@@ -24,23 +24,23 @@ Use the `Skill` tool. When you invoke a skill, its content is loaded and present
 
 # Using Skills
 
-## La regla (por niveles)
+## The rule (by tier)
 
-No toda skill compite por tu atención por igual. Aplica dos niveles:
+Not every skill competes equally for your attention. Apply two tiers:
 
-**Espina y gates — considéralas siempre.** Las skills de proceso y de calidad
+**Spine and gates — always consider them.** The process and quality skills
 (`development-process`, `brainstorming`, `writing-plans`, `executing-plans`,
 `subagent-driven-development`, `test-driven-development`,
 `requesting-code-review`, `receiving-code-review`, `post-implementation-qa`,
 `finishing-a-development-branch`, `verification-before-completion`,
-`systematic-debugging`) forman la disciplina del desarrollo: evalúalas en todo
-trabajo de desarrollo. Tu entrada por defecto es `development-process`.
+`systematic-debugging`) form development discipline: evaluate them on all
+development work. Your default entry point is `development-process`.
 
-**Especializadas — solo ante señal clara.** Las demás skills (advisory de
-arquitectura/CI/NFR, frontend, documentación, etc.) se invocan **únicamente
-cuando el contexto lo pide explícitamente** (hablas de arquitectura, configuras
-un pipeline, trabajas una pantalla UI, documentas un módulo…). No las invoques
-"por si acaso": esperar la signal evita ruido y carga innecesaria.
+**Specialized — only on clear signal.** The remaining skills (architecture/CI/NFR
+advisory, frontend, documentation, etc.) are invoked **only when the context
+explicitly calls for them** (you are discussing architecture, configuring a pipeline,
+working on a UI screen, documenting a module...). Do not invoke them
+"just in case": waiting for the signal avoids noise and unnecessary overhead.
 
 ## Orchestration
 
@@ -68,9 +68,9 @@ When you invoke a skill, announce it briefly: *"I'm using the {skill-name} skill
 
 If a skill provides a checklist, create a task for each item with the task tool and complete them in order. Skills are designed to be followed exactly — do not skip steps or reorder them.
 
-## Invariantes de robustez (agnósticos, AWM)
+## Robustness invariants (agnostic, AWM)
 
-Reglas genéricas que AWM hereda a todo agente vía contexto inyectado. No son específicas de ningún proyecto:
+Generic rules that AWM inherits to every agent via injected context. Not specific to any project:
 
-- **Toda función pública valida sus entradas y falla ruidosamente.** Nunca devuelvas `Infinity`/`NaN`/`undefined` en silencio ante entradas inválidas o límite: lanzá un error explícito.
-- **El alcance puede excluir *features*, nunca *seguridad/robustez*.** Que el diseño declare algo "fuera de alcance" justifica omitir una feature, no omitir la validación de entradas ni un invariante de robustez. La validación de entradas es un piso, no una feature.
+- **Every public function validates its inputs and fails loudly.** Never silently return `Infinity`/`NaN`/`undefined` on invalid or edge inputs: throw an explicit error.
+- **Scope may exclude *features*, never *security/robustness*.** A design declaring something "out of scope" justifies omitting a feature, not omitting input validation or a robustness invariant. Input validation is a floor, not a feature.

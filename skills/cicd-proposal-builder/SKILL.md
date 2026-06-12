@@ -1,163 +1,163 @@
 ---
 name: cicd-proposal-builder
 version: "1.0.0"
-description: "Especialista en diseño de pipelines CI/CD. Usa esta skill cuando necesites definir pipeline, estrategia de branching, ambientes, gates de calidad, estrategia de deploy o controles mínimos. Activa ante frases como: 'necesito un pipeline', 'propuesta de CI/CD', 'qué branching strategy', 'cómo configuro los ambientes', 'qué gates de calidad debería tener', 'estrategia de deploy'."
+description: "Specialist in CI/CD pipeline design. Use this skill when you need to define a pipeline, branching strategy, environments, quality gates, deploy strategy, or minimum controls. Activate on phrases like: 'I need a pipeline', 'CI/CD proposal', 'what branching strategy', 'how do I configure the environments', 'what quality gates should I have', 'deploy strategy'."
 ---
 
 # CI/CD Proposal Builder
 
-Especialista en diseño de pipelines CI/CD. Guía al usuario desde las restricciones del proyecto hasta una propuesta completa de delivery pipeline, cubriendo branching strategy, ambientes, gates de calidad, estrategia de deploy y controles mínimos.
+Specialist in CI/CD pipeline design. Guides the user from project constraints to a complete delivery pipeline proposal, covering branching strategy, environments, quality gates, deploy strategy, and minimum controls.
 
-**Principio core:** Un pipeline bien diseñado es invisible — el equipo hace push y las cosas correctas pasan. Un pipeline mal diseñado es un cuello de botella que nadie quiere tocar. El output es una propuesta concreta y accionable.
+**Core principle:** A well-designed pipeline is invisible — the team pushes and the right things happen. A poorly designed pipeline is a bottleneck nobody wants to touch. The output is a concrete, actionable proposal.
 
 ---
 
-## Paso 0: Detectar Modo de Operación
+## Step 0: Detect Operating Mode
 
-| Señal | Modo |
+| Signal | Mode |
 |-------|------|
-| Invocada directamente por el usuario o por un orquestador con ciclo completo | **Modo Completo** |
-| Invocada por otra skill que ya tiene contexto y pide expertise puntual | **Modo Contextual** |
+| Invoked directly by the user or by an orchestrator with a full cycle | **Full Mode** |
+| Invoked by another skill that already has context and requests targeted expertise | **Contextual Mode** |
 
-Si no queda claro, pregunta: *"¿Quieres que te guíe en el diseño completo del pipeline, o necesitas resolver algo puntual (branching, ambientes, gates)?"*
+If unclear, ask: *"Do you want me to guide you through the complete pipeline design, or do you need to resolve something specific (branching, environments, gates)?"*
 
 ---
 
-## Paso 0.1: Recopilar Contexto del Proyecto
+## Step 0.1: Gather Project Context
 
-**¿El proyecto tiene repositorio?**
+**Does the project have a repository?**
 
-- **Sí →**
-  1. Lee `AGENTS.md` (stack, cloud provider, estructura)
-  2. Lee `README.md` (propósito, setup)
-  3. Busca configs de CI/CD existentes:
+- **Yes →**
+  1. Read `AGENTS.md` (stack, cloud provider, structure)
+  2. Read `README.md` (purpose, setup)
+  3. Look for existing CI/CD configs:
      - `.github/workflows/*.yml` (GitHub Actions)
      - `Jenkinsfile` (Jenkins)
      - `.gitlab-ci.yml` (GitLab CI)
      - `Dockerfile`, `docker-compose.yml`
      - `Makefile`, `Taskfile.yml`
      - `terraform/`, `pulumi/`, `cdk/`
-  4. Identifica scripts de build/test existentes (package.json scripts, Makefile targets, etc.)
-  5. Pregunta: *"¿Hay restricciones adicionales? (compliance, cloud provider fijo, equipo de plataforma que aprueba cambios)"*
+  4. Identify existing build/test scripts (package.json scripts, Makefile targets, etc.)
+  5. Ask: *"Are there additional constraints? (compliance, fixed cloud provider, platform team that approves changes)"*
 
-- **No →** *"Describime: stack tecnológico, cloud provider, cantidad de ambientes que necesitas, requisitos de compliance"*
+- **No →** *"Describe to me: tech stack, cloud provider, number of environments you need, compliance requirements"*
 
-**En Modo Contextual:** Omitir este paso — usar el contexto ya establecido por el skill invocador.
+**In Contextual Mode:** Skip this step — use the context already established by the invoking skill.
 
 ---
 
-## Modo Completo — Ciclo Interactivo
+## Full Mode — Interactive Cycle
 
-### Fase 1: Entender contexto
+### Phase 1: Understand context
 
-Preguntas guiadas (una a la vez):
-- ¿Cuál es el stack tecnológico? (lenguajes, frameworks, runtime)
-- ¿Qué cloud provider usan? (AWS, GCP, Azure, on-prem, híbrido)
-- ¿Tamaño y experiencia del equipo? (impacta complejidad tolerable del pipeline)
-- ¿Hay constraints de compliance o seguridad? (aprobaciones manuales, security scans obligatorios, ambientes aislados)
-- ¿Hay CI/CD existente que se quiere mejorar o es desde cero?
+Guided questions (one at a time):
+- What is the tech stack? (languages, frameworks, runtime)
+- What cloud provider do you use? (AWS, GCP, Azure, on-prem, hybrid)
+- Team size and experience? (impacts tolerable pipeline complexity)
+- Are there compliance or security constraints? (manual approvals, mandatory security scans, isolated environments)
+- Is there existing CI/CD to improve, or is this from scratch?
 
-**Output:** Restricciones claras y compartidas.
+**Output:** Clear and shared constraints.
 
-### Fase 2: Branching strategy
+### Phase 2: Branching strategy
 
-Proponer 2-3 estrategias con trade-offs según el contexto:
+Propose 2-3 strategies with trade-offs based on context:
 
-| Estrategia | Ideal para | Trade-off |
+| Strategy | Ideal for | Trade-off |
 |-----------|-----------|-----------|
-| **Trunk-based** | Equipos maduros, CD, feature flags | Requiere disciplina y buena cobertura de tests |
-| **GitHub Flow** | Equipos medianos, PRs, releases frecuentes | Balance entre simplicidad y control |
-| **GitFlow** | Releases planificados, múltiples versiones en producción | Complejidad alta, branches de larga vida |
+| **Trunk-based** | Mature teams, CD, feature flags | Requires discipline and good test coverage |
+| **GitHub Flow** | Medium-sized teams, PRs, frequent releases | Balance between simplicity and control |
+| **GitFlow** | Planned releases, multiple versions in production | High complexity, long-lived branches |
 
-Recomendar con justificación basada en el contexto del equipo.
+Recommend with justification based on the team's context.
 
-**Presentar opciones y esperar aprobación.**
+**Present options and wait for approval.**
 
-### Fase 3: Ambientes y promoción
+### Phase 3: Environments and promotion
 
-Definir:
-- Qué ambientes existen (dev, staging, QA, pre-prod, prod)
-- Cómo se promueve código entre ambientes (automático vs manual)
-- Manejo de configuración por ambiente (env vars, secrets, feature flags)
-- Aislamiento entre ambientes (red, datos, accesos)
+Define:
+- What environments exist (dev, staging, QA, pre-prod, prod)
+- How code is promoted between environments (automatic vs manual)
+- Configuration management per environment (env vars, secrets, feature flags)
+- Isolation between environments (network, data, access)
 
-Proponer el mínimo viable de ambientes para el contexto, no el máximo posible.
+Propose the minimum viable set of environments for the context, not the maximum possible.
 
-**Presentar propuesta y esperar aprobación.**
+**Present proposal and wait for approval.**
 
-### Fase 4: Gates de calidad
+### Phase 4: Quality gates
 
-Para cada gate, definir si es **blocking** (rompe el pipeline) o **advisory** (reporta pero no bloquea):
+For each gate, define whether it is **blocking** (breaks the pipeline) or **advisory** (reports but does not block):
 
-| Gate | Qué valida | Cuándo corre | Blocking? |
+| Gate | What it validates | When it runs | Blocking? |
 |------|-----------|-------------|-----------|
-| Linting | Estilo y formato de código | En cada push | Según equipo |
-| Unit tests | Lógica de negocio | En cada push | Sí |
-| Integration tests | Interacción entre componentes | En PR / pre-merge | Sí |
-| Security scan | Vulnerabilidades en deps y código | En PR | Según criticidad |
-| Code review | Revisión humana | En PR | Sí |
-| Smoke tests | Funcionalidad básica post-deploy | Post-deploy a staging | Sí |
-| Performance tests | Regresiones de rendimiento | Pre-release (opcional) | Advisory |
+| Linting | Code style and formatting | On every push | Per team |
+| Unit tests | Business logic | On every push | Yes |
+| Integration tests | Interaction between components | On PR / pre-merge | Yes |
+| Security scan | Vulnerabilities in deps and code | On PR | Per criticality |
+| Code review | Human review | On PR | Yes |
+| Smoke tests | Basic functionality post-deploy | Post-deploy to staging | Yes |
+| Performance tests | Performance regressions | Pre-release (optional) | Advisory |
 
-Adaptar según el stack y las restricciones.
+Adapt based on the stack and constraints.
 
-**Presentar gates y esperar aprobación.**
+**Present gates and wait for approval.**
 
-### Fase 5: Estrategia de deploy
+### Phase 5: Deploy strategy
 
-Proponer 2-3 opciones con trade-offs:
+Propose 2-3 options with trade-offs:
 
-| Estrategia | Ideal para | Trade-off |
+| Strategy | Ideal for | Trade-off |
 |-----------|-----------|-----------|
-| **Rolling** | Aplicaciones stateless, infraestructura simple | Downtime mínimo pero rollback lento |
-| **Blue/Green** | Zero-downtime requerido, rollback instantáneo | Costo doble de infra durante deploy |
-| **Canary** | Releases de alto riesgo, validación gradual | Complejidad de routing y monitoring |
-| **Feature Flags** | Separar deploy de release, A/B testing | Deuda técnica si no se limpian |
+| **Rolling** | Stateless applications, simple infrastructure | Minimal downtime but slow rollback |
+| **Blue/Green** | Zero-downtime required, instant rollback | Double infra cost during deploy |
+| **Canary** | High-risk releases, gradual validation | Routing and monitoring complexity |
+| **Feature Flags** | Separating deploy from release, A/B testing | Technical debt if not cleaned up |
 
-Recomendar según la tolerancia a downtime y la infraestructura disponible.
+Recommend based on downtime tolerance and available infrastructure.
 
-**Presentar opciones y esperar aprobación.**
+**Present options and wait for approval.**
 
-### Fase 6: Generar artefacto de diseño
+### Phase 6: Generate design artifact
 
-Compilar todas las decisiones en artefacto estructurado:
+Compile all decisions into a structured artifact:
 
-| Invocada desde | Artefacto | Quién ejecuta |
+| Invoked from | Artifact | Who executes |
 |---|---|---|
-| `brainstorming` | Resultado retornado a `brainstorming` para integrar en el diseño | `brainstorming` continúa su flujo (escribe design doc, luego llama a `writing-plans`) |
-| `docs-brainstorming` / `docs-system-orchestrator` | Documento de propuesta CI/CD | `docs-assistant` |
-| Standalone | Documento de propuesta CI/CD | `docs-assistant` |
+| `brainstorming` | Result returned to `brainstorming` to integrate into the design | `brainstorming` continues its flow (writes design doc, then calls `writing-plans`) |
+| `docs-brainstorming` / `docs-system-orchestrator` | CI/CD proposal document | `docs-assistant` |
+| Standalone | CI/CD proposal document | `docs-assistant` |
 
 ---
 
-## Modo Contextual — Intervención Puntual
+## Contextual Mode — Targeted Intervention
 
-| Invocador pide | Qué hace |
+| Invoker asks | What it does |
 |---|---|
-| "Necesito definir el pipeline para este proyecto" | Fases 1-5 con contexto ya proporcionado |
-| "Qué branching strategy conviene?" | Solo fase 2 |
-| "Revisa si este pipeline tiene gaps" | Review de configuración existente + señalar mejoras |
-| "Qué gates de calidad debería tener?" | Solo fase 4 |
+| "I need to define the pipeline for this project" | Phases 1-5 with context already provided |
+| "What branching strategy should I use?" | Phase 2 only |
+| "Review whether this pipeline has gaps" | Review of existing configuration + flag improvements |
+| "What quality gates should I have?" | Phase 4 only |
 
-En modo contextual: no abrir ciclo completo, usar contexto del invocador, retornar resultado. Fase 6 no aplica — el invocador maneja la generación del artefacto.
+In contextual mode: do not open a full cycle, use the invoker's context, return result. Phase 6 does not apply — the invoker handles artifact generation.
 
 ---
 
-## Reglas Transversales
+## Cross-cutting Rules
 
-- **Mínimo viable, no máximo posible.** Un pipeline simple que funciona es mejor que uno complejo que nadie entiende.
-- **Automatizar lo repetitivo, no lo excepcional.** No construir gates para casos que pasan una vez al año.
-- **El pipeline es código.** Todo versionado, todo reproducible, nada manual que pueda olvidarse.
-- **Una pregunta a la vez** en modo completo.
-- **Aprobación incremental** por fase.
+- **Minimum viable, not maximum possible.** A simple pipeline that works is better than a complex one nobody understands.
+- **Automate the repetitive, not the exceptional.** Do not build gates for cases that happen once a year.
+- **The pipeline is code.** Everything versioned, everything reproducible, nothing manual that can be forgotten.
+- **One question at a time** in full mode.
+- **Incremental approval** per phase.
 
 ---
 
 ## <TERMINATION_PHASE>
 
-Cuando el modo de operación concluya, **DETENTE**.
+When the operating mode concludes, **STOP**.
 
-Tu único paso final es:
-1. Reportar resultado (resumen de la propuesta CI/CD).
-2. Indicar siguiente paso según contexto de invocación.
-3. Esperar confirmación. No proceder automáticamente.
+Your only final step is:
+1. Report the result (summary of the CI/CD proposal).
+2. Indicate the next step according to the invocation context.
+3. Wait for confirmation. Do not proceed automatically.

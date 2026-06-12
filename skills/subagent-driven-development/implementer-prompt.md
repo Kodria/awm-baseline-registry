@@ -40,9 +40,9 @@ Task tool (general-purpose):
        with unaddressed new sensor findings.
 
        **Lee `overall`, no el exit code.** `not_certified` (sin `.awm/sensors.json`)
-       también sale exit 0 — NO lo reportes como "sensors pass". Si el veredicto es
-       `not_certified`, dilo explícito: "sin sensores configurados, gate no certificado".
-       Solo `overall: "pass"` cuenta como verde; `fail` se arregla antes de reportar DONE.
+       also exits 0 — do NOT report it as "sensors pass". If the verdict is
+       `not_certified`, state it explicitly: "no sensors configured, gate not certified".
+       Only `overall: "pass"` counts as green; `fail` must be fixed before reporting DONE.
     5. Commit your work
     6. Self-review (see below)
     7. Report back

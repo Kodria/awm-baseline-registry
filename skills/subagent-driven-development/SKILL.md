@@ -235,7 +235,7 @@ Once all tasks are complete and the final code review is approved, you have **on
 Your sequence — execute in order, do not skip:
 1. **Invoke `post-implementation-qa`** via the Skill tool. It runs inline in this session: it reads the plan, diffs the branch, dispatches its own review subagent, runs the fix loop if needed, and adds `<!-- awm-qa-complete -->` to the plan. Let it complete fully before continuing.
 2. After QA completes, report a summary of all implemented tasks and the QA verdict.
-3. Ask the user: *"¿Deseas continuar con la fase de cierre de rama? Si usas `development-process`, el orquestador evaluará el estado del proyecto y te propondrá el siguiente paso."*
+3. Ask the user: *"Do you want to continue with the branch-closing phase? If you use `development-process`, the orchestrator will evaluate the project state and propose the next step."*
 4. Wait for confirmation. Do NOT invoke `finishing-a-development-branch` automatically.
 
 ## Advantages
