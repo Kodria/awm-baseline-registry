@@ -148,9 +148,9 @@ Run with **no flag** — that runs *all* sensors (fast: `tsc`, `lint`; slow: `se
 **Lee el veredicto, no el exit code.** `awm sensors run` emite JSON con un campo `overall`:
 - `overall: "pass"` → sensores corrieron, sin hallazgos nuevos. Verde.
 - `overall: "fail"` → hay hallazgos nuevos o un tool faltante. Bloquea hasta resolver.
-- `overall: "not_certified"` → no hay `.awm/sensors.json` en el árbol. **NO es un pass.** Decláralo explícito como "sin sensores configurados — gate no certificado". Nunca lo reportes como "sensores OK".
+- `overall: "not_certified"` → no `.awm/sensors.json` found in the tree. **NOT a pass.** Declare it explicitly as "no sensors configured — gate not certified". Never report it as "sensors OK".
 
-`exit 0` NO significa "limpio" por sí solo: `not_certified` también sale 0. La señal autoritativa es `overall`.
+`exit 0` does NOT mean "clean" on its own: `not_certified` also exits 0. The authoritative signal is `overall`.
 
 - Exit 0 with `overall: pass` → sensors clean; proceed.
 - Exit 1 with sensor failures → autocorrect using the LLM-formatted errors, re-run sensors, then claim done. The ratchet reports only **new** findings (`newCount`); fix those, not the pre-existing baseline.

@@ -1,7 +1,7 @@
 {
   "name": "dev",
   "version": "1.0.0",
-  "description": "Núcleo de desarrollo de software agéntico: espina SDD, gates de calidad, sensores y advisory.",
+  "description": "Agentic software development core: SDD spine, quality gates, sensors, and advisory.",
   "scope": "baseline",
   "dependsOn": [],
   "skills": [

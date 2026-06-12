@@ -1,7 +1,7 @@
 {
   "name": "authoring",
   "version": "1.0.0",
-  "description": "Autoría del propio harness y creación de skills (activar solo en el repo agentic-workflow).",
+  "description": "Harness authoring and skill creation (enable only in the agentic-workflow repo).",
   "scope": "project",
   "dependsOn": ["dev"],
   "skills": ["writing-skills"],

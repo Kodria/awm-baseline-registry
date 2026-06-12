@@ -1,4 +1,4 @@
-# Referencia: Emil Kowalski — Design Engineering (conocimiento de craft/animación)
+# Reference: Emil Kowalski — Design Engineering (craft and animation knowledge)
 
 
 # Design Engineering

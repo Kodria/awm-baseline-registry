@@ -10,28 +10,28 @@ description: Use after implementation is complete and before finishing the branc
 
 ## Overview
 
-El harness previene bugs futuros (preventivo). Este skill cierra los bugs encontrados ahora (correctivo). Corre entre ejecución y finishing, reemplazando el prompt informal de "review total antes de cerrar".
+The harness prevents future bugs (preventive). This skill closes bugs found now (corrective). Runs between execution and finishing, replacing the informal "full review before closing" prompt.
 
-**Core principle:** Ninguna rama se cierra sin evidencia de que lo construido coincide con lo planeado Y de que el código es correcto.
+**Core principle:** No branch is closed without evidence that what was built matches what was planned AND that the code is correct.
 
-## Dos Entry Points
+## Two Entry Points
 
-### Entry Point 1 — Desde development-process (desarrollo activo)
-Invocado cuando `subagent-driven-development` o `executing-plans` reporta todas las tareas completas. El plan está disponible en `docs/plans/`.
+### Entry Point 1 — From development-process (active development)
+Invoked when `subagent-driven-development` or `executing-plans` reports all tasks complete. The plan is available in `docs/plans/`.
 
 ### Entry Point 2 — Standalone
-El usuario invoca directamente al encontrar un bug o querer un QA pass sin desarrollo previo.
-- Si existe `*-plan.md` para la rama actual en `docs/plans/` → úsalo como referencia
-- Si no hay plan → delegar directamente a `systematic-debugging`
+The user invokes directly when finding a bug or wanting a QA pass without prior development.
+- If `*-plan.md` exists for the current branch in `docs/plans/` → use it as reference
+- If no plan → delegate directly to `systematic-debugging`
 
-## Tipos de Hallazgos
+## Finding Types
 
-| Tipo | Descripción | Remediación |
+| Type | Description | Remediation |
 |------|-------------|-------------|
-| **B — Fidelidad** | El plan dice X, el código hace Y (falta algo, sobra algo, mal entendido) | Subagente de corrección apuntado al gap, sin root cause analysis |
-| **C — Calidad** | Bug lógico, edge case, comportamiento inesperado | `systematic-debugging` → root cause → subagente fix |
+| **B — Fidelity** | The plan says X, the code does Y (something missing, something extra, misunderstood) | Correction subagent pointed at the gap, no root cause analysis |
+| **C — Quality** | Logic bug, edge case, unexpected behavior | `systematic-debugging` → root cause → subagent fix |
 
-> **Lente de seguridad (alcance ≠ exención).** "Documentado-fuera-de-alcance" NO exime invariantes de seguridad/robustez. Una función pública que devuelve `Infinity`/`NaN`/`undefined` en silencio, o que crashea con entradas límite/inválidas, es un hallazgo **Type C aunque el diseño lo haya declarado fuera de alcance.** El alcance excluye *features*, nunca el piso de robustez.
+> **Security lens (scope ≠ exemption).** "Documented-out-of-scope" does NOT exempt security/robustness invariants. A public function that silently returns `Infinity`/`NaN`/`undefined`, or that crashes on edge/invalid inputs, is a **Type C finding even if the design declared it out of scope.** Scope excludes *features*, never the robustness floor.
 
 ## El Proceso
 
@@ -40,79 +40,79 @@ digraph qa_process {
     rankdir=TB;
 
     "Entry" [shape=doublecircle];
-    "Plan activo?" [shape=diamond];
-    "Delegar a systematic-debugging" [shape=box];
-    "Leer plan + git diff + awm sensors run" [shape=box];
+    "Active plan?" [shape=diamond];
+    "Delegate to systematic-debugging" [shape=box];
+    "Read plan + git diff + awm sensors run" [shape=box];
     "Dispatch deep-review subagent" [shape=box];
-    "Presentar hallazgos al usuario" [shape=box];
-    "Lista vacía?" [shape=diamond];
-    "Marcar QA completo en plan" [shape=box];
-    "Retornar a development-process" [shape=doublecircle];
-    "Siguiente hallazgo (blockers primero)" [shape=box];
-    "Tipo B: subagente fix directo" [shape=box];
-    "Tipo C: systematic-debugging → fix" [shape=box];
+    "Present findings to user" [shape=box];
+    "Empty list?" [shape=diamond];
+    "Mark QA complete in plan" [shape=box];
+    "Return to development-process" [shape=doublecircle];
+    "Next finding (blockers first)" [shape=box];
+    "Type B: direct subagent fix" [shape=box];
+    "Type C: systematic-debugging → fix" [shape=box];
     "awm sensors run + verification-before-completion" [shape=box];
-    "Hallazgo recurrente (≥2)?" [shape=diamond];
+    "Recurring finding (≥2)?" [shape=diamond];
     "harness-retro" [shape=box];
 
-    "Entry" -> "Plan activo?";
-    "Plan activo?" -> "Delegar a systematic-debugging" [label="no"];
-    "Plan activo?" -> "Leer plan + git diff + awm sensors run" [label="sí"];
-    "Leer plan + git diff + awm sensors run" -> "Dispatch deep-review subagent";
-    "Dispatch deep-review subagent" -> "Presentar hallazgos al usuario";
-    "Presentar hallazgos al usuario" -> "Lista vacía?";
-    "Lista vacía?" -> "Marcar QA completo en plan" [label="sí"];
-    "Marcar QA completo en plan" -> "Retornar a development-process";
-    "Lista vacía?" -> "Siguiente hallazgo (blockers primero)" [label="no"];
-    "Siguiente hallazgo (blockers primero)" -> "Tipo B: subagente fix directo" [label="Type B"];
-    "Siguiente hallazgo (blockers primero)" -> "Tipo C: systematic-debugging → fix" [label="Type C"];
-    "Tipo B: subagente fix directo" -> "awm sensors run + verification-before-completion";
-    "Tipo C: systematic-debugging → fix" -> "awm sensors run + verification-before-completion";
-    "awm sensors run + verification-before-completion" -> "Hallazgo recurrente (≥2)?";
-    "Hallazgo recurrente (≥2)?" -> "harness-retro" [label="sí"];
-    "harness-retro" -> "Lista vacía?" [label="regla agregada"];
-    "Hallazgo recurrente (≥2)?" -> "Lista vacía?" [label="no"];
+    "Entry" -> "Active plan?";
+    "Active plan?" -> "Delegate to systematic-debugging" [label="no"];
+    "Active plan?" -> "Read plan + git diff + awm sensors run" [label="yes"];
+    "Read plan + git diff + awm sensors run" -> "Dispatch deep-review subagent";
+    "Dispatch deep-review subagent" -> "Present findings to user";
+    "Present findings to user" -> "Empty list?";
+    "Empty list?" -> "Mark QA complete in plan" [label="yes"];
+    "Mark QA complete in plan" -> "Return to development-process";
+    "Empty list?" -> "Next finding (blockers first)" [label="no"];
+    "Next finding (blockers first)" -> "Type B: direct subagent fix" [label="Type B"];
+    "Next finding (blockers first)" -> "Type C: systematic-debugging → fix" [label="Type C"];
+    "Type B: direct subagent fix" -> "awm sensors run + verification-before-completion";
+    "Type C: systematic-debugging → fix" -> "awm sensors run + verification-before-completion";
+    "awm sensors run + verification-before-completion" -> "Recurring finding (≥2)?";
+    "Recurring finding (≥2)?" -> "harness-retro" [label="yes"];
+    "harness-retro" -> "Empty list?" [label="rule added"];
+    "Recurring finding (≥2)?" -> "Empty list?" [label="no"];
 }
 ```
 
-## Paso a Paso
+## Step by Step
 
-### Paso 1: Localizar el plan activo
+### Step 1: Locate the active plan
 
 ```bash
 git branch --show-current
 ls docs/plans/ | grep -v design | sort | tail -5
 ```
 
-Si no hay plan para la rama actual → standalone mode → `systematic-debugging`.
+If no plan exists for the current branch → standalone mode → `systematic-debugging`.
 
-### Paso 2: Reunir evidencia
+### Step 2: Gather evidence
 
 ```bash
 git diff main...HEAD
 awm sensors run
 ```
 
-### Paso 3: Dispatch del subagente de revisión profunda
+### Step 3: Dispatch the deep-review subagent
 
-**Construir el prompt DESDE el template `./deep-review-prompt.md`** — leer el archivo e inyectar el contexto en su estructura. Un prompt inline escrito de memoria pierde la instrucción de ledger. Inyectar:
+**Build the prompt FROM the `./deep-review-prompt.md` template** — read the file and inject the context into its structure. An inline prompt written from memory loses the ledger instruction. Inject:
 - Texto completo del plan
 - Git diff completo de la rama
 - Output completo de `awm sensors run`
 
 El subagente retorna JSON con lista de hallazgos clasificados.
 
-- El subagente además registra cada hallazgo y win en el ledger vía `awm ledger add` (ver deep-review-prompt.md), insumo de `harness-retro`.
+- The subagent also logs each finding and win in the ledger via `awm ledger add` (see deep-review-prompt.md), feeding into `harness-retro`.
 
-### Paso 4: Presentar hallazgos al usuario
+### Step 4: Present findings to the user
 
-**Gate de ledger (antes de presentar):** correr `awm ledger list` y verificar que cada hallazgo del JSON tiene su entrada correspondiente (fase `post-qa`). Si el subagente reportó N hallazgos pero el ledger no creció, el pipeline de aprendizaje está roto — re-despachar al subagente para que emita los `awm ledger add` faltantes antes de continuar. No presentar hallazgos cuyo registro no existe.
+**Ledger gate (before presenting):** run `awm ledger list` and verify that each finding in the JSON has a corresponding entry (phase `post-qa`). If the subagent reported N findings but the ledger did not grow, the learning pipeline is broken — re-dispatch the subagent to emit the missing `awm ledger add` entries before continuing. Do not present findings whose record does not exist.
 
 ```
 ## Hallazgos QA
 
 Type B — Fidelidad (N hallazgos)
-  [B1] 🔴 BLOCKER: Falta implementar X (plan sección 3.2)
+  [B1] 🔴 BLOCKER: Missing implementation of X (plan section 3.2)
   [B2] 🟡 IMPORTANT: Feature Y no estaba en el plan
 
 Type C — Calidad (M hallazgos)
@@ -122,59 +122,59 @@ Type C — Calidad (M hallazgos)
 Resumen: N Type-B, M Type-C. K blockers.
 ```
 
-Preguntar: "¿Procedemos con todos los hallazgos, o hay alguno que quieras descartar?"
-Esperar confirmación antes de iniciar el fix loop.
+Ask: "Shall we proceed with all findings, or is there any you want to discard?"
+Wait for confirmation before starting the fix loop.
 
 ### Paso 5: Fix loop (blockers primero, luego importantes, luego minors)
 
 **Para Type B:**
-- Dispatch subagente con descripción exacta del gap + sección del plan relevante
-- Sin root cause analysis — el gap está claro del plan
-- Después del fix: `awm sensors run` + `verification-before-completion`
+- Dispatch subagent with exact description of the gap + relevant plan section
+- No root cause analysis — the gap is clear from the plan
+- After the fix: `awm sensors run` + `verification-before-completion`
 
-**Para Type C:**
-- Invocar `systematic-debugging` → root cause confirmado → dispatch subagente fix
-- Después del fix: `awm sensors run` + `verification-before-completion`
+**For Type C:**
+- Invoke `systematic-debugging` → confirmed root cause → dispatch subagent fix
+- After the fix: `awm sensors run` + `verification-before-completion`
 
 **Si el mismo hallazgo aparece ≥2 veces:** invocar `harness-retro` antes de continuar.
 
 **Si el usuario descarta un hallazgo:** anotar el motivo y continuar.
 
-### Paso 6: Gate de completion
+### Step 6: Completion gate
 
-Solo proceder cuando TODOS:
-- [ ] Lista de hallazgos vacía (todos resueltos o descartados con motivo)
+Proceed only when ALL:
+- [ ] Findings list empty (all resolved or discarded with reason)
 - [ ] `awm sensors run` limpio
 - [ ] `verification-before-completion` pasado para cada fix
 
-### Paso 7: Marcar QA completo
+### Step 7: Mark QA complete
 
-Agregar al comienzo del plan (primera línea después del header `#`):
+Add at the beginning of the plan (first line after the `#` header):
 ```markdown
 <!-- awm-qa-complete: YYYY-MM-DD -->
 ```
 
 Reportar: "QA completo. N hallazgos encontrados y cerrados. Listo para `finishing-a-development-branch`."
 
-## Ley de Hierro
+## Iron Law
 
 ```
-NO CLAIM DE "QA COMPLETO" SIN:
-1. awm sensors run limpio
-2. verification-before-completion por cada fix
-3. Lista vacía o descartes justificados
+NO "QA COMPLETE" CLAIM WITHOUT:
+1. Clean awm sensors run
+2. verification-before-completion per each fix
+3. Empty list or justified discards
 ```
 
 ## Red Flags
 
-- "Solo un fix rápido, no necesito correr sensores" → CORRER SENSORES
-- "La implementación se ve bien" → EVIDENCIA, no apariencias
-- "Este hallazgo es menor, lo salto" → presentar al usuario, que decida
+- "Just a quick fix, I don't need to run sensors" → RUN SENSORS
+- "The implementation looks fine" → EVIDENCE, not appearances
+- "This finding is minor, I'll skip it" → present to user, let them decide
 - Mezclar tratamiento Type B y C
-- Saltar confirmación antes del fix loop
+- Skipping confirmation before the fix loop
 - Olvidar el marker `<!-- awm-qa-complete -->`
-- Despachar el deep-review con prompt inline en vez del template → se pierde la instrucción de `awm ledger add`
-- Presentar hallazgos sin verificar que el ledger creció (gate del Paso 4)
+- Dispatching the deep-review with an inline prompt instead of the template → the `awm ledger add` instruction is lost
+- Presenting findings without verifying that the ledger grew (Step 4 gate)
 
 ## Conexiones
 
@@ -185,4 +185,4 @@ NO CLAIM DE "QA COMPLETO" SIN:
 | `subagent-driven-development` | Ejecuta los fixes |
 | `verification-before-completion` | Gate por cada fix |
 | `harness-retro` | Si hallazgo es recurrente (≥2) |
-| `finishing-a-development-branch` | Fase siguiente cuando QA está limpio |
+| `finishing-a-development-branch` | Next phase when QA is clean |
