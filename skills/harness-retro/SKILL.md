@@ -48,7 +48,7 @@ You MUST create a task for each item and complete them in order:
 Session finding
 ├── structural / security / logic (sensor-catchable)
 │   └── remediation tree: eslint.config.awm.mjs / .semgrep.awm.yml / tests/structural/
-├── de proceso (project rule)
+├── process (project rule)
 │   └── CONSTITUTION.md
 └── agent working-style + wins
     └── AGENTS.md
@@ -135,13 +135,13 @@ test('parseConfig returns explicit error on empty input', () => {
 });
 ```
 
-**de proceso (CONSTITUTION.md):**
+**process (CONSTITUTION.md):**
 ```markdown
 ## Process
 - Before invoking a destructive Bash command (rm, drop, truncate), MUST confirm with the user when not in CI.
 ```
 
-**de seguridad (Semgrep):**
+**security (Semgrep):**
 ```yaml
 # .semgrep.awm.yml — added rule
 - id: no-eval-on-user-input

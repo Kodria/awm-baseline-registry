@@ -33,7 +33,7 @@ The user invokes directly when finding a bug or wanting a QA pass without prior 
 
 > **Security lens (scope ≠ exemption).** "Documented-out-of-scope" does NOT exempt security/robustness invariants. A public function that silently returns `Infinity`/`NaN`/`undefined`, or that crashes on edge/invalid inputs, is a **Type C finding even if the design declared it out of scope.** Scope excludes *features*, never the robustness floor.
 
-## El Proceso
+## The Process
 
 ```dot
 digraph qa_process {
@@ -96,11 +96,11 @@ awm sensors run
 ### Step 3: Dispatch the deep-review subagent
 
 **Build the prompt FROM the `./deep-review-prompt.md` template** — read the file and inject the context into its structure. An inline prompt written from memory loses the ledger instruction. Inject:
-- Texto completo del plan
-- Git diff completo de la rama
-- Output completo de `awm sensors run`
+- Full plan text
+- Full git diff of the branch
+- Full output of `awm sensors run`
 
-El subagente retorna JSON con lista de hallazgos clasificados.
+The subagent returns JSON with a list of classified findings.
 
 - The subagent also logs each finding and win in the ledger via `awm ledger add` (see deep-review-prompt.md), feeding into `harness-retro`.
 
@@ -109,25 +109,25 @@ El subagente retorna JSON con lista de hallazgos clasificados.
 **Ledger gate (before presenting):** run `awm ledger list` and verify that each finding in the JSON has a corresponding entry (phase `post-qa`). If the subagent reported N findings but the ledger did not grow, the learning pipeline is broken — re-dispatch the subagent to emit the missing `awm ledger add` entries before continuing. Do not present findings whose record does not exist.
 
 ```
-## Hallazgos QA
+## QA Findings
 
-Type B — Fidelidad (N hallazgos)
+Type B — Fidelity (N findings)
   [B1] 🔴 BLOCKER: Missing implementation of X (plan section 3.2)
-  [B2] 🟡 IMPORTANT: Feature Y no estaba en el plan
+  [B2] 🟡 IMPORTANT: Feature Y was not in the plan
 
-Type C — Calidad (M hallazgos)
-  [C1] 🔴 BLOCKER: Edge case Z no manejado (file.ts:45)
-  [C2] ⚪ MINOR: Mensaje de error poco claro
+Type C — Quality (M findings)
+  [C1] 🔴 BLOCKER: Edge case Z not handled (file.ts:45)
+  [C2] ⚪ MINOR: Error message unclear
 
-Resumen: N Type-B, M Type-C. K blockers.
+Summary: N Type-B, M Type-C. K blockers.
 ```
 
 Ask: "Shall we proceed with all findings, or is there any you want to discard?"
 Wait for confirmation before starting the fix loop.
 
-### Paso 5: Fix loop (blockers primero, luego importantes, luego minors)
+### Step 5: Fix loop (blockers first, then important, then minors)
 
-**Para Type B:**
+**For Type B:**
 - Dispatch subagent with exact description of the gap + relevant plan section
 - No root cause analysis — the gap is clear from the plan
 - After the fix: `awm sensors run` + `verification-before-completion`
@@ -136,16 +136,16 @@ Wait for confirmation before starting the fix loop.
 - Invoke `systematic-debugging` → confirmed root cause → dispatch subagent fix
 - After the fix: `awm sensors run` + `verification-before-completion`
 
-**Si el mismo hallazgo aparece ≥2 veces:** invocar `harness-retro` antes de continuar.
+**If the same finding appears ≥2 times:** invoke `harness-retro` before continuing.
 
-**Si el usuario descarta un hallazgo:** anotar el motivo y continuar.
+**If the user discards a finding:** record the reason and continue.
 
 ### Step 6: Completion gate
 
 Proceed only when ALL:
 - [ ] Findings list empty (all resolved or discarded with reason)
-- [ ] `awm sensors run` limpio
-- [ ] `verification-before-completion` pasado para cada fix
+- [ ] `awm sensors run` clean
+- [ ] `verification-before-completion` passed for each fix
 
 ### Step 7: Mark QA complete
 
@@ -154,7 +154,7 @@ Add at the beginning of the plan (first line after the `#` header):
 <!-- awm-qa-complete: YYYY-MM-DD -->
 ```
 
-Reportar: "QA completo. N hallazgos encontrados y cerrados. Listo para `finishing-a-development-branch`."
+Report: "QA complete. N findings found and closed. Ready for `finishing-a-development-branch`."
 
 ## Iron Law
 
@@ -170,19 +170,19 @@ NO "QA COMPLETE" CLAIM WITHOUT:
 - "Just a quick fix, I don't need to run sensors" → RUN SENSORS
 - "The implementation looks fine" → EVIDENCE, not appearances
 - "This finding is minor, I'll skip it" → present to user, let them decide
-- Mezclar tratamiento Type B y C
+- Mixing Type B and C treatment
 - Skipping confirmation before the fix loop
-- Olvidar el marker `<!-- awm-qa-complete -->`
+- Forgetting the `<!-- awm-qa-complete -->` marker
 - Dispatching the deep-review with an inline prompt instead of the template → the `awm ledger add` instruction is lost
 - Presenting findings without verifying that the ledger grew (Step 4 gate)
 
-## Conexiones
+## Connections
 
-| Skill | Rol |
-|-------|-----|
-| `development-process` | Lo invoca como nueva fase |
-| `systematic-debugging` | Para hallazgos Type C |
-| `subagent-driven-development` | Ejecuta los fixes |
-| `verification-before-completion` | Gate por cada fix |
-| `harness-retro` | Si hallazgo es recurrente (≥2) |
+| Skill | Role |
+|-------|------|
+| `development-process` | Invokes this as a new phase |
+| `systematic-debugging` | For Type C findings |
+| `subagent-driven-development` | Executes the fixes |
+| `verification-before-completion` | Gate for each fix |
+| `harness-retro` | If a finding is recurring (≥2) |
 | `finishing-a-development-branch` | Next phase when QA is clean |
