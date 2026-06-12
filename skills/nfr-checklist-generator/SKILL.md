@@ -1,149 +1,149 @@
 ---
 name: nfr-checklist-generator
 version: "1.0.0"
-description: "Especialista en requisitos no funcionales. Usa esta skill cuando necesites identificar, priorizar y definir NFRs para un proyecto — observabilidad, seguridad, data privacy, compliance, performance, operación/soporte. Activa ante frases como: 'qué no funcionales necesito', 'checklist de NFRs', 'qué definir temprano', 'requisitos de seguridad', 'necesito definir observabilidad', 'qué compliance aplica'."
+description: "Specialist in non-functional requirements. Use this skill when you need to identify, prioritize, and define NFRs for a project — observability, security, data privacy, compliance, performance, operations/support. Activate on phrases like: 'what non-functionals do I need', 'NFR checklist', 'what to define early', 'security requirements', 'I need to define observability', 'what compliance applies'."
 ---
 
 # NFR Checklist Generator
 
-Especialista en requisitos no funcionales. Guía al usuario en la identificación, priorización y definición de NFRs, distinguiendo qué debe definirse temprano (para no rehacer) vs qué puede esperar.
+Specialist in non-functional requirements. Guides the user in identifying, prioritizing, and defining NFRs, distinguishing what must be defined early (to avoid rework) vs what can wait.
 
-**Principio core:** Un NFR bien definido temprano ahorra meses de retrabajo. Un NFR mal priorizado consume tiempo que el proyecto no tiene. El output es un checklist priorizado y accionable.
+**Core principle:** A well-defined NFR early saves months of rework. A poorly prioritized NFR consumes time the project does not have. The output is a prioritized, actionable checklist.
 
 ---
 
-## Paso 0: Detectar Modo de Operación
+## Step 0: Detect Operating Mode
 
-| Señal | Modo |
+| Signal | Mode |
 |-------|------|
-| Invocada directamente por el usuario o por un orquestador con ciclo completo | **Modo Completo** |
-| Invocada por otra skill que ya tiene contexto y pide expertise puntual | **Modo Contextual** |
+| Invoked directly by the user or by an orchestrator with a full cycle | **Full Mode** |
+| Invoked by another skill that already has context and requests targeted expertise | **Contextual Mode** |
 
-Si no queda claro, pregunta: *"¿Quieres que te guíe en una definición completa de NFRs desde cero, o necesitas que revise algo puntual?"*
-
----
-
-## Paso 0.1: Recopilar Contexto del Proyecto
-
-**¿El proyecto tiene repositorio?**
-
-- **Sí →**
-  1. Lee `AGENTS.md` (stack, tipo de proyecto, estructura)
-  2. Lee `README.md` (propósito)
-  3. Busca docs existentes de NFRs, SLAs, runbooks
-  4. Detecta qué ya está implementado (logging frameworks, monitoring, auth, rate limiting, health checks, etc.)
-  5. Pregunta: *"¿Hay requisitos regulatorios o de compliance que apliquen?"*
-
-- **No →** *"Describime: tipo de proyecto (B2B, B2C, interno, regulated), industria, usuarios esperados, criticidad operacional"*
-
-**En Modo Contextual:** Omitir este paso — usar el contexto ya establecido por el skill invocador.
+If unclear, ask: *"Do you want me to guide you through a complete NFR definition from scratch, or do you need me to review something specific?"*
 
 ---
 
-## Modo Completo — Ciclo Interactivo
+## Step 0.1: Gather Project Context
 
-### Fase 1: Clasificar proyecto
+**Does the project have a repository?**
 
-Preguntas guiadas (una a la vez):
-- ¿Qué tipo de proyecto es? (B2B, B2C, interno, plataforma, regulated)
-- ¿Qué industria? (retail, finanzas, salud, gobierno, etc.)
-- ¿Cuál es la criticidad operacional? (si se cae, ¿qué pasa?)
-- ¿Cuántos usuarios se esperan? ¿Hay picos de tráfico?
-- ¿Hay regulaciones que apliquen? (PCI-DSS, GDPR, SOX, HIPAA, etc.)
+- **Yes →**
+  1. Read `AGENTS.md` (stack, project type, structure)
+  2. Read `README.md` (purpose)
+  3. Look for existing NFR docs, SLAs, runbooks
+  4. Detect what is already implemented (logging frameworks, monitoring, auth, rate limiting, health checks, etc.)
+  5. Ask: *"Are there regulatory or compliance requirements that apply?"*
 
-**Output:** Perfil del proyecto claro.
+- **No →** *"Describe to me: project type (B2B, B2C, internal, regulated), industry, expected users, operational criticality"*
 
-### Fase 2: Categorías aplicables
+**In Contextual Mode:** Skip this step — use the context already established by the invoking skill.
 
-Según el perfil, presentar las categorías relevantes con su prioridad sugerida:
+---
 
-| Categoría | Qué cubre | Relevancia típica |
+## Full Mode — Interactive Cycle
+
+### Phase 1: Classify the project
+
+Guided questions (one at a time):
+- What type of project is this? (B2B, B2C, internal, platform, regulated)
+- What industry? (retail, finance, health, government, etc.)
+- What is the operational criticality? (if it goes down, what happens?)
+- How many users are expected? Are there traffic spikes?
+- Are there regulations that apply? (PCI-DSS, GDPR, SOX, HIPAA, etc.)
+
+**Output:** Clear project profile.
+
+### Phase 2: Applicable categories
+
+Based on the profile, present the relevant categories with their suggested priority:
+
+| Category | What it covers | Typical relevance |
 |-----------|-----------|-------------------|
-| **Observabilidad** | Logging, monitoring, alerting, tracing, dashboards | Siempre alta |
-| **Seguridad** | AuthN, AuthZ, encryption, secret management, vulnerability scanning | Siempre alta |
-| **Data Privacy** | PII handling, data retention, consent, right to deletion | Alta si B2C o regulated |
-| **Compliance** | Regulaciones específicas, auditoría, certificaciones | Alta si regulated |
-| **Performance** | Latencia, throughput, response time, capacidad | Alta si user-facing |
-| **Disponibilidad** | Uptime SLA, disaster recovery, failover, backup/restore | Alta si crítico |
-| **Escalabilidad** | Horizontal/vertical scaling, capacity planning | Media-alta según volumen |
-| **Operación/Soporte** | Deployment, rollback, incident response, runbooks, on-call | Siempre media-alta |
-| **Accesibilidad** | WCAG, screen readers, keyboard navigation | Alta si B2C web |
+| **Observability** | Logging, monitoring, alerting, tracing, dashboards | Always high |
+| **Security** | AuthN, AuthZ, encryption, secret management, vulnerability scanning | Always high |
+| **Data Privacy** | PII handling, data retention, consent, right to deletion | High if B2C or regulated |
+| **Compliance** | Specific regulations, auditing, certifications | High if regulated |
+| **Performance** | Latency, throughput, response time, capacity | High if user-facing |
+| **Availability** | Uptime SLA, disaster recovery, failover, backup/restore | High if critical |
+| **Scalability** | Horizontal/vertical scaling, capacity planning | Medium-high depending on volume |
+| **Operations/Support** | Deployment, rollback, incident response, runbooks, on-call | Always medium-high |
+| **Accessibility** | WCAG, screen readers, keyboard navigation | High if B2C web |
 
-- No incluir categorías que claramente no aplican al contexto.
-- El usuario puede agregar o quitar categorías.
+- Do not include categories that clearly do not apply to the context.
+- The user can add or remove categories.
 
-**Presentar y esperar aprobación.**
+**Present and wait for approval.**
 
-### Fase 3: Definir por categoría
+### Phase 3: Define per category
 
-Para cada categoría priorizada (una a la vez):
-- Proponer métricas/criterios concretos según el perfil del proyecto.
-- Indicar qué nivel de exigencia es razonable para el tipo de proyecto.
-- Señalar qué ya existe vs qué falta (si hay contexto de repo).
-- Ejemplos concretos, no definiciones abstractas.
+For each prioritized category (one at a time):
+- Propose concrete metrics/criteria based on the project profile.
+- Indicate what level of rigor is reasonable for the project type.
+- Flag what already exists vs what is missing (if there is repo context).
+- Concrete examples, not abstract definitions.
 
-Ejemplo para Observabilidad en un B2B:
-- ✅ Logging estructurado (JSON) en todos los servicios
-- ✅ Correlation ID propagado entre servicios
-- ✅ Health check endpoint en cada servicio
-- ✅ Dashboard de métricas de negocio (pedidos/hora, errores de pago)
-- ⬚ Alerting configurado para SLOs definidos
-- ⬚ Distributed tracing entre servicios
+Example for Observability in a B2B:
+- Structured logging (JSON) in all services
+- Correlation ID propagated across services
+- Health check endpoint on each service
+- Business metrics dashboard (orders/hour, payment errors)
+- Alerting configured for defined SLOs
+- Distributed tracing across services
 
-**Presentar NFRs por categoría y esperar aprobación antes de pasar a la siguiente.**
+**Present NFRs per category and wait for approval before moving to the next one.**
 
-### Fase 4: Priorizar timing
+### Phase 4: Prioritize timing
 
-Clasificar cada NFR definido en:
+Classify each defined NFR as:
 
-| Timing | Criterio | Ejemplo |
+| Timing | Criterion | Example |
 |--------|----------|---------|
-| **Definir ahora** | Si no se define temprano, hay retrabajo significativo o riesgo operacional | Logging estructurado (cambiar formato después requiere migrar todo), AuthN/AuthZ (agregarlo después es reescritura) |
-| **Puede esperar** | Se puede agregar después sin impacto arquitectónico | Dashboard avanzado, alerting fino, accessibility improvements |
+| **Define now** | If not defined early, there is significant rework or operational risk | Structured logging (changing the format later requires migrating everything), AuthN/AuthZ (adding it later is a rewrite) |
+| **Can wait** | Can be added later without architectural impact | Advanced dashboard, fine-grained alerting, accessibility improvements |
 
-Presentar la matriz completa con justificación de cada clasificación.
+Present the complete matrix with justification for each classification.
 
-**Presentar y esperar aprobación.**
+**Present and wait for approval.**
 
-### Fase 5: Generar artefacto de diseño
+### Phase 5: Generate design artifact
 
-Compilar en artefacto estructurado. Destino según contexto de invocación:
+Compile into a structured artifact. Destination based on invocation context:
 
-| Invocada desde | Artefacto | Quién ejecuta |
+| Invoked from | Artifact | Who executes |
 |---|---|---|
-| `brainstorming` | Resultado retornado a `brainstorming` para integrar en el diseño | `brainstorming` continúa su flujo (escribe design doc, luego llama a `writing-plans`) |
-| `docs-brainstorming` / `docs-system-orchestrator` | Plan de documentación | `docs-assistant` |
-| Standalone | Documento de NFRs priorizados con matriz de timing | `docs-assistant` |
+| `brainstorming` | Result returned to `brainstorming` to integrate into the design | `brainstorming` continues its flow (writes design doc, then calls `writing-plans`) |
+| `docs-brainstorming` / `docs-system-orchestrator` | Documentation plan | `docs-assistant` |
+| Standalone | Prioritized NFR document with timing matrix | `docs-assistant` |
 
 ---
 
-## Modo Contextual — Intervención Puntual
+## Contextual Mode — Targeted Intervention
 
-| Invocador pide | Qué hace |
+| Invoker asks | What it does |
 |---|---|
-| "Qué NFRs debería considerar para este proyecto?" | Fases 1-2 rápidas con contexto proporcionado |
-| "Qué NFRs no puedo dejar para después?" | Solo fase 4 con NFRs ya conocidos |
-| "Revisa si me falta algo en estos NFRs" | Gap analysis contra el perfil del proyecto |
-| "Qué nivel de observabilidad necesito?" | Solo una categoría de fase 3 |
+| "What NFRs should I consider for this project?" | Phases 1-2 quickly with provided context |
+| "What NFRs can I not leave for later?" | Phase 4 only with already known NFRs |
+| "Review whether I am missing anything in these NFRs" | Gap analysis against the project profile |
+| "What level of observability do I need?" | One category from phase 3 only |
 
-En modo contextual: no abrir ciclo completo, usar contexto del invocador, retornar resultado. Fase 5 no aplica — el invocador maneja la generación del artefacto.
+In contextual mode: do not open a full cycle, use the invoker's context, return result. Phase 5 does not apply — the invoker handles artifact generation.
 
 ---
 
-## Reglas Transversales
+## Cross-cutting Rules
 
-- **Concreto sobre abstracto.** "Logging estructurado JSON" es un NFR. "Tener buena observabilidad" no lo es.
-- **El timing es tan importante como el NFR.** No basta con listar — hay que decir cuándo.
-- **No inflar el checklist.** Solo NFRs que aplican al perfil del proyecto. Un proyecto interno sin datos sensibles no necesita GDPR.
-- **Una pregunta a la vez** en modo completo.
-- **Aprobación incremental** por fase.
+- **Concrete over abstract.** "Structured JSON logging" is an NFR. "Having good observability" is not.
+- **Timing is as important as the NFR.** Listing is not enough — you must say when.
+- **Do not inflate the checklist.** Only NFRs that apply to the project profile. An internal project without sensitive data does not need GDPR.
+- **One question at a time** in full mode.
+- **Incremental approval** per phase.
 
 ---
 
 ## <TERMINATION_PHASE>
 
-Cuando el modo de operación concluya, **DETENTE**.
+When the operating mode concludes, **STOP**.
 
-1. Reportar resultado (resumen de NFRs definidos y priorización temporal).
-2. Indicar siguiente paso según contexto de invocación.
-3. Esperar confirmación. No proceder automáticamente.
+1. Report the result (summary of defined NFRs and timing prioritization).
+2. Indicate the next step according to the invocation context.
+3. Wait for confirmation. Do not proceed automatically.

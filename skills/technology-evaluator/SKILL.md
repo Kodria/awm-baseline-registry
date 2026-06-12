@@ -1,149 +1,149 @@
 ---
 name: technology-evaluator
 version: "1.0.0"
-description: "Especialista en evaluación comparativa de tecnologías. Usa esta skill cuando necesites decidir entre opciones tecnológicas (frameworks, librerías, bases de datos, cloud services, herramientas) con criterios estructurados y scoring. Activa ante frases como: 'compara estas opciones', 'qué framework debería usar', 'evalúa estas alternativas', 'necesito elegir entre X e Y', 'qué base de datos conviene para este caso'."
+description: "Specialist in comparative technology evaluation. Use this skill when you need to decide between technology options (frameworks, libraries, databases, cloud services, tools) using structured criteria and scoring. Activate on phrases like: 'compare these options', 'what framework should I use', 'evaluate these alternatives', 'I need to choose between X and Y', 'what database fits this case'."
 ---
 
 # Technology Evaluator
 
-Especialista en evaluación comparativa de tecnologías. Guía al usuario en la selección de cualquier herramienta, framework, librería, base de datos, cloud service o componente tecnológico mediante un proceso estructurado de criterios, evaluación y scoring.
+Specialist in comparative technology evaluation. Guides the user in selecting any tool, framework, library, database, cloud service, or technology component through a structured process of criteria definition, evaluation, and scoring.
 
-**Principio core:** El input es declarativo (qué necesito, qué restricciones tengo), el output es un artefacto concreto (matriz de evaluación con recomendación). La decisión final siempre es del usuario.
+**Core principle:** The input is declarative (what I need, what constraints I have), the output is a concrete artifact (evaluation matrix with recommendation). The final decision always belongs to the user.
 
 ---
 
-## Paso 0: Detectar Modo de Operación
+## Step 0: Detect Operating Mode
 
-| Señal | Modo |
+| Signal | Mode |
 |-------|------|
-| Invocada directamente por el usuario o por un orquestador con ciclo completo | **Modo Completo** |
-| Invocada por otra skill (brainstorming, docs-brainstorming, discovery-assistant) que ya tiene contexto establecido y pide expertise puntual | **Modo Contextual** |
+| Invoked directly by the user or by an orchestrator with a full cycle | **Full Mode** |
+| Invoked by another skill (brainstorming, docs-brainstorming, discovery-assistant) that already has established context and requests targeted expertise | **Contextual Mode** |
 
-Si no queda claro, pregunta: *"¿Quieres que te guíe en una evaluación completa desde cero, o necesitas que evalúe algo puntual dentro del trabajo que ya estamos haciendo?"*
-
----
-
-## Paso 0.1: Recopilar Contexto del Proyecto
-
-Antes de preguntar al usuario:
-
-**¿El proyecto tiene repositorio?**
-
-- **Sí →**
-  1. Lee `AGENTS.md` (stack, convenciones, estructura)
-  2. Lee `README.md` (propósito, setup)
-  3. Identifica tecnologías ya en uso (package.json, go.mod, requirements.txt, pom.xml, Gemfile, etc.)
-  4. Detecta restricciones implícitas por stack actual
-  5. Pregunta: *"¿Hay estándares corporativos o restricciones adicionales que apliquen?"*
-
-- **No →** Toma exclusivamente lo que el usuario proporciona.
-
-**En Modo Contextual:** Omitir este paso — usar el contexto ya establecido por el skill invocador.
+If unclear, ask: *"Do you want me to guide you through a complete evaluation from scratch, or do you need me to evaluate something specific within the work we are already doing?"*
 
 ---
 
-## Modo Completo — Ciclo Interactivo
+## Step 0.1: Gather Project Context
 
-### Fase 1: Definir qué se evalúa
+Before asking the user:
 
-Preguntas guiadas (una a la vez):
-- ¿Qué tipo de decisión es? (framework, DB, UI library, cloud service, herramienta, etc.)
-- ¿Por qué surge esta necesidad? ¿Qué problema resuelve?
-- ¿Ya tienen algo en uso que quieren reemplazar? ¿Por qué?
+**Does the project have a repository?**
 
-**Output:** Alcance de la evaluación claro y compartido.
+- **Yes →**
+  1. Read `AGENTS.md` (stack, conventions, structure)
+  2. Read `README.md` (purpose, setup)
+  3. Identify technologies already in use (package.json, go.mod, requirements.txt, pom.xml, Gemfile, etc.)
+  4. Detect implicit constraints from the current stack
+  5. Ask: *"Are there corporate standards or additional constraints that apply?"*
 
-### Fase 2: Identificar candidatos
+- **No →** Take exclusively what the user provides.
 
-- Si el usuario trae su lista → validar que sean opciones viables dado el contexto.
-- Si el usuario pide recomendaciones → proponer opciones basadas en el contexto del proyecto.
-- Filtrar candidatos claramente no viables (incompatibilidad de licencia, proyecto abandonado, no soporta el runtime, etc.).
-- **Usar web search** para validar estado actual de cada candidato (último release, actividad del repo, licencia vigente).
-- Limitar a 2-5 candidatos finales.
+**In Contextual Mode:** Skip this step — use the context already established by the invoking skill.
 
-**Presentar al usuario y esperar aprobación antes de continuar.**
+---
 
-### Fase 3: Definir criterios de evaluación
+## Full Mode — Interactive Cycle
 
-Proponer criterios relevantes según el tipo de decisión y restricciones. Ejemplos por categoría:
+### Phase 1: Define what is being evaluated
 
-| Categoría | Criterios posibles |
+Guided questions (one at a time):
+- What type of decision is this? (framework, DB, UI library, cloud service, tool, etc.)
+- Why does this need arise? What problem does it solve?
+- Do you already have something in use that you want to replace? Why?
+
+**Output:** Clear and shared evaluation scope.
+
+### Phase 2: Identify candidates
+
+- If the user brings their list → validate that they are viable options given the context.
+- If the user asks for recommendations → propose options based on the project context.
+- Filter out clearly non-viable candidates (license incompatibility, abandoned project, does not support the runtime, etc.).
+- **Use web search** to validate the current state of each candidate (latest release, repo activity, current license).
+- Limit to 2-5 final candidates.
+
+**Present to the user and wait for approval before continuing.**
+
+### Phase 3: Define evaluation criteria
+
+Propose relevant criteria based on the type of decision and constraints. Examples by category:
+
+| Category | Possible criteria |
 |-----------|-------------------|
-| Técnicos | Performance, bundle size, type safety, API design, extensibilidad |
-| Ecosistema | Comunidad, documentación, plugins/integraciones, adopción en la industria |
-| Operacionales | Learning curve, debugging experience, tooling, migration path |
-| Estratégicos | Licencia, mantenimiento activo, backing corporativo, roadmap |
-| Compatibilidad | Integración con stack actual, soporte de runtime, requisitos de infra |
+| Technical | Performance, bundle size, type safety, API design, extensibility |
+| Ecosystem | Community, documentation, plugins/integrations, industry adoption |
+| Operational | Learning curve, debugging experience, tooling, migration path |
+| Strategic | License, active maintenance, corporate backing, roadmap |
+| Compatibility | Integration with current stack, runtime support, infra requirements |
 
-- Pedir al usuario que pondere por importancia (alta/media/baja o peso numérico).
-- No incluir criterios que no aplican al contexto.
+- Ask the user to weight by importance (high/medium/low or numeric weight).
+- Do not include criteria that do not apply to the context.
 
-**Presentar criterios ponderados y esperar aprobación.**
+**Present weighted criteria and wait for approval.**
 
-### Fase 4: Evaluación comparativa
+### Phase 4: Comparative evaluation
 
-Para cada candidato contra cada criterio:
-- Evaluar con datos concretos, no opiniones vagas.
-- **Usar web search** para validar datos que puedan estar desactualizados (benchmarks recientes, pricing actual, estado de mantenimiento, breaking changes).
-- Ser honesto cuando no hay datos claros para un criterio — señalar que requiere PoC o benchmark propio.
-- Presentar en formato matriz.
+For each candidate against each criterion:
+- Evaluate with concrete data, not vague opinions.
+- **Use web search** to validate data that may be outdated (recent benchmarks, current pricing, maintenance status, breaking changes).
+- Be honest when there is no clear data for a criterion — flag that it requires a PoC or own benchmark.
+- Present in matrix format.
 
-**Presentar matriz de evaluación y esperar aprobación.**
+**Present evaluation matrix and wait for approval.**
 
-### Fase 5: Recomendación
+### Phase 5: Recommendation
 
-- Presentar recomendación con justificación clara.
-- Señalar riesgos de la opción recomendada.
-- Indicar en qué escenarios otra opción sería mejor.
-- Si la evaluación es muy cerrada, decirlo — no forzar un ganador artificial.
+- Present recommendation with clear justification.
+- Flag risks of the recommended option.
+- Indicate in which scenarios another option would be better.
+- If the evaluation is very close, say so — do not force an artificial winner.
 
-**Presentar recomendación y esperar aprobación.**
+**Present recommendation and wait for approval.**
 
-### Fase 6: Generar artefacto de diseño
+### Phase 6: Generate design artifact
 
-Compilar todas las decisiones en un artefacto estructurado. El destino depende del contexto de invocación:
+Compile all decisions into a structured artifact. The destination depends on the invocation context:
 
-| Invocada desde | Artefacto | Quién ejecuta |
+| Invoked from | Artifact | Who executes |
 |---|---|---|
-| `brainstorming` | Resultado de evaluación retornado a `brainstorming` para integrar en el diseño | `brainstorming` continúa su flujo (escribe design doc, luego llama a `writing-plans`) |
-| `docs-brainstorming` / `docs-system-orchestrator` | Plan de documentación | `docs-assistant` produce el documento con templates |
-| Standalone | Plan de documentación | `docs-assistant` |
+| `brainstorming` | Evaluation result returned to `brainstorming` to integrate into the design | `brainstorming` continues its flow (writes design doc, then calls `writing-plans`) |
+| `docs-brainstorming` / `docs-system-orchestrator` | Documentation plan | `docs-assistant` produces the document with templates |
+| Standalone | Documentation plan | `docs-assistant` |
 
 ---
 
-## Modo Contextual — Intervención Puntual
+## Contextual Mode — Targeted Intervention
 
-La skill recibe contexto del invocador y ejecuta solo la capacidad solicitada:
+The skill receives context from the invoker and executes only the requested capability:
 
-| Invocador pide | Qué hace |
+| Invoker asks | What it does |
 |---|---|
-| "Compara estas 3 opciones para X" | Fases 3-5 con candidatos ya definidos |
-| "Qué criterios debería usar para elegir un X?" | Solo fase 3 |
-| "Qué opciones hay para resolver X?" | Solo fase 2 — listar candidatos |
-| "Valida si esta elección tiene sentido" | Review de decisión existente + señalar riesgos |
+| "Compare these 3 options for X" | Phases 3-5 with candidates already defined |
+| "What criteria should I use to choose an X?" | Phase 3 only |
+| "What options are there to solve X?" | Phase 2 only — list candidates |
+| "Validate whether this choice makes sense" | Review of existing decision + flag risks |
 
-En modo contextual:
-- No abrir ciclo interactivo completo.
-- Usar el contexto ya establecido por el skill invocador.
-- Retornar resultado al invocador para que lo integre en su flujo.
+In contextual mode:
+- Do not open a full interactive cycle.
+- Use the context already established by the invoking skill.
+- Return result to the invoker so it can integrate it into its flow.
 
 ---
 
-## Reglas Transversales
+## Cross-cutting Rules
 
-- **No fuerces un ganador.** Si las opciones son equivalentes, dilo.
-- **Datos sobre opiniones.** Respalda cada evaluación con datos concretos o señala que es una valoración subjetiva.
-- **Web search obligatorio** en fase 2 y 4 para validar estado actual de los candidatos.
-- **Una pregunta a la vez** en modo completo.
-- **Aprobación incremental** — presentar resultados por fase y esperar confirmación.
+- **Do not force a winner.** If the options are equivalent, say so.
+- **Data over opinions.** Back each evaluation with concrete data or flag it as a subjective assessment.
+- **Web search required** in phases 2 and 4 to validate the current state of candidates.
+- **One question at a time** in full mode.
+- **Incremental approval** — present results per phase and wait for confirmation.
 
 ---
 
 ## <TERMINATION_PHASE>
 
-Cuando el modo de operación concluya, **DETENTE**.
+When the operating mode concludes, **STOP**.
 
-Tu único paso final es:
-1. Reportar el resultado al usuario (resumen de evaluación y recomendación).
-2. Indicar el siguiente paso según el contexto de invocación.
-3. Esperar confirmación. No proceder automáticamente.
+Your only final step is:
+1. Report the result to the user (summary of evaluation and recommendation).
+2. Indicate the next step according to the invocation context.
+3. Wait for confirmation. Do not proceed automatically.

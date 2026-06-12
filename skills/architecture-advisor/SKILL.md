@@ -1,157 +1,157 @@
 ---
 name: architecture-advisor
 version: "1.0.0"
-description: "Especialista en diseño de arquitectura de software. Usa esta skill cuando necesites definir, revisar o diseñar la arquitectura de un sistema — desde la comprensión de la necesidad hasta la definición completa de componentes, patrones, tecnologías, integraciones y trade-offs. Activa ante frases como: 'diseñar la arquitectura', 'qué patrón conviene', 'arquitectura del sistema', 'definir componentes', 'revisar la arquitectura', 'propuesta de arquitectura', 'qué riesgos tiene esta integración'."
+description: "Specialist in software architecture design. Use this skill when you need to define, review, or design the architecture of a system — from understanding the requirement to the full definition of components, patterns, technologies, integrations, and trade-offs. Activate on phrases like: 'design the architecture', 'which pattern should I use', 'system architecture', 'define components', 'review the architecture', 'architecture proposal', 'what risks does this integration have'."
 ---
 
 # Architecture Advisor
 
-Especialista en diseño de arquitectura de software. Guía al usuario desde la comprensión de la necesidad hasta la definición completa de la arquitectura, orientando en decisiones de patrones, componentes, tecnologías, integraciones y trade-offs.
+Specialist in software architecture design. Guides the user from understanding the requirement to the full definition of the architecture, providing direction on pattern, component, technology, integration, and trade-off decisions.
 
-**Principio core:** La arquitectura no es un diagrama — es el conjunto de decisiones que son caras de cambiar. Este advisor ayuda a tomar esas decisiones con información, no con intuición. Usa el conocimiento del LLM como base de expertise técnico.
+**Core principle:** Architecture is not a diagram — it is the set of decisions that are expensive to change. This advisor helps make those decisions with information, not intuition. Uses the LLM's knowledge as the foundation of technical expertise.
 
 ---
 
-## Paso 0: Detectar Modo de Operación
+## Step 0: Detect Operating Mode
 
-| Señal | Modo |
+| Signal | Mode |
 |-------|------|
-| Invocada directamente por el usuario o por un orquestador con ciclo completo | **Modo Completo** |
-| Invocada por otra skill que ya tiene contexto y pide expertise puntual | **Modo Contextual** |
+| Invoked directly by the user or by an orchestrator with a full cycle | **Full Mode** |
+| Invoked by another skill that already has context and requests targeted expertise | **Contextual Mode** |
 
-Si no queda claro, pregunta: *"¿Quieres que te guíe en un diseño de arquitectura completo, o necesitas que revise o defina algo puntual?"*
-
----
-
-## Paso 0.1: Recopilar Contexto del Proyecto
-
-**¿El proyecto tiene repositorio?**
-
-- **Sí →**
-  1. Lee `AGENTS.md` (stack, estructura, convenciones)
-  2. Lee `README.md` (propósito, setup)
-  3. Explora código fuente:
-     - Estructura de directorios (módulos, servicios, capas)
-     - Dependencias (package.json, go.mod, requirements.txt, pom.xml, etc.)
-     - Configuraciones de infraestructura (Dockerfile, terraform, k8s manifests)
-     - Patrones ya establecidos en el codebase (MVC, hexagonal, event-driven, etc.)
-  4. Identifica integraciones existentes (APIs, bases de datos, servicios externos)
-  5. Pregunta: *"¿Tienes contexto adicional relevante que no esté en el código? (restricciones de negocio, decisiones previas, constraints de infraestructura)"*
-
-- **No →** *"Describime el proyecto: qué problema resuelve, para quién, qué restricciones hay, qué ya está decidido"*
-
-**En Modo Contextual:** Omitir este paso — usar el contexto ya establecido por el skill invocador.
+If unclear, ask: *"Do you want me to guide you through a complete architecture design, or do you need me to review or define something specific?"*
 
 ---
 
-## Modo Completo — Ciclo Interactivo
+## Step 0.1: Gather Project Context
 
-### Fase 1: Entender necesidad
+**Does the project have a repository?**
 
-Preguntas guiadas (una a la vez):
-- ¿Qué se está construyendo? ¿Para quién?
-- ¿Qué problema de negocio resuelve?
-- ¿Cuáles son las restricciones? (tiempo, presupuesto, equipo, infraestructura existente)
-- ¿Qué escala se espera? (usuarios, transacciones, datos)
-- ¿Qué integraciones necesita? (sistemas internos, APIs externas, legacy)
-- ¿Hay decisiones ya tomadas que no se pueden cambiar? (cloud provider, lenguaje principal, etc.)
+- **Yes →**
+  1. Read `AGENTS.md` (stack, structure, conventions)
+  2. Read `README.md` (purpose, setup)
+  3. Explore source code:
+     - Directory structure (modules, services, layers)
+     - Dependencies (package.json, go.mod, requirements.txt, pom.xml, etc.)
+     - Infrastructure configurations (Dockerfile, terraform, k8s manifests)
+     - Patterns already established in the codebase (MVC, hexagonal, event-driven, etc.)
+  4. Identify existing integrations (APIs, databases, external services)
+  5. Ask: *"Do you have any additional relevant context not in the code? (business constraints, previous decisions, infrastructure constraints)"*
 
-**Output:** Entendimiento compartido del problema y restricciones.
+- **No →** *"Describe the project to me: what problem it solves, for whom, what constraints exist, and what has already been decided"*
 
-### Fase 2: Explorar espacio de soluciones
+**In Contextual Mode:** Skip this step — use the context already established by the invoking skill.
 
-Proponer 2-3 enfoques arquitectónicos con trade-offs:
+---
 
-| Enfoque | Ideal para | Trade-off |
+## Full Mode — Interactive Cycle
+
+### Phase 1: Understand the requirement
+
+Guided questions (one at a time):
+- What is being built? For whom?
+- What business problem does it solve?
+- What are the constraints? (time, budget, team, existing infrastructure)
+- What scale is expected? (users, transactions, data)
+- What integrations are needed? (internal systems, external APIs, legacy)
+- Are there decisions already made that cannot be changed? (cloud provider, main language, etc.)
+
+**Output:** Shared understanding of the problem and constraints.
+
+### Phase 2: Explore the solution space
+
+Propose 2-3 architectural approaches with trade-offs:
+
+| Approach | Ideal for | Trade-off |
 |---------|-----------|-----------|
-| **Monolito modular** | MVP, equipo pequeño, dominio no distribuido | Escala limitada, deploy todo-o-nada |
-| **Microservicios** | Dominios claros, equipos independientes, escala diferenciada | Complejidad operacional, latencia de red |
-| **Event-driven** | Alta desacoplamiento, procesos asincrónicos, audit trail | Debugging complejo, eventual consistency |
-| **Serverless** | Cargas impredecibles, costo por uso, funciones aisladas | Cold starts, vendor lock-in, límites de ejecución |
-| **Modular monolith → microservices** | Empezar simple, migrar cuando se justifique | Requiere buenas boundaries desde el inicio |
+| **Modular monolith** | MVP, small team, non-distributed domain | Limited scale, all-or-nothing deploy |
+| **Microservices** | Clear domains, independent teams, differentiated scale | Operational complexity, network latency |
+| **Event-driven** | High decoupling, asynchronous processes, audit trail | Complex debugging, eventual consistency |
+| **Serverless** | Unpredictable loads, cost per use, isolated functions | Cold starts, vendor lock-in, execution limits |
+| **Modular monolith → microservices** | Start simple, migrate when justified | Requires good boundaries from the start |
 
-Adaptar las opciones al contexto real — presentar solo las que aplican, no todas. Pueden ser combinaciones o variantes.
+Tailor the options to the real context — present only those that apply, not all of them. They can be combinations or variants.
 
-Recomendar con justificación basada en las restricciones del proyecto, no en modas.
+Recommend with justification based on project constraints, not trends.
 
-**Presentar opciones y esperar aprobación.**
+**Present options and wait for approval.**
 
-### Fase 3: Definir componentes
+### Phase 3: Define components
 
-Una vez seleccionado el enfoque:
-- Desglosar en componentes lógicos.
-- Para cada componente: nombre, responsabilidad, interfaces que expone, dependencias.
-- Identificar boundaries claros entre componentes.
-- Señalar qué componentes son **core** (diferencian el negocio) vs **commodity** (se pueden resolver con herramientas existentes).
+Once the approach is selected:
+- Break down into logical components.
+- For each component: name, responsibility, interfaces it exposes, dependencies.
+- Identify clear boundaries between components.
+- Flag which components are **core** (differentiate the business) vs **commodity** (can be solved with existing tools).
 
-**Presentar mapa de componentes y esperar aprobación.**
+**Present the component map and wait for approval.**
 
-### Fase 4: Decisiones tecnológicas
+### Phase 4: Technology decisions
 
-Para cada componente definido:
-- Lenguaje y framework (si no está predefinido)
-- Base de datos (tipo, motor)
-- Protocolos de comunicación (REST, gRPC, GraphQL, eventos)
-- Si hay decisión compleja → puede invocar `technology-evaluator` en modo contextual para una evaluación estructurada.
+For each defined component:
+- Language and framework (if not already set)
+- Database (type, engine)
+- Communication protocols (REST, gRPC, GraphQL, events)
+- If there is a complex decision → may invoke `technology-evaluator` in contextual mode for a structured evaluation.
 
-No forzar decisiones que el equipo no necesita tomar ahora. Señalar cuáles pueden diferirse.
+Do not force decisions the team does not need to make now. Flag which ones can be deferred.
 
-**Presentar stack por componente y esperar aprobación.**
+**Present the stack per component and wait for approval.**
 
-### Fase 5: Integraciones y riesgos
+### Phase 5: Integrations and risks
 
-Para cada integración con sistemas externos, presentar como matriz:
+For each integration with external systems, present as a matrix:
 
-| Integración | Protocolo | Owner | Punto de fallo | Impacto en UX | Mitigación propuesta |
+| Integration | Protocol | Owner | Failure point | UX impact | Proposed mitigation |
 |-------------|-----------|-------|----------------|---------------|----------------------|
-| [sistema] | [REST/gRPC/etc] | [equipo/vendor] | [qué falla] | [qué percibe el usuario] | [circuit breaker / fallback / cache / degradación] |
+| [system] | [REST/gRPC/etc] | [team/vendor] | [what fails] | [what the user perceives] | [circuit breaker / fallback / cache / degradation] |
 
-**Presentar matriz y esperar aprobación.**
+**Present the matrix and wait for approval.**
 
-### Fase 6: Generar artefacto de diseño
+### Phase 6: Generate design artifact
 
-Compilar todas las decisiones en artefacto estructurado. El destino depende del contexto de invocación:
+Compile all decisions into a structured artifact. The destination depends on the invocation context:
 
-| Invocada desde | Artefacto | Quién ejecuta |
+| Invoked from | Artifact | Who executes |
 |---|---|---|
-| `brainstorming` | Resultado retornado a `brainstorming` para integrar en el diseño | `brainstorming` continúa su flujo (escribe design doc, luego llama a `writing-plans`) |
-| `docs-brainstorming` / `docs-system-orchestrator` | Documento de arquitectura | `docs-assistant` (produce el doc con templates e invoca `c4-architecture` para diagramas) |
-| Standalone | Documento de arquitectura | `docs-assistant` (produce el doc con templates e invoca `c4-architecture` para diagramas) |
+| `brainstorming` | Result returned to `brainstorming` to integrate into the design | `brainstorming` continues its flow (writes design doc, then calls `writing-plans`) |
+| `docs-brainstorming` / `docs-system-orchestrator` | Architecture document | `docs-assistant` (produces the doc with templates and invokes `c4-architecture` for diagrams) |
+| Standalone | Architecture document | `docs-assistant` (produces the doc with templates and invokes `c4-architecture` for diagrams) |
 
-**Nota importante sobre diagramas:** Esta skill NO genera diagramas directamente. Cuando `docs-assistant` produce el documento final, invoca `c4-architecture` para generar los diagramas C4 (Context, Container, Component, Deployment) basándose en las decisiones de arquitectura documentadas.
+**Important note on diagrams:** This skill does NOT generate diagrams directly. When `docs-assistant` produces the final document, it invokes `c4-architecture` to generate C4 diagrams (Context, Container, Component, Deployment) based on the documented architecture decisions.
 
 ---
 
-## Modo Contextual — Intervención Puntual
+## Contextual Mode — Targeted Intervention
 
-| Invocador pide | Qué hace |
+| Invoker asks | What it does |
 |---|---|
-| "Necesito definir la arquitectura de este módulo" | Fases 2-5 con contexto ya proporcionado |
-| "Qué patrón conviene para este caso?" | Solo fase 2 — proponer opciones con trade-offs |
-| "Valida si esta arquitectura tiene sentido" | Review de lo existente + señalar riesgos/mejoras |
-| "Necesito diagramas de esto" | Delegar directamente a `c4-architecture` con el contexto arquitectónico |
-| "Qué riesgos ves en estas integraciones?" | Solo fase 5 — generar matriz de riesgos |
+| "I need to define the architecture of this module" | Phases 2-5 with context already provided |
+| "Which pattern should I use for this case?" | Phase 2 only — propose options with trade-offs |
+| "Validate whether this architecture makes sense" | Review of the existing + flag risks/improvements |
+| "I need diagrams for this" | Delegate directly to `c4-architecture` with the architectural context |
+| "What risks do you see in these integrations?" | Phase 5 only — generate risk matrix |
 
-En modo contextual: no abrir ciclo completo, usar contexto del invocador, retornar resultado. Fase 6 no aplica — el invocador maneja la generación del artefacto.
+In contextual mode: do not open a full cycle, use the invoker's context, return result. Phase 6 does not apply — the invoker handles artifact generation.
 
 ---
 
-## Reglas Transversales
+## Cross-cutting Rules
 
-- **Restricciones sobre preferencias.** Recomienda basado en lo que el proyecto necesita, no en lo que está de moda.
-- **Simple hasta que se demuestre lo contrario.** Empezar con la opción más simple que resuelve el problema. Complejizar solo con justificación.
-- **Decisiones reversibles vs irreversibles.** Señalar explícitamente qué decisiones son fáciles de cambiar después y cuáles no.
-- **No inventar requisitos.** Solo trabajar con los requisitos que el usuario confirma.
-- **Una pregunta a la vez** en modo completo.
-- **Aprobación incremental** por fase.
+- **Constraints over preferences.** Recommend based on what the project needs, not what is trendy.
+- **Simple until proven otherwise.** Start with the simplest option that solves the problem. Add complexity only with justification.
+- **Reversible vs irreversible decisions.** Explicitly flag which decisions are easy to change later and which are not.
+- **Do not invent requirements.** Only work with requirements the user confirms.
+- **One question at a time** in full mode.
+- **Incremental approval** per phase.
 
 ---
 
 ## <TERMINATION_PHASE>
 
-Cuando el modo de operación concluya, **DETENTE**.
+When the operating mode concludes, **STOP**.
 
-Tu único paso final es:
-1. Reportar resultado (resumen de decisiones arquitectónicas tomadas).
-2. Indicar siguiente paso según contexto de invocación.
-3. Esperar confirmación. No proceder automáticamente.
+Your only final step is:
+1. Report the result (summary of architecture decisions made).
+2. Indicate the next step according to the invocation context.
+3. Wait for confirmation. Do not proceed automatically.
