@@ -1,3 +1,5 @@
+<!-- awm-plan-complete: 2026-06-25 — executed inline; brainstorming/writing-plans/post-implementation-qa bumped to 1.1.0 -->
+
 # Capa de requisitos (EARS + IDs + trazabilidad) + QA multi-lente — Plan de Implementación
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use subagent-driven-development o executing-plans para implementar tarea por tarea. Los pasos usan checkbox (`- [ ]`).
@@ -59,53 +61,53 @@
 **Files:**
 - Modify: `skills/brainstorming/SKILL.md`
 
-- [ ] **Step 1: Añadir el template de la sección de requisitos** en "After the Design / Documentation", antes de la escritura del design doc. Incluir las 5 plantillas EARS + la forma compleja, con énfasis en IF/THEN para casos borde (R1, R2). Numeración con IDs `R1`, `R1.1` (R4).
-- [ ] **Step 2: Añadir el guardrail tier** (R8): EARS+IDs obligatorios para features multi-archivo/riesgosas, salteables para diffs triviales; requisitos tersos (bullets), no prosa. Reusar el lenguaje de "Anti-Pattern: Too Simple" ya presente.
-- [ ] **Step 3: Actualizar el Checklist** (paso 7 "Write design doc") para nombrar la sección `## Requisitos` como parte del doc.
-- [ ] **Step 4: Bump version** `1.0.0` → `1.1.0` en el frontmatter (R10).
-- [ ] **Step 5: Verificar** — `grep -c "THE .* SHALL" skills/brainstorming/SKILL.md` ≥ 5 (las plantillas presentes); `grep '^version' SKILL.md` muestra `1.1.0`.
-- [ ] **Step 6: Commit** — `docs(brainstorming): add EARS requirements section + tier guardrail`
+- [x] **Step 1: Añadir el template de la sección de requisitos** en "After the Design / Documentation", antes de la escritura del design doc. Incluir las 5 plantillas EARS + la forma compleja, con énfasis en IF/THEN para casos borde (R1, R2). Numeración con IDs `R1`, `R1.1` (R4).
+- [x] **Step 2: Añadir el guardrail tier** (R8): EARS+IDs obligatorios para features multi-archivo/riesgosas, salteables para diffs triviales; requisitos tersos (bullets), no prosa. Reusar el lenguaje de "Anti-Pattern: Too Simple" ya presente.
+- [x] **Step 3: Actualizar el Checklist** (paso 7 "Write design doc") para nombrar la sección `## Requisitos` como parte del doc.
+- [x] **Step 4: Bump version** `1.0.0` → `1.1.0` en el frontmatter (R10).
+- [x] **Step 5: Verificar** — `grep -c "THE .* SHALL" skills/brainstorming/SKILL.md` ≥ 5 (las plantillas presentes); `grep '^version' SKILL.md` muestra `1.1.0`.
+- [x] **Step 6: Commit** — `docs(brainstorming): add EARS requirements section + tier guardrail`
 
 ## Task 2: `brainstorming` — clarify gate + spec self-review
 
 **Files:**
 - Modify: `skills/brainstorming/SKILL.md`
 
-- [ ] **Step 1: Clarify gate** (R3) — en "Ask clarifying questions" / antes de "Present design", añadir gate explícito: no avanzar a diseño mientras queden ambigüedades abiertas en los requisitos. Reutiliza el "one question at a time" ya existente.
-- [ ] **Step 2: Extender Spec Self-Review** — añadir ítem: "cada requisito está en EARS y es 1:1 testeable; cada uno tiene ID estable" (R1, R4).
-- [ ] **Step 3: Verificar** — grep del nuevo ítem de self-review y del clarify gate.
-- [ ] **Step 4: Commit** — `docs(brainstorming): add clarify gate and EARS check to spec self-review`
+- [x] **Step 1: Clarify gate** (R3) — en "Ask clarifying questions" / antes de "Present design", añadir gate explícito: no avanzar a diseño mientras queden ambigüedades abiertas en los requisitos. Reutiliza el "one question at a time" ya existente.
+- [x] **Step 2: Extender Spec Self-Review** — añadir ítem: "cada requisito está en EARS y es 1:1 testeable; cada uno tiene ID estable" (R1, R4).
+- [x] **Step 3: Verificar** — grep del nuevo ítem de self-review y del clarify gate.
+- [x] **Step 4: Commit** — `docs(brainstorming): add clarify gate and EARS check to spec self-review`
 
 ## Task 3: `brainstorming` — endurecer spec-document-reviewer-prompt
 
 **Files:**
 - Modify: `skills/brainstorming/spec-document-reviewer-prompt.md`
 
-- [ ] **Step 1: Leer** el prompt actual del revisor para encajar el estilo.
-- [ ] **Step 2: Añadir criterios** al revisor: (a) ¿toda requisito en EARS?, (b) ¿IDs estables presentes?, (c) ¿algún requisito ambiguo o no testeable? Exigir evidencia concreta (cita el requisito) por hallazgo (R1–R4).
-- [ ] **Step 3: Verificar + Commit** — `docs(brainstorming): spec reviewer checks EARS, IDs, testability`
+- [x] **Step 1: Leer** el prompt actual del revisor para encajar el estilo.
+- [x] **Step 2: Añadir criterios** al revisor: (a) ¿toda requisito en EARS?, (b) ¿IDs estables presentes?, (c) ¿algún requisito ambiguo o no testeable? Exigir evidencia concreta (cita el requisito) por hallazgo (R1–R4).
+- [x] **Step 3: Verificar + Commit** — `docs(brainstorming): spec reviewer checks EARS, IDs, testability`
 
 ## Task 4: `writing-plans` — tags de ID + matriz de trazabilidad + analyze
 
 **Files:**
 - Modify: `skills/writing-plans/SKILL.md`
 
-- [ ] **Step 1: Tag de requisitos en Task Structure** — añadir línea `_Requisitos: R1.1, R2.3_` al bloque `### Task N` y referenciar IDs en los tests (R5).
-- [ ] **Step 2: Self-Review §1 → matriz de trazabilidad** — reemplazar "Spec coverage" por una matriz requisito→tarea→test; reportar forward gaps (requisito sin tarea/test) y backward gaps (tarea/test sin requisito = scope creep / código huérfano) (R6).
-- [ ] **Step 3: Check analyze pre-handoff** — añadir gate antes del Execution Handoff: todo ID tiene ≥1 tarea y ≥1 test; ninguna tarea/test carece de ID (R6).
-- [ ] **Step 4: Tier** (R8) — nota de que la matriz aplica a planes multi-tarea; diffs triviales la saltean.
-- [ ] **Step 5: Bump version** `1.0.0` → `1.1.0` (R10).
-- [ ] **Step 6: Verificar** — grep `_Requisitos:` y de la matriz; version `1.1.0`.
-- [ ] **Step 7: Commit** — `docs(writing-plans): add requirement-ID traceability matrix and analyze gate`
+- [x] **Step 1: Tag de requisitos en Task Structure** — añadir línea `_Requisitos: R1.1, R2.3_` al bloque `### Task N` y referenciar IDs en los tests (R5).
+- [x] **Step 2: Self-Review §1 → matriz de trazabilidad** — reemplazar "Spec coverage" por una matriz requisito→tarea→test; reportar forward gaps (requisito sin tarea/test) y backward gaps (tarea/test sin requisito = scope creep / código huérfano) (R6).
+- [x] **Step 3: Check analyze pre-handoff** — añadir gate antes del Execution Handoff: todo ID tiene ≥1 tarea y ≥1 test; ninguna tarea/test carece de ID (R6).
+- [x] **Step 4: Tier** (R8) — nota de que la matriz aplica a planes multi-tarea; diffs triviales la saltean.
+- [x] **Step 5: Bump version** `1.0.0` → `1.1.0` (R10).
+- [x] **Step 6: Verificar** — grep `_Requisitos:` y de la matriz; version `1.1.0`.
+- [x] **Step 7: Commit** — `docs(writing-plans): add requirement-ID traceability matrix and analyze gate`
 
 ## Task 5: `writing-plans` — endurecer plan-document-reviewer-prompt
 
 **Files:**
 - Modify: `skills/writing-plans/plan-document-reviewer-prompt.md`
 
-- [ ] **Step 1: Leer** el prompt actual.
-- [ ] **Step 2: Añadir criterios** — el revisor verifica que cada Task tagea IDs, que la matriz cubre todos los requisitos, y flaggea huérfanos (R5, R6).
-- [ ] **Step 3: Verificar + Commit** — `docs(writing-plans): plan reviewer checks traceability and orphans`
+- [x] **Step 1: Leer** el prompt actual.
+- [x] **Step 2: Añadir criterios** — el revisor verifica que cada Task tagea IDs, que la matriz cubre todos los requisitos, y flaggea huérfanos (R5, R6).
+- [x] **Step 3: Verificar + Commit** — `docs(writing-plans): plan reviewer checks traceability and orphans`
 
 ## Task 6: `post-implementation-qa` — refundación dos pistas (Cambios 3 + 4 + 2, edición única)
 
@@ -115,26 +117,26 @@
 - Modify: `skills/post-implementation-qa/SKILL.md`
 - Modify: `skills/post-implementation-qa/deep-review-prompt.md`
 
-- [ ] **Step 1: SKILL.md — refundar el modelo de hallazgos en dos pistas** (R11, R12):
+- [x] **Step 1: SKILL.md — refundar el modelo de hallazgos en dos pistas** (R11, R12):
   - Reemplazar la tabla "Finding Types (B / C)" por **Pista A — Fidelidad** (ex-Type B, anclada al plan) y **Pista B — Calidad** (panel de lentes plan-agnósticas). **Eliminar la clasificación Type C** (R12: la skill no la conserva); su contenido se redistribuye en las lentes.
   - Convertir la nota al pie "Security lens (scope ≠ exemption)" en la **lente de robustez/seguridad de primera clase** de la Pista B (R13).
-- [ ] **Step 2: SKILL.md — Pista A dirigida por IDs** (R7): el deep-review de fidelidad usa los IDs de requisito del spec como checklist de completitud; cada ID implementado y testeado; flaggea forward gaps (ID sin código/test) y backward gaps (código sin ID = scope creep).
-- [ ] **Step 3: SKILL.md — Pista B multi-lente** (R12, R15): el proceso despacha **un subagente por lente** (robustez/seguridad, corrección lógica, tests) en contexto aislado; **dedup** de hallazgos solapados (mismo `archivo:línea`) antes de presentar. Actualizar el diagrama `dot` y los pasos "Dispatch" para reflejar el fan-out por lente.
-- [ ] **Step 4: SKILL.md — tier + gate determinista** (R15): diff trivial → solo lente de robustez (el piso nunca se saltea) + Pista A si hay IDs; multi-archivo/crítico → panel completo. Reafirmar que ninguna lente declara "limpio" con `awm sensors run` rojo (ya existe el Iron Law; extenderlo a las lentes).
-- [ ] **Step 5: deep-review-prompt.md — reestructura en plantilla de dos pistas** (R7, R11–R14):
+- [x] **Step 2: SKILL.md — Pista A dirigida por IDs** (R7): el deep-review de fidelidad usa los IDs de requisito del spec como checklist de completitud; cada ID implementado y testeado; flaggea forward gaps (ID sin código/test) y backward gaps (código sin ID = scope creep).
+- [x] **Step 3: SKILL.md — Pista B multi-lente** (R12, R15): el proceso despacha **un subagente por lente** (robustez/seguridad, corrección lógica, tests) en contexto aislado; **dedup** de hallazgos solapados (mismo `archivo:línea`) antes de presentar. Actualizar el diagrama `dot` y los pasos "Dispatch" para reflejar el fan-out por lente.
+- [x] **Step 4: SKILL.md — tier + gate determinista** (R15): diff trivial → solo lente de robustez (el piso nunca se saltea) + Pista A si hay IDs; multi-archivo/crítico → panel completo. Reafirmar que ninguna lente declara "limpio" con `awm sensors run` rojo (ya existe el Iron Law; extenderlo a las lentes).
+- [x] **Step 5: deep-review-prompt.md — reestructura en plantilla de dos pistas** (R7, R11–R14):
   - Sección **Pista A**: "verificá que cada ID de requisito esté implementado y tenga test; reportá IDs faltantes y código sin ID. Reportá huecos, no estilo."
   - Sección **Pista B**: una sub-plantilla por lente (robustez/seguridad, corrección lógica, tests), cada una con su criterio plan-agnóstico explícito.
   - **Cabecera anti-sesgo común a todas las lentes** (R14): "El contexto fresco atenúa pero no neutraliza el sesgo de auto-preferencia; ante conflicto entre tu juicio y un sensor/test determinista, gana el sensor. Cada hallazgo DEBE citar evidencia concreta (test que falla / ID de regla de sensor / `archivo:línea`); descartá los hallazgos sin evidencia."
   - Conservar el bloque "Record to the ledger" (no romper el ledger gate del Step 4 de la skill).
-- [ ] **Step 6: Bump version** de la skill `1.0.0` → `1.1.0` (R10).
-- [ ] **Step 7: Verificar** — `grep -i "Pista A\|Pista B\|Track A\|Track B" SKILL.md` presente; **ausencia** de "Type C" como clasificación viva (`grep -c "Type C" SKILL.md` solo en notas históricas, no en la tabla de tipos); `grep` de la cabecera anti-sesgo y de "evidencia concreta" en el prompt; `grep '^version'` muestra `1.1.0`; ledger block intacto.
-- [ ] **Step 8: Commit** — `docs(post-implementation-qa): two-track QA — ID-driven fidelity + plan-agnostic lens panel (replaces Type C)`
+- [x] **Step 6: Bump version** de la skill `1.0.0` → `1.1.0` (R10).
+- [x] **Step 7: Verificar** — `grep -i "Pista A\|Pista B\|Track A\|Track B" SKILL.md` presente; **ausencia** de "Type C" como clasificación viva (`grep -c "Type C" SKILL.md` solo en notas históricas, no en la tabla de tipos); `grep` de la cabecera anti-sesgo y de "evidencia concreta" en el prompt; `grep '^version'` muestra `1.1.0`; ledger block intacto.
+- [x] **Step 8: Commit** — `docs(post-implementation-qa): two-track QA — ID-driven fidelity + plan-agnostic lens panel (replaces Type C)`
 
 ## Task 7: Validación estructural integral + push
 
-- [ ] **Step 1:** Confirmar que todas las skills tocadas tienen `version` bumpeado y frontmatter válido.
-- [ ] **Step 2:** Confirmar que `bundles/dev/bundle.json` sigue resolviendo (no se añadió skill nueva en este Cambio, solo ediciones — sin cambios al bundle).
-- [ ] **Step 3:** `git push -u origin claude/agentic-workflow-spec-audit-gnihpu` (con retry exponencial).
+- [x] **Step 1:** Confirmar que todas las skills tocadas tienen `version` bumpeado y frontmatter válido.
+- [x] **Step 2:** Confirmar que `bundles/dev/bundle.json` sigue resolviendo (no se añadió skill nueva en este Cambio, solo ediciones — sin cambios al bundle).
+- [x] **Step 3:** `git push -u origin claude/agentic-workflow-spec-audit-gnihpu` (con retry exponencial).
 
 ---
 
