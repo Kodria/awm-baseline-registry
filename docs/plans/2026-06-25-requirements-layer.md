@@ -92,12 +92,12 @@
 **Files:**
 - Modify: `skills/writing-plans/SKILL.md`
 
-- [x] **Step 1: Tag de requisitos en Task Structure** — añadir línea `_Requisitos: R1.1, R2.3_` al bloque `### Task N` y referenciar IDs en los tests (R5).
+- [x] **Step 1: Tag de requisitos en Task Structure** — añadir línea `_Requirements: R1.1, R2.3_` al bloque `### Task N` y referenciar IDs en los tests (R5). *(El string del tag va en inglés: los skills están normalizados a inglés — F-10 — y el tag es contenido que se emite en los planes de los usuarios.)*
 - [x] **Step 2: Self-Review §1 → matriz de trazabilidad** — reemplazar "Spec coverage" por una matriz requisito→tarea→test; reportar forward gaps (requisito sin tarea/test) y backward gaps (tarea/test sin requisito = scope creep / código huérfano) (R6).
 - [x] **Step 3: Check analyze pre-handoff** — añadir gate antes del Execution Handoff: todo ID tiene ≥1 tarea y ≥1 test; ninguna tarea/test carece de ID (R6).
 - [x] **Step 4: Tier** (R8) — nota de que la matriz aplica a planes multi-tarea; diffs triviales la saltean.
 - [x] **Step 5: Bump version** `1.0.0` → `1.1.0` (R10).
-- [x] **Step 6: Verificar** — grep `_Requisitos:` y de la matriz; version `1.1.0`.
+- [x] **Step 6: Verificar** — grep `_Requirements:` y de la matriz; version `1.1.0`.
 - [x] **Step 7: Commit** — `docs(writing-plans): add requirement-ID traceability matrix and analyze gate`
 
 ## Task 5: `writing-plans` — endurecer plan-document-reviewer-prompt
@@ -148,7 +148,7 @@
 | R2 | T1 | grep IF/THEN template |
 | R3 | T2 | grep clarify gate |
 | R4 | T1, T2, T3 | grep IDs en template + self-review + reviewer |
-| R5 | T4, T5 | grep `_Requisitos:` + reviewer |
+| R5 | T4, T5 | grep `_Requirements:` + reviewer |
 | R6 | T4, T5 | grep matriz + analyze gate |
 | R7 | T6 | grep checklist en QA + deep-review-prompt |
 | R8 | T1, T4 | grep tier guardrail |

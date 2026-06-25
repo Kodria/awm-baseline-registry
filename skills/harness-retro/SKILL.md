@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "2.0.0"
+version: "2.0.1"
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
 
@@ -25,7 +25,7 @@ description: Use as the terminal learning phase of development-process — reads
 
 - The ledger is empty, there are no manual observations, **and the session genuinely produced zero findings** — exit fast and add the `awm-retro-complete` marker.
 
-**Empty-ledger consistency check (mandatory before fast-exit):** an empty ledger is only legitimate if nothing was found during the cycle. Cross-check against the session evidence: did the spec/quality reviewers report issues? Did `post-implementation-qa` present findings (Type B/C in the plan or QA report)? If findings were reported anywhere but the ledger is empty, the learning pipeline is broken — **that IS the retro finding**. Do not fast-exit: trace where the `awm ledger add` instruction was dropped (inline prompt instead of template? missing gate?), cure the gap in the responsible skill, and log it. An empty ledger after a cycle with findings is contradictory evidence, never a clean bill.
+**Empty-ledger consistency check (mandatory before fast-exit):** an empty ledger is only legitimate if nothing was found during the cycle. Cross-check against the session evidence: did the spec/quality reviewers report issues? Did `post-implementation-qa` present findings (Track A/B in the plan or QA report)? If findings were reported anywhere but the ledger is empty, the learning pipeline is broken — **that IS the retro finding**. Do not fast-exit: trace where the `awm ledger add` instruction was dropped (inline prompt instead of template? missing gate?), cure the gap in the responsible skill, and log it. An empty ledger after a cycle with findings is contradictory evidence, never a clean bill.
 
 ## Checklist
 
@@ -228,7 +228,7 @@ Then add the `awm-retro-complete` marker to the active plan (first line after th
 |---|---|
 | `subagent-driven-development` spec-reviewer | Emits `awm ledger add --polarity finding|win` per spec gap / win |
 | `subagent-driven-development` code-quality-reviewer | Emits `awm ledger add` per quality issue / win |
-| `post-implementation-qa` deep-review | Emits `awm ledger add` per Type B/C finding / win |
+| `post-implementation-qa` deep-review | Emits `awm ledger add` per Track A (`class: proceso`) / Track B (`class: seguridad\|logica\|tests`) finding / win |
 | `verification-before-completion` | Emits `awm ledger add` on recurring sensor failure |
 | `systematic-debugging` | Emits `awm ledger add` on confirmed root cause |
 | `development-process` | Routes to harness-retro after QA; requires `awm-retro-complete` to proceed to finishing |

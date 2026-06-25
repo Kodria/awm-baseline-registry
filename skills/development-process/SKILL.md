@@ -1,6 +1,6 @@
 ---
 name: development-process
-version: "1.0.0"
+version: "1.0.1"
 description: Use when starting a new development task, resuming work, or when unsure which skill to invoke next - orchestrates the full development lifecycle from idea to merge
 ---
 
@@ -54,7 +54,7 @@ digraph lifecycle {
 | 2. Planning | `writing-plans` | Design doc without pending UI screens | Implementation plan in `docs/plans/YYYY-MM-DD-<topic>-plan.md` |
 | 3a. Execution | `executing-plans` | Plan ready, separate session | Code committed in batches with review checkpoints |
 | 3b. Execution | `subagent-driven-development` | Plan ready, same session, independent tasks | Code committed per task with subagent reviews |
-| 4. QA | `post-implementation-qa` | All tasks done, before finishing | Hallazgos Type B/C cerrados, marker `awm-qa-complete` en plan |
+| 4. QA | `post-implementation-qa` | All tasks done, before finishing | Track A/B findings closed, `awm-qa-complete` marker in plan |
 | 4.5. Retro | `harness-retro` | QA complete (`awm-qa-complete`), retro not yet done (`awm-retro-complete` absent) | Lessons cured into remediation tree / CONSTITUTION.md / AGENTS.md; ledger archived; marker `awm-retro-complete` added to plan |
 | 5. Completion | `finishing-a-development-branch` | `awm-retro-complete` present in plan | Merge, PR, or branch cleanup |
 

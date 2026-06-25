@@ -151,7 +151,7 @@ The requirements are the exit gate of the questioning phase. Do NOT move to the 
 The EARS + IDs structure scales with risk, like the rest of the process:
 
 - **Multi-file or risky features** → the `## Requirements` section is mandatory.
-- **Trivial one-file diffs** → it is skippable; a one-line bullet of intent is enough.
+- **Trivial one-file diffs** → the section is skippable (intentionally absent); a one-line bullet of intent replaces it, no `## Requirements` section.
 
 This mirrors the "Too Simple" anti-pattern: simple doesn't exempt you from process, but the process scales down. Never pad a trivial change with prose requirements.
 
