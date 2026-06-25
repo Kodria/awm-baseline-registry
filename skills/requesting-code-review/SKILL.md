@@ -1,6 +1,6 @@
 ---
 name: requesting-code-review
-version: "1.0.0"
+version: "1.1.0"
 description: Use when completing tasks, implementing major features, or before merging to verify work meets requirements
 ---
 
@@ -46,6 +46,7 @@ Use Task tool with superpowers:code-reviewer type, fill template at `code-review
 - Fix Important issues before proceeding
 - Note Minor issues for later
 - Push back if reviewer is wrong (with reasoning)
+- Treat the verdict as advisory, not authoritative: the reviewer runs in the same model that built the code, so fresh context attenuates but does not neutralize self-preference bias. On any conflict between the reviewer's judgment and a deterministic sensor/test (`awm sensors run`), the sensor/test wins.
 
 ## Example
 

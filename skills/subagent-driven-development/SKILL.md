@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.0.1"
+version: "1.1.0"
 description: Use when executing implementation plans with independent tasks in the current session
 ---
 
@@ -101,6 +101,8 @@ Use the least powerful model that can handle each role to conserve cost and incr
 - Touches 1-2 files with a complete spec → cheap model
 - Touches multiple files with integration concerns → standard model
 - Requires design judgment or broad codebase understanding → most capable model
+
+**Reviewer model/role separation (anti-bias, tier).** Fresh context attenuates but does not neutralize self-preference bias — it lives in the weights and survives blinding. For critical-correction review tasks, dispatch the reviewer in a *different model family* from the implementer when the harness can; otherwise at least give it a distinct role/prompt and withhold the implementer's chain-of-thought. Where model separation isn't available, lean harder on the deterministic gate (`awm sensors run`, tests) — the only defense that neutralizes the bias rather than just attenuating it. Do NOT turn this into same-model debate: at equal compute it does not beat self-consistency.
 
 ## Handling Implementer Status
 
