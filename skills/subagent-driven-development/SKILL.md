@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.0.0"
+version: "1.0.1"
 description: Use when executing implementation plans with independent tasks in the current session
 ---
 
@@ -230,7 +230,7 @@ Final reviewer: All requirements met, ready to merge
 
 Once all tasks are complete and the final code review is approved, you have **one mandatory step before stopping**: invoke `post-implementation-qa`.
 
-> **Why not skip it:** The final code reviewer within this skill checks code quality. `post-implementation-qa` checks plan fidelity (Type B) and logic bugs (Type C) — a different review class that this skill's code reviewer does not perform. Skipping it means the branch reaches `finishing-a-development-branch` without a plan-vs-implementation audit.
+> **Why not skip it:** The final code reviewer within this skill checks code quality. `post-implementation-qa` checks Track A fidelity (plan-vs-implementation, ID-driven) and Track B quality (robustness/logic/tests lenses) — a different review class that this skill's code reviewer does not perform. Skipping it means the branch reaches `finishing-a-development-branch` without a plan-vs-implementation audit.
 
 Your sequence — execute in order, do not skip:
 1. **Invoke `post-implementation-qa`** via the Skill tool. It runs inline in this session: it reads the plan, diffs the branch, dispatches its own review subagent, runs the fix loop if needed, and adds `<!-- awm-qa-complete -->` to the plan. Let it complete fully before continuing.
