@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "1.0.0"
+version: "1.1.0"
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
 
@@ -66,6 +66,8 @@ This structure informs the task decomposition. Each task should produce self-con
 ````markdown
 ### Task N: [Component Name]
 
+_Requirements: R1.1, R2.3_
+
 **Files:**
 - Create: `exact/path/to/file.py`
 - Modify: `exact/path/to/existing.py:123-145`
@@ -74,7 +76,7 @@ This structure informs the task decomposition. Each task should produce self-con
 - [ ] **Step 1: Write the failing test**
 
 ```python
-def test_specific_behavior():
+def test_specific_behavior():  # verifies R1.1
     result = function(input)
     assert result == expected
 ```
@@ -104,6 +106,8 @@ git commit -m "feat: add specific feature"
 ```
 ````
 
+**Requirement traceability tag.** The `_Requirements: R1.1, R2.3_` line names the requirement IDs (from the spec's `## Requirements` section) that the task satisfies, and each test comment names the ID it verifies (`# verifies R1.1`). This is what makes the traceability matrix and the analyze gate below mechanical rather than guesswork. **Tier:** omit the tag only for trivial single-file diffs whose spec intentionally has no `## Requirements` section.
+
 ## No Placeholders
 
 Every step must contain the actual content an engineer needs. These are **plan failures** — never write them:
@@ -125,13 +129,32 @@ Every step must contain the actual content an engineer needs. These are **plan f
 
 After writing the complete plan, look at the spec with fresh eyes and check the plan against it. This is a checklist you run yourself — not a subagent dispatch.
 
-**1. Spec coverage:** Skim each section/requirement in the spec. Can you point to a task that implements it? List any gaps.
+**1. Traceability matrix:** Build a table mapping each spec requirement ID to the task(s) and test(s) that cover it. Report both directions:
+- **Forward gap** — a requirement ID with no task or no test. The requirement isn't built or isn't verified. Add the missing task/test.
+- **Backward gap** — a task or test with no requirement ID. That's scope creep / orphan code — either it traces to a requirement you forgot to write, or it shouldn't be in the plan. Resolve it, don't leave it dangling.
+
+```markdown
+| Req  | Task(s) | Test(s) |
+|------|---------|---------|
+| R1.1 | T2      | test_specific_behavior |
+```
+
+*(Tier: the matrix applies to multi-task plans tied to a `## Requirements` spec. A trivial single-file diff with no requirements section skips it.)*
 
 **2. Placeholder scan:** Search your plan for red flags — any of the patterns from the "No Placeholders" section above. Fix them.
 
 **3. Type consistency:** Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug.
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
+
+## Analyze Gate (coverage, pre-handoff)
+
+Before offering the execution choice, run this gate on the traceability matrix. It is the `analyze` step: a mechanical coverage check, not a judgment call.
+
+- **Every requirement ID has ≥1 task AND ≥1 test.** A requirement with a task but no test is built-but-unverified — not done.
+- **No task or test lacks a requirement ID.** Anything unanchored is orphan scope — resolve it before handoff.
+
+Do not proceed to the execution handoff while the gate reports gaps. *(Tier: skipped for trivial single-file diffs with no `## Requirements` section.)*
 
 ## Execution Handoff
 
