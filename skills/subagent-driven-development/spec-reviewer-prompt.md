@@ -55,6 +55,15 @@ Task tool (general-purpose):
 
     **Verify by reading code, not by trusting report.**
 
+    ## Anti-bias guard
+
+    You may be the same model that implemented this. Fresh context attenuates but
+    does NOT neutralize self-preference bias — your verdict never outranks a
+    deterministic sensor or test. On conflict between your judgment and
+    `awm sensors run` or a failing test, the sensor/test wins. Every issue you
+    list MUST cite concrete evidence (failing test / sensor rule ID / `file:line`);
+    drop any finding you cannot anchor.
+
     Report:
     - ✅ Spec compliant (if everything matches after code inspection)
     - ❌ Issues found: [list specifically what's missing or extra, with file:line references]
