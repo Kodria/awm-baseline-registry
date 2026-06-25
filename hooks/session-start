@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # SessionStart hook for AWM bootstrap.
 # Reads ${AWM_HOOKS_ROOT}/using-awm.md and emits a Claude Code-compatible JSON.
+#
+# Fires on the matcher 'startup|clear|compact'. On 'compact' it is the
+# deterministic recovery point after a context compaction: besides the static
+# feedforward (using-awm + CONSTITUTION) it re-anchors the dynamic, file-derived
+# canonical state (active plan goal, open plan items, open ledger items) that the
+# compaction summary may have dropped — see the "Re-anchor block" section below.
 
 set -euo pipefail
 
@@ -8,6 +14,16 @@ set -euo pipefail
 # Defaults to the directory containing this script (assumes installed at ~/.awm/hooks/).
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 AWM_HOOKS_ROOT="${AWM_HOOKS_ROOT:-$SCRIPT_DIR}"
+
+# Read hook stdin (Claude Code passes JSON incl. "source": startup|clear|compact).
+# Guarded with [ ! -t 0 ] so a manual/interactive run (tty stdin) never blocks on EOF.
+session_source=""
+if [ ! -t 0 ]; then
+    hook_input=$(cat 2>/dev/null || true)
+    session_source=$(printf '%s' "$hook_input" \
+        | grep -o '"source"[[:space:]]*:[[:space:]]*"[^"]*"' \
+        | head -1 | sed 's/.*"\([^"]*\)"$/\1/' 2>/dev/null || true)
+fi
 
 SKILL_FILE="${AWM_HOOKS_ROOT}/using-awm.md"
 
@@ -43,6 +59,54 @@ if [ -s "$CONSTITUTION_FILE" ]; then
     constitution_escaped=$(escape_for_json "$constitution_content")
     # \n is a literal two-char JSON escape sequence (not a shell newline) — matches the convention on line 36.
     session_context="${session_context}\n\n## Project Constitution\n\n${constitution_escaped}"
+fi
+
+# --- Re-anchor block (post-compaction / resume recovery) ----------------------
+# Surfaces the durable, file-derived canonical state the compaction summary may
+# have dropped. Failure-safe: any detection failure leaves session_context
+# untouched (silent-in-absence, same contract as the CONSTITUTION block).
+reanchor=""
+PLANS_DIR="$PWD/docs/plans"
+if [ -d "$PLANS_DIR" ]; then
+    # Active plan = most-recently-modified plan (not a design doc) that still has
+    # open checkboxes and is not marked complete. Deterministic, file-derived.
+    active_plan=""
+    while IFS= read -r plan_file; do
+        [ -z "$plan_file" ] && continue
+        case "$plan_file" in *design*) continue;; esac
+        grep -q '^- \[ \]' "$plan_file" 2>/dev/null || continue
+        if grep -qE 'awm-(plan|qa)-complete' "$plan_file" 2>/dev/null; then continue; fi
+        active_plan="$plan_file"
+        break
+    done < <(ls -t "$PLANS_DIR"/*.md 2>/dev/null || true)
+
+    if [ -n "$active_plan" ]; then
+        goal_line=$(grep -m1 '\*\*Goal:\*\*' "$active_plan" 2>/dev/null || true)
+        [ -z "$goal_line" ] && goal_line=$(grep -m1 '^# ' "$active_plan" 2>/dev/null || true)
+        open_items=$(grep -m8 '^- \[ \]' "$active_plan" 2>/dev/null || true)
+        ledger_open=""
+        if command -v awm >/dev/null 2>&1; then
+            ledger_open=$(awm ledger list 2>/dev/null | head -8 || true)
+        fi
+        reanchor="## Re-anchor (post-compaction recovery)"$'\n'"Active plan: $(basename "$active_plan")"
+        [ -n "$goal_line" ]   && reanchor="${reanchor}"$'\n'"${goal_line}"
+        [ -n "$open_items" ]  && reanchor="${reanchor}"$'\n'"Open plan items:"$'\n'"${open_items}"
+        [ -n "$ledger_open" ] && reanchor="${reanchor}"$'\n'"Open ledger items:"$'\n'"${ledger_open}"
+    fi
+fi
+
+if [ -n "$reanchor" ]; then
+    reanchor_escaped=$(escape_for_json "$reanchor")
+    session_context="${session_context}\n\n${reanchor_escaped}"
+    # Audit trail: log the recovery to the branch ledger, but only for genuine
+    # compaction boundaries, and only best-effort (silent if awm/ledger absent).
+    if [ "$session_source" = "compact" ] && command -v awm >/dev/null 2>&1; then
+        awm ledger add --phase compaction-recovery \
+            --source-skill context-compaction-recovery --polarity finding \
+            --class proceso --signature compaction-reanchor --severity info \
+            --desc "re-anchored active plan + open items after compaction" \
+            >/dev/null 2>&1 || true
+    fi
 fi
 
 # Emit Claude Code format using printf (avoids bash 5.3+ heredoc hang).

@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.1.0"
+version: "1.2.0"
 description: Use when executing implementation plans with independent tasks in the current session
 ---
 
@@ -145,6 +145,19 @@ The per-branch ledger (`awm ledger`) is what `harness-retro` learns from. Review
 2. **At the controller, before marking the task complete:** if a reviewer reported findings or wins, run `awm ledger list` and confirm the ledger grew accordingly. If the reviewer's report shows issues but the ledger has no matching entries, send the reviewer back to emit them. Trust-but-verify: `awm ledger list` is cheap and authoritative.
 
 A clean review with genuinely zero findings and zero wins is the only case where no ledger growth is acceptable.
+
+## Reconciliation Gate (AWM)
+
+<!-- AWM-INTEGRATION: subagent-reconciliation-gate -->
+
+**Every subagent return is a compaction boundary for the controller.** You do not see the subagent's context — only its summary report. A summary can silently omit what the subagent skipped, misread, or left open, exactly the way a context compaction drops state. So treat the return like a post-compaction event: reconcile against the durable, file-derived truth before marking the task complete.
+
+Before marking a task complete, the controller reconciles the subagent's report against:
+1. The task's requirement IDs in the plan — is each one actually implemented and tested in the diff, not just claimed in the report?
+2. Open `- [ ]` items in the active plan — did the report close what it claimed?
+3. `awm ledger list` — do the findings/wins the report mentions actually exist as entries?
+
+If the report and the file-derived state disagree, the **files win** — send the task back, do not mark complete on the strength of the summary alone. (This is the per-subagent counterpart of the deterministic SessionStart re-anchor that recovers the main agent's state after a compaction.)
 
 ## Prompt Templates
 
