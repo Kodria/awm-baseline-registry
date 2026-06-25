@@ -1,14 +1,16 @@
-# Capa de requisitos (EARS + IDs + trazabilidad) — Plan de Implementación
+# Capa de requisitos (EARS + IDs + trazabilidad) + QA multi-lente — Plan de Implementación
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use subagent-driven-development o executing-plans para implementar tarea por tarea. Los pasos usan checkbox (`- [ ]`).
 
-**Goal:** Añadir una capa de requisitos estructurada (criterios EARS + IDs de requisito + trazabilidad spec→tarea→test) al espinazo de skills de AWM, tier-able y agnóstica al proveedor.
+**Goal:** Añadir una capa de requisitos estructurada (criterios EARS + IDs de requisito + trazabilidad spec→tarea→test) al espinazo de skills de AWM, tier-able y agnóstica al proveedor; **y, en la misma pasada, refundar `post-implementation-qa`** en dos pistas (fidelidad por IDs + panel de calidad multi-lente que reemplaza al Type C), absorbiendo las notas anti-sesgo del Eje 2.
 
 **Architecture:** Edición de contenido de skills en `awm-baseline-registry`. Tres skills del espinazo ganan secciones nuevas; cuatro plantillas de prompt acompañantes se endurecen. Sin tooling nuevo: EARS es gramática de texto, los IDs son convención de nombres, el check `analyze` es un checklist. Todo gateado por el principio tier (obligatorio en features multi-archivo/riesgosas, salteable en diffs triviales).
 
+> **Nota de alcance (por qué este plan crece más allá de "capa de requisitos").** La Task 6 (`post-implementation-qa`) realiza **tres cambios del design doc en una sola edición de la skill**: Cambio 3 (IDs como checklist — Pista A), Cambio 4 (panel multi-lente plan-agnóstico — Pista B, **reemplaza al Type C**) y Cambio 2 (notas anti-sesgo en las plantillas). Se pliegan deliberadamente para **no tocar la skill de QA tres veces**. Los requisitos R11–R15 gobiernan esa parte; R1–R10 gobiernan la capa de requisitos en `brainstorming`/`writing-plans`.
+
 **Tech Stack:** Markdown (SKILL.md + frontmatter semver), bundles/dev/bundle.json. Verificación = validez estructural (frontmatter, version bump, referencias que resuelven) + grep de los marcadores nuevos.
 
-**Sustento:** `docs/plans/2026-06-25-spec-audit-improvements-design.md` (Cambio 3) y `docs/research/2026-06-25-agentic-harness-market-audit.md` (Eje 3) en el repo `agentic-workflow`.
+**Sustento:** `docs/plans/2026-06-25-spec-audit-improvements-design.md` (Cambios 2, 3 y 4) y `docs/research/2026-06-25-agentic-harness-market-audit.md` (Ejes 2 y 3) en el repo `agentic-workflow`.
 
 ---
 
@@ -27,6 +29,14 @@
 - **R9 — Agnóstico al proveedor.** THE implementación SHALL NOT depender de features propietarias de ningún harness (solo archivos, texto, prompts de subagente).
 - **R10 — Versionado.** WHEN se edita el contenido de una skill, THE frontmatter `version` SHALL incrementarse en semver.
 
+> *Requisitos R11–R15 — refundación de `post-implementation-qa` (Cambios 4 + 2). Realizados junto a R7 en la Task 6 para editar la skill una sola vez.*
+
+- **R11 — Dos pistas.** WHEN `post-implementation-qa` corre su revisión, THE skill SHALL separar explícitamente la **Pista A** (fidelidad anclada al plan, dirigida por los IDs de requisito) de la **Pista B** (calidad plan-agnóstica).
+- **R12 — Panel multi-lente reemplaza al Type C.** THE Pista B SHALL despachar lentes distintas (robustez/seguridad, corrección lógica, tests) como **subagentes separados de contexto aislado**, cada una con criterio plan-agnóstico, en lugar del cubo Type C monolítico; THE skill SHALL NOT conservar la clasificación Type C.
+- **R13 — Robustez como lente de primera clase.** THE lente de robustez/seguridad SHALL evaluar el piso (`Infinity`/`NaN`/`undefined` silenciosos, crash en borde/entrada inválida, validación en fronteras) **independientemente del scope declarado** en el plan.
+- **R14 — Anti-sesgo en las plantillas (Cambio 2).** THE plantilla de cada lente SHALL (a) declarar que el contexto fresco atenúa pero no neutraliza el sesgo y que **ante conflicto lente-vs-sensor gana el sensor determinista**, y (b) exigir **evidencia concreta** (test que falla / ID de regla de sensor / `archivo:línea`) por hallazgo, descartando los que no la traigan.
+- **R15 — Tier del panel + gate determinista.** WHERE el cambio es un diff trivial, THE Pista B SHALL reducirse a la sola lente de robustez (el piso nunca se saltea); IF el cambio es multi-archivo o de corrección crítica, THEN SHALL correr el panel completo. THE panel SHALL NOT declarar "limpio" mientras `awm sensors run` reporte fallas.
+
 ---
 
 ## File Structure
@@ -37,8 +47,8 @@
 | `skills/brainstorming/spec-document-reviewer-prompt.md` | El revisor verifica EARS + IDs + no-ambigüedad | R1, R2, R3, R4 |
 | `skills/writing-plans/SKILL.md` | Tag de IDs por Task; Self-Review → matriz de trazabilidad; check analyze | R5, R6, R8, R10 |
 | `skills/writing-plans/plan-document-reviewer-prompt.md` | El revisor verifica trazabilidad y huérfanos | R5, R6 |
-| `skills/post-implementation-qa/SKILL.md` | IDs como checklist de completitud en deep-review | R7, R10 |
-| `skills/post-implementation-qa/deep-review-prompt.md` | El deep-review chequea cada ID implementado + tests | R7 |
+| `skills/post-implementation-qa/SKILL.md` | Refundación dos pistas: Pista A (IDs como checklist) + Pista B (panel multi-lente que reemplaza al Type C); tier + gate determinista | R7, R10, R11, R12, R13, R15 |
+| `skills/post-implementation-qa/deep-review-prompt.md` | Reestructura en plantilla de dos pistas; una lente por subagente; notas anti-sesgo + evidencia concreta por hallazgo | R7, R11, R12, R13, R14 |
 
 > **Nota de verificación:** el registry no tiene tests automatizados. La "prueba" de cada tarea es estructural: (a) el marcador nuevo existe (grep), (b) `version` bumpeado, (c) ninguna referencia de bundle se rompe. No hay TDD de código aquí; hay *verification-before-completion* sobre el contenido.
 
@@ -97,16 +107,28 @@
 - [ ] **Step 2: Añadir criterios** — el revisor verifica que cada Task tagea IDs, que la matriz cubre todos los requisitos, y flaggea huérfanos (R5, R6).
 - [ ] **Step 3: Verificar + Commit** — `docs(writing-plans): plan reviewer checks traceability and orphans`
 
-## Task 6: `post-implementation-qa` — IDs como checklist de completitud
+## Task 6: `post-implementation-qa` — refundación dos pistas (Cambios 3 + 4 + 2, edición única)
+
+> **Por qué una sola task para la skill de QA:** R7 (IDs, Cambio 3), R11–R13/R15 (panel multi-lente, Cambio 4) y R14 (anti-sesgo, Cambio 2) tocan los **mismos dos archivos**. Se editan juntos para no reescribir la skill tres veces y dejar el modelo mental coherente (Pista A / Pista B) en una pasada.
 
 **Files:**
 - Modify: `skills/post-implementation-qa/SKILL.md`
 - Modify: `skills/post-implementation-qa/deep-review-prompt.md`
 
-- [ ] **Step 1: SKILL.md** — el deep-review usa los IDs de requisito del spec como checklist de completitud; cada ID debe estar implementado y testeado; flaggea backward gaps (R7).
-- [ ] **Step 2: deep-review-prompt.md** — añadir al prompt del revisor de contexto fresco: "verificá que cada ID de requisito esté implementado y tenga test; reportá IDs faltantes y código sin ID. Reportá huecos, no estilo." (R7, cierra el hueco que la best-practice de Claude Code señala: sin IDs el revisor no tiene checklist).
-- [ ] **Step 3: Bump version** de la skill (R10).
-- [ ] **Step 4: Verificar + Commit** — `docs(post-implementation-qa): use requirement IDs as completeness checklist`
+- [ ] **Step 1: SKILL.md — refundar el modelo de hallazgos en dos pistas** (R11, R12):
+  - Reemplazar la tabla "Finding Types (B / C)" por **Pista A — Fidelidad** (ex-Type B, anclada al plan) y **Pista B — Calidad** (panel de lentes plan-agnósticas). **Eliminar la clasificación Type C** (R12: la skill no la conserva); su contenido se redistribuye en las lentes.
+  - Convertir la nota al pie "Security lens (scope ≠ exemption)" en la **lente de robustez/seguridad de primera clase** de la Pista B (R13).
+- [ ] **Step 2: SKILL.md — Pista A dirigida por IDs** (R7): el deep-review de fidelidad usa los IDs de requisito del spec como checklist de completitud; cada ID implementado y testeado; flaggea forward gaps (ID sin código/test) y backward gaps (código sin ID = scope creep).
+- [ ] **Step 3: SKILL.md — Pista B multi-lente** (R12, R15): el proceso despacha **un subagente por lente** (robustez/seguridad, corrección lógica, tests) en contexto aislado; **dedup** de hallazgos solapados (mismo `archivo:línea`) antes de presentar. Actualizar el diagrama `dot` y los pasos "Dispatch" para reflejar el fan-out por lente.
+- [ ] **Step 4: SKILL.md — tier + gate determinista** (R15): diff trivial → solo lente de robustez (el piso nunca se saltea) + Pista A si hay IDs; multi-archivo/crítico → panel completo. Reafirmar que ninguna lente declara "limpio" con `awm sensors run` rojo (ya existe el Iron Law; extenderlo a las lentes).
+- [ ] **Step 5: deep-review-prompt.md — reestructura en plantilla de dos pistas** (R7, R11–R14):
+  - Sección **Pista A**: "verificá que cada ID de requisito esté implementado y tenga test; reportá IDs faltantes y código sin ID. Reportá huecos, no estilo."
+  - Sección **Pista B**: una sub-plantilla por lente (robustez/seguridad, corrección lógica, tests), cada una con su criterio plan-agnóstico explícito.
+  - **Cabecera anti-sesgo común a todas las lentes** (R14): "El contexto fresco atenúa pero no neutraliza el sesgo de auto-preferencia; ante conflicto entre tu juicio y un sensor/test determinista, gana el sensor. Cada hallazgo DEBE citar evidencia concreta (test que falla / ID de regla de sensor / `archivo:línea`); descartá los hallazgos sin evidencia."
+  - Conservar el bloque "Record to the ledger" (no romper el ledger gate del Step 4 de la skill).
+- [ ] **Step 6: Bump version** de la skill `1.0.0` → `1.1.0` (R10).
+- [ ] **Step 7: Verificar** — `grep -i "Pista A\|Pista B\|Track A\|Track B" SKILL.md` presente; **ausencia** de "Type C" como clasificación viva (`grep -c "Type C" SKILL.md` solo en notas históricas, no en la tabla de tipos); `grep` de la cabecera anti-sesgo y de "evidencia concreta" en el prompt; `grep '^version'` muestra `1.1.0`; ledger block intacto.
+- [ ] **Step 8: Commit** — `docs(post-implementation-qa): two-track QA — ID-driven fidelity + plan-agnostic lens panel (replaces Type C)`
 
 ## Task 7: Validación estructural integral + push
 
@@ -130,8 +152,13 @@
 | R8 | T1, T4 | grep tier guardrail |
 | R9 | (todas) | revisión: sin dependencias propietarias |
 | R10 | T1, T4, T6 | grep `version` bumpeado |
+| R11 | T6 | grep "Pista A/Pista B" en SKILL + prompt |
+| R12 | T6 | grep ausencia de Type C como tipo vivo; fan-out por lente |
+| R13 | T6 | grep lente de robustez/seguridad de primera clase |
+| R14 | T6 | grep cabecera anti-sesgo + "evidencia concreta" en prompt |
+| R15 | T6 | grep tier del panel + gate determinista |
 
-Forward: todos los requisitos tienen tarea. Backward: ninguna tarea sin requisito. Sin huérfanos.
+Forward: todos los requisitos (R1–R15) tienen tarea. Backward: ninguna tarea sin requisito. Sin huérfanos.
 
 ---
 
@@ -141,4 +168,4 @@ Dos opciones de ejecución:
 1. **Subagent-Driven (recomendado)** — subagente fresco por tarea, review entre tareas. *Caveat Eje 2: el review hereda sesgo residual; gateamos con verificación estructural determinista (grep + version), no con juicio del modelo.*
 2. **Inline** — ejecución en esta sesión con checkpoints.
 
-Dado que las tareas son ediciones de markdown acopladas (varias tocan el mismo SKILL.md), **recomiendo inline con checkpoint por skill**: T1+T2+T3 (brainstorming) → checkpoint → T4+T5 (writing-plans) → checkpoint → T6 (qa) → T7 (push).
+Dado que las tareas son ediciones de markdown acopladas (varias tocan el mismo SKILL.md), **recomiendo inline con checkpoint por skill**: T1+T2+T3 (brainstorming) → checkpoint → T4+T5 (writing-plans) → checkpoint → **T6 (qa — la task más pesada: refundación dos pistas, Cambios 3+4+2 en una edición)** → T7 (push).
