@@ -1,7 +1,7 @@
 {
   "version": 1,
   "bundles": [
-    { "name": "dev",       "source": "./bundles/dev",       "version": "1.0.0", "scope": "baseline" },
+    { "name": "dev",       "source": "./bundles/dev",       "version": "1.2.0", "scope": "baseline" },
     { "name": "frontend",  "source": "./bundles/frontend",  "version": "1.0.0", "scope": "project" },
     { "name": "authoring", "source": "./bundles/authoring", "version": "1.0.0", "scope": "project" }
   ]
