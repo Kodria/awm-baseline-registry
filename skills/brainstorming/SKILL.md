@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-version: "1.0.0"
+version: "1.1.0"
 description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation."
 ---
 
@@ -26,12 +26,12 @@ You MUST create a task for each of these items and complete them in order:
 
 1. **Explore project context** — check files, docs, recent commits
 2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
-3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
+3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria; do not exit this phase while any requirement still has an open ambiguity (see Clarify gate)
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
 6. **UI Screen detection** — during/after presenting the design, evaluate if the feature needs UI screens (see the UI Screen Detection section)
-7. **Write design doc** — save to `docs/plans/YYYY-MM-DD-<topic>-design.md` (including the `## UI Screens` table when applicable) and commit
-8. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
+7. **Write design doc** — save to `docs/plans/YYYY-MM-DD-<topic>-design.md` with the `## Requirements` (EARS) section as its durable head (see below), plus the `## UI Screens` table when applicable, and commit
+8. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope, and EARS/ID validity (see below)
 9. **User reviews written spec** — ask the user to review the spec file before proceeding
 10. **Transition to next step** — if the design doc has `## UI Screens` with pending screens, invoke `ui-design`; otherwise invoke `writing-plans`
 
@@ -121,6 +121,40 @@ Do NOT invoke any other implementation skill.
 - Where existing code has problems that affect the work (e.g., a file that's grown too large, unclear boundaries, tangled responsibilities), include targeted improvements as part of the design - the way a good developer improves code they're working in.
 - Don't propose unrelated refactoring. Stay focused on what serves the current goal.
 
+## Requirements Section (EARS)
+
+The design doc opens with a durable `## Requirements` section **before** the design sections: structured, testable acceptance criteria in EARS notation (Easy Approach to Requirements Syntax). This separates the WHAT (requirements) from the HOW (design), so the later phases — TDD, traceability, fresh-context QA — have atomic criteria to verify against instead of prose.
+
+**EARS templates** — pick the one that fits each requirement:
+
+| Pattern | Template | Use for |
+|---------|----------|---------|
+| Ubiquitous | `THE <system> SHALL <response>` | Always-on properties |
+| Event-driven | `WHEN <trigger>, THE <system> SHALL <response>` | Response to an event |
+| State-driven | `WHILE <state>, THE <system> SHALL <response>` | Behavior during a state |
+| Optional feature | `WHERE <feature is included>, THE <system> SHALL <response>` | Behavior tied to an optional feature |
+| Unwanted behavior | `IF <trigger>, THEN THE <system> SHALL <response>` | Error / edge / invalid-input handling |
+| Complex | Combine the above, e.g. `WHILE <state>, WHEN <trigger>, THE <system> SHALL <response>` | Compound conditions |
+
+**Prioritize the `IF/THEN` (unwanted behavior) template.** It forces you to specify edge cases, invalid inputs, and error paths up front — exactly the class of bug (boundary handling, `Infinity`/`NaN`, missing validation) that robustness review otherwise discovers late. EARS moves it upstream into the spec.
+
+**Requirement IDs.** Number every requirement with a stable ID (`R1`, `R2`, `R1.1`, …). These IDs are the spine of traceability: `writing-plans` tags each task with the IDs it satisfies, and `post-implementation-qa` uses them as a completeness checklist. A requirement without an ID cannot be traced.
+
+**Keep it terse.** Requirements are bullet-point EARS statements, never long prose — a durable head for the spec, not an essay.
+
+### Clarify gate (zero open ambiguity)
+
+The requirements are the exit gate of the questioning phase. Do NOT move to the design sections while any requirement still carries an open ambiguity. Use the existing one-question-at-a-time loop to resolve each unknown until there are zero open ambiguities, then write the requirements and proceed. Ambiguity that survives into the design becomes rework in implementation — resolve it at spec time.
+
+### Tier (anti-waterfall guardrail)
+
+The EARS + IDs structure scales with risk, like the rest of the process:
+
+- **Multi-file or risky features** → the `## Requirements` section is mandatory.
+- **Trivial one-file diffs** → it is skippable; a one-line bullet of intent is enough.
+
+This mirrors the "Too Simple" anti-pattern: simple doesn't exempt you from process, but the process scales down. Never pad a trivial change with prose requirements.
+
 ## After the Design
 
 **Documentation:**
@@ -138,6 +172,7 @@ After writing the spec document, look at it with fresh eyes:
 2. **Internal consistency:** Do any sections contradict each other? Does the architecture match the feature descriptions?
 3. **Scope check:** Is this focused enough for a single implementation plan, or does it need decomposition?
 4. **Ambiguity check:** Could any requirement be interpreted two different ways? If so, pick one and make it explicit.
+5. **EARS/ID check:** Is every requirement in EARS notation and 1:1 testable? Does each carry a stable ID (`R1`, `R1.1`, …)? If a requirement can't be phrased as a single testable `SHALL`, split it until it can.
 
 Fix any issues inline. No need to re-review — just fix and move on.
 
