@@ -1,6 +1,6 @@
 ---
 name: finishing-a-development-branch
-version: "1.0.0"
+version: "1.1.0"
 description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup
 ---
 
@@ -13,6 +13,20 @@ Guide completion of development work by presenting clear options and handling ch
 **Core principle:** Verify tests → Present options → Execute choice → Clean up.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
+
+## Modo de ejecución (lectura del campo)
+
+Al arrancar, localiza el plan activo (`docs/plans/*-plan.md` de la rama actual) y lee su línea `**Modo de ejecución:**`:
+
+- Ausente o `interactivo` → modo interactivo (default): comportamiento estándar de este skill.
+- `desatendido` → aplica la sección **Modo desatendido** de este skill.
+- Cualquier otro valor → trátalo como `interactivo` y avisa al usuario: "Valor inválido en `Modo de ejecución`: `<valor>` — usando modo interactivo."
+
+El modo desatendido quita pausas, no controles: los gates (sensor, ledger, reconciliation, anti-bias, drift plan-vs-código) corren idénticos en ambos modos.
+
+### Modo desatendido
+
+WHEN el modo es `desatendido` AND los tests del Step 1 pasan: omite el menú del Step 3 y ejecuta directamente la **Opción 2 (Push and Create PR)**. IF los tests fallan, THEN detente y reporta los fallos sin crear el PR — igual que en modo interactivo; tests rojos son una pausa legítima que ningún modo salta. La **Opción 4 (Discard)** NUNCA está disponible en modo desatendido: descartar trabajo es una acción destructiva que siempre requiere a un humano.
 
 ## The Process
 
@@ -49,7 +63,9 @@ Or ask: "This branch split from main - is that correct?"
 
 ### Step 3: Present Options
 
-Present exactly these 4 options:
+**Modo desatendido:** no presentes el menú — ejecuta directamente la Opción 2 (Push and Create PR) del Step 4 y continúa con el cleanup del Step 5. La Opción 4 (Discard) no existe en este modo.
+
+**Modo interactivo:** present exactly these 4 options:
 
 ```
 Implementation complete. What would you like to do?
@@ -167,7 +183,7 @@ git worktree remove <worktree-path>
 
 **Open-ended questions**
 - **Problem:** "What should I do next?" → ambiguous
-- **Fix:** Present exactly 4 structured options
+- **Fix:** Present exactly 4 structured options (modo desatendido es la excepción documentada: no presenta el menú, ejecuta directo la Opción 2 — ver sección "Modo desatendido")
 
 **Automatic worktree cleanup**
 - **Problem:** Remove worktree when might need it (Option 2, 3)
@@ -187,7 +203,7 @@ git worktree remove <worktree-path>
 
 **Always:**
 - Verify tests before offering options
-- Present exactly 4 options
+- Present exactly 4 options (modo desatendido exceptuado: ver sección "Modo desatendido")
 - Get typed confirmation for Option 4
 - Clean up worktree for Options 1 & 4 only
 
