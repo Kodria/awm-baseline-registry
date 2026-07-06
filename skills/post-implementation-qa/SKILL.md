@@ -1,6 +1,6 @@
 ---
 name: post-implementation-qa
-version: "1.1.0"
+version: "1.2.0"
 description: Use after implementation is complete and before finishing the branch — runs two-track QA (Track A fidelity vs. the plan, Track B plan-agnostic quality lenses), drives a fix loop until clean. Also works standalone when a bug is found independently.
 ---
 
@@ -13,6 +13,20 @@ description: Use after implementation is complete and before finishing the branc
 The harness prevents future bugs (preventive). This skill closes bugs found now (corrective). Runs between execution and finishing, replacing the informal "full review before closing" prompt.
 
 **Core principle:** No branch is closed without evidence that what was built matches what was planned AND that the code is correct.
+
+## Modo de ejecución (lectura del campo)
+
+Al arrancar, localiza el plan activo (`docs/plans/*-plan.md` de la rama actual) y lee su línea `**Modo de ejecución:**`:
+
+- Ausente o `interactivo` → modo interactivo (default): comportamiento estándar de este skill.
+- `desatendido` → aplica la sección **Modo desatendido** de este skill.
+- Cualquier otro valor → trátalo como `interactivo` y avisa al usuario: "Valor inválido en `Modo de ejecución`: `<valor>` — usando modo interactivo."
+
+El modo desatendido quita pausas, no controles: los gates (sensor, ledger, reconciliation, anti-bias, drift plan-vs-código) corren idénticos en ambos modos.
+
+### Modo desatendido
+
+WHEN el modo es `desatendido`: en el Step 4 no preguntes "¿procedemos con todos?" — entra directo al fix loop y corrige TODOS los hallazgos (blockers → important → minors), sin descartes. Todo lo demás es idéntico: ledger gate del Step 4, `awm sensors run` + `verification-before-completion` por cada fix, y el completion gate del Step 6 corren igual en ambos modos.
 
 ## Two Entry Points
 
@@ -165,7 +179,11 @@ Track B — Quality (M findings)
 Summary: N Track-A, M Track-B. K blockers.
 ```
 
-Each Track-B finding is tagged with the lens that raised it. Ask: "Shall we proceed with all findings, or is there any you want to discard?" Wait for confirmation before the fix loop.
+Each Track-B finding is tagged with the lens that raised it.
+
+**Modo interactivo:** Ask: "Shall we proceed with all findings, or is there any you want to discard?" Wait for confirmation before the fix loop.
+
+**Modo desatendido:** no preguntes — entra al fix loop con TODOS los hallazgos (blockers → important → minors), sin descartes.
 
 ### Step 5: Fix loop (blockers first, then important, then minors)
 
@@ -216,7 +234,7 @@ NO "QA COMPLETE" CLAIM WITHOUT:
 - Running Track B as one "find all bugs" agent instead of distinct lenses → the blind spot returns
 - Skipping the Robustness/Security lens because the design "declared it out of scope" → the floor is never out of scope
 - A lens declaring clean while `awm sensors run` is red → the sensor wins
-- Skipping confirmation before the fix loop
+- Skipping confirmation before the fix loop (modo interactivo — en desatendido la confirmación se omite por diseño)
 - Forgetting the `<!-- awm-qa-complete -->` marker
 - Dispatching a review with an inline prompt instead of the template → the `awm ledger add` instruction and the anti-bias header are lost
 - Presenting findings without verifying that the ledger grew (Step 4 gate)
