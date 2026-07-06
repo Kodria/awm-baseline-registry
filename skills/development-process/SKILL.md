@@ -117,7 +117,7 @@ In interactive mode, your ONLY actionable step upon determining the project stat
 
 ### Step 4: Invoke the Skill and Transfer Control
 
-Once approved, invoke the skill. The invoked skill takes full control of the session from this point.
+Once approved (interactive) or auto-routed (unattended), invoke the skill. The invoked skill takes full control of the session from this point.
 
 ## Decision Rules
 
