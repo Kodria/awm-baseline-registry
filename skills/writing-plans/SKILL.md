@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "1.1.0"
+version: "1.2.0"
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
 
@@ -58,8 +58,27 @@ This structure informs the task decomposition. Each task should produce self-con
 
 **Tech Stack:** [Key technologies/libraries]
 
+**Modo de ejecución:** interactivo
+
 ---
 ```
+
+### Modo de ejecución
+
+El campo `**Modo de ejecución:**` acepta `interactivo` (default) o `desatendido`. Escribe `desatendido` **solo si el usuario lo pidió explícitamente** para esta corrida. Si el campo queda ausente, los skills lectores asumen `interactivo`.
+
+WHEN el modo es `desatendido`, incluye este blockquote canónico inmediatamente después de la línea del campo (texto literal, no lo parafrasees — es la única fuente del mandato):
+
+```markdown
+> Mandato de ejecución desatendida: ejecución completa sin pausas de check-in
+> entre tareas. harness-retro triagea con criterio propio del agente (solo valor
+> real, recurrente o sistémico — descarta el resto sin preguntar).
+> post-implementation-qa corrige TODOS los hallazgos que surjan, no solo algunos.
+> finishing-a-development-branch crea el PR directamente (opción "push + PR"),
+> sin presentar el menú de 4 opciones.
+```
+
+Los skills lectores (`development-process`, `subagent-driven-development`, `post-implementation-qa`, `harness-retro`, `finishing-a-development-branch`) parsean únicamente la línea del campo; el blockquote es para humanos y para robustez ante compactación de contexto. El modo desatendido quita pausas, no controles: todos los gates corren igual.
 
 ## Task Structure
 
