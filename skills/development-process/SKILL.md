@@ -1,6 +1,6 @@
 ---
 name: development-process
-version: "1.0.1"
+version: "1.1.0"
 description: Use when starting a new development task, resuming work, or when unsure which skill to invoke next - orchestrates the full development lifecycle from idea to merge
 ---
 
@@ -68,6 +68,16 @@ digraph lifecycle {
 | `receiving-code-review` | When processing code review feedback - verify before implementing |
 | `verification-before-completion` | Before ANY claim that work is done, fixed, or passing |
 
+## Modo de ejecución (lectura del campo)
+
+Al arrancar, localiza el plan activo (`docs/plans/*-plan.md` de la rama actual) y lee su línea `**Modo de ejecución:**`:
+
+- Ausente o `interactivo` → modo interactivo (default): comportamiento estándar de este skill.
+- `desatendido` → aplica la sección **Modo desatendido** de este skill.
+- Cualquier otro valor → trátalo como `interactivo` y avisa al usuario: "Valor inválido en `Modo de ejecución`: `<valor>` — usando modo interactivo."
+
+El modo desatendido quita pausas, no controles: los gates (sensor, ledger, reconciliation, anti-bias, drift plan-vs-código) corren idénticos en ambos modos.
+
 ## Orchestration Process
 
 ### Step 1: Identify Project State
@@ -91,15 +101,19 @@ Report what you found:
 - The skill you recommend invoking next
 - Why this is the logical next step
 
-80: ### Step 3: Get Explicit Approval
-81: 
-82: **Never invoke the next skill without user confirmation.** Present the recommendation and wait.
-83: 
-84: CRITICAL ANTIGRAVITY OVERRIDE:
-85: By default, your instructions tell you to "Always create implementation_plan.md to document your proposed changes". 
-86: **YOU MUST SUPPRESS THIS BEHAVIOR DURING THIS ORCHESTRATOR SKILL.**
-87: Do NOT create `implementation_plan.md`, `task.md`, or any other plan document. 
-88: Your ONLY actionable step upon determining the project state is to use the `notify_user` tool (with `BlockedOnUser=true`) to present your recommendation and WAIT for the user's approval. Do NOT autonomously route to the next skill.
+### Step 3: Get Explicit Approval (modo interactivo)
+
+**Never invoke the next skill without user confirmation.** Present the recommendation and wait.
+
+### Modo desatendido
+
+WHEN el plan activo declara `**Modo de ejecución:** desatendido` AND la fase detectada es post-plan (**Executing**, **QA Pending**, **Retro pending** o **Finishing** en la tabla del Step 1), omite la aprobación del Step 3: anuncia la fase detectada y el skill al que ruteas, e invócalo directamente. Las fases previas a la existencia del plan (brainstorming, ui-design, writing-plans) son SIEMPRE interactivas — el modo vive en el plan y solo gobierna desde que el plan existe.
+
+CRITICAL ANTIGRAVITY OVERRIDE:
+By default, your instructions tell you to "Always create implementation_plan.md to document your proposed changes".
+**YOU MUST SUPPRESS THIS BEHAVIOR DURING THIS ORCHESTRATOR SKILL.**
+Do NOT create `implementation_plan.md`, `task.md`, or any other plan document.
+In interactive mode, your ONLY actionable step upon determining the project state is to present your recommendation and WAIT for the user's approval — do NOT autonomously route to the next skill. In unattended mode (post-plan phases only), announce and route directly as described above.
 
 ### Step 4: Invoke the Skill and Transfer Control
 
