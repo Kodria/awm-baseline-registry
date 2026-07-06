@@ -261,12 +261,13 @@ Once all tasks are complete and the final code review is approved, you have **on
 
 > **Why not skip it:** The final code reviewer within this skill checks code quality. `post-implementation-qa` checks Track A fidelity (plan-vs-implementation, ID-driven) and Track B quality (robustness/logic/tests lenses) — a different review class that this skill's code reviewer does not perform. Skipping it means the branch reaches `finishing-a-development-branch` without a plan-vs-implementation audit.
 
-Your sequence — execute in order, do not skip:
+Your sequence — execute steps 1-2 in order, then branch by mode at step 3:
 1. **Invoke `post-implementation-qa`** via the Skill tool. It runs inline in this session: it reads the plan, diffs the branch, dispatches its own review subagent, runs the fix loop if needed, and adds `<!-- awm-qa-complete -->` to the plan. Let it complete fully before continuing.
 2. After QA completes, report a summary of all implemented tasks and the QA verdict.
-3. **Modo interactivo:** Ask the user: *"Do you want to continue with the branch-closing phase? If you use `development-process`, the orchestrator will evaluate the project state and propose the next step."* Wait for confirmation.
-4. **Modo desatendido** (el plan declara `**Modo de ejecución:** desatendido`): omite la pregunta — anuncia que la ejecución terminó y devuelve el control al orquestador (`development-process`), que rutea automáticamente.
-5. En ambos modos: do NOT invoke `finishing-a-development-branch` directly from this skill.
+3. Then, depending on the plan's `**Modo de ejecución:**` field (mutually exclusive — apply only the one that matches):
+   - **Modo interactivo:** Ask the user: *"Do you want to continue with the branch-closing phase? If you use `development-process`, the orchestrator will evaluate the project state and propose the next step."* Wait for confirmation.
+   - **Modo desatendido** (el plan declara `**Modo de ejecución:** desatendido`): omite la pregunta — anuncia que la ejecución terminó y devuelve el control al orquestador (`development-process`), que rutea automáticamente.
+4. In both modes: do NOT invoke `finishing-a-development-branch` directly from this skill.
 
 ## Advantages
 
