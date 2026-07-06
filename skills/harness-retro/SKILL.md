@@ -234,10 +234,10 @@ Then add the `awm-retro-complete` marker to the active plan (first line after th
 ## Anti-patterns
 
 - **Asking "where did this fail before?" instead of reading the ledger.** The ledger has the answer — use `awm ledger list` and `awm ledger recurring`.
-- **Treating recurrence count as a hard gate.** Count is a signal to weigh, not a threshold to pass. A single high-severity finding may be worth structuralizing.
+- **Treating recurrence count as a hard gate.** Count is a signal to weigh, not a threshold to pass. A single high-severity finding may be worth structuralizing. (Modo desatendido usa recurrencia/severidad/sistemicidad como criterio mecánico de triage por diseño — ver sección "Modo desatendido" — pero eso no lo convierte en gate único: cualquiera de los tres es suficiente, y `blocker` o sistémico solos también curan.)
 - **Drafting a "philosophical" rule instead of an enforceable one.** "Code should be readable" is a wish, not a rule.
 - **Replacing the regression test with the harness rule.** Both should exist — the test asserts the specific case is fixed, the rule prevents the class of cases from returning.
-- **Letting AI write the logic structural test.** The skill drafts, the human owns approval.
+- **Letting AI write the logic structural test.** The skill drafts, the human owns approval. (Modo desatendido es la excepción documentada: el agente aplica sin aprobación por ítem — ver sección "Modo desatendido" — pero conserva el paso de verificación que la regla dispara antes de comitear.)
 - **Appending raw entries to CONSTITUTION.md / AGENTS.md** without merging/pruning — these docs are delivered every session and must stay bounded.
 - **Curating agent-style lessons into CLAUDE.md.** Agent lessons and wins go to `AGENTS.md` (every agent reads it), never `CLAUDE.md` (Claude-specific).
 - **Skipping the `awm ledger archive` step.** The next session should start with a clean ledger; always archive before closing.
