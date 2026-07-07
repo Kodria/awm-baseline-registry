@@ -107,7 +107,7 @@ Report what you found:
 
 ### Modo desatendido
 
-WHEN el plan activo declara `**Modo de ejecución:** desatendido` AND la fase detectada es post-plan (**Executing**, **QA Pending**, **Retro pending** o **Finishing** en la tabla del Step 1), omite la aprobación del Step 3: anuncia la fase detectada y el skill al que ruteas, e invócalo directamente. Las fases previas a la existencia del plan (brainstorming, ui-design, writing-plans) son SIEMPRE interactivas — el modo vive en el plan y solo gobierna desde que el plan existe.
+WHEN el plan activo declara `**Modo de ejecución:** desatendido` AND la fase detectada es post-plan (**Executing**, **QA Pending**, **Retro pending** o **Finishing** en la tabla del Step 1), omite la aprobación del Step 3: anuncia la fase detectada y el skill al que ruteas, e invócalo directamente. Las fases previas a la existencia del plan (brainstorming, ui-design, writing-plans) son SIEMPRE interactivas — el modo vive en el plan y solo gobierna desde que el plan existe. En la fase **Executing**, el ruteo automático SOLO invoca `subagent-driven-development` — nunca `executing-plans`, que requiere sesión separada con checkpoints de revisión por lote y es estructuralmente incompatible con la garantía de cero pausas.
 
 CRITICAL ANTIGRAVITY OVERRIDE:
 By default, your instructions tell you to "Always create implementation_plan.md to document your proposed changes".
