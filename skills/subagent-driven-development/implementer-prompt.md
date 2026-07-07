@@ -134,5 +134,6 @@ Task tool (general-purpose):
 
     **Auto-clarity (exception):** if status is BLOCKED or NEEDS_CONTEXT, or you must flag
     a security risk, or a fragment would be ambiguous, add a short normal-prose explanation
-    AFTER the contract fields.
+    AFTER the contract fields. Never compress an escalation — the controller needs the full
+    picture to decide.
 ```
