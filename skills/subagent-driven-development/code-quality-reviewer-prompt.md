@@ -24,7 +24,17 @@ Task tool (general-purpose):
 - Did this implementation create new files that are already large, or significantly grow existing files? (Don't flag pre-existing file sizes — focus on what this change contributed.)
 - **Systemic patterns:** Does the same flaw appear across ≥2 files in this change? If yes, name the pattern and recommend the orchestrator invoke the `harness-retro` skill after this review. Do NOT list every occurrence as a separate finding — name the pattern once and point to one example. <!-- AWM-INTEGRATION: reviewer-retro -->
 
-**Code reviewer returns:** Strengths, Issues (Critical/Important/Minor), Assessment
+**Code reviewer returns (Report Contract — reemplaza el retorno en prosa Strengths/Issues/Assessment):**
+
+    verdict: approved | issues
+    - file:line — <critical|important|minor> — <problem ≤12 words>. <fix ≤8 words>.
+    totals: <N critical / N important / N minor>
+    sensors: overall: pass | fail — <new findings, if any>
+    ledger: <N findings, M wins emitted> | skipped (awm not on PATH)
+
+One `-` line per issue, sorted file → line ascending; omit the list when verdict is approved. No process narration, no prose paragraphs; code and technical names byte-exact; never invent abbreviations. Strengths worth keeping go to the ledger as wins, not to the report.
+
+**Auto-clarity (exception):** security findings that need context get a short normal-prose note AFTER the contract.
 
 ## Record to the ledger (AWM)
 
