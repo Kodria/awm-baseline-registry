@@ -1,5 +1,7 @@
 # Modo Desatendido + Contratos de Salida Implementation Plan
 
+<!-- awm-qa-complete: 2026-07-07 -->
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Formalizar el modo de ejecución desatendida como campo estructurado del plan (leído por 5 skills) y adoptar contratos de salida compactos en los prompt templates de subagentes.
