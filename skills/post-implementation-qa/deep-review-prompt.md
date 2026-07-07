@@ -127,6 +127,11 @@ If no issues found:
 { "findings": [], "summary": "No issues found on this track/lens." }
 ```
 
+Length limits (compact output — the controller's context pays for every word):
+- `title` ≤ 12 words. `detail` ≤ 25 words. `summary` one line.
+- `detail` must NOT repeat `evidence` — state the what/where once.
+- No filler, no hedging, fragments OK. Code, error strings, and technical names byte-exact.
+
 Severity guide:
 - blocker: prevents correct function or violates a core requirement / the robustness floor
 - important: degraded behavior, missing requirement, could cause real problems

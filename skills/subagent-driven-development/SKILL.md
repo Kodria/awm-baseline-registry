@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.2.0"
+version: "1.3.0"
 description: Use when executing implementation plans with independent tasks in the current session
 ---
 
@@ -13,6 +13,20 @@ Execute plan by dispatching fresh subagent per task, with two-stage review after
 **Core principle:** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
 
 **Continuous execution:** Do not pause to check in with your human partner between tasks. Execute all tasks from the plan without stopping. The only reasons to stop are: BLOCKED status you cannot resolve, ambiguity that genuinely prevents progress, or all tasks complete. "Should I continue?" prompts and progress summaries waste their time — they asked you to execute the plan, so execute it.
+
+## Modo de ejecución (lectura del campo)
+
+Al arrancar, localiza el plan activo (`docs/plans/*-plan.md` de la rama actual) y lee su línea `**Modo de ejecución:**`:
+
+- Ausente o `interactivo` → modo interactivo (default): comportamiento estándar de este skill.
+- `desatendido` → aplica la sección **Modo desatendido** de este skill.
+- Cualquier otro valor → trátalo como `interactivo` y avisa al usuario: "Valor inválido en `Modo de ejecución`: `<valor>` — usando modo interactivo."
+
+El modo desatendido quita pausas, no controles: los gates (sensor, ledger, reconciliation, anti-bias, drift plan-vs-código) corren idénticos en ambos modos.
+
+### Modo desatendido
+
+La ejecución continua entre tareas es el comportamiento default en AMBOS modos (no cambia). WHEN el modo es `desatendido`, lo único que cambia es la TERMINATION_PHASE: no preguntes al usuario si continuar con el cierre — devuelve el control al orquestador, que rutea la fase siguiente automáticamente. IF un subagente reporta BLOCKED irresoluble o hay ambigüedad que impide el progreso, THEN detente y escala al usuario igual que en modo interactivo — BLOCKED nunca se salta.
 
 ## When to Use
 
@@ -247,11 +261,13 @@ Once all tasks are complete and the final code review is approved, you have **on
 
 > **Why not skip it:** The final code reviewer within this skill checks code quality. `post-implementation-qa` checks Track A fidelity (plan-vs-implementation, ID-driven) and Track B quality (robustness/logic/tests lenses) — a different review class that this skill's code reviewer does not perform. Skipping it means the branch reaches `finishing-a-development-branch` without a plan-vs-implementation audit.
 
-Your sequence — execute in order, do not skip:
+Your sequence — execute steps 1-2 in order, then branch by mode at step 3:
 1. **Invoke `post-implementation-qa`** via the Skill tool. It runs inline in this session: it reads the plan, diffs the branch, dispatches its own review subagent, runs the fix loop if needed, and adds `<!-- awm-qa-complete -->` to the plan. Let it complete fully before continuing.
 2. After QA completes, report a summary of all implemented tasks and the QA verdict.
-3. Ask the user: *"Do you want to continue with the branch-closing phase? If you use `development-process`, the orchestrator will evaluate the project state and propose the next step."*
-4. Wait for confirmation. Do NOT invoke `finishing-a-development-branch` automatically.
+3. Then, depending on the plan's `**Modo de ejecución:**` field (mutually exclusive — apply only the one that matches):
+   - **Modo interactivo:** Ask the user: *"Do you want to continue with the branch-closing phase? If you use `development-process`, the orchestrator will evaluate the project state and propose the next step."* Wait for confirmation.
+   - **Modo desatendido** (el plan declara `**Modo de ejecución:** desatendido`): omite la pregunta — anuncia que la ejecución terminó y devuelve el control al orquestador (`development-process`), que rutea automáticamente.
+4. In both modes: do NOT invoke `finishing-a-development-branch` directly from this skill.
 
 ## Advantages
 

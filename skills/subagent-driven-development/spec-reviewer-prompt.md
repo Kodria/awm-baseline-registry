@@ -64,9 +64,17 @@ Task tool (general-purpose):
     list MUST cite concrete evidence (failing test / sensor rule ID / `file:line`);
     drop any finding you cannot anchor.
 
-    Report:
-    - ✅ Spec compliant (if everything matches after code inspection)
-    - ❌ Issues found: [list specifically what's missing or extra, with file:line references]
+    ## Report Contract
+
+    Report using EXACTLY this format. No prose paragraphs, no process narration. Code and technical names byte-exact; never invent abbreviations.
+
+        verdict: compliant | issues
+        - <missing|extra|misread> — <R# or plan section> — file:line — <≤12 words>
+        ledger: <N findings, M wins emitted> | skipped (awm not on PATH)
+
+    One `-` line per issue; omit the issue list when verdict is compliant. Every line must carry its evidence anchor (file:line or sensor rule ID).
+
+    **Auto-clarity (exception):** security risks or anything a fragment would make ambiguous get a short normal-prose note AFTER the contract.
 ```
 
 ## Record to the ledger (AWM)

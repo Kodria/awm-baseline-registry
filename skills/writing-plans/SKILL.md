@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "1.1.0"
+version: "1.2.1"
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
 
@@ -58,8 +58,29 @@ This structure informs the task decomposition. Each task should produce self-con
 
 **Tech Stack:** [Key technologies/libraries]
 
+**Modo de ejecución:** interactivo
+
 ---
 ```
+
+### Modo de ejecución
+
+El campo `**Modo de ejecución:**` acepta `interactivo` (default) o `desatendido`. Escribe `desatendido` **solo si el usuario lo pidió explícitamente** para esta corrida. Si el campo queda ausente, los skills lectores asumen `interactivo`.
+
+WHEN el modo es `desatendido`, incluye este blockquote canónico inmediatamente después de la línea del campo (texto literal, no lo parafrasees — es la única fuente del mandato):
+
+```markdown
+> Mandato de ejecución desatendida: ejecución completa sin pausas de check-in
+> entre tareas, ni de confirmación entre fases (development-process rutea
+> automáticamente y subagent-driven-development no pregunta si continuar con
+> el cierre). harness-retro triagea con criterio propio del agente (solo valor
+> real, recurrente o sistémico — descarta el resto sin preguntar).
+> post-implementation-qa corrige TODOS los hallazgos que surjan, no solo algunos.
+> finishing-a-development-branch crea el PR directamente (opción "push + PR"),
+> sin presentar el menú de 4 opciones.
+```
+
+Los skills lectores (`development-process`, `subagent-driven-development`, `post-implementation-qa`, `harness-retro`, `finishing-a-development-branch`) parsean únicamente la línea del campo; el blockquote es para humanos y para robustez ante compactación de contexto. El modo desatendido quita pausas, no controles: todos los gates corren igual.
 
 ## Task Structure
 
@@ -140,6 +161,8 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 ```
 
 *(Tier: the matrix applies to multi-task plans tied to a `## Requirements` spec. A trivial single-file diff with no requirements section skips it.)*
+
+**Matrix precision (verification must match the claim, not just a shared marker):** the `Test(s)` column must cite a verification step that actually proves THAT requirement's specific claim — not a generic marker shared with other requirements. A `grep` for a broad, reused phrase (e.g. counting how many times "Modo desatendido" appears in a file) proves the phrase exists somewhere, not that a specific requirement's semantic claim holds (e.g. that BLOCKED escalation is never skipped, or that an invalid field value falls back safely). This was caught in a QA pass where several matrix rows cited generic-marker greps for requirements whose actual claim needed a phrase-specific check. When a requirement makes a specific behavioral claim, either grep for language that anchors that specific claim, or note explicitly that the check relies on manual reading rather than an automated proxy.
 
 **2. Placeholder scan:** Search your plan for red flags — any of the patterns from the "No Placeholders" section above. Fix them.
 

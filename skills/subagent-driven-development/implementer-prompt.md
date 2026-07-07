@@ -112,18 +112,28 @@ Task tool (general-purpose):
 
     If you find issues during self-review, fix them now before reporting.
 
-    ## Report Format
+    ## Report Contract
 
-    When done, report:
-    - **Status:** DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
-    - What you implemented (or what you attempted, if blocked)
-    - What you tested and test results
-    - **Sensor results** (if `.awm/sensors.json` exists): the `awm sensors run` `overall` and any new findings you fixed
-    - Files changed
-    - Self-review findings (if any)
-    - Any issues or concerns
+    Report using EXACTLY these fields, one per line, in this order. No process narration, no
+    prose paragraphs. Fragments OK. Code, commands, error strings, and technical names
+    byte-exact. Never invent abbreviations (cfg/impl/req).
+
+        status: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
+        files: <path — change ≤10 words>          (one line per file changed)
+        tests: <N pass / M fail — command run>
+        sensors: overall: pass | fail | not_certified — new findings fixed: N
+        self-review: clean | <≤3 bullets>
+        concerns: none | <≤3 bullets>
+
+    If `.awm/sensors.json` does not exist, report `sensors: not_certified — no sensors
+    configured` (never claim "sensors pass" without the file).
 
     Use DONE_WITH_CONCERNS if you completed the work but have doubts about correctness.
     Use BLOCKED if you cannot complete the task. Use NEEDS_CONTEXT if you need
     information that wasn't provided. Never silently produce work you're unsure about.
+
+    **Auto-clarity (exception):** if status is BLOCKED or NEEDS_CONTEXT, or you must flag
+    a security risk, or a fragment would be ambiguous, add a short normal-prose explanation
+    AFTER the contract fields. Never compress an escalation — the controller needs the full
+    picture to decide.
 ```

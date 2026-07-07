@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "2.0.1"
+version: "2.1.0"
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
 
@@ -26,6 +26,24 @@ description: Use as the terminal learning phase of development-process — reads
 - The ledger is empty, there are no manual observations, **and the session genuinely produced zero findings** — exit fast and add the `awm-retro-complete` marker.
 
 **Empty-ledger consistency check (mandatory before fast-exit):** an empty ledger is only legitimate if nothing was found during the cycle. Cross-check against the session evidence: did the spec/quality reviewers report issues? Did `post-implementation-qa` present findings (Track A/B in the plan or QA report)? If findings were reported anywhere but the ledger is empty, the learning pipeline is broken — **that IS the retro finding**. Do not fast-exit: trace where the `awm ledger add` instruction was dropped (inline prompt instead of template? missing gate?), cure the gap in the responsible skill, and log it. An empty ledger after a cycle with findings is contradictory evidence, never a clean bill.
+
+## Modo de ejecución (lectura del campo)
+
+Al arrancar, localiza el plan activo (`docs/plans/*-plan.md` de la rama actual) y lee su línea `**Modo de ejecución:**`:
+
+- Ausente o `interactivo` → modo interactivo (default): comportamiento estándar de este skill.
+- `desatendido` → aplica la sección **Modo desatendido** de este skill.
+- Cualquier otro valor → trátalo como `interactivo` y avisa al usuario: "Valor inválido en `Modo de ejecución`: `<valor>` — usando modo interactivo."
+
+El modo desatendido quita pausas, no controles: los gates (sensor, ledger, reconciliation, anti-bias, drift plan-vs-código) corren idénticos en ambos modos.
+
+### Modo desatendido
+
+WHEN el modo es `desatendido`, el paso 2 del checklist no presenta ítem por ítem: triagea con criterio propio.
+
+- **Cura** (estructuraliza en su target según la clase) los hallazgos que cumplan al menos uno: recurrentes (`awm ledger recurring --min 2`), severidad `blocker`, o sistémicos (mismo patrón en ≥2 archivos/tareas).
+- **Descarta** el resto SIN preguntar, documentando cada descarte con su razón en `docs/harness-retros.md` (sección "Descartes").
+- Los pasos 3-10 corren idénticos: clasificar, draftear la regla, curar (merge-and-prune), aplicar, **verificar que la regla dispara**, commit, log, `awm ledger archive` y marker `awm-retro-complete`.
 
 ## Checklist
 
@@ -100,7 +118,9 @@ Present every ledger item — findings AND wins — grouped by signature with it
 - **Record as AGENTS.md lesson/win** → reinforcing working patterns
 - **Dismiss** → note the reason and move on
 
-Do not apply anything without explicit user approval per item. Do not batch-apply.
+**Modo interactivo:** do not apply anything without explicit user approval per item. Do not batch-apply.
+
+**Modo desatendido:** aplica el triage con criterio propio definido en la sección "Modo desatendido" — sin aprobación por ítem, con descartes documentados.
 
 ### 3. Classify
 
@@ -194,6 +214,7 @@ Append (or create) `docs/harness-retros.md`:
 - **Occurrences (ledger count):** N
 - **Rule:** path:line of the new rule
 - **Sensor:** which sensor catches it (typecheck | lint | security | structural-test | constitution | agents-md)
+- **Descartes (modo desatendido):** <signature — razón> | ninguno
 ```
 
 ### 10. Close the retro
@@ -213,10 +234,10 @@ Then add the `awm-retro-complete` marker to the active plan (first line after th
 ## Anti-patterns
 
 - **Asking "where did this fail before?" instead of reading the ledger.** The ledger has the answer — use `awm ledger list` and `awm ledger recurring`.
-- **Treating recurrence count as a hard gate.** Count is a signal to weigh, not a threshold to pass. A single high-severity finding may be worth structuralizing.
+- **Treating recurrence count as a hard gate.** Count is a signal to weigh, not a threshold to pass. A single high-severity finding may be worth structuralizing. (Modo desatendido usa recurrencia/severidad/sistemicidad como criterio mecánico de triage por diseño — ver sección "Modo desatendido" — pero eso no lo convierte en gate único: cualquiera de los tres es suficiente, y `blocker` o sistémico solos también curan.)
 - **Drafting a "philosophical" rule instead of an enforceable one.** "Code should be readable" is a wish, not a rule.
 - **Replacing the regression test with the harness rule.** Both should exist — the test asserts the specific case is fixed, the rule prevents the class of cases from returning.
-- **Letting AI write the logic structural test.** The skill drafts, the human owns approval.
+- **Letting AI write the logic structural test.** The skill drafts, the human owns approval. (Modo desatendido es la excepción documentada: el agente aplica sin aprobación por ítem — ver sección "Modo desatendido" — pero conserva el paso de verificación que la regla dispara antes de comitear.)
 - **Appending raw entries to CONSTITUTION.md / AGENTS.md** without merging/pruning — these docs are delivered every session and must stay bounded.
 - **Curating agent-style lessons into CLAUDE.md.** Agent lessons and wins go to `AGENTS.md` (every agent reads it), never `CLAUDE.md` (Claude-specific).
 - **Skipping the `awm ledger archive` step.** The next session should start with a clean ledger; always archive before closing.
