@@ -86,7 +86,9 @@ Formato en el header del plan (template de `writing-plans`):
 **Modo de ejecución:** desatendido
 
 > Mandato de ejecución desatendida: ejecución completa sin pausas de check-in
-> entre tareas. harness-retro triagea con criterio propio del agente (solo valor
+> entre tareas, ni de confirmación entre fases (development-process rutea
+> automáticamente y subagent-driven-development no pregunta si continuar con
+> el cierre). harness-retro triagea con criterio propio del agente (solo valor
 > real, recurrente o sistémico — descarta el resto sin preguntar).
 > post-implementation-qa corrige TODOS los hallazgos que surjan, no solo algunos.
 > finishing-a-development-branch crea el PR directamente (opción "push + PR"),
