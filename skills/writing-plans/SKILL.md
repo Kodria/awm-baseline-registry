@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "1.2.0"
+version: "1.2.1"
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
 
@@ -161,6 +161,8 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 ```
 
 *(Tier: the matrix applies to multi-task plans tied to a `## Requirements` spec. A trivial single-file diff with no requirements section skips it.)*
+
+**Matrix precision (verification must match the claim, not just a shared marker):** the `Test(s)` column must cite a verification step that actually proves THAT requirement's specific claim — not a generic marker shared with other requirements. A `grep` for a broad, reused phrase (e.g. counting how many times "Modo desatendido" appears in a file) proves the phrase exists somewhere, not that a specific requirement's semantic claim holds (e.g. that BLOCKED escalation is never skipped, or that an invalid field value falls back safely). This was caught in a QA pass where several matrix rows cited generic-marker greps for requirements whose actual claim needed a phrase-specific check. When a requirement makes a specific behavioral claim, either grep for language that anchors that specific claim, or note explicitly that the check relies on manual reading rather than an automated proxy.
 
 **2. Placeholder scan:** Search your plan for red flags — any of the patterns from the "No Placeholders" section above. Fix them.
 
