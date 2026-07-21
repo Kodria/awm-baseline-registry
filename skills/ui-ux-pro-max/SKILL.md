@@ -37,13 +37,14 @@ For the full rule list per category (all ~98 UX guidelines with rationale), read
 
 ## Running the search tool
 
-The search script lives inside this skill's own directory, not the project directory. Resolve the skill root once per session (first match wins — AWM installs are directory symlinks, so executing through them works; no `readlink` needed):
+The search script lives inside this skill's own directory, not the project directory. Resolve the skill root once per session (first match wins — AWM installs are directory symlinks, so executing through them works; no `readlink` needed). The two relative candidates resolve against whatever directory the agent is currently in (typically the project root) — that's why `$HOME/.claude/...` is checked first, before any cwd-dependent path:
 
 ```bash
 UIPRO=""
 for d in "$HOME/.claude/skills/ui-ux-pro-max" ".claude/skills/ui-ux-pro-max" ".agents/skills/ui-ux-pro-max"; do
   [ -f "$d/scripts/search.py" ] && UIPRO="$d" && break
 done
+[ -z "$UIPRO" ] && { echo "ui-ux-pro-max not found in any known install location" >&2; exit 1; }
 python3 "$UIPRO/scripts/search.py" "<query>" --domain <domain>
 ```
 
