@@ -3,7 +3,7 @@
 Use this template when dispatching the QA review subagents in `post-implementation-qa`. The review runs in two tracks:
 
 - **Track A — Fidelity:** one subagent, plan-anchored, driven by requirement IDs.
-- **Track B — Quality:** **one subagent per lens** (Robustness/Security, Logic correctness, Tests), each in isolated context, plan-agnostic.
+- **Track B — Quality:** **one subagent per lens** (Robustness/Security, Logic correctness, Tests, and — conditionally, for UI diffs with `.stitch/designs/` artifacts — Design Fidelity), each in isolated context, plan-agnostic.
 
 Build each subagent's prompt by combining the **common anti-bias header** with the relevant **track/lens section** below, then injecting the context (plan + requirement IDs, git diff, sensor output).
 
@@ -98,6 +98,22 @@ Look for:
 Each finding cites the test file (`file:line`) or the uncovered requirement ID.
 ```
 
+## Track B — Design Fidelity lens subagent
+
+*(Conditional — only dispatch when the diff touches UI and `.stitch/designs/` artifacts exist for the affected screen(s).)*
+
+```
+## Your Job (Track B — Design Fidelity lens)
+
+Only dispatch this lens when the diff touches UI and `.stitch/designs/` artifacts exist for the affected screen(s).
+
+Invoke the `design-fidelity` skill's comparison procedure (Steps 1-4: load design, build element inventory, capture implementation, compare element by element) for each affected screen. Each element with status `missing`/`diverged` is a finding — map severity per design-fidelity's rubric (high/medium/low → blocker/important/minor). Elements marked `present` are not findings.
+
+If `design-fidelity`'s verdict is `NOT_CERTIFIED` (no browser evidence), report ONE finding at `important` severity stating certification could not be completed — do not silently omit this.
+
+Each finding cites the design artifact path + implementation screenshot path (or source-code location in the no-browser fallback) as evidence.
+```
+
 ---
 
 ## Output Format (append to EVERY subagent — return ONLY this JSON, no preamble)
@@ -120,7 +136,7 @@ Each finding cites the test file (`file:line`) or the uncovered requirement ID.
 }
 ```
 
-For Track B subagents set `"track": "B"` and `"lens"` to `robustness` | `logic` | `tests`, and id-prefix accordingly (`B1`, `B2`, …).
+For Track B subagents set `"track": "B"` and `"lens"` to `robustness` | `logic` | `tests` | `design-fidelity`, and id-prefix accordingly (`B1`, `B2`, …).
 
 If no issues found:
 ```
