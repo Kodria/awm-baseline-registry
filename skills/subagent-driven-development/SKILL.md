@@ -160,6 +160,15 @@ The per-branch ledger (`awm ledger`) is what `harness-retro` learns from. Review
 
 A clean review with genuinely zero findings and zero wins is the only case where no ledger growth is acceptable.
 
+## Design Fidelity Propagation Gate (AWM)
+
+<!-- AWM-INTEGRATION: subagent-design-gate -->
+
+If the plan task declared `**Skills:**` or `**Design artifacts:**`, this is not complete until the implementer's report shows real engagement with both — matching the pattern of the Sensor and Ledger gates above.
+
+1. **In the implementer prompt:** the Required Skills and Design Artifacts sections already instruct the implementer to invoke declared skills and confirm design elements before reporting DONE, populating the report's new `design:` field.
+2. **At the controller, before marking the task complete:** if the task declared `**Design artifacts:**` and the report's `design:` field is missing, or blank, or contradicts the diff (e.g. says "3/3 confirmed" but the diff shows no corresponding UI changes), do not mark the task complete — send it back. If the task declared `**Skills:**` and `concerns` doesn't mention the skill tool being unavailable, but nothing in the diff/report shows evidence the skill was actually invoked, treat this like the Ledger Gate's trust-but-verify principle — ask the implementer to confirm.
+
 ## Reconciliation Gate (AWM)
 
 <!-- AWM-INTEGRATION: subagent-reconciliation-gate -->
@@ -170,6 +179,7 @@ Before marking a task complete, the controller reconciles the subagent's report 
 1. The task's requirement IDs in the plan — is each one actually implemented and tested in the diff, not just claimed in the report?
 2. Open `- [ ]` items in the active plan — did the report close what it claimed?
 3. `awm ledger list` — do the findings/wins the report mentions actually exist as entries?
+4. The task's `**Skills:**` / `**Design artifacts:**` declarations — does the report's `design:` field and diff satisfy the Design Fidelity Propagation Gate above?
 
 If the report and the file-derived state disagree, the **files win** — send the task back, do not mark complete on the strength of the summary alone. (This is the per-subagent counterpart of the deterministic SessionStart re-anchor that recovers the main agent's state after a compaction.)
 
