@@ -94,7 +94,7 @@ _Requirements: R1.1, R2.3_
 - Modify: `exact/path/to/existing.py:123-145`
 - Test: `tests/exact/path/to/test.py`
 
-**Skills:** frontend-craft, ui-ux-pro-max            ← skills the implementer MUST invoke (single line, comma-separated — omit line if none)
+**Skills:** frontend-craft            ← skills the implementer MUST invoke; single line, comma-separated (add ui-ux-pro-max only for the standalone case below — omit line if none)
 **Design artifacts:** .stitch/designs/login.html, .stitch/designs/login.png   ← single line, comma-separated (UI tasks only — omit line if not applicable)
 
 - [ ] **Step 1: Write the failing test**
