@@ -13,7 +13,7 @@ Design UI screens using Google Stitch via MCP. This skill reads the `## UI Scree
 **Announce at start:** "I'm using the ui-design skill to design UI screens with Stitch."
 
 <HARD-GATE>
-Do NOT write any implementation code. This skill only produces visual designs in Stitch and updates the design doc with references. Implementation happens later in the pipeline via writing-plans → execution.
+Do NOT write any implementation code. This skill only produces visual designs in Stitch, downloads their artifacts, and updates the design doc with artifact paths. Implementation happens later in the pipeline via writing-plans → execution.
 </HARD-GATE>
 
 ## Checklist
