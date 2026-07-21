@@ -16,6 +16,23 @@ Task tool (general-purpose):
 
     [Scene-setting: where this fits, dependencies, architectural context]
 
+    ## Required Skills
+
+    This task declares required skills: [list from the plan task's **Skills:** field — omit this
+    section entirely if the task declares none].
+    Invoke each one with the Skill tool BEFORE implementing, and follow it. If the Skill tool
+    is unavailable in your context, say so in your report's `concerns` — do NOT silently skip
+    the skills.
+
+    ## Design Artifacts (UI tasks only)
+
+    Ground truth for this screen: [paths from the plan task's **Design artifacts:** field].
+    - Read the PNG with the Read tool — it is an image; LOOK at it before writing any code.
+    - Read the design HTML for structure, content and styling detail.
+    - Implement to match. Before reporting DONE, list every major element visible in the
+      design (header, search, cards, stats, …) and confirm each one exists in your
+      implementation. Any element you cannot implement goes in `concerns`.
+
     ## Before You Begin
 
     If you have questions about:

@@ -181,6 +181,8 @@ Dispatch prompts are **built from these templates, not written from memory** —
 - `./spec-reviewer-prompt.md` - Dispatch spec compliance reviewer subagent
 - `./code-quality-reviewer-prompt.md` - Dispatch code quality reviewer subagent
 
+When the plan task declares `**Skills:**` or `**Design artifacts:**`, copy both fields verbatim into the corresponding template sections (Required Skills / Design Artifacts). Omit the sections for tasks that do not declare them.
+
 ## Example Workflow
 
 ```
