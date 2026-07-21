@@ -1,7 +1,7 @@
 ---
 name: design-fidelity
 version: "1.0.0"
-description: Use after implementing a UI screen that has committed design artifacts (.stitch/designs/), or when the user asks to verify an implementation against its design. Compares the running implementation against the design PNG/HTML element by element, drives a fix loop until convergence. Also dispatched by post-implementation-qa as a conditional lens for UI diffs.
+description: Use after implementing a UI screen that has committed design artifacts (.stitch/designs/), or when the user asks to verify an implementation against its design. Compares the running implementation against the design PNG/HTML element by element, drives a fix loop until convergence. Intended for future dispatch by post-implementation-qa as a conditional lens for UI diffs, once registered there.
 ---
 
 # Design Fidelity Gate
