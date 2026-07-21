@@ -1,7 +1,7 @@
 ---
 name: ui-design
-version: "1.0.0"
-description: "Design UI screens using Google Stitch. Reads screens from the design doc's ## UI Screens table, generates them one by one via Stitch MCP, iterates with user feedback, and updates the design doc with Stitch references. Invoke after brainstorming when UI Screens section exists with pending screens."
+version: "2.0.0"
+description: "Design UI screens using Google Stitch with layered access (MCP, CLI via STITCH_API_KEY, or offline fallback). Reads screens from the design doc's ## UI Screens table, generates them one by one, downloads HTML+PNG artifacts to .stitch/designs/, and updates the design doc with artifact paths. Invoke after brainstorming when UI Screens section exists with pending screens."
 ---
 
 # UI Design with Google Stitch
@@ -58,6 +58,18 @@ digraph ui_design {
 ```
 
 **The terminal state is invoking writing-plans.** Do NOT invoke any other skill.
+
+---
+
+## Step 0: Access Detection
+
+Decide the access layer BEFORE loading the design doc, and announce it to the user. Never abort the phase because Stitch is unreachable.
+
+1. **Layer 1 — Stitch MCP:** if the Stitch MCP tools (`list_projects`, `generate_screen_from_text`, …) are available in your tool list → use them for every Stitch call in this skill. Announce: *"Stitch access: MCP (layer 1)."*
+2. **Layer 2 — Stitch CLI:** if no MCP but `STITCH_API_KEY` is set and `npx` exists (`[ -n "$STITCH_API_KEY" ] && command -v npx`) → run every Stitch call through Bash: `npx -y @_davideast/stitch-mcp tool <tool_name> <args>`, using the exact syntax from the CLI reference table below. Same logical flow, same tool names. Announce: *"Stitch access: CLI via STITCH_API_KEY (layer 2)."*
+3. **Layer 3 — Offline:** neither available → follow the **Offline Mode** section of this skill. Announce: *"Stitch access: none — offline mode (layer 3). Design system and mockups will be generated locally."*
+
+**Mid-flow degradation:** if a layer-2 CLI call fails (non-zero exit, auth error), announce the failure and degrade to layer 3 for the remaining screens. Never degrade silently, and never mark the phase complete pretending Stitch output exists.
 
 ---
 
@@ -232,3 +244,28 @@ After committing the updated design doc:
 - `variantCount`: 1-5 (default 3)
 - `creativeRange`: `REFINE` | `EXPLORE` | `REIMAGINE`
 - `aspects`: `LAYOUT` | `COLOR_SCHEME` | `IMAGES` | `TEXT_FONT` | `TEXT_CONTENT`
+
+---
+
+## Stitch CLI Reference (Layer 2)
+
+`STITCH_API_KEY` is generated in Stitch → Settings → API key. Export it before invoking the CLI (e.g. `set -a; source .env; set +a`).
+
+All calls use the `tool` subcommand with `-d '<json>'` for arguments (like `curl -d`) and `-o json` for parseable output. Never use positional/per-field flags, and never use `-o raw` (not valid JSON — `util.inspect` format).
+
+| Tool | Exact command | Notes |
+|------|----------------|-------|
+| `list_projects` | `npx -y @_davideast/stitch-mcp tool list_projects -o json` | No `-d` needed — all fields optional. |
+| `create_project` | `npx -y @_davideast/stitch-mcp tool create_project -d '{"title":"<title>"}' -o json` | `title` optional. |
+| `get_project` | `npx -y @_davideast/stitch-mcp tool get_project -d '{"name":"projects/<projectId>"}' -o json` | `name` required, format `projects/{project}`. |
+| `list_design_systems` | `npx -y @_davideast/stitch-mcp tool list_design_systems -d '{"projectId":"<projectId>"}' -o json` | `projectId` marked optional in the schema but **required in practice** — omitting it returns `Error: Tool Call Failed [list_design_systems]: Request contains an invalid argument.` |
+| `create_design_system` | `npx -y @_davideast/stitch-mcp tool create_design_system -d '{"designSystem":{"displayName":"<name>","theme":"<theme-object>"},"projectId":"<projectId>"}' -o json` | `designSystem` (object with `displayName` + `theme`) required; `projectId` optional (empty = global asset). `<theme-object>` is a placeholder — substitute a real `DesignTheme` JSON object (e.g. `{"bodyFont":"INTER","colorMode":"DARK",...}`), not the literal string. The CLI does not validate client-side before sending, so a missing `designSystem` still reaches the server and can create an empty design system asset — always pass it. |
+| `generate_screen_from_text` | `npx -y @_davideast/stitch-mcp tool generate_screen_from_text -d '{"projectId":"<projectId>","prompt":"<prompt>","deviceType":"MOBILE"}' -o json` | `projectId` + `prompt` required; `deviceType`/`designSystem`/`modelId` optional. |
+| `get_screen` | `npx -y @_davideast/stitch-mcp tool get_screen -d '{"name":"projects/<projectId>/screens/<screenId>"}' -o json` | Only `name` is needed (`projects/{p}/screens/{s}`) even though the schema also lists `projectId`/`screenId` as required — those are deprecated/legacy. Response includes `htmlCode.downloadUrl` and `screenshot.downloadUrl`, same as MCP. |
+| `edit_screens` | `npx -y @_davideast/stitch-mcp tool edit_screens -d '{"projectId":"<projectId>","selectedScreenIds":["<screenId1>","<screenId2>"],"prompt":"<prompt>"}' -o json` | `projectId`, `selectedScreenIds` (real JSON array, not a string), `prompt` required. |
+| `generate_variants` | `npx -y @_davideast/stitch-mcp tool generate_variants -d '{"projectId":"<projectId>","selectedScreenIds":["<screenId>"],"prompt":"<prompt>","variantOptions":{"count":3}}' -o json` | `projectId`, `selectedScreenIds`, `prompt`, `variantOptions` (object) required. |
+| `apply_design_system` | `npx -y @_davideast/stitch-mcp tool apply_design_system -d '{"projectId":"<projectId>","assetId":"<designSystemAssetId>","selectedScreenInstances":[{"id":"<instanceId>","sourceScreen":"projects/<projectId>/screens/<screenId>"}]}' -o json` | `projectId`, `assetId`, `selectedScreenInstances` (array of `{id, sourceScreen}`) required. Source these pairs from `get_project`'s `screenInstances` field, filtering to entries that have `sourceScreen` (skip `DESIGN_SYSTEM_INSTANCE` entries, which use `sourceAsset` instead). |
+
+**Discovery shortcut:** `npx -y @_davideast/stitch-mcp tool <name> --schema` (no `-d`) prints the tool's argument schema plus an auto-generated `example` command — the cheapest way to confirm syntax for a tool not in this table, without spending a real call.
+
+**Error handling (R2.5):** `STITCH_API_KEY` invalid or missing produces different error text depending on the failure mode (HTTP 401 from the server vs. client-side validation before any network call), and exact wording is not guaranteed across CLI versions. Do not match specific error strings — treat **any** `Error:` in the CLI invocation's output (client-side, HTTP 401, or `Tool Call Failed [...]`) as a signal to degrade to Layer 3 (offline). Transport noise like `Stitch Transport Error: [DOMException [AbortError]...]` in stderr is not itself a failure signal if valid JSON still follows on stdout.
