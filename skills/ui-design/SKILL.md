@@ -8,7 +8,7 @@ description: "Design UI screens using Google Stitch with layered access (MCP, CL
 
 ## Overview
 
-Design UI screens using Google Stitch via MCP. This skill reads the `## UI Screens` table from an approved design doc, generates each screen in Stitch, iterates with the user until approved, and updates the design doc with Stitch references.
+Design UI screens using Google Stitch via MCP. This skill reads the `## UI Screens` table from an approved design doc, generates each screen in Stitch, iterates with the user until approved, downloads HTML+PNG artifacts to `.stitch/designs/`, and updates the design doc with artifact paths.
 
 **Announce at start:** "I'm using the ui-design skill to design UI screens with Stitch."
 
@@ -37,6 +37,7 @@ digraph ui_design {
     "Present to user" [shape=box];
     "User approves?" [shape=diamond];
     "Refine screen" [shape=box];
+    "Download artifacts (3e)" [shape=box];
     "Mark completed" [shape=box];
     "More screens?" [shape=diamond];
     "Update design doc" [shape=box];
@@ -49,7 +50,8 @@ digraph ui_design {
     "Present to user" -> "User approves?";
     "User approves?" -> "Refine screen" [label="no"];
     "Refine screen" -> "Present to user";
-    "User approves?" -> "Mark completed" [label="yes"];
+    "User approves?" -> "Download artifacts (3e)" [label="yes"];
+    "Download artifacts (3e)" -> "Mark completed";
     "Mark completed" -> "More screens?";
     "More screens?" -> "Next pending screen" [label="yes"];
     "More screens?" -> "Update design doc" [label="no"];
@@ -127,7 +129,9 @@ If a design system was created or exists, call `apply_design_system` after gener
 
 ### Step 2b: Design Intelligence (ui-ux-pro-max — all layers)
 
-Before creating the design system and before generating any screen, consult the `ui-ux-pro-max` skill (invoke it with the Skill tool if not yet loaded):
+**Execution order note:** this subsection is documented after Step 2's "Design system" prose for readability, but its consultation happens BEFORE any `create_design_system`/`update_design_system` call is actually made and before any screen is generated — go back and run it as the first thing you do inside Step 2, ahead of finalizing the design system described above, then return here for Step 3.
+
+Consult the `ui-ux-pro-max` skill (invoke it with the Skill tool if not yet loaded):
 
 1. Derive keywords from the design doc: product type + industry + tone (e.g. `"team management dashboard dark professional"`).
 2. Run its `--design-system` search with `--persist --output-dir <project-root>` so `design-system/<slug>/MASTER.md` is written as the token artifact.
@@ -186,19 +190,38 @@ Inform the user: *"Screen '{name}' approved. Moving to next screen..."* (or *"Al
 
 Immediately after the user approves a screen:
 
-1. Call `get_screen` for the approved screen; extract `htmlCode.downloadUrl` and `screenshot.downloadUrl`.
-2. Download both to the repo (create the directory on first use — and if `.gitignore` excludes `.stitch/`, surface it and resolve with the user before continuing):
+1. **Check `.gitignore` BEFORE downloading anything.** Both artifact directories must actually land in git — a silently ignored path defeats the whole artifact-first contract:
 
 ```bash
-mkdir -p .stitch/designs
-bash <skill-dir>/scripts/fetch-stitch.sh "<htmlCode.downloadUrl>" ".stitch/designs/<screen-slug>.html"
-bash <skill-dir>/scripts/fetch-stitch.sh "<screenshot.downloadUrl>=w1600" ".stitch/designs/<screen-slug>.png"
+mkdir -p .stitch/designs design-system
+git check-ignore -q .stitch/designs/ 2>/dev/null && echo ".stitch/ is gitignored — surface this to the user before continuing"
+git check-ignore -q design-system/ 2>/dev/null && echo "design-system/ is gitignored — surface this to the user before continuing"
+```
+
+If either check fires, **stop** — do not proceed to download or generate further screens. Tell the user explicitly, e.g. *"`.stitch/` is excluded by `.gitignore`, so approved-screen artifacts would never be committed. How do you want to resolve this — un-ignore the path, or choose a different artifact location?"* — and wait for their decision before continuing. A "surfaced" note alone (without stopping) is not sufficient.
+
+2. Resolve this skill's own directory once per session (mirrors the `ui-ux-pro-max` convention — AWM installs are directory symlinks, so executing through them works with no `readlink` needed):
+
+```bash
+UIDESIGN=""
+for d in "$HOME/.claude/skills/ui-design" ".claude/skills/ui-design" ".agents/skills/ui-design"; do
+  [ -f "$d/scripts/fetch-stitch.sh" ] && UIDESIGN="$d" && break
+done
+[ -z "$UIDESIGN" ] && { echo "ui-design skill not found in any known install location" >&2; exit 1; }
+```
+
+3. Call `get_screen` for the approved screen; extract `htmlCode.downloadUrl` and `screenshot.downloadUrl`.
+4. Download both to the repo:
+
+```bash
+bash "$UIDESIGN/scripts/fetch-stitch.sh" "<htmlCode.downloadUrl>" ".stitch/designs/<screen-slug>.html"
+bash "$UIDESIGN/scripts/fetch-stitch.sh" "<screenshot.downloadUrl>=w1600" ".stitch/designs/<screen-slug>.png"
 ```
 
 (The `=w{width}` suffix requests full resolution instead of a thumbnail. Use the design's device width: 1600 desktop, 800 mobile.)
 
-3. Verify both files exist and are non-empty (`ls -la .stitch/designs/`). If either download fails, retry once; if it still fails, the screen stays `pending` and you report the failure — do NOT mark it `completed`.
-4. Only approved screens get artifacts — never download discarded variants.
+5. Verify both files exist and are non-empty (`ls -la .stitch/designs/`). If either download fails, retry once; if it still fails, the screen stays `pending` — do NOT mark it `completed` — and output this exact message to the user: `"Could not download artifacts for screen '<name>' after retry — it remains pending. Error: <error>. You can retry manually or investigate the URL/network."`
+6. Only approved screens get artifacts — never download discarded variants.
 
 ---
 
