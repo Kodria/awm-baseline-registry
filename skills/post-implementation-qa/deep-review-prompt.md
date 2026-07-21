@@ -169,6 +169,11 @@ For each Track B finding (robustness / logic / tests):
 awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity finding --class <seguridad|logica|tests> --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>" --ref <file:line>
 ```
 
+For each Track B finding from the design-fidelity lens:
+```
+awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity finding --class structural --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>" --ref <design-artifact-path>:<implementation-screenshot-path>
+```
+
 For each invariant the implementation got **right** (a win worth reinforcing):
 ```
 awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity win --class <appropriate-class> --signature <short-slug> --severity info --desc "<one line>"

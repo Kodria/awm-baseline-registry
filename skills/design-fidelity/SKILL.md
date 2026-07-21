@@ -1,7 +1,7 @@
 ---
 name: design-fidelity
 version: "1.0.0"
-description: Use after implementing a UI screen that has committed design artifacts (.stitch/designs/), or when the user asks to verify an implementation against its design. Compares the running implementation against the design PNG/HTML element by element, drives a fix loop until convergence. Intended for future dispatch by post-implementation-qa as a conditional lens for UI diffs, once registered there.
+description: Use after implementing a UI screen that has committed design artifacts (.stitch/designs/), or when the user asks to verify an implementation against its design. Compares the running implementation against the design PNG/HTML element by element, drives a fix loop until convergence. Registered as a conditional Track B lens in post-implementation-qa, dispatched for UI diffs with committed design artifacts.
 ---
 
 # Design Fidelity Gate
@@ -76,7 +76,7 @@ The gate passes ONLY with verdict `CONVERGED` (all elements `present` or waived)
 
 **Standalone invocation:** produce the markdown report above (Step 5) for a human reader.
 
-**As a post-implementation-qa lens:** when this skill is registered as a QA lens (see `post-implementation-qa`'s lens table and `deep-review-prompt.md`'s Output Format — that wiring is a separate task, not part of this skill), the dispatching controller wraps Steps 1-4's comparison procedure with QA's standard JSON Output Format and ledger instructions. Each element with status `missing`/`diverged` becomes one finding: `"track": "B"`, a stable id (e.g. `F1`, `F2`, ...), severity mapped from this skill's high/medium/low scale to blocker/important/minor respectively, `"title"` the element name, `"detail"` the divergence description, `"evidence"` the file:line-equivalent (design artifact path + implementation screenshot path), `"reference"` the screen name. Elements marked `present` are not findings. A `CONVERGED` verdict with zero findings still emits the standard empty-case format.
+**As a post-implementation-qa lens:** this skill is registered as a conditional Track B QA lens (see `post-implementation-qa`'s lens table, its tier logic, and `deep-review-prompt.md`'s `lens` enum and Design Fidelity template block). The dispatching controller wraps Steps 1-4's comparison procedure with QA's standard JSON Output Format and ledger instructions. Each element with status `missing`/`diverged` becomes one finding: `"track": "B"`, `"lens": "design-fidelity"`, a stable id following the Track B convention (`B1`, `B2`, ...), severity mapped from this skill's high/medium/low scale to blocker/important/minor respectively, `"title"` the element name, `"detail"` the divergence description, `"evidence"` the file:line-equivalent (design artifact path + implementation screenshot path), `"reference"` the screen name. Elements marked `present` are not findings. A `CONVERGED` verdict with zero findings still emits the standard empty-case format.
 
 ## Red Flags
 

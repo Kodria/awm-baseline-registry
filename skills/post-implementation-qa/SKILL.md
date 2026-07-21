@@ -249,6 +249,7 @@ NO "QA COMPLETE" CLAIM WITHOUT:
 | `development-process` | Invokes this as a new phase |
 | `brainstorming` / `writing-plans` | Produce the requirement IDs Track A checks against |
 | `systematic-debugging` | For Track B findings |
+| `design-fidelity` | Conditional Track B lens for UI diffs with committed design artifacts |
 | `subagent-driven-development` | Executes the fixes |
 | `verification-before-completion` | Gate for each fix |
 | `harness-retro` | If a finding is recurring (≥2) |
