@@ -22,8 +22,8 @@ You MUST create a task for each of these items and complete them in order:
 
 1. **Load design doc** — find and read the design doc, extract the `## UI Screens` table
 2. **Setup Stitch project** — list projects to find or create one for this feature, then detect or create design system
-3. **Design screens** — generate each pending screen one by one, iterate with user until approved
-4. **Update design doc** — update the table with Stitch references, commit
+3. **Design screens** — generate, iterate, **download artifacts**
+4. **Update design doc** — table with artifact paths, commit doc + artifacts
 5. **Transition to planning** — invoke writing-plans skill
 
 ## Process Flow
@@ -125,6 +125,18 @@ If a design system was created or exists, call `apply_design_system` after gener
 
 ---
 
+### Step 2b: Design Intelligence (ui-ux-pro-max — all layers)
+
+Before creating the design system and before generating any screen, consult the `ui-ux-pro-max` skill (invoke it with the Skill tool if not yet loaded):
+
+1. Derive keywords from the design doc: product type + industry + tone (e.g. `"team management dashboard dark professional"`).
+2. Run its `--design-system` search with `--persist --output-dir <project-root>` so `design-system/<slug>/MASTER.md` is written as the token artifact.
+3. Use the result to drive Stitch:
+   - `create_design_system` properties (colors, typography, roundness, colorMode) come from the recommended palette/font pairing.
+   - Every `generate_screen_from_text` prompt is enriched with the recommended style vocabulary (style name, key effects, anti-patterns to avoid) — concrete words beat vague vibes.
+
+---
+
 ## Step 3: Design Screens (one by one)
 
 For each screen with status `pending`, in the order listed in the table:
@@ -170,6 +182,24 @@ Inform the user: *"Screen '{name}' approved. Moving to next screen..."* (or *"Al
 
 **Model override:** If the user requests faster iteration at any point, switch to `GEMINI_3_FLASH` for subsequent generations. Inform: *"Switching to fast mode for quicker iterations."*
 
+### 3e. Download artifacts (MANDATORY — a screen is not `completed` without them)
+
+Immediately after the user approves a screen:
+
+1. Call `get_screen` for the approved screen; extract `htmlCode.downloadUrl` and `screenshot.downloadUrl`.
+2. Download both to the repo (create the directory on first use — and if `.gitignore` excludes `.stitch/`, surface it and resolve with the user before continuing):
+
+```bash
+mkdir -p .stitch/designs
+bash <skill-dir>/scripts/fetch-stitch.sh "<htmlCode.downloadUrl>" ".stitch/designs/<screen-slug>.html"
+bash <skill-dir>/scripts/fetch-stitch.sh "<screenshot.downloadUrl>=w1600" ".stitch/designs/<screen-slug>.png"
+```
+
+(The `=w{width}` suffix requests full resolution instead of a thumbnail. Use the design's device width: 1600 desktop, 800 mobile.)
+
+3. Verify both files exist and are non-empty (`ls -la .stitch/designs/`). If either download fails, retry once; if it still fails, the screen stays `pending` and you report the failure — do NOT mark it `completed`.
+4. Only approved screens get artifacts — never download discarded variants.
+
 ---
 
 ## Step 4: Update Design Doc
@@ -184,17 +214,16 @@ After all screens are approved:
 
 > Stitch Project: `projects/{projectId}`
 
-| Screen | Description | Device | Status | Stitch Screen |
-|--------|-------------|--------|--------|---------------|
-| Login  | Login screen with email and OAuth | MOBILE | completed | screens/xyz1 |
-| Dashboard | Main view with key metrics | DESKTOP | completed | screens/xyz2 |
+| Screen | Description | Device | Status | Stitch Screen | Artifacts |
+|--------|-------------|--------|--------|---------------|-----------|
+| Login  | Login screen with email and OAuth | MOBILE | completed | screens/xyz1 | .stitch/designs/login.html · .stitch/designs/login.png |
 ```
 
-3. Commit the updated design doc:
+3. Commit the design doc AND the artifacts together:
 
 ```bash
-git add docs/plans/<design-doc-filename>.md
-git commit -m "docs: update design doc with Stitch UI screen references"
+git add docs/plans/<design-doc-filename>.md .stitch/designs/ design-system/
+git commit -m "docs: design phase artifacts (screens + tokens) for <feature>"
 ```
 
 ---
@@ -214,7 +243,7 @@ After committing the updated design doc:
 - **One edit at a time** — When refining, make one major change per edit call.
 - **Use UI/UX keywords** — "navigation bar", "hero section", "card grid", "floating action button".
 - **GEMINI_3_1_PRO by default** — Switch to GEMINI_3_FLASH only if user requests speed.
-- **References only** — Store Stitch IDs in the design doc, don't download screenshots or HTML to the repo.
+- **Artifact-first** — Every approved screen materializes `.stitch/designs/<slug>.html` + `.png` committed to the repo. Implementation consumes ONLY these artifacts; Stitch (MCP or CLI) is never needed after this phase.
 - **No implementation** — This skill designs screens, it does not write code.
 
 ---
