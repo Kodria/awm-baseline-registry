@@ -94,8 +94,8 @@ _Requirements: R1.1, R2.3_
 - Modify: `exact/path/to/existing.py:123-145`
 - Test: `tests/exact/path/to/test.py`
 
-**Skills:** frontend-craft, ui-ux-pro-max            ← skills the implementer MUST invoke (omit line if none)
-**Design artifacts:** .stitch/designs/login.html, .stitch/designs/login.png   ← UI tasks only
+**Skills:** frontend-craft, ui-ux-pro-max            ← skills the implementer MUST invoke (single line, comma-separated — omit line if none)
+**Design artifacts:** .stitch/designs/login.html, .stitch/designs/login.png   ← single line, comma-separated (UI tasks only — omit line if not applicable)
 
 - [ ] **Step 1: Write the failing test**
 
@@ -132,7 +132,11 @@ git commit -m "feat: add specific feature"
 
 **Requirement traceability tag.** The `_Requirements: R1.1, R2.3_` line names the requirement IDs (from the spec's `## Requirements` section) that the task satisfies, and each test comment names the ID it verifies (`# verifies R1.1`). This is what makes the traceability matrix and the analyze gate below mechanical rather than guesswork. **Tier:** omit the tag only for trivial single-file diffs whose spec intentionally has no `## Requirements` section.
 
-**Skill & artifact propagation (UI tasks).** Any task that creates or modifies UI belonging to a designed screen MUST declare `**Skills:**` (at minimum `frontend-craft`) and `**Design artifacts:**` with the exact paths inherited from the design doc's `## UI Screens` Artifacts column. The execution controller copies both into the subagent prompt — a UI task without them ships an implementer who has never seen the design.
+**Skill & artifact propagation (UI tasks).** Any task that creates or modifies UI belonging to a designed screen MUST declare `**Skills:**` (at minimum `frontend-craft`) and `**Design artifacts:**` with the exact paths inherited from the design doc's `## UI Screens` Artifacts column (see `skills/ui-design/SKILL.md` Step 4 for the table format). The execution controller copies both into the subagent prompt — a UI task without them ships an implementer who has never seen the design.
+
+A task counts as touching a designed screen when its `**Files:**` list includes a route/component/page file that corresponds to a screen listed in the design doc's `## UI Screens` table — cross-check the Files list against that table's Screen column before deciding.
+
+`frontend-craft` alone is normally sufficient — it consults `ui-ux-pro-max` internally when a color/typography/UX decision needs it. Only declare `ui-ux-pro-max` directly in `**Skills:**` if the task needs to invoke its search independent of frontend-craft (e.g. a task that's purely about generating/persisting a design system, with no frontend-craft escalation).
 
 ## No Placeholders
 
@@ -173,7 +177,7 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 
 **3. Type consistency:** Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug.
 
-**4. UI task propagation:** Does every task touching a designed screen declare `**Skills:**` and `**Design artifacts:**`? A UI task without them is a plan failure — fix it.
+**4. UI task propagation:** Does every task touching a designed screen declare `**Skills:**` and `**Design artifacts:**`? Do the declared artifact paths match the design doc's `## UI Screens` Artifacts column for that screen (not stale/mismatched)? A UI task without them, or with wrong paths, is a plan failure — fix it.
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
