@@ -260,6 +260,19 @@ After committing the updated design doc:
 
 ---
 
+## Offline Mode (Layer 3)
+
+When no Stitch access exists, this skill still fulfills the same artifact contract — locally.
+
+1. **Tokens:** run ui-ux-pro-max (Step 2b applies identically) with `--design-system --persist --output-dir <project-root>` → `design-system/<slug>/MASTER.md`.
+2. **Mockups:** for each `pending` screen, invoke the `impeccable` skill (sub-command `craft` or `shape`) to produce a **static, self-contained HTML mockup** at `.stitch/designs/<screen-slug>.html`, using `MASTER.md` tokens + the screen's Description as the brief. One screen at a time; present to the user; iterate until approved (same 3b–3d loop, with impeccable edits instead of `edit_screens`).
+3. **PNG:** if a browser tool (Playwright MCP) is available: navigate to `file://<abs-path>/.stitch/designs/<slug>.html`, resize to the device width (1600 desktop / 390 mobile), screenshot → `.stitch/designs/<slug>.png`. If no browser is available, record `png: n/a (offline, no browser)` in the Artifacts column — an explicit degradation, never a silent one.
+4. **Design doc:** same Step 4 table and commit; the `Stitch Screen` column reads `offline`.
+
+**HARD-GATE carve-out:** the HTML mockup under `.stitch/designs/` is a *design artifact*, not implementation. Application source code remains forbidden in this skill.
+
+---
+
 ## Key Principles
 
 - **One screen at a time** — Don't batch-generate. Present and approve each individually.
