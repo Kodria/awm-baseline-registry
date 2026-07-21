@@ -36,7 +36,7 @@ When escalating, hand impeccable:
 - any ground-truth artifact paths found in step 1 (`.stitch/designs/<slug>.html` / `.png`)
 - any ui-ux-pro-max query results from step 4
 
-impeccable's brief format (Feature Summary / Primary User Action / Design Direction / Scope) has no dedicated slot for the last two — fold artifact paths and ui-ux-pro-max results into the Design Direction section of the brief so they aren't dropped. impeccable owns its own flow from there; return to the calling execution skill when it finishes.
+impeccable's brief (whether the compact bullet form or the full structured form) has no dedicated slot for the last two — fold artifact paths and ui-ux-pro-max results into wherever the brief accommodates visual direction (e.g. the Design Direction section in the full form) so they aren't dropped. impeccable owns its own flow from there; return to the calling execution skill when it finishes.
 
 ## Boundaries
 
