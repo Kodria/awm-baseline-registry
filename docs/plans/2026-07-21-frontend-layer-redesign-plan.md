@@ -517,14 +517,42 @@ _Requirements: R6.6_
 
 **Files:**
 - Modify: `skills/post-implementation-qa/SKILL.md`
+- Modify: `skills/post-implementation-qa/deep-review-prompt.md`
+
+> **Nota agregada durante ejecución (post Task 7 review):** la revisión de Task 7 confirmó que `deep-review-prompt.md` define un enum CERRADO para `"lens"` (`robustness|logic|tests`, línea ~123) y que la tabla de lentes/lógica de tier de `post-implementation-qa/SKILL.md` no mencionan `design-fidelity`. Una fila de tabla sola (el Step 1 original de esta task) NO hace que la lente sea despachable de verdad — faltan el template block y la extensión del enum. Esta task ahora cierra ambos lados: registro real (Steps 1b/1c nuevos) + la fila/red-flag original.
 
 - [ ] **Step 1: Añadir la fila a la tabla de lentes del Track B**
 
-En la tabla `| Lens | Looks for |` (línea ~63), añadir:
+En la tabla `| Lens | Looks for |` (línea ~63 de `SKILL.md`), añadir:
 
 ```markdown
 | Design fidelity *(conditional: only when the diff touches UI and `.stitch/designs/` exists)* | Divergence between the implemented screens and their committed design artifacts — invoke the `design-fidelity` skill; its per-element findings enter the fix loop like any other Track B finding |
 ```
+
+- [ ] **Step 1b: Extender el enum y añadir el template block en `deep-review-prompt.md`**
+
+1. En la línea que define el enum de lens (`"lens"` to `robustness` | `logic` | `tests`), extenderla a `robustness` | `logic` | `tests` | `design-fidelity`.
+2. Añadir un nuevo bloque de template, paralelo a los 3 existentes (Track B — Robustness/Security, Logic correctness, Tests), por ejemplo:
+
+```markdown
+## Track B — Design Fidelity lens subagent
+
+​```
+## Your Job (Track B — Design Fidelity lens)
+
+Only dispatch this lens when the diff touches UI and `.stitch/designs/` artifacts exist for the affected screen(s).
+
+Invoke the `design-fidelity` skill's comparison procedure (Steps 1-4: load design, build element inventory, capture implementation, compare element by element) for each affected screen. Each element with status `missing`/`diverged` is a finding — map severity per design-fidelity's rubric (high/medium/low → blocker/important/minor). Elements marked `present` are not findings.
+
+If `design-fidelity`'s verdict is `NOT_CERTIFIED` (no browser evidence), report ONE finding at `important` severity stating certification could not be completed — do not silently omit this.
+​```
+```
+
+(Ajustar la sintaxis exacta de fences según el resto del archivo — leer `deep-review-prompt.md` primero para igualar el estilo de los otros 3 bloques.)
+
+- [ ] **Step 1c: Añadir design-fidelity a la lógica de tier en `SKILL.md`**
+
+En la sección "Tier (which lenses to run)" (línea ~154-157), añadir una regla: la lente Design Fidelity se dispara SOLO cuando el diff toca UI Y existen artefactos `.stitch/designs/` para la(s) pantalla(s) afectada(s) — independientemente del tier (trivial/multi-file), ya que es condicional a la señal de UI, no al tamaño del diff.
 
 - [ ] **Step 2: Añadir red flag**
 
@@ -538,12 +566,13 @@ En la tabla/sección de Red Flags del skill, añadir:
 
 ```bash
 grep -c "design-fidelity" skills/post-implementation-qa/SKILL.md   # verifies R6.6 (>=2)
+grep -c "design-fidelity" skills/post-implementation-qa/deep-review-prompt.md  # verifies R6.6 registration (>=2: enum + template block)
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add skills/post-implementation-qa/SKILL.md
+git add skills/post-implementation-qa/SKILL.md skills/post-implementation-qa/deep-review-prompt.md
 git commit -m "feat(qa): conditional design-fidelity lens for UI diffs [R6.6]"
 ```
 
