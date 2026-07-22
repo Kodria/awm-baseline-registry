@@ -96,11 +96,27 @@ Scan `docs/plans/` for existing artifacts:
 
 ### Frontend bundle gate
 
-WHEN the detected state is **UI Design pending**, OR the active plan contains any `**Design artifacts:**` field, verify the frontend skills are installed before routing: the `ui-design` skill (and `frontend-craft`) must be available — check the skill list, or `ls ~/.claude/skills/ui-design .claude/skills/ui-design .agents/skills/ui-design 2>/dev/null`. IF absent, THEN stop and instruct:
+WHEN the detected state is **UI Design pending**, OR the active plan contains any `**Design artifacts:**` field, verify the frontend skills are installed before routing: both `ui-design` and `frontend-craft` must be available at one of the known install locations:
+
+```bash
+MISSING=""
+for skill in ui-design frontend-craft; do
+  FOUND=""
+  for d in "$HOME/.claude/skills/$skill" ".claude/skills/$skill" ".agents/skills/$skill"; do
+    [ -d "$d" ] && FOUND="$d" && break
+  done
+  [ -z "$FOUND" ] && MISSING="$MISSING $skill"
+done
+[ -n "$MISSING" ] && echo "missing:$MISSING"
+```
+
+IF either skill is absent, THEN stop and instruct:
 
 > "This work needs the `frontend` bundle, which is not installed. Run `awm update && awm init` and select the frontend bundle for this project, then resume."
 
 Do NOT improvise the phase without the skill.
+
+This checks `ui-design` and `frontend-craft` as a proxy for bundle installation — a partial/corrupted install missing `ui-ux-pro-max` or `design-fidelity` specifically would not be caught here.
 
 ### Step 2: Present State to User
 
