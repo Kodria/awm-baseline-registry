@@ -20,7 +20,7 @@ Hallazgo transversal #2: `brief-spec` y `mermaid-diagrams` en `~/.claude/skills/
 
 ## Notas obligatorias
 
-**(a) Plantilla ausente de `brief-spec`.** `references/plantilla-brief.md` NO existe en la instalación. Confirmado con `find / -iname "*plantilla-brief*"` (cero resultados) y con listado directo del directorio (`ls ~/.claude/skills/brief-spec/` → solo `SKILL.md`, ninguna subcarpeta `references/`). La plantilla se reconstruye desde las reglas normativas descritas en el propio `SKILL.md` (mandato de no-asunción, secciones de trazabilidad por ID, tabla de DAs, etc.) durante Task 3 — no se copia de ningún archivo existente porque no hay ninguno.
+**(a) Plantilla ausente de `brief-spec`.** Ver evidencia en la fila `brief-spec` de la tabla arriba. La plantilla se reconstruye desde las reglas normativas del propio `SKILL.md` durante Task 3 — no se copia de ningún archivo existente porque no hay ninguno.
 
 **(b) Qué se adapta en cada veredicto "adaptar":**
 - `architecture-advisor`: reusar Fases 1-5 y la tabla de Contextual Mode sin cambios; NO usar la tabla de destinos de Fase 6 (`docs-assistant`/`docs-brainstorming`/`docs-system-orchestrator`, inexistentes); si Task 6 necesita diagramas, remitir a `mermaid-diagrams` en vez de a `c4-architecture` (también inexistente).
