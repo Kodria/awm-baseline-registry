@@ -30,6 +30,10 @@ Task tool (general-purpose):
     ## Design Artifacts (UI tasks only)
 
     Ground truth for this screen: [paths from the plan task's **Design artifacts:** field].
+
+    (If the plan task's **Design artifacts:** field is empty or absent, DELETE this entire
+    "Design Artifacts" section from the dispatched prompt — do not leave a placeholder or an
+    empty list.)
     - Read the PNG with the Read tool — it is an image; LOOK at it before writing any code.
     - Read the design HTML for structure, content and styling detail.
     - Implement to match. Before reporting DONE, list every major element visible in the
