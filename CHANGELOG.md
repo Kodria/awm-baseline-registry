@@ -1,5 +1,7 @@
 # Changelog
 
+Newest entry on top; append new releases directly below this line.
+
 ## product 1.0.0 / dev 1.6.0 — 2026-07-22
 
 ### Added — bundle `product` (new)
