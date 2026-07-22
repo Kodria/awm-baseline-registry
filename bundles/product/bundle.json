@@ -1,0 +1,17 @@
+{
+  "name": "product",
+  "version": "1.0.0",
+  "description": "Business layer: product discovery, briefs, architecture assessment/extraction, and readiness gate — matures ideas before they enter the development engine.",
+  "scope": "baseline",
+  "dependsOn": [],
+  "skills": [
+    "product-process",
+    "product-discovery",
+    "product-brief",
+    "architecture-assessment",
+    "architecture-extraction",
+    "readiness-gate"
+  ],
+  "workflows": [],
+  "agents": []
+}
