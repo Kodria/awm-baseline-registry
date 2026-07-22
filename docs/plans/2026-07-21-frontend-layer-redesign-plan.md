@@ -818,6 +818,8 @@ _Requirements: R2.1, R2.2, R2.3, R3.7, R6.4, R7.2_
 **Files:**
 - Test: proyecto `/Users/cencosud/Developments/personal/test-awm` (no se commitea nada al registry en esta task)
 
+> **DEFERIDA — no ejecutada en modo desatendido (2026-07-21).** El usuario pidió modo desatendido "hasta PR". Esta task requiere: (a) generar pantallas reales en la cuenta de Stitch del usuario (costo real de cuota/API, como ya ocurrió en el spike de Task 1), (b) crear y pushear un tag pre-release (`v1.4.0-rc.1`), (c) correr `awm update`/`awm init` contra un proyecto real. Son acciones con efecto externo visible y de costo real — fuera del alcance de "llegar al PR" sin confirmación explícita. Queda pendiente para que el usuario la ejecute (o autorice explícitamente) después de revisar el PR, antes del tag final `v1.4.0`.
+
 Estos escenarios son manuales/asistidos (requieren Stitch real y sesiones separadas). Ejecutarlos ANTES del tag de release. Para que el entorno de prueba use la versión de la rama, seguir el mecanismo de instalación local que el usuario use para QA de registries (NUNCA editar `~/.awm` a mano — si `awm update` solo toma tags, crear un tag pre-release `v1.4.0-rc.1` y correr `awm update`).
 
 - [ ] **Step 1: Escenario capa 1 (PC con MCP)** — feature con 1 pantalla: brainstorming → ui-design anuncia "layer 1" → pantalla aprobada → verificar `ls test-awm/.stitch/designs/` muestra `<slug>.html` y `<slug>.png` no vacíos y la tabla del design doc tiene columna `Artifacts` (verifies R2.1, R3.7).
