@@ -99,7 +99,7 @@ project: <slug or null>
 ---
 ```
 
-Más las reglas del contrato (redactarlas como reglas normativas, una por bullet): (1) re-ingesta reconoce por discriminador `awm: product-brief`, nunca por heurística de contenido; (2) `schema` es entero y solo crece; versiones futuras del gate leen todo `schema` anterior; (3) `readiness` lo escribe solo `readiness-gate` (R5.2); (4) informes de assessment/extraction usan el mismo frontmatter con su `mode` (R5.3); (5) secciones requeridas del cuerpo (R5.1): Business need (N#), Non-assumption mandate (lista de lo NO verificado), Glossary, Processes (PR-#), Requirements (RF-x.y / RNF-x.y, redacción EARS-compatible), Open decisions (tabla DA-# con columna "blocks"), Out of scope, Releases (valor independiente), Risks.
+Más las reglas del contrato (redactarlas como reglas normativas, una por bullet): (1) re-ingesta reconoce por discriminador `awm: product-brief`, nunca por heurística de contenido; (2) `schema` es entero y solo crece; versiones futuras del gate leen todo `schema` anterior; (3) `readiness` lo escribe solo `readiness-gate` (R5.2); (4) informes de assessment/extraction usan el mismo frontmatter con su `mode` (R5.3); (5) secciones requeridas del cuerpo (R5.1, **11 secciones** — amendado en Task 2 al detectar que G2/G5 del gate no tenían sección de origen): Business need (N#), Users & context, Constraints, Non-assumption mandate (lista de lo NO verificado), Glossary, Processes (PR-#), Requirements (RF-x.y / RNF-x.y, redacción EARS-compatible), Open decisions (tabla DA-# con columna "blocks"), Out of scope, Releases (valor independiente), Risks.
 
 - [ ] **Step 2: Escribir `skills/readiness-gate/SKILL.md`** con:
   - Frontmatter: `name: readiness-gate`, `version: "1.0.0"`, description activadora: *"Use when a product brief must be certified ready for development, or re-verified at the crossing point into development-process. Evaluates the G1–G9 Definition-of-Ready checklist against the brief's actual content — never against its stored seal."*
@@ -151,7 +151,7 @@ _Requirements: R5.1, R4, R4.1_
   - **Anti-patrones** (lista literal de brief-spec): esquemas/rutas/firmas "tentativas" con sintaxis de certeza; CA no ejecutables o solo verificables con mocks; releases que solo tienen sentido si el siguiente existe; resolver ambigüedades del dueño en el doc en vez de DA-#; omitir fuera-de-alcance.
   - **Termination:** brief entregado + gate ejecutado; devuelve control al orquestador con el estado del sello.
 
-- [ ] **Step 2: Escribir `references/brief-template.md`** — esqueleto completo del brief: frontmatter (bloque de Task 2) + las 9 secciones de R5.1 en orden, cada una con 1-2 líneas de guía inline (`<!-- guidance -->`) y ejemplos de ID. Reconstruida desde las reglas (la plantilla original no existe — hallazgo de Task 1).
+- [ ] **Step 2: Escribir `references/brief-template.md`** — esqueleto completo del brief: frontmatter (bloque de Task 2) + las 11 secciones de R5.1 en orden (ver `skills/readiness-gate/references/brief-contract.md` para el orden exacto y la redacción de Users & context / Constraints), cada una con 1-2 líneas de guía inline (`<!-- guidance -->`) y ejemplos de ID. Reconstruida desde las reglas (la plantilla original no existe — hallazgo de Task 1).
 
 - [ ] **Step 3: Lint** (convenciones) + `grep -q 'mode: brief' skills/product-brief/SKILL.md && grep -q 'DA-' skills/product-brief/references/brief-template.md && echo OK` → `OK`
 
