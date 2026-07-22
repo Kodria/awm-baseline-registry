@@ -45,7 +45,7 @@ Draft using the structure of `references/brief-template.md` (read it while draft
 
 **R0 is always read-only discovery.** Its deliverable is: the real-state report + conceptual→real mapping + contradictions found + technical plan conforming to discovered conventions. R0 never modifies code or data, and everything downstream is gated by the owner's validation of its report.
 
-**ID traceability.** Needs (`N#`), principles (`P#`), processes (`PR-#`), functional requirements (`RF-x.y`), non-functional requirements (`RNF-x.y` and cross-cutting `RNF-T.#`), acceptance criteria (`CA-x.y`), open decisions (`DA-#`). Open decisions go in a table with a **"blocks"** column (which release cannot start without resolving it) and a **"known positions"** column.
+**ID traceability.** Needs (`N#`), processes (`PR-#`), functional requirements (`RF-x.y`), non-functional requirements (`RNF-x.y` and cross-cutting `RNF-T.#`), acceptance criteria (`CA-x.y`), open decisions (`DA-#`). Every ID scheme here has a defined home in `references/brief-contract.md`'s section list — do not carry forward an ID prefix (e.g. brief-spec's `P#` for "principles") that has no section to land in; either fold it into an existing section or drop it.
 
 **Release sequencing by value, with justification.** Release order is recommended by business value (whatever replaces the cost/pain that motivated the project goes first), not by technical dependency, and the justification is written out.
 
