@@ -850,9 +850,9 @@ Solo tras QA (post-implementation-qa) + retro, vía `finishing-a-development-bra
 | R1.1 | T2 | grep `version: "1.0.0"` en SKILL.md = 1 (T2·S6) |
 | R1.2 | T2 | grep `CLAUDE_PLUGIN_ROOT` = 0 + smoke `--design-system` corre vía `$UIPRO` (T2·S6-7) |
 | R1.3 | T2 | grep `README` = 0; texto de fallback `python`/`py -3` presente (T2·S4,S6) |
-| R2.1 | T3, T14 | grep `Step 0: Access Detection` = 1; escenario capa 1 E2E (T14·S1) |
-| R2.2 | T1, T3, T14 | spike doc con tabla de sintaxis; sección CLI en SKILL.md; escenario capa 2 E2E (T14·S2) |
-| R2.3 | T3, T5, T14 | Step 0 rutea a Offline Mode; escenario capa 3 E2E (T14·S3) |
+| R2.1 | T3, T14 | grep `Step 0: Access Detection` = 1 (static, confirmed). Escenario capa 1 E2E (T14·S1) — **PENDING, Task 14 deferred, not yet run.** |
+| R2.2 | T1, T3, T14 | Spike doc con tabla de sintaxis; sección CLI en SKILL.md (static, confirmed). Escenario capa 2 E2E (T14·S2) — **PENDING, Task 14 deferred, not yet run.** |
+| R2.3 | T3, T5, T14 | Step 0 rutea a Offline Mode (static, confirmed). Escenario capa 3 E2E (T14·S3) — **PENDING, Task 14 deferred, not yet run.** |
 | R2.4 | T3 | grep `Announce` ≥1 en Step 0 (T3·S4) |
 | R2.5 | T3 | grep `Mid-flow degradation` = 1 (T3·S4) |
 | R3.1 | T4 | grep `3e. Download artifacts` = 1 (T4·S6) |
@@ -861,7 +861,7 @@ Solo tras QA (post-implementation-qa) + retro, vía `finishing-a-development-bra
 | R3.4 | T4 | grep del comando `git add ... .stitch/designs/ design-system/` = 1 (T4·S6) |
 | R3.5 | T4 | grep `gitignore` ≥1 en 3e (T4·S6) |
 | R3.6 | T4 | grep `Step 2b: Design Intelligence` = 1 (T4·S6) |
-| R3.7 | T4, T14 | grep `Artifact-first` ≥1 y `References only` = 0; E2E artefactos commiteados (T14·S1) |
+| R3.7 | T4, T14 | grep `Artifact-first` ≥1 y `References only` = 0 (static, confirmed). E2E artefactos commiteados (T14·S1) — **PENDING, Task 14 deferred, not yet run.** |
 | R4.1 | T5 | sección Offline Mode ítem 1 (`--persist --output-dir`) (T5·S2) |
 | R4.2 | T5 | Offline Mode ítem 2 (mockup impeccable) + `HARD-GATE carve-out` = 1 (T5·S2) |
 | R4.3 | T5 | grep `png: n/a (offline` ≥1 (T5·S2) |
@@ -870,11 +870,11 @@ Solo tras QA (post-implementation-qa) + retro, vía `finishing-a-development-bra
 | R6.1 | T7 | `skills/design-fidelity/SKILL.md` existe con frontmatter versionado (T7·S2) |
 | R6.2 | T7 | grep `element inventory` ≥1 (T7·S2) |
 | R6.3 | T7 | Step 3 Capture + Step 4 Compare presentes (grep `Screenshot` ≥1) (T7·S2) |
-| R6.4 | T7, T14 | grep `explicit user waiver` ≥1; prueba negativa E2E (T14·S5) |
+| R6.4 | T7, T14 | grep `explicit user waiver` ≥1 (static, confirmed). Prueba negativa E2E (T14·S5) — **PENDING, Task 14 deferred, not yet run.** |
 | R6.5 | T7 | grep `NOT_CERTIFIED` ≥3 (T7·S2) |
 | R6.6 | T8 | grep `design-fidelity` ≥2 en post-implementation-qa (T8·S3) |
 | R7.1 | T9 | grep `Design artifacts:` ≥2 en writing-plans (T9·S3) |
-| R7.2 | T10, T14 | grep `Required Skills` ≥1 en implementer-prompt; inspección del prompt real E2E (T14·S4) |
+| R7.2 | T10, T14 | grep `Required Skills` ≥1 en implementer-prompt (static, confirmed). Inspección del prompt real E2E (T14·S4) — **PENDING, Task 14 deferred, not yet run.** |
 | R7.3 | T10 | grep `do NOT silently skip` = 1 (T10·S3) |
 | R7.4 | T11 | grep `SUBAGENT-STOP` = 0 y `SUBAGENT-POLICY` = 2 (T11·S2) |
 | R7.5 | T12 | grep `Frontend bundle gate` = 1 + fila 1.5 actualizada (T12·S3) |
@@ -883,6 +883,8 @@ Solo tras QA (post-implementation-qa) + retro, vía `finishing-a-development-bra
 | R8.3 | T13 | `git diff awm-registry.json` vacío (T13·S5) |
 
 *Nota de precisión:* los greps de R2.4, R3.5, R3.7 y R6.2 usan frases que también podrían aparecer en otro contexto del mismo archivo; el verificador debe confirmar que el match está dentro de la sección indicada (lectura dirigida, no solo conteo).
+
+**Nota de estado E2E (QA B4):** 6 requirements (R2.1, R2.2, R2.3, R3.7, R6.4, R7.2) están verificados estáticamente pero su confirmación E2E en vivo sigue pendiente — ver la nota de deferral de Task 14. Este pase de QA certifica la corrección estática de las instrucciones de skill entregadas, no su comportamiento en vivo contra Stitch/Playwright reales.
 
 **Analyze gate:** 33/33 requirements con ≥1 task y ≥1 verificación; ninguna task sin requirement (T1 ancla en R2.2 como spike habilitante; T14–T15 anclan en los requirements que ejercitan E2E). Sin gaps forward ni backward.
 
