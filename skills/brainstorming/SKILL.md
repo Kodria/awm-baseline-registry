@@ -1,7 +1,7 @@
 ---
 name: brainstorming
-version: "1.1.0"
-description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation."
+version: "1.2.0"
+description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation. Explores SOLUTION space and is invoked via development-process; a raw business idea with no brief and no decision to build goes to product-process first."
 ---
 
 # Brainstorming Ideas Into Designs
@@ -16,6 +16,33 @@ Start by understanding the current project context, then ask questions one at a 
 Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
 </HARD-GATE>
 
+## Brief Preload Mode
+
+**Detection.** At the start of the session, check whether the context contains a document carrying the `awm: product-brief` discriminator in its frontmatter (see `skills/readiness-gate/references/brief-contract.md`) with `mode: brief`. This is the only artifact shape Brief Preload Mode applies to — a `mode: brief` document is the product of `product-brief`, and only that document carries the full contract body (`N#`, `RF-x.y`/`RNF-x.y`, Out of scope, `DA-#`, etc.) that this mode maps into a design.
+
+Do **not** enter Brief Preload Mode for `mode: discovery`, `mode: assessment`, or `mode: extraction` documents:
+- A `mode: discovery` document in context is the partial-summary artifact `product-discovery` writes when the user stops before all five phases are covered (see its Termination section) — open phases, not requirements. It has no `RF/RNF` section to seed `## Requirements` from. Treat it as project context/notes, the same as any other file explored in step 1, never as a preload source.
+- `mode: assessment` and `mode: extraction` reports are architecture content (context/container views, findings), never gated by `readiness-gate`, and carry no brief-shaped `RF`/`RNF`/`DA-#` content — mapping them into `## Requirements` would be nonsensical.
+
+**When a `mode: brief` document is found**, invoke `readiness-gate` to re-verify it — never trust the document's own stored `readiness` seal, even if it already reads `ready` (the gate always re-runs; see `skills/readiness-gate/SKILL.md`, R7/R7.2).
+- Re-verified `ready` → enter Brief Preload Mode.
+- Re-verified `draft` → inform the user of the gaps `readiness-gate` reports and suggest running `product-process` (or `product-brief` directly) to close them first. Continue in Brief Preload Mode only if the user insists — in that case the brief is used as notes to accelerate questioning, not as a certified source, and every gap the gate flagged still needs to be asked about as if unanswered.
+
+**Mapping (R8).** Once in Brief Preload Mode, pre-populate this session's understanding from the brief before asking anything:
+
+| Brief section | Feeds into |
+|---|---|
+| `N#` business-need entries / business cases | Context and purpose (what step 1, "Explore project context," would otherwise have to build up from scratch) |
+| `RF-x.y` / `RNF-x.y` | Seed of the `## Requirements` (EARS) section — carry the ID forward, restate in EARS form |
+| Out of scope | Non-goals |
+| Open `DA-#` decisions | The first clarifying questions to ask |
+
+**Operational rule (R8.1).** Before asking any clarifying question, check whether the brief already answers it. If it does, record the answer as sourced from the brief (traceable by ID: "from brief N3") and do NOT ask it.
+
+**Gates stay intact (R8.2).** Brief Preload Mode changes *what starting material* this skill works from — it never changes what this skill still owes the process: technical validation against the real repo, design approval, and spec self-review all still run exactly as they do without a brief. **The brief accelerates; it never exempts.**
+
+**Without a brief in context**, this skill behaves exactly as before this section existed — no change to the checklist, the process flow, or any gate.
+
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
 
 Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
@@ -25,6 +52,7 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 1. **Explore project context** — check files, docs, recent commits
+1a. **Brief preload check** — if a `mode: brief` document carrying the `awm: product-brief` discriminator is in context, enter Brief Preload Mode (see section above; other modes are explicitly excluded there)
 2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria; do not exit this phase while any requirement still has an open ambiguity (see Clarify gate)
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation

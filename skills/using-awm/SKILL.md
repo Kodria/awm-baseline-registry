@@ -1,14 +1,17 @@
 ---
 name: using-awm
-version: "1.1.1"
+version: "1.2.0"
 description: Use when starting any development conversation - establishes tiered skill invocation policy (spine skills always, specialized skills on clear signal)
 ---
 
 <SUBAGENT-POLICY>
 If you were dispatched as a subagent to execute a specific task: skip the orchestration
-skills (development-process, brainstorming, writing-plans, executing-plans,
-subagent-driven-development, finishing-a-development-branch) — your controller owns
-orchestration. But DO invoke:
+and product-layer skills (development-process, product-process, brainstorming,
+writing-plans, executing-plans, subagent-driven-development, finishing-a-development-branch,
+product-discovery, product-brief, architecture-assessment, architecture-extraction,
+readiness-gate) — your controller owns orchestration, and these are heavy interactive/creative
+skills whose own trigger phrases could otherwise fire mid-task the same way brainstorming's
+could. But DO invoke:
 1. Every skill your prompt declares as required.
 2. The craft/verification skills your task triggers on its own signal — this list is
    illustrative, not exhaustive: frontend-craft for UI surfaces, test-driven-development
@@ -39,12 +42,13 @@ Use the `Skill` tool. When you invoke a skill, its content is loaded and present
 Not every skill competes equally for your attention. Apply two tiers:
 
 **Spine and gates — always consider them.** The process and quality skills
-(`development-process`, `brainstorming`, `writing-plans`, `executing-plans`,
+(`development-process`, `product-process`, `brainstorming`, `writing-plans`, `executing-plans`,
 `subagent-driven-development`, `test-driven-development`,
 `requesting-code-review`, `receiving-code-review`, `post-implementation-qa`,
 `finishing-a-development-branch`, `verification-before-completion`,
 `systematic-debugging`) form development discipline: evaluate them on all
-development work. Your default entry point is `development-process`.
+development work. Your default entry point is one of `development-process`
+or `product-process` — see the Orchestration section below for which.
 
 **Specialized — only on clear signal.** The remaining skills (architecture/CI/NFR
 advisory, frontend — `frontend-craft`, `design-fidelity`, `ui-ux-pro-max` — documentation,
@@ -55,7 +59,19 @@ signal avoids noise and unnecessary overhead.
 
 ## Orchestration
 
-For development tasks, your default entry point is the `development-process` skill — it routes to brainstorming, writing-plans, execution, and finishing based on project state. Invoke it on any new development work unless the user explicitly says otherwise.
+AWM has two sibling orchestrators with an explicit boundary. Route by what the session starts with:
+
+| The session starts with… | Orchestrator |
+|---|---|
+| An idea/need WITHOUT a formed requirement ("I have an idea", "let's explore a new module"), an architecture evaluation or extraction request, or an existing brief to resume | `product-process` |
+| A concrete requirement over code (defined feature, bug, refactor), or a certified-`ready` brief handed off to build | `development-process` |
+| Ambiguous | ASK: "mature the idea (product layer) or build now (development)?" — never guess |
+
+Precedence rule: `brainstorming` explores SOLUTION space and is invoked via `development-process` — never as the entry point for a raw business idea. `product-discovery` explores PROBLEM space.
+
+Architecture disambiguation: a request for a full, standalone architecture evaluation that produces a portable, re-ingestible report ("assess this architecture", "diagnose whether this holds up") goes to `product-process` → `architecture-assessment`. A one-off advisory opinion mid-conversation with no report artifact ("what pattern fits here", "does this design make sense") stays with `architecture-advisor` directly (Specialized tier) — `architecture-assessment` itself invokes `architecture-advisor` in Contextual Mode for exactly this kind of targeted opinion, so the two are complementary, not competing entry points.
+
+Anti-loss rules: one orchestrator active at a time; the brief is the baton between them (context crosses only inside the artifact); returning from development to product happens explicitly through `product-process`, never by improvising business answers mid-development.
 
 For documentation tasks, the equivalent entry point is `docs-system-orchestrator`.
 
