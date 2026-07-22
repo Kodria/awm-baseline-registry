@@ -35,6 +35,8 @@ Task tool (general-purpose):
     "Design Artifacts" section from the dispatched prompt — do not leave a placeholder or an
     empty list.)
     - Read the PNG with the Read tool — it is an image; LOOK at it before writing any code.
+      (If the field declares no PNG — e.g. an offline-designed screen with only an HTML
+      mockup — skip this bullet; the HTML alone is the ground truth.)
     - Read the design HTML for structure, content and styling detail.
     - Implement to match. Before reporting DONE, list every major element visible in the
       design (header, search, cards, stats, …) and confirm each one exists in your
