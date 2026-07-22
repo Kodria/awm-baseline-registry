@@ -145,6 +145,14 @@ Consult the `ui-ux-pro-max` skill (invoke it with the Skill tool if not yet load
 
 For each screen with status `pending`, in the order listed in the table:
 
+**Derive the screen slug first.** The Screen column is free text from the design doc and may contain spaces, punctuation, or shell metacharacters — never embed it raw in a filename, path, or shell command. Before doing anything else for this screen, derive a filesystem-safe slug from its Screen name:
+
+```bash
+SLUG=$(echo "<Screen Name>" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
+```
+
+From here on, **every occurrence of `<screen-slug>` in this document — in the download commands below (3e), in the offline-mode scratch-dir mechanics, and anywhere else a screen-derived filename or path is built — means this sanitized `$SLUG`, never the raw Screen name.**
+
 ### 3a. Generate
 
 1. Build a prompt combining:
