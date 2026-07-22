@@ -44,7 +44,10 @@ Not every skill competes equally for your attention. Apply two tiers:
 `requesting-code-review`, `receiving-code-review`, `post-implementation-qa`,
 `finishing-a-development-branch`, `verification-before-completion`,
 `systematic-debugging`) form development discipline: evaluate them on all
-development work. Your default entry point is `development-process`.
+development work. Your default entry point for development work is
+`development-process` — but check the Orchestration section below first: a
+session that starts with an idea, need, or architecture request rather than
+a concrete requirement belongs to `product-process` instead.
 
 **Specialized — only on clear signal.** The remaining skills (architecture/CI/NFR
 advisory, frontend — `frontend-craft`, `design-fidelity`, `ui-ux-pro-max` — documentation,
