@@ -1,6 +1,6 @@
 ---
 name: development-process
-version: "1.2.0"
+version: "1.3.0"
 description: Use when starting a new development task, resuming work, or when unsure which skill to invoke next - orchestrates the full development lifecycle from idea to merge
 ---
 
@@ -19,6 +19,7 @@ digraph lifecycle {
     rankdir=TB;
 
     "New task / idea" [shape=doublecircle];
+    "Brief ready (product layer)" [shape=doublecircle];
     "brainstorming" [shape=box, style=filled, fillcolor=lightyellow];
     "ui-design" [shape=box, style=filled, fillcolor=lightyellow, label="ui-design\n(optional)"];
     "writing-plans" [shape=box, style=filled, fillcolor=lightyellow];
@@ -28,6 +29,7 @@ digraph lifecycle {
     "Done" [shape=doublecircle];
 
     "New task / idea" -> "brainstorming";
+    "Brief ready (product layer)" -> "brainstorming" [label="preloaded"];
     "brainstorming" -> "ui-design" [label="UI Screens pending"];
     "brainstorming" -> "writing-plans" [label="no UI"];
     "ui-design" -> "writing-plans" [label="screens completed"];
@@ -86,6 +88,7 @@ Scan `docs/plans/` for existing artifacts:
 
 | Files found | State | Next action |
 |-------------|-------|-------------|
+| Invoked with a brief already in hand (e.g. a file path handed off by `product-process` Step 3, verdict `ready`) | **Brief ready (product layer)** | Invoke `brainstorming` directly, passing the brief's path — `brainstorming` itself detects the `mode: brief` document and enters Brief Preload Mode (see `skills/brainstorming/SKILL.md`); this skill does not re-check the mode or re-run the gate itself |
 | No design or plan files for the topic | **New** | Invoke `brainstorming` |
 | `*-design.md` with `## UI Screens` section containing rows with `Status: pending` | **UI Design pending** | Invoke `ui-design` |
 | `*-design.md` without `## UI Screens` or no rows with `Status: pending`, no `*-plan.md` | **Designed** | Invoke `writing-plans` |
@@ -174,6 +177,15 @@ Once approved (interactive) or auto-routed (unattended), invoke the skill. The i
 
 ### When user says "review this" or "is this ready?"
 1. Invoke `requesting-code-review`
+
+### Business gap during development (R10.2)
+
+**Literal rule:** *Business gap during development: if a business-level unknown appears mid-development (a missing business case, an unresolved product decision), do NOT improvise the answer. Record it as an open decision (DA-#) in the source brief and offer the user to return to `product-process` to mature it. The boundary is always crossed through the door.*
+
+1. Identify the source brief — the document (if any) that was passed at entry per the **Brief ready (product layer)** row above. If no brief was passed at entry, there is no source document to append a `DA-#` to: note the gap in the current plan/design doc instead, and mention `product-process` as the option to formalize it into a brief.
+2. If a source brief exists, append the gap as a new `DA-#` open decision in that brief file — do not invent a new document, do not decide the business question yourself.
+3. Offer the user to invoke `product-process` on that brief to mature the open decision.
+4. Do not resume improvising a business-level answer while the `DA-#` remains open — the only way back across the boundary is through `product-process`, the same door the brief crossed through at entry.
 
 ## Red Flags
 
