@@ -89,8 +89,7 @@ Present the alternatives back as a short list (at least two, one of which is alw
 ## Cross-Cutting Rules
 
 - **Problem-space discipline.** This skill never proposes technical solutions, architectures, or stacks. If the conversation drifts to HOW, park it as a note for the brief and return to WHAT/WHY.
-- **Nothing is asserted without user confirmation.** Every problem framing, JTBD statement, business case, constraint, and alternative is proposed as a draft and only kept once the user has explicitly confirmed it — this skill never puts words in the user's mouth and calls it settled.
-- **One question at a time**, throughout every phase — see Conversational Mechanics.
+- **Nothing is asserted without user confirmation; one question at a time.** See Conversational Mechanics above — both rules apply throughout every phase, not just where first introduced.
 - **Insist on completeness in Phase 3.** A thin business-case catalog is the single most common reason a downstream brief fails G4 later; do not let the user move on with only the happy path covered.
 
 ## Termination
