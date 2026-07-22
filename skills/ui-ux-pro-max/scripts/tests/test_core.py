@@ -94,6 +94,38 @@ class TestDomainDetection(unittest.TestCase):
         self.assertEqual(detect_domain("...!!!???"), "style")
 
 
+class TestEmptyStringQuery(unittest.TestCase):
+    """QA B12: the only prior 'empty query' test used the punctuation string
+    '...!!!???', so search()/search_stack() were never actually called with
+    the literal empty string ''. Verified empirically that '' behaves the
+    same as punctuation-only input (zero tokens -> fallback to 'style'
+    domain, zero results, no crash/error) -- asserted explicitly here since
+    '' is a distinct edge case (falsy value) that a punctuation-only string
+    doesn't exercise (e.g. bool('') is False, bool('...!!!???') is True)."""
+
+    def test_detect_domain_empty_string_falls_back_to_style(self):
+        self.assertEqual(detect_domain(""), "style")
+
+    def test_search_empty_string_with_explicit_domain_returns_no_results(self):
+        result = search("", domain="ux", max_results=3)
+        self.assertEqual(result["count"], 0)
+        self.assertNotIn("error", result)
+        self.assertIn("suggestions", result)
+
+    def test_search_empty_string_auto_detect_falls_back_to_style(self):
+        result = search("")
+        self.assertEqual(result["domain"], "style")
+        self.assertTrue(result["auto_detected"])
+        self.assertEqual(result["count"], 0)
+        self.assertNotIn("error", result)
+
+    def test_search_stack_empty_string_returns_no_results_not_error(self):
+        result = search_stack("", "react", max_results=3)
+        self.assertEqual(result["count"], 0)
+        self.assertNotIn("error", result)
+        self.assertIn("suggestions", result)
+
+
 class TestPersistence(unittest.TestCase):
     def test_persist_then_skip_then_force(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -169,6 +201,44 @@ class TestMalformedCsvRows(unittest.TestCase):
 
             bm25 = core._get_bm25(csv_path, ["Category", "Keywords", "Description"], data)
             self.assertNotIn("none", bm25.vocabulary())
+
+
+class TestCsvErrorPaths(unittest.TestCase):
+    """QA B11: _search_csv's `except (csv.Error, OSError, UnicodeDecodeError)`
+    branch and search_stack's unknown-stack branch were never exercised by
+    any test. Verified empirically (this Python's csv module no longer
+    raises on embedded NUL bytes) which real inputs actually reach each
+    branch: a directory in place of a file (Path.exists() is True for
+    directories too, so the existence guard doesn't catch it -- open()
+    raises IsADirectoryError, an OSError subclass) and invalid UTF-8 bytes
+    (raises UnicodeDecodeError while the file is being read/decoded)."""
+
+    def test_directory_in_place_of_csv_file_fails_gracefully(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fake_csv = Path(tmp) / "styles.csv"
+            fake_csv.mkdir()  # exists() is True, but it is not a readable file
+            results, bm25 = core._search_csv(fake_csv, ["Category"], ["Category"], "query", 3)
+            self.assertIsNone(bm25)
+            self.assertEqual(len(results), 1)
+            self.assertIn("_error", results[0])
+            self.assertIn("Failed to read", results[0]["_error"])
+
+    def test_invalid_utf8_bytes_fail_gracefully(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad_csv = Path(tmp) / "bad_encoding.csv"
+            bad_csv.write_bytes(b"Category,Keywords\n\xff\xfe,rounded\n")
+            results, bm25 = core._search_csv(
+                bad_csv, ["Category", "Keywords"], ["Category", "Keywords"], "query", 3
+            )
+            self.assertIsNone(bm25)
+            self.assertEqual(len(results), 1)
+            self.assertIn("_error", results[0])
+
+    def test_unknown_stack_returns_clear_error_not_crash(self):
+        result = search_stack("performance", "not-a-real-stack", max_results=3)
+        self.assertIn("error", result)
+        self.assertIn("Unknown stack", result["error"])
+        self.assertIn("not-a-real-stack", result["error"])
 
 
 class TestReasoningMatch(unittest.TestCase):
