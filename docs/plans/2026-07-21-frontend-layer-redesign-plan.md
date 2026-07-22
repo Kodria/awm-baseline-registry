@@ -1,5 +1,7 @@
 # Frontend Layer Redesign Implementation Plan
 
+<!-- awm-qa-complete: 2026-07-21 -->
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Rediseñar la capa frontend de AWM: contrato artifact-first en ui-design, acceso a Stitch por capas (MCP → CLI → offline), integración de ui-ux-pro-max, gate de fidelidad visual (design-fidelity) y propagación de skills a subagentes.
