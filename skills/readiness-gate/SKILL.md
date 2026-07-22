@@ -56,7 +56,7 @@ For each criterion, locate the concrete evidence in the document (or its
 concrete absence) — do not accept a criterion on the strength of a section
 existing if its content doesn't actually satisfy the verification question.
 
-## Phase 3 — Veredicto
+## Phase 3 — Verdict
 
 Produce a per-criterion verdict, ✓ or ✗, each backed by evidence — when ✗,
 cite the specific gap (e.g. "G8 fails: DA-2 has no `blocks` value" or "G3
@@ -78,7 +78,7 @@ fails: Out of scope section is empty").
   this skill runs — the existing seal is never trusted as a shortcut.
 - At the crossing point into `development-process`, the gate **always**
   re-runs, even when the seal already reads `ready` (R7.2). If the fresh
-  verdict discrepa from the stored seal (e.g. seal says `ready` but a
+  verdict diverges from the stored seal (e.g. seal says `ready` but a
   criterion now fails, or the reverse), the crossing is **blocked** and the
   discrepancy is shown explicitly — which criterion changed status and why.
 - The gate does not edit brief content. Its writes are limited to exactly
