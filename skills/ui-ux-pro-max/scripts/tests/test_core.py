@@ -20,6 +20,7 @@ from pathlib import Path
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
+import core
 from core import BM25, detect_domain, search, search_stack, CSV_CONFIG, AVAILABLE_STACKS
 from design_system import generate_design_system, persist_design_system, DesignSystemGenerator, hex_to_ansi
 
@@ -143,6 +144,31 @@ class TestHexToAnsi(unittest.TestCase):
 
     def test_empty_string_does_not_raise(self):
         self.assertEqual(hex_to_ansi(""), "")
+
+
+class TestMalformedCsvRows(unittest.TestCase):
+    """QA B7: csv.DictReader maps a short/malformed row's missing trailing
+    fields to None (key present, value None), not to a missing key -- so
+    row.get(col, "")'s default never triggers and str(None) used to leak the
+    literal token "none" into the BM25 search corpus."""
+
+    def test_short_row_does_not_leak_none_token_into_corpus(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            csv_path = Path(tmp) / "malformed.csv"
+            csv_path.write_text(
+                "Category,Keywords,Description\n"
+                "Buttons,rounded,Nice buttons\n"
+                "Cards\n",  # short row: DictReader sets Keywords/Description to None
+                encoding="utf-8",
+            )
+
+            data = core._load_csv(csv_path)
+            # Sanity check on the DictReader behavior this test relies on.
+            self.assertIsNone(data[1]["Keywords"])
+            self.assertIsNone(data[1]["Description"])
+
+            bm25 = core._get_bm25(csv_path, ["Category", "Keywords", "Description"], data)
+            self.assertNotIn("none", bm25.vocabulary())
 
 
 class TestReasoningMatch(unittest.TestCase):

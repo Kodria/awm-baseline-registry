@@ -256,7 +256,11 @@ def _get_bm25(filepath, search_cols, data):
     if cached and cached[0] == mtime:
         return cached[1]
 
-    documents = [" ".join(str(row.get(col, "")) for col in search_cols) for row in data]
+    # csv.DictReader maps a short/malformed row's missing trailing fields to
+    # None (the key IS present, value is None) -- row.get(col, "")'s default
+    # never triggers in that case, so guard explicitly or str(None) pollutes
+    # the corpus with the literal token "none".
+    documents = [" ".join(str(row.get(col) or "") for col in search_cols) for row in data]
     bm25 = BM25()
     bm25.fit(documents)
     _bm25_cache[key] = (mtime, bm25)
