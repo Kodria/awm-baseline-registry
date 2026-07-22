@@ -54,6 +54,7 @@ Read BOTH images in the same turn (design PNG, implementation PNG) and walk the 
 ```markdown
 ## Design Fidelity Report — <screen>
 Design: .stitch/designs/<screen-slug>.png · Implementation: .stitch/verification/<screen-slug>-impl.png
+**Fix cycle:** N/3
 
 | # | Element (from design) | Status | Divergence | Severity |
 |---|----------------------|--------|------------|----------|
@@ -63,12 +64,14 @@ Design: .stitch/designs/<screen-slug>.png · Implementation: .stitch/verificatio
 **Verdict:** CONVERGED | DIVERGENT (N elements pending) | NOT_CERTIFIED (no browser evidence)
 ```
 
+The `**Fix cycle:** N/3` line is the durable counter for Step 6 below — it is written into the report text itself, not held only in the agent's working memory. The first time Step 5 runs for a screen, N = 1. Every time the report is regenerated for that same screen (Step 6.2), increment N by 1 before re-emitting the report, so the report artifact itself always reflects how many fix-and-recheck cycles have run — recoverable even across a context compaction or a resumed session, since it is read off the last emitted report rather than counted from memory.
+
 ### Step 6: Fix loop
 While the verdict is DIVERGENT:
 1. For each `missing`/`diverged` element (highest severity first), implement the fix (or dispatch it to the executing skill/subagent that owns implementation).
-2. Re-run Steps 3–5 for the affected screen.
+2. Re-run Steps 3–5 for the affected screen, incrementing **Fix cycle** in the regenerated report (see Step 5).
 3. An element may only leave the list by becoming `present` or by **explicit user waiver** (record "waived by user" in the report).
-4. If 3 fix-and-recheck cycles for the same screen still leave DIVERGENT elements, stop looping and escalate to the user with the current report — do not retry indefinitely.
+4. If **Fix cycle** reaches `3/3` in the report and the verdict is still DIVERGENT, stop looping and escalate to the user with the current report — do not retry indefinitely. Read the count from the report's own `**Fix cycle:**` line, not from memory of how many turns have passed.
 
 The gate passes ONLY with verdict `CONVERGED` (all elements `present` or waived). `NOT_CERTIFIED` is never a pass — state it explicitly to whoever invoked the skill.
 

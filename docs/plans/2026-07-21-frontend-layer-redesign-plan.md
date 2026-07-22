@@ -870,7 +870,7 @@ Solo tras QA (post-implementation-qa) + retro, vía `finishing-a-development-bra
 | R6.1 | T7 | `skills/design-fidelity/SKILL.md` existe con frontmatter versionado (T7·S2) |
 | R6.2 | T7 | grep `element inventory` ≥1 (T7·S2) |
 | R6.3 | T7 | Step 3 Capture + Step 4 Compare presentes (grep `Screenshot` ≥1) (T7·S2) |
-| R6.4 | T7, T14 | grep `explicit user waiver` ≥1 (static, confirmed). Prueba negativa E2E (T14·S5) — **PENDING, Task 14 deferred, not yet run.** |
+| R6.4 | T7, T14 | grep `explicit user waiver` ≥1 (static, confirmed). Prueba negativa E2E (T14·S5) — **PENDING, Task 14 deferred, not yet run.** Nota QA (B5/B6): el cap de 3 ciclos con escalación a usuario (SKILL.md Step 6.4) y su contador persistido en el reporte (`**Fix cycle:** N/3`, Step 5) son comportamiento de agente sobre instrucciones en Markdown — no verificable con un grep de frase genérica (ese sería el anti-patrón de "marcador genérico" que la propia skill `writing-plans` advierte evitar, ya que un grep solo confirma que el texto existe, no que el agente cuenta y escala correctamente en una sesión real). Verificación honesta: manual/en vivo, diferida junto con Task 14 (mismo estatus PENDING que el resto de esta fila) — no se fabrica un check automatizado que no pruebe el comportamiento real. |
 | R6.5 | T7 | grep `NOT_CERTIFIED` ≥3 (T7·S2) |
 | R6.6 | T8 | grep `design-fidelity` ≥2 en post-implementation-qa (T8·S3) |
 | R7.1 | T9 | grep `Design artifacts:` ≥2 en writing-plans (T9·S3) |
