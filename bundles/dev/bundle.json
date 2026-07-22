@@ -1,6 +1,6 @@
 {
   "name": "dev",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Agentic software development core: SDD spine, quality gates, sensors, and advisory.",
   "scope": "baseline",
   "dependsOn": [],
