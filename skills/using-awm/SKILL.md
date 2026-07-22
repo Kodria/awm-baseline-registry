@@ -1,12 +1,22 @@
 ---
 name: using-awm
-version: "1.0.0"
+version: "1.1.1"
 description: Use when starting any development conversation - establishes tiered skill invocation policy (spine skills always, specialized skills on clear signal)
 ---
 
-<SUBAGENT-STOP>
-If you were dispatched as a subagent to execute a specific task, skip this skill.
-</SUBAGENT-STOP>
+<SUBAGENT-POLICY>
+If you were dispatched as a subagent to execute a specific task: skip the orchestration
+skills (development-process, brainstorming, writing-plans, executing-plans,
+subagent-driven-development, finishing-a-development-branch) — your controller owns
+orchestration. But DO invoke:
+1. Every skill your prompt declares as required.
+2. The craft/verification skills your task triggers on its own signal — this list is
+   illustrative, not exhaustive: frontend-craft for UI surfaces, test-driven-development
+   for implementation, verification-before-completion before reporting done,
+   systematic-debugging on bugs, and any other skill your task's own signal calls for
+   (e.g. `design-fidelity` when verifying implemented UI against its design,
+   `ui-ux-pro-max` when a design-system/style decision needs it directly).
+</SUBAGENT-POLICY>
 
 ## Instruction Priority
 
@@ -37,10 +47,11 @@ Not every skill competes equally for your attention. Apply two tiers:
 development work. Your default entry point is `development-process`.
 
 **Specialized — only on clear signal.** The remaining skills (architecture/CI/NFR
-advisory, frontend, documentation, etc.) are invoked **only when the context
-explicitly calls for them** (you are discussing architecture, configuring a pipeline,
-working on a UI screen, documenting a module...). Do not invoke them
-"just in case": waiting for the signal avoids noise and unnecessary overhead.
+advisory, frontend — `frontend-craft`, `design-fidelity`, `ui-ux-pro-max` — documentation,
+etc.) are invoked **only when the context explicitly calls for them** (you are discussing
+architecture, configuring a pipeline, working on a UI screen, verifying a UI against its
+design, documenting a module...). Do not invoke them "just in case": waiting for the
+signal avoids noise and unnecessary overhead.
 
 ## Orchestration
 

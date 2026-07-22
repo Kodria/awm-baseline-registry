@@ -1,6 +1,6 @@
 ---
 name: post-implementation-qa
-version: "1.2.0"
+version: "1.3.0"
 description: Use after implementation is complete and before finishing the branch — runs two-track QA (Track A fidelity vs. the plan, Track B plan-agnostic quality lenses), drives a fix loop until clean. Also works standalone when a bug is found independently.
 ---
 
@@ -65,6 +65,7 @@ A quality defect (division by zero → `Infinity`, crash on invalid input) is a 
 | **Robustness / Security** | The floor that scope never exempts: silent `Infinity`/`NaN`/`undefined`, crash on boundary/invalid input, missing validation at trust boundaries (user input, external APIs). A public function that silently returns `Infinity`/`NaN`/`undefined`, or crashes on edge/invalid input, is a finding **even if the design declared it out of scope**. Scope excludes *features*, never the robustness floor. |
 | **Logic correctness** | Wrong result for valid input, broken invariants, state that can become inconsistent, off-by-one and ordering bugs. |
 | **Tests** | Does each requirement have a test? Do tests exercise the `IF/THEN` edge cases from the spec? Empty asserts, tests that can't fail, missing failure-path coverage. |
+| **Design fidelity** *(conditional: only when the diff touches UI and `.stitch/designs/` exists)* | Divergence between the implemented screens and their committed design artifacts — invoke the `design-fidelity` skill; its per-element findings enter the fix loop like any other Track B finding |
 
 *(Extensible by tier: add perf / concurrency lenses when the domain warrants. Don't dispatch lenses the change can't possibly trip.)*
 
@@ -155,6 +156,7 @@ Also read the spec's `## Requirements` section to collect the requirement IDs �
 - **Trivial single-file diff** → run only the **Robustness/Security** lens (the floor is never skipped) + Track A if requirement IDs exist.
 - **Multi-file or critical-correction change** → run the full lens panel.
 - Never dispatch a lens the change cannot possibly trip (e.g. no concurrency lens for a pure string-formatting change).
+- **Design Fidelity** → dispatch it whenever the diff touches UI AND `.stitch/designs/` artifacts exist for the affected screen(s), regardless of tier (trivial or multi-file) — it is conditional on the UI-diff signal, not on diff size.
 
 Each subagent returns JSON with a list of findings. It also logs each finding and win in the ledger via `awm ledger add` (see deep-review-prompt.md), feeding `harness-retro`.
 
@@ -238,6 +240,7 @@ NO "QA COMPLETE" CLAIM WITHOUT:
 - Forgetting the `<!-- awm-qa-complete -->` marker
 - Dispatching a review with an inline prompt instead of the template → the `awm ledger add` instruction and the anti-bias header are lost
 - Presenting findings without verifying that the ledger grew (Step 4 gate)
+- "UI diff with `.stitch/designs/` present, no fidelity report" → QA is incomplete — dispatch the design-fidelity lens before closing
 
 ## Connections
 
@@ -246,6 +249,7 @@ NO "QA COMPLETE" CLAIM WITHOUT:
 | `development-process` | Invokes this as a new phase |
 | `brainstorming` / `writing-plans` | Produce the requirement IDs Track A checks against |
 | `systematic-debugging` | For Track B findings |
+| `design-fidelity` | Conditional Track B lens for UI diffs with committed design artifacts |
 | `subagent-driven-development` | Executes the fixes |
 | `verification-before-completion` | Gate for each fix |
 | `harness-retro` | If a finding is recurring (≥2) |

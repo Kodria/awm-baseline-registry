@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.3.0"
+version: "1.4.0"
 description: Use when executing implementation plans with independent tasks in the current session
 ---
 
@@ -160,6 +160,17 @@ The per-branch ledger (`awm ledger`) is what `harness-retro` learns from. Review
 
 A clean review with genuinely zero findings and zero wins is the only case where no ledger growth is acceptable.
 
+## Design Fidelity Propagation Gate (AWM)
+
+<!-- AWM-INTEGRATION: subagent-design-gate -->
+
+If the plan task declared `**Skills:**` or `**Design artifacts:**`, this is not complete until the implementer's report shows real engagement with both — matching the pattern of the Sensor and Ledger gates above.
+
+1. **In the implementer prompt:** the Required Skills and Design Artifacts sections already instruct the implementer to invoke declared skills and confirm design elements before reporting DONE, populating the report's new `design:` field.
+2. **At the controller, before marking the task complete:**
+   - **Design artifacts:** if the task declared `**Design artifacts:**` and the report's `design:` field is missing, or blank, or contradicts the diff (e.g. says "3/3 confirmed" but the diff shows no corresponding UI changes), do not mark the task complete — send it back.
+   - **Skills:** if the task declared `**Skills:**`, check `concerns` for either failure mode the implementer prompt instructs it to report: (a) the Skill tool being unavailable in its harness, or (b) a declared skill not being installed. If neither is flagged, but the diff shows no evidence any declared skill's guidance was actually followed (e.g. a `frontend-craft` requirement with no sign of anti-slop/typography/color rules applied in the diff), do not mark the task complete — send it back for the implementer to confirm which skills were invoked and how.
+
 ## Reconciliation Gate (AWM)
 
 <!-- AWM-INTEGRATION: subagent-reconciliation-gate -->
@@ -170,6 +181,7 @@ Before marking a task complete, the controller reconciles the subagent's report 
 1. The task's requirement IDs in the plan — is each one actually implemented and tested in the diff, not just claimed in the report?
 2. Open `- [ ]` items in the active plan — did the report close what it claimed?
 3. `awm ledger list` — do the findings/wins the report mentions actually exist as entries?
+4. The task's `**Skills:**` / `**Design artifacts:**` declarations — does the report's `design:` field and diff satisfy the Design Fidelity Propagation Gate above?
 
 If the report and the file-derived state disagree, the **files win** — send the task back, do not mark complete on the strength of the summary alone. (This is the per-subagent counterpart of the deterministic SessionStart re-anchor that recovers the main agent's state after a compaction.)
 
@@ -180,6 +192,8 @@ Dispatch prompts are **built from these templates, not written from memory** —
 - `./implementer-prompt.md` - Dispatch implementer subagent
 - `./spec-reviewer-prompt.md` - Dispatch spec compliance reviewer subagent
 - `./code-quality-reviewer-prompt.md` - Dispatch code quality reviewer subagent
+
+When the plan task declares `**Skills:**` or `**Design artifacts:**`, copy both fields verbatim into the corresponding template sections (Required Skills / Design Artifacts). Omit the sections for tasks that do not declare them.
 
 ## Example Workflow
 

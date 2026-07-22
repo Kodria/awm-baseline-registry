@@ -1,10 +1,10 @@
 {
   "name": "frontend",
-  "version": "1.0.0",
-  "description": "Frontend craft and implementation layer.",
+  "version": "2.0.0",
+  "description": "Frontend craft and implementation layer: artifact-first Stitch design, design intelligence, and visual fidelity gate.",
   "scope": "project",
   "dependsOn": ["dev"],
-  "skills": ["impeccable", "ui-design", "extract-design-md", "code-to-design", "react-components", "frontend-craft"],
+  "skills": ["impeccable", "ui-design", "extract-design-md", "react-components", "frontend-craft", "ui-ux-pro-max", "design-fidelity"],
   "workflows": [],
   "agents": []
 }

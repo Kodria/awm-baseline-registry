@@ -1,19 +1,19 @@
 ---
 name: ui-design
-version: "1.0.0"
-description: "Design UI screens using Google Stitch. Reads screens from the design doc's ## UI Screens table, generates them one by one via Stitch MCP, iterates with user feedback, and updates the design doc with Stitch references. Invoke after brainstorming when UI Screens section exists with pending screens."
+version: "2.0.0"
+description: "Design UI screens using Google Stitch with layered access (MCP, CLI via STITCH_API_KEY, or offline fallback). Reads screens from the design doc's ## UI Screens table, generates them one by one, downloads HTML+PNG artifacts to .stitch/designs/, and updates the design doc with artifact paths. Invoke after brainstorming when UI Screens section exists with pending screens."
 ---
 
 # UI Design with Google Stitch
 
 ## Overview
 
-Design UI screens using Google Stitch via MCP. This skill reads the `## UI Screens` table from an approved design doc, generates each screen in Stitch, iterates with the user until approved, and updates the design doc with Stitch references.
+Design UI screens using Google Stitch via MCP. This skill reads the `## UI Screens` table from an approved design doc, generates each screen in Stitch, iterates with the user until approved, downloads HTML+PNG artifacts to `.stitch/designs/`, and updates the design doc with artifact paths.
 
 **Announce at start:** "I'm using the ui-design skill to design UI screens with Stitch."
 
 <HARD-GATE>
-Do NOT write any implementation code. This skill only produces visual designs in Stitch and updates the design doc with references. Implementation happens later in the pipeline via writing-plans → execution.
+Do NOT write any implementation code. This skill only produces visual designs in Stitch, downloads their artifacts, and updates the design doc with artifact paths. Implementation happens later in the pipeline via writing-plans → execution.
 </HARD-GATE>
 
 ## Checklist
@@ -22,8 +22,8 @@ You MUST create a task for each of these items and complete them in order:
 
 1. **Load design doc** — find and read the design doc, extract the `## UI Screens` table
 2. **Setup Stitch project** — list projects to find or create one for this feature, then detect or create design system
-3. **Design screens** — generate each pending screen one by one, iterate with user until approved
-4. **Update design doc** — update the table with Stitch references, commit
+3. **Design screens** — generate, iterate, **download artifacts**
+4. **Update design doc** — table with artifact paths, commit doc + artifacts
 5. **Transition to planning** — invoke writing-plans skill
 
 ## Process Flow
@@ -37,6 +37,7 @@ digraph ui_design {
     "Present to user" [shape=box];
     "User approves?" [shape=diamond];
     "Refine screen" [shape=box];
+    "Download artifacts (3e)" [shape=box];
     "Mark completed" [shape=box];
     "More screens?" [shape=diamond];
     "Update design doc" [shape=box];
@@ -49,7 +50,8 @@ digraph ui_design {
     "Present to user" -> "User approves?";
     "User approves?" -> "Refine screen" [label="no"];
     "Refine screen" -> "Present to user";
-    "User approves?" -> "Mark completed" [label="yes"];
+    "User approves?" -> "Download artifacts (3e)" [label="yes"];
+    "Download artifacts (3e)" -> "Mark completed";
     "Mark completed" -> "More screens?";
     "More screens?" -> "Next pending screen" [label="yes"];
     "More screens?" -> "Update design doc" [label="no"];
@@ -58,6 +60,18 @@ digraph ui_design {
 ```
 
 **The terminal state is invoking writing-plans.** Do NOT invoke any other skill.
+
+---
+
+## Step 0: Access Detection
+
+Decide the access layer BEFORE loading the design doc, and announce it to the user. Never abort the phase because Stitch is unreachable.
+
+1. **Layer 1 — Stitch MCP:** if the Stitch MCP tools (`list_projects`, `generate_screen_from_text`, …) are available in your tool list → use them for every Stitch call in this skill. Announce: *"Stitch access: MCP (layer 1)."*
+2. **Layer 2 — Stitch CLI:** if no MCP but `STITCH_API_KEY` is set and `npx` exists (`[ -n "$STITCH_API_KEY" ] && command -v npx >/dev/null 2>&1`) → run every Stitch call through Bash: `npx -y @_davideast/stitch-mcp tool <tool_name> <args>`, using the exact syntax from the CLI reference table below. Same logical flow, same tool names. Announce: *"Stitch access: CLI via STITCH_API_KEY (layer 2)."*
+3. **Layer 3 — Offline:** neither available → follow the **Offline Mode** section of this skill. Announce: *"Stitch access: none — offline mode (layer 3). Design system and mockups will be generated locally."*
+
+**Mid-flow degradation:** if a layer-2 CLI call fails, announce the failure and degrade to layer 3 for the remaining screens. Use the same failure rule defined under "Error handling (R2.5)" in the Stitch CLI Reference section below: treat any `Error:` in the CLI invocation's output (client-side validation, HTTP 401, or `Tool Call Failed [...]`) as a failed call — do not rely on shell exit code alone, since npx may not always propagate a non-zero exit cleanly. Never degrade silently, and never mark the phase complete pretending Stitch output exists.
 
 ---
 
@@ -113,9 +127,31 @@ If a design system was created or exists, call `apply_design_system` after gener
 
 ---
 
+### Step 2b: Design Intelligence (ui-ux-pro-max — all layers)
+
+**Execution order note:** this subsection is documented after Step 2's "Design system" prose for readability, but its consultation happens BEFORE any `create_design_system`/`update_design_system` call is actually made and before any screen is generated — go back and run it as the first thing you do inside Step 2, ahead of finalizing the design system described above, then return here for Step 3.
+
+Consult the `ui-ux-pro-max` skill (invoke it with the Skill tool if not yet loaded):
+
+1. Derive keywords from the design doc: product type + industry + tone (e.g. `"team management dashboard dark professional"`).
+2. Run its `--design-system` search with `--persist --output-dir <project-root>` so `design-system/<slug>/MASTER.md` is written as the token artifact.
+3. Use the result to drive Stitch:
+   - `create_design_system` properties (colors, typography, roundness, colorMode) come from the recommended palette/font pairing.
+   - Every `generate_screen_from_text` prompt is enriched with the recommended style vocabulary (style name, key effects, anti-patterns to avoid) — concrete words beat vague vibes.
+
+---
+
 ## Step 3: Design Screens (one by one)
 
 For each screen with status `pending`, in the order listed in the table:
+
+**Derive the screen slug first.** The Screen column is free text from the design doc and may contain spaces, punctuation, or shell metacharacters — never embed it raw in a filename, path, or shell command. Before doing anything else for this screen, derive a filesystem-safe slug from its Screen name:
+
+```bash
+SLUG=$(echo "<Screen Name>" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
+```
+
+From here on, **every occurrence of `<screen-slug>` in this document — in the download commands below (3e), in the offline-mode scratch-dir mechanics, and anywhere else a screen-derived filename or path is built — means this sanitized `$SLUG`, never the raw Screen name.**
 
 ### 3a. Generate
 
@@ -158,6 +194,43 @@ Inform the user: *"Screen '{name}' approved. Moving to next screen..."* (or *"Al
 
 **Model override:** If the user requests faster iteration at any point, switch to `GEMINI_3_FLASH` for subsequent generations. Inform: *"Switching to fast mode for quicker iterations."*
 
+### 3e. Download artifacts (MANDATORY — a screen is not `completed` without them)
+
+Immediately after the user approves a screen:
+
+1. **Check `.gitignore` BEFORE downloading anything.** Both artifact directories must actually land in git — a silently ignored path defeats the whole artifact-first contract:
+
+```bash
+mkdir -p .stitch/designs design-system
+git check-ignore -q .stitch/designs/ 2>/dev/null && echo ".stitch/ is gitignored — surface this to the user before continuing"
+git check-ignore -q design-system/ 2>/dev/null && echo "design-system/ is gitignored — surface this to the user before continuing"
+```
+
+If either check fires, **stop** — do not proceed to download or generate further screens. Tell the user explicitly, e.g. *"`.stitch/` is excluded by `.gitignore`, so approved-screen artifacts would never be committed. How do you want to resolve this — un-ignore the path, or choose a different artifact location?"* — and wait for their decision before continuing. A "surfaced" note alone (without stopping) is not sufficient.
+
+2. Resolve this skill's own directory once per session (mirrors the `ui-ux-pro-max` convention — AWM installs are directory symlinks, so executing through them works with no `readlink` needed):
+
+```bash
+UIDESIGN=""
+for d in "$HOME/.claude/skills/ui-design" ".claude/skills/ui-design" ".agents/skills/ui-design"; do
+  [ -f "$d/scripts/fetch-stitch.sh" ] && UIDESIGN="$d" && break
+done
+[ -z "$UIDESIGN" ] && { echo "ui-design skill not found in any known install location" >&2; exit 1; }
+```
+
+3. Call `get_screen` for the approved screen; extract `htmlCode.downloadUrl` and `screenshot.downloadUrl`.
+4. Download both to the repo:
+
+```bash
+bash "$UIDESIGN/scripts/fetch-stitch.sh" "<htmlCode.downloadUrl>" ".stitch/designs/<screen-slug>.html"
+bash "$UIDESIGN/scripts/fetch-stitch.sh" "<screenshot.downloadUrl>=w1600" ".stitch/designs/<screen-slug>.png"
+```
+
+(The `=w{width}` suffix requests full resolution instead of a thumbnail. Use the design's device width: 1600 desktop, 800 mobile.)
+
+5. Verify both files exist and are non-empty (`ls -la .stitch/designs/`). If either download fails, retry once; if it still fails, the screen stays `pending` — do NOT mark it `completed` — and output this exact message to the user: `"Could not download artifacts for screen '<name>' after retry — it remains pending. Error: <error>. You can retry manually or investigate the URL/network."`
+6. Only approved screens get artifacts — never download discarded variants.
+
 ---
 
 ## Step 4: Update Design Doc
@@ -172,17 +245,16 @@ After all screens are approved:
 
 > Stitch Project: `projects/{projectId}`
 
-| Screen | Description | Device | Status | Stitch Screen |
-|--------|-------------|--------|--------|---------------|
-| Login  | Login screen with email and OAuth | MOBILE | completed | screens/xyz1 |
-| Dashboard | Main view with key metrics | DESKTOP | completed | screens/xyz2 |
+| Screen | Description | Device | Status | Stitch Screen | Artifacts |
+|--------|-------------|--------|--------|---------------|-----------|
+| Login  | Login screen with email and OAuth | MOBILE | completed | screens/xyz1 | .stitch/designs/login.html · .stitch/designs/login.png |
 ```
 
-3. Commit the updated design doc:
+3. Commit the design doc AND the artifacts together:
 
 ```bash
-git add docs/plans/<design-doc-filename>.md
-git commit -m "docs: update design doc with Stitch UI screen references"
+git add docs/plans/<design-doc-filename>.md .stitch/designs/ design-system/
+git commit -m "docs: design phase artifacts (screens + tokens) for <feature>"
 ```
 
 ---
@@ -196,13 +268,42 @@ After committing the updated design doc:
 
 ---
 
+## Offline Mode (Layer 3)
+
+When no Stitch access exists, this skill still fulfills the same artifact contract — locally.
+
+1. **Tokens:** run ui-ux-pro-max's keyword derivation and `--design-system --persist --output-dir <project-root>` search (Step 2b's first two bullets apply identically) → `design-system/<slug>/MASTER.md`. Step 2b's third bullet (driving `create_design_system` / `generate_screen_from_text`) does NOT apply offline — there are no Stitch calls to drive. Instead, `MASTER.md`'s tokens feed directly into the `craft` brief in point 2 below.
+2. **Mockups:** for each `pending` screen, invoke the `impeccable` skill's `craft` sub-command, using `MASTER.md` tokens + the screen's Description as the brief, to produce a **static, self-contained HTML mockup**.
+   - **Why a scratch dir.** Per `craft.md`'s Step 0, `craft` runs its own `ls` against whatever the actual shell working directory is (it takes no directory parameter) and only offers the "Single index.html" option when that directory is empty — if it detects an existing framework (`package.json`, `astro.config.*`, etc., which most real projects have) it silently reuses that framework instead, defeating the point of a portable offline mockup. Force the greenfield menu by running `craft` from inside a fresh, empty scratch directory created new for this screen, never reused across screens.
+   - **Scope — what "done" means, before anything gets copied out.** Run `craft` only through: its Step 0 (choose **"Single index.html"** from the greenfield menu), its Step 1 (shape brief, run internally — its own "present the shape output and stop" gate is satisfied by this skill's own present/approve step below, no need to pause twice), and an initial pass of markup/CSS. Explicitly **skip Step 3's mandatory visual-direction loop**, even when the harness has native image-generation tools (which would otherwise make that loop mandatory per `craft.md`) — the design intelligence and tokens already came from ui-ux-pro-max in point 1 above, so craft's own palette/mock-exploration loop is redundant here. Do **not** proceed into Step 4 (Build to Production Quality), Step 5 (Iterate Visually), or Step 6 (Present) — those assume a real, running feature (production-hardening checklist, in-browser inspection loop, build pipeline). Stop once `index.html` reflects the brief with working markup/CSS.
+   - **Mechanics — run literally, in this exact order** (captures the project root before moving, so the later `cp` and the eventual `git add .stitch/designs/` never resolve against the wrong directory):
+
+```bash
+PROJECT_ROOT="$(pwd)"
+mkdir -p .stitch/.scratch/<screen-slug> .stitch/designs
+cd .stitch/.scratch/<screen-slug>
+# invoke craft here — its Step 0 `ls` now sees this empty dir and offers the greenfield menu; choose "Single index.html"
+# ... craft runs per the Scope above, writes index.html here ...
+cp index.html "$PROJECT_ROOT/.stitch/designs/<screen-slug>.html"
+cd "$PROJECT_ROOT"
+rm -rf ".stitch/.scratch/<screen-slug>"
+```
+
+   - **Present without a screenshot.** No PNG exists yet at this point (PNG capture is point 3 below, and only after approval) — "presenting" a screen here means describing the generated HTML or opening the file for the user to view directly, not showing a screenshot. If the user requests changes, repeat the **Mechanics** sequence above (fresh scratch dir, same screen slug) with the feedback folded into the brief — this replaces `edit_screens` from the online flow. Repeat until approved, one screen at a time, before moving to the next `pending` screen.
+3. **PNG:** check your tool list for browser-automation tools (e.g. `browser_navigate`, `browser_resize`, `browser_take_screenshot` — the Playwright MCP tool family), same concrete-check style as Step 0. If present: navigate to `file://<abs-path>/.stitch/designs/<screen-slug>.html`, resize to the device width (1600 desktop / 390 mobile), screenshot → `.stitch/designs/<screen-slug>.png`. If no such tools are present, record `png: n/a (offline, no browser)` in the Artifacts column — an explicit degradation, never a silent one.
+4. **Design doc:** same Step 4 table and commit; the `Stitch Screen` column reads `offline`, and the `> Stitch Project: ...` header line reads `> Stitch Project: n/a (offline mode)`. Artifacts cell follows the same `path · path` convention used elsewhere in the table, e.g. `.stitch/designs/login.html · n/a (offline, no browser)` (or `.stitch/designs/login.html · .stitch/designs/login.png` when a browser was available for the screenshot).
+
+**HARD-GATE carve-out:** the HTML mockup under `.stitch/designs/` is a *design artifact*, not implementation — produced by stopping `craft` at the written `index.html`, before its production-hardening/build-pipeline steps. Application source code remains forbidden in this skill.
+
+---
+
 ## Key Principles
 
 - **One screen at a time** — Don't batch-generate. Present and approve each individually.
 - **One edit at a time** — When refining, make one major change per edit call.
 - **Use UI/UX keywords** — "navigation bar", "hero section", "card grid", "floating action button".
 - **GEMINI_3_1_PRO by default** — Switch to GEMINI_3_FLASH only if user requests speed.
-- **References only** — Store Stitch IDs in the design doc, don't download screenshots or HTML to the repo.
+- **Artifact-first** — Every approved screen materializes `.stitch/designs/<slug>.html` + `.png` committed to the repo. Implementation consumes ONLY these artifacts; Stitch (MCP or CLI) is never needed after this phase.
 - **No implementation** — This skill designs screens, it does not write code.
 
 ---
@@ -232,3 +333,29 @@ After committing the updated design doc:
 - `variantCount`: 1-5 (default 3)
 - `creativeRange`: `REFINE` | `EXPLORE` | `REIMAGINE`
 - `aspects`: `LAYOUT` | `COLOR_SCHEME` | `IMAGES` | `TEXT_FONT` | `TEXT_CONTENT`
+
+---
+
+## Stitch CLI Reference (Layer 2)
+
+`STITCH_API_KEY` is generated in Stitch → Settings → API key. Export it before invoking the CLI (e.g. `set -a; source .env; set +a`).
+
+All calls use the `tool` subcommand with `-d '<json>'` for arguments (like `curl -d`) and `-o json` for parseable output. Never use positional/per-field flags, and never use `-o raw` (not valid JSON — `util.inspect` format).
+
+| Tool | Exact command | Notes |
+|------|----------------|-------|
+| `list_projects` | `npx -y @_davideast/stitch-mcp tool list_projects -o json` | No `-d` needed — all fields optional. |
+| `create_project` | `npx -y @_davideast/stitch-mcp tool create_project -d '{"title":"<title>"}' -o json` | `title` optional. |
+| `get_project` | `npx -y @_davideast/stitch-mcp tool get_project -d '{"name":"projects/<projectId>"}' -o json` | `name` required, format `projects/{project}`. |
+| `list_design_systems` | `npx -y @_davideast/stitch-mcp tool list_design_systems -d '{"projectId":"<projectId>"}' -o json` | `projectId` marked optional in the schema but **required in practice** — omitting it returns `Error: Tool Call Failed [list_design_systems]: Request contains an invalid argument.` |
+| `create_design_system` | `npx -y @_davideast/stitch-mcp tool create_design_system -d '{"designSystem":{"displayName":"<name>","theme":"<theme-object>"},"projectId":"<projectId>"}' -o json` | `designSystem` (object with `displayName` + `theme`) required; `projectId` optional (empty = global asset). `<theme-object>` is a placeholder — substitute a real `DesignTheme` JSON object (e.g. `{"bodyFont":"INTER","colorMode":"DARK",...}`), not the literal string. The CLI does not validate client-side before sending, so a missing `designSystem` still reaches the server and can create an empty design system asset — always pass it. |
+| `generate_screen_from_text` | `npx -y @_davideast/stitch-mcp tool generate_screen_from_text -d '{"projectId":"<projectId>","prompt":"<prompt>","deviceType":"MOBILE"}' -o json` | `projectId` + `prompt` required; `deviceType`/`designSystem`/`modelId` optional. |
+| `get_screen` | `npx -y @_davideast/stitch-mcp tool get_screen -d '{"name":"projects/<projectId>/screens/<screenId>"}' -o json` | Only `name` is needed (`projects/{p}/screens/{s}`) even though the schema also lists `projectId`/`screenId` as required — those are deprecated/legacy. Response includes `htmlCode.downloadUrl` and `screenshot.downloadUrl`, same as MCP. **This redundancy is CLI-specific** — the `get_screen(name, projectId, screenId)` signature in the Stitch MCP Tools Reference table above documents the MCP tool itself and is unaffected by this note. |
+| `edit_screens` | `npx -y @_davideast/stitch-mcp tool edit_screens -d '{"projectId":"<projectId>","selectedScreenIds":["<screenId1>","<screenId2>"],"prompt":"<prompt>"}' -o json` | `projectId`, `selectedScreenIds` (real JSON array, not a string), `prompt` required. |
+| `generate_variants` | `npx -y @_davideast/stitch-mcp tool generate_variants -d '{"projectId":"<projectId>","selectedScreenIds":["<screenId>"],"prompt":"<prompt>","variantOptions":{"count":3}}' -o json` | `projectId`, `selectedScreenIds`, `prompt`, `variantOptions` (object) required. |
+| `apply_design_system` | `npx -y @_davideast/stitch-mcp tool apply_design_system -d '{"projectId":"<projectId>","assetId":"<designSystemAssetId>","selectedScreenInstances":[{"id":"<instanceId>","sourceScreen":"projects/<projectId>/screens/<screenId>"}]}' -o json` | `projectId`, `assetId`, `selectedScreenInstances` (array of `{id, sourceScreen}`) required. Source these pairs from `get_project`'s `screenInstances` field, filtering to entries that have `sourceScreen` (skip `DESIGN_SYSTEM_INSTANCE` entries, which use `sourceAsset` instead). |
+| `update_design_system` | `npx -y @_davideast/stitch-mcp tool update_design_system -d '{"name":"<designSystemAssetName>","projectId":"<projectId>","designSystem":{"displayName":"<name>","theme":"<theme-object>"}}' -o json` | **Not verified by the CLI spike** (`docs/plans/2026-07-21-stitch-cli-spike.md` only listed this tool as available, without checking its syntax). Command inferred from the MCP signature `update_design_system(name, projectId, designSystem)` following the same `-d`/`-o json` pattern as the other tools in this table. Before relying on this in Layer 2, run `npx -y @_davideast/stitch-mcp tool update_design_system --schema` to confirm exact required fields. |
+
+**Discovery shortcut:** `npx -y @_davideast/stitch-mcp tool <name> --schema` (no `-d`) prints the tool's argument schema plus an auto-generated `example` command — the cheapest way to confirm syntax for a tool not in this table, without spending a real call.
+
+**Error handling (R2.5):** `STITCH_API_KEY` invalid or missing produces different error text depending on the failure mode (HTTP 401 from the server vs. client-side validation before any network call), and exact wording is not guaranteed across CLI versions. Do not match specific error strings — treat **any** `Error:` in the CLI invocation's output (client-side, HTTP 401, or `Tool Call Failed [...]`) as a signal to degrade to Layer 3 (offline). Transport noise like `Stitch Transport Error: [DOMException [AbortError]...]` in stderr is not itself a failure signal if valid JSON still follows on stdout.

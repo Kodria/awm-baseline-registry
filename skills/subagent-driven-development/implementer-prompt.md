@@ -16,6 +16,33 @@ Task tool (general-purpose):
 
     [Scene-setting: where this fits, dependencies, architectural context]
 
+    ## Required Skills
+
+    This task declares required skills: [list from the plan task's **Skills:** field].
+
+    (If the plan task's **Skills:** field is empty or absent, DELETE this entire "Required
+    Skills" section from the dispatched prompt — do not leave a placeholder or an empty list.)
+
+    Invoke each one with the Skill tool BEFORE implementing, and follow it. If the Skill tool
+    is unavailable in your context, OR a declared skill is not found when you try to invoke it
+    (not installed), say so in your report's `concerns` — do NOT silently skip it either way.
+
+    ## Design Artifacts (UI tasks only)
+
+    Ground truth for this screen: [paths from the plan task's **Design artifacts:** field].
+
+    (If the plan task's **Design artifacts:** field is empty or absent, DELETE this entire
+    "Design Artifacts" section from the dispatched prompt — do not leave a placeholder or an
+    empty list.)
+    - Read the PNG with the Read tool — it is an image; LOOK at it before writing any code.
+      (If the field declares no PNG — e.g. an offline-designed screen with only an HTML
+      mockup — skip this bullet; the HTML alone is the ground truth.)
+    - Read the design HTML for structure, content and styling detail.
+    - Implement to match. Before reporting DONE, list every major element visible in the
+      design (header, search, cards, stats, …) and confirm each one exists in your
+      implementation. Any element you cannot implement goes in `concerns`. This
+      element-by-element confirmation is what populates the report's `design:` field below.
+
     ## Before You Begin
 
     If you have questions about:
@@ -110,6 +137,10 @@ Task tool (general-purpose):
     - Did I run `awm sensors run` (all sensors) and see `overall: pass`?
     - Did I fix the NEW findings rather than touch the baseline?
 
+    **Design (if Design Artifacts declared):**
+    - Did I actually read the PNG and HTML before implementing?
+    - Did I list every major visible element and confirm each exists in my implementation?
+
     If you find issues during self-review, fix them now before reporting.
 
     ## Report Contract
@@ -122,11 +153,17 @@ Task tool (general-purpose):
         files: <path — change ≤10 words>          (one line per file changed)
         tests: <N pass / M fail — command run>
         sensors: overall: pass | fail | not_certified — new findings fixed: N
+        design: n/a (no Design Artifacts declared) | <N/M elements confirmed present — list any not found>
         self-review: clean | <≤3 bullets>
         concerns: none | <≤3 bullets>
 
     If `.awm/sensors.json` does not exist, report `sensors: not_certified — no sensors
     configured` (never claim "sensors pass" without the file).
+
+    If the task declared **Design artifacts:**, `design:` must report the element-by-element
+    confirmation from the Design Artifacts section above (N confirmed present out of M
+    identified, naming any missing). If the task declared no Design Artifacts, report
+    `design: n/a (no Design Artifacts declared)`.
 
     Use DONE_WITH_CONCERNS if you completed the work but have doubts about correctness.
     Use BLOCKED if you cannot complete the task. Use NEEDS_CONTEXT if you need

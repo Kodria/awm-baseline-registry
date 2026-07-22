@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "1.2.1"
+version: "1.3.0"
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
 
@@ -94,6 +94,9 @@ _Requirements: R1.1, R2.3_
 - Modify: `exact/path/to/existing.py:123-145`
 - Test: `tests/exact/path/to/test.py`
 
+**Skills:** frontend-craft            ← skills the implementer MUST invoke; single line, comma-separated (add ui-ux-pro-max only for the standalone case below — omit line if none)
+**Design artifacts:** .stitch/designs/login.html, .stitch/designs/login.png   ← single line, comma-separated (UI tasks only — omit line if not applicable)
+
 - [ ] **Step 1: Write the failing test**
 
 ```python
@@ -128,6 +131,12 @@ git commit -m "feat: add specific feature"
 ````
 
 **Requirement traceability tag.** The `_Requirements: R1.1, R2.3_` line names the requirement IDs (from the spec's `## Requirements` section) that the task satisfies, and each test comment names the ID it verifies (`# verifies R1.1`). This is what makes the traceability matrix and the analyze gate below mechanical rather than guesswork. **Tier:** omit the tag only for trivial single-file diffs whose spec intentionally has no `## Requirements` section.
+
+**Skill & artifact propagation (UI tasks).** Any task that creates or modifies UI belonging to a designed screen MUST declare `**Skills:**` (at minimum `frontend-craft`) and `**Design artifacts:**` with the exact paths inherited from the design doc's `## UI Screens` Artifacts column (see `skills/ui-design/SKILL.md` Step 4 for the table format). The execution controller copies both into the subagent prompt — a UI task without them ships an implementer who has never seen the design. The design doc's table cell separates paths with `·` (e.g. `.stitch/designs/login.html · .stitch/designs/login.png`); when inheriting them into `**Design artifacts:**`, convert that `·`-separated cell into the comma-separated single-line format shown above (`.stitch/designs/login.html, .stitch/designs/login.png`) — comma-separated is what the execution controller mechanically copies into implementer prompts, so don't carry the `·` over. Inherit only real file paths: if a cell entry is a degradation token rather than a path (e.g. `n/a (offline, no browser)` when no PNG exists), do NOT carry it into the field — declare only the paths that exist (e.g. just the `.html`).
+
+A task counts as touching a designed screen when its `**Files:**` list includes a route/component/page file that corresponds to a screen listed in the design doc's `## UI Screens` table — cross-check the Files list against that table's Screen column before deciding.
+
+`frontend-craft` alone is normally sufficient — it consults `ui-ux-pro-max` internally when a color/typography/UX decision needs it. Only declare `ui-ux-pro-max` directly in `**Skills:**` if the task needs to invoke its search independent of frontend-craft (e.g. a task that's purely about generating/persisting a design system, with no frontend-craft escalation).
 
 ## No Placeholders
 
@@ -167,6 +176,8 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 **2. Placeholder scan:** Search your plan for red flags — any of the patterns from the "No Placeholders" section above. Fix them.
 
 **3. Type consistency:** Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug.
+
+**4. UI task propagation:** Does every task touching a designed screen declare `**Skills:**` and `**Design artifacts:**`? Do the declared artifact paths match the design doc's `## UI Screens` Artifacts column for that screen (not stale/mismatched)? A UI task without them, or with wrong paths, is a plan failure — fix it.
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
