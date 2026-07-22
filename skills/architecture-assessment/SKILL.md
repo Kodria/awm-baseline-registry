@@ -204,7 +204,7 @@ mode: assessment
 readiness: n/a
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
-open_decisions: [DA-1]
+open_decisions: []
 project: <slug or null>
 ---
 ```
