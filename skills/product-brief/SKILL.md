@@ -33,7 +33,7 @@ Never write the brief directly. First present the proposed content section by se
 
 Draft using the structure of `references/brief-template.md` (read it while drafting — it lays out all 11 required sections in contract order). The non-negotiable rules while drafting:
 
-**Non-assumption mandate as the first section.** It includes: the statement that the brief was built without access to the code; the **explicit and exhaustive list of what has NOT been verified** (entities, integrations, conventions, external payload formats, deployment mechanisms); the rule that any contradiction between the brief and the real system is reported to the owner and never resolved by assuming; and the explicit delegation of all technical definition (schemas, routes, signatures, libraries) to the implementer after discovery.
+**Non-assumption mandate, immediately after Business Need / Users & Context / Constraints.** It includes: the statement that the brief was built without access to the code; the **explicit and exhaustive list of what has NOT been verified** (entities, integrations, conventions, external payload formats, deployment mechanisms); the rule that any contradiction between the brief and the real system is reported to the owner and never resolved by assuming; and the explicit delegation of all technical definition (schemas, routes, signatures, libraries) to the implementer after discovery.
 
 **Language calibrated to certainty.** References to system entities are conceptual and must be marked as such ("real structure: discover in R0", "verify in R0 whether this exists"). Never assert with certainty something the conversation did not verify. Thresholds and parameters are configurable and/or open decisions, never definitive magic numbers.
 

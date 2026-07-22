@@ -38,20 +38,22 @@ project: <slug or null>
 
 <!-- guidance: who uses or suffers this, and in what context they encounter it (device,
      channel, frequency, urgency). This is what readiness-gate's G2 checks — without
-     concrete names/roles here, the criterion fails. -->
+     concrete names/roles here, the criterion fails. Descriptive bullets, no ID scheme —
+     the contract does not define one for this section (unlike N#/PR-#/RF-x.y/DA-#). -->
 
-- **U1** — <role/persona> encounters this when <context/trigger>, via <channel>.
-- **U2** — <second user group, if any>.
+- <role/persona> encounters this when <context/trigger>, via <channel>.
+- <second user group, if any>.
 
 ## Constraints
 
 <!-- guidance: technical, cost, privacy, and untouchable-infrastructure limits the solution
      must respect. This is what readiness-gate's G5 checks. Constraints are hard limits
-     already known — not open decisions (those go in "Open Decisions" below). -->
+     already known — not open decisions (those go in "Open Decisions" below). Descriptive
+     bullets, no ID scheme — the contract does not define one for this section. -->
 
-- **C1** — Technical: <e.g. must run on existing infra X; cannot introduce dependency Y>.
-- **C2** — Cost: <e.g. no new paid subscriptions without owner sign-off>.
-- **C3** — Privacy/NDA: <e.g. data category Z cannot leave the current boundary>.
+- Technical: <e.g. must run on existing infra X; cannot introduce dependency Y>.
+- Cost: <e.g. no new paid subscriptions without owner sign-off>.
+- Privacy/NDA: <e.g. data category Z cannot leave the current boundary>.
 
 ## Non-Assumption Mandate
 
