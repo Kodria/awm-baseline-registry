@@ -14,7 +14,7 @@ awm: product-brief          # discriminator: AWM product-layer artifact
 schema: 1                   # contract version
 title: <short name>
 mode: discovery | brief | assessment | extraction
-readiness: draft | ready    # written ONLY by readiness-gate
+readiness: draft | ready | n/a  # written ONLY by readiness-gate; n/a for modes it never gates
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 open_decisions: [DA-1, DA-3]
@@ -56,10 +56,27 @@ project: <slug or null>
   discriminator and schema rules above apply to them exactly as they apply to
   `mode: discovery` or `mode: brief` documents.
 
-- **Required body sections (R5.1).** Regardless of `mode`, the body of a
+- **`readiness: n/a` for modes the gate never evaluates.** `readiness-gate`'s
+  G1–G9 checklist verifies brief-specific criteria (problem statement,
+  business cases, requirements traceability, release sequencing) that have no
+  equivalent in an architecture document. `mode: assessment` and
+  `mode: extraction` reports are never submitted to that gate, so they write
+  `readiness: n/a` — an explicit statement that the field doesn't apply,
+  never a self-authored `draft`/`ready` (that vocabulary stays exclusive to
+  `readiness-gate`'s verdict on `mode: discovery`/`mode: brief` documents,
+  per the rule above).
+
+- **Required body sections (R5.1) — scoped to `mode: brief` (and the
+  crystallized handoff a `mode: discovery` session produces).** The body of a
   product brief MUST contain the following sections, each carrying its own
   stable ID scheme so requirements and decisions stay traceable across edits
-  and re-ingestion:
+  and re-ingestion. `mode: assessment` and `mode: extraction` reports do
+  **not** use this section list — their bodies are purpose-built for
+  architecture content (context/container views, data model, findings), not
+  business content; R5.3's parity requirement is frontmatter-only, not body
+  structure. Every mode still reuses the ID-traceability discipline (a stable
+  ID per trackable item) and the non-assumption/calibrated-certainty
+  discipline, even where the section list itself doesn't apply:
   - **Business need** — one or more `N#` entries stating the problem, who
     bears its cost, and the cost of leaving it unresolved.
   - **Users & context** — who uses or suffers this, and in what context they
