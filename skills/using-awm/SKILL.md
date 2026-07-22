@@ -1,12 +1,19 @@
 ---
 name: using-awm
-version: "1.0.0"
+version: "1.1.0"
 description: Use when starting any development conversation - establishes tiered skill invocation policy (spine skills always, specialized skills on clear signal)
 ---
 
-<SUBAGENT-STOP>
-If you were dispatched as a subagent to execute a specific task, skip this skill.
-</SUBAGENT-STOP>
+<SUBAGENT-POLICY>
+If you were dispatched as a subagent to execute a specific task: skip the orchestration
+skills (development-process, brainstorming, writing-plans, executing-plans,
+subagent-driven-development, finishing-a-development-branch) — your controller owns
+orchestration. But DO invoke:
+1. Every skill your prompt declares as required.
+2. The craft/verification skills your task triggers on its own signal: frontend-craft
+   for UI surfaces, test-driven-development for implementation,
+   verification-before-completion before reporting done, systematic-debugging on bugs.
+</SUBAGENT-POLICY>
 
 ## Instruction Priority
 
