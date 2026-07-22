@@ -50,7 +50,7 @@ digraph lifecycle {
 | Phase | Skill | Trigger | Output |
 |-------|-------|---------|--------|
 | 1. Design | `brainstorming` | New feature, new task, creative work | Design doc with optional `## UI Screens` section |
-| 1.5. UI Design | `ui-design` | Design doc has `## UI Screens` with pending screens | Design doc updated with Stitch screen references |
+| 1.5. UI Design | `ui-design` | Design doc has `## UI Screens` with pending screens | Design doc updated with artifact paths + .stitch/designs/ committed |
 | 2. Planning | `writing-plans` | Design doc without pending UI screens | Implementation plan in `docs/plans/YYYY-MM-DD-<topic>-plan.md` |
 | 3a. Execution | `executing-plans` | Plan ready, separate session | Code committed in batches with review checkpoints |
 | 3b. Execution | `subagent-driven-development` | Plan ready, same session, independent tasks | Code committed per task with subagent reviews |
@@ -93,6 +93,14 @@ Scan `docs/plans/` for existing artifacts:
 | `*-plan.md` exists, all tasks complete, no `<!-- awm-qa-complete` in plan | **QA Pending** | Invoke `post-implementation-qa` |
 | `*-plan.md` all tasks complete, `<!-- awm-qa-complete` present in plan, no `<!-- awm-retro-complete` | **Retro pending** | Invoke `harness-retro` |
 | `*-plan.md` all tasks complete, `<!-- awm-retro-complete` present in plan | **Finishing** | Invoke `finishing-a-development-branch` |
+
+### Frontend bundle gate
+
+WHEN the detected state is **UI Design pending**, OR the active plan contains any `**Design artifacts:**` field, verify the frontend skills are installed before routing: the `ui-design` skill (and `frontend-craft`) must be available — check the skill list, or `ls ~/.claude/skills/ui-design .claude/skills/ui-design .agents/skills/ui-design 2>/dev/null`. IF absent, THEN stop and instruct:
+
+> "This work needs the `frontend` bundle, which is not installed. Run `awm update && awm init` and select the frontend bundle for this project, then resume."
+
+Do NOT improvise the phase without the skill.
 
 ### Step 2: Present State to User
 
