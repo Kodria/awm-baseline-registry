@@ -1,12 +1,12 @@
 ---
 name: using-awm
-version: "1.1.1"
+version: "1.2.0"
 description: Use when starting any development conversation - establishes tiered skill invocation policy (spine skills always, specialized skills on clear signal)
 ---
 
 <SUBAGENT-POLICY>
 If you were dispatched as a subagent to execute a specific task: skip the orchestration
-skills (development-process, brainstorming, writing-plans, executing-plans,
+skills (development-process, product-process, brainstorming, writing-plans, executing-plans,
 subagent-driven-development, finishing-a-development-branch) — your controller owns
 orchestration. But DO invoke:
 1. Every skill your prompt declares as required.
@@ -39,7 +39,7 @@ Use the `Skill` tool. When you invoke a skill, its content is loaded and present
 Not every skill competes equally for your attention. Apply two tiers:
 
 **Spine and gates — always consider them.** The process and quality skills
-(`development-process`, `brainstorming`, `writing-plans`, `executing-plans`,
+(`development-process`, `product-process`, `brainstorming`, `writing-plans`, `executing-plans`,
 `subagent-driven-development`, `test-driven-development`,
 `requesting-code-review`, `receiving-code-review`, `post-implementation-qa`,
 `finishing-a-development-branch`, `verification-before-completion`,
@@ -55,7 +55,17 @@ signal avoids noise and unnecessary overhead.
 
 ## Orchestration
 
-For development tasks, your default entry point is the `development-process` skill — it routes to brainstorming, writing-plans, execution, and finishing based on project state. Invoke it on any new development work unless the user explicitly says otherwise.
+AWM has two sibling orchestrators with an explicit boundary. Route by what the session starts with:
+
+| The session starts with… | Orchestrator |
+|---|---|
+| An idea/need WITHOUT a formed requirement ("I have an idea", "let's explore a new module"), an architecture evaluation or extraction request, or an existing brief to resume | `product-process` |
+| A concrete requirement over code (defined feature, bug, refactor), or a certified-`ready` brief handed off to build | `development-process` |
+| Ambiguous | ASK: "mature the idea (product layer) or build now (development)?" — never guess |
+
+Precedence rule: `brainstorming` explores SOLUTION space and is invoked via `development-process` — never as the entry point for a raw business idea. `product-discovery` explores PROBLEM space.
+
+Anti-loss rules: one orchestrator active at a time; the brief is the baton between them (context crosses only inside the artifact); returning from development to product happens explicitly through `product-process`, never by improvising business answers mid-development.
 
 For documentation tasks, the equivalent entry point is `docs-system-orchestrator`.
 
