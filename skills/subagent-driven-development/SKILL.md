@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.3.0"
+version: "1.4.0"
 description: Use when executing implementation plans with independent tasks in the current session
 ---
 
@@ -167,7 +167,9 @@ A clean review with genuinely zero findings and zero wins is the only case where
 If the plan task declared `**Skills:**` or `**Design artifacts:**`, this is not complete until the implementer's report shows real engagement with both — matching the pattern of the Sensor and Ledger gates above.
 
 1. **In the implementer prompt:** the Required Skills and Design Artifacts sections already instruct the implementer to invoke declared skills and confirm design elements before reporting DONE, populating the report's new `design:` field.
-2. **At the controller, before marking the task complete:** if the task declared `**Design artifacts:**` and the report's `design:` field is missing, or blank, or contradicts the diff (e.g. says "3/3 confirmed" but the diff shows no corresponding UI changes), do not mark the task complete — send it back. If the task declared `**Skills:**` and `concerns` doesn't mention the skill tool being unavailable, but nothing in the diff/report shows evidence the skill was actually invoked, treat this like the Ledger Gate's trust-but-verify principle — ask the implementer to confirm.
+2. **At the controller, before marking the task complete:**
+   - **Design artifacts:** if the task declared `**Design artifacts:**` and the report's `design:` field is missing, or blank, or contradicts the diff (e.g. says "3/3 confirmed" but the diff shows no corresponding UI changes), do not mark the task complete — send it back.
+   - **Skills:** if the task declared `**Skills:**`, check `concerns` for either failure mode the implementer prompt instructs it to report: (a) the Skill tool being unavailable in its harness, or (b) a declared skill not being installed. If neither is flagged, but the diff shows no evidence any declared skill's guidance was actually followed (e.g. a `frontend-craft` requirement with no sign of anti-slop/typography/color rules applied in the diff), do not mark the task complete — send it back for the implementer to confirm which skills were invoked and how.
 
 ## Reconciliation Gate (AWM)
 
