@@ -11,6 +11,7 @@ or directly:
     python scripts/tests/test_core.py
 """
 
+import os
 import sys
 import tempfile
 import unittest
@@ -20,7 +21,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 from core import BM25, detect_domain, search, search_stack, CSV_CONFIG, AVAILABLE_STACKS
-from design_system import generate_design_system, persist_design_system, DesignSystemGenerator
+from design_system import generate_design_system, persist_design_system, DesignSystemGenerator, hex_to_ansi
 
 
 class TestTokenizer(unittest.TestCase):
@@ -115,6 +116,33 @@ class TestPersistence(unittest.TestCase):
             generate_design_system("saas dashboard", "Scoped Project", persist=True, output_dir=tmp)
             expected = Path(tmp) / "design-system" / "scoped-project" / "MASTER.md"
             self.assertTrue(expected.exists())
+
+
+class TestHexToAnsi(unittest.TestCase):
+    """QA B2: malformed hex must fail soft (empty string), never raise."""
+
+    def setUp(self):
+        self._prev_colorterm = os.environ.get("COLORTERM")
+        os.environ["COLORTERM"] = "truecolor"
+
+    def tearDown(self):
+        if self._prev_colorterm is None:
+            os.environ.pop("COLORTERM", None)
+        else:
+            os.environ["COLORTERM"] = self._prev_colorterm
+
+    def test_valid_hex_produces_ansi_swatch(self):
+        self.assertTrue(hex_to_ansi("#2563EB").startswith("\033[38;2;"))
+
+    def test_non_hex_digits_do_not_raise(self):
+        # Reviewer repro: '#GGGGGG' used to raise ValueError from int(..., 16).
+        self.assertEqual(hex_to_ansi("#GGGGGG"), "")
+
+    def test_wrong_length_does_not_raise(self):
+        self.assertEqual(hex_to_ansi("#ABC"), "")
+
+    def test_empty_string_does_not_raise(self):
+        self.assertEqual(hex_to_ansi(""), "")
 
 
 class TestReasoningMatch(unittest.TestCase):

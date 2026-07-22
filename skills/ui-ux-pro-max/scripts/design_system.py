@@ -341,7 +341,11 @@ def hex_to_ansi(hex_color: str) -> str:
     if colorterm not in ('truecolor', '24bit'):
         return ""
     hex_color = hex_color.lstrip('#')
-    if len(hex_color) != 6:
+    if len(hex_color) != 6 or not re.fullmatch(r'[0-9a-fA-F]{6}', hex_color):
+        # Malformed hex (e.g. non-hex digits like '#GGGGGG', or corrupted/edited
+        # CSV data). This is a cosmetic terminal swatch, not the design system
+        # data itself — fail soft like the other guards above rather than
+        # crashing the whole --design-system invocation over a decorative detail.
         return ""
     r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
     return f"\033[38;2;{r};{g};{b}m██\033[0m "
