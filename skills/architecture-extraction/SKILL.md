@@ -22,11 +22,9 @@ in which case its output becomes verified context for `product-brief`
 (see Termination).
 
 Every skill that touches a real codebase without a human curating every
-line risks presenting guesses as facts. This skill's core discipline is
-calibrated certainty: it distinguishes, at every claim, between what was
-**verified** (either by a deterministic tool or a direct file:line
-citation) and what was merely **inferred** — and it never lets the second
-category masquerade as the first.
+line risks presenting guesses as facts; this skill's core discipline against
+that risk — calibrated certainty — is stated once, in full, under
+Cross-Cutting Rules below.
 
 ## Step 0 — Access Detection (Graphify Layer)
 
@@ -198,18 +196,14 @@ project: <slug or null>
 ---
 ```
 
-**On `readiness` for extraction reports.** `readiness-gate`'s G1–G9
-checklist verifies brief-specific criteria (problem statement, business
-cases, requirements traceability, release sequencing) that have no
-equivalent in an architecture document — an extraction report is never
-submitted to that gate. Per `brief-contract.md`, `architecture-extraction`
-is explicitly barred from writing `draft`/`ready` (that vocabulary belongs
-solely to `readiness-gate`'s DoR verdict). So this skill writes
-`readiness: n/a` — not a DoR status, an explicit statement that the field
-doesn't apply to this artifact type. Completeness of validation is tracked
-instead by Phase 3: an extraction doc with items still sitting in
-`open_decisions` simply means Phase 3 isn't finished, visible directly in
-the ledger rather than encoded into the `readiness` field.
+**On `readiness` for extraction reports.** See
+`skills/readiness-gate/references/brief-contract.md` for the full rule —
+in short, extraction reports are never submitted to the G1–G9 gate, so this
+skill writes the contract's defined `readiness: n/a`, never a self-authored
+`draft`/`ready`. Completeness of validation is tracked instead by Phase 3:
+an extraction doc with items still sitting in `open_decisions` simply means
+Phase 3 isn't finished, visible directly in the ledger rather than encoded
+into the `readiness` field.
 
 **On body structure.** R5.3 requires frontmatter parity with other
 product-layer artifacts, not body parity — an extraction report's body is

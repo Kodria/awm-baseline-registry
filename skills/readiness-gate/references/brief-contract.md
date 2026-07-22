@@ -40,13 +40,19 @@ project: <slug or null>
   invalidated by a contract upgrade, and a gate that cannot parse a lower
   `schema` than its own is a bug in the gate, not in the brief.
 
-- **`readiness` has exactly one writer.** The `readiness` field is written
-  only by the `readiness-gate` skill, as the outcome of running the G1–G9
-  checklist against the brief's actual content (R5.2). No mode skill
-  (`product-discovery`, `product-brief`, `architecture-assessment`,
-  `architecture-extraction`, or any orchestrator) may set, flip, or
-  hand-author this field — doing so would let a producer self-certify its own
-  output, which defeats the purpose of an independent gate.
+- **`readiness-gate` is the only writer of `ready` (and of any change to an
+  existing value).** A mode skill creating a new document initializes
+  `readiness` to its neutral starting value — `draft` for `mode: discovery`/
+  `mode: brief`, `n/a` for `mode: assessment`/`mode: extraction` — because the
+  field must exist in the frontmatter from the moment the file is created.
+  That one-time initialization to the neutral value is not self-certification
+  and is expected. What no mode skill (`product-discovery`, `product-brief`,
+  `architecture-assessment`, `architecture-extraction`, or any orchestrator)
+  may ever do is write `ready`, or change an existing `readiness` value once
+  set — both of those are exclusively `readiness-gate`'s to perform, as the
+  outcome of running the G1–G9 checklist against the document's actual
+  content (R5.2). This is what prevents a producer from self-certifying its
+  own output while still letting every mode create a well-formed document.
 
 - **Assessment and extraction reports share the same frontmatter.** Reports
   produced by `mode: assessment` and `mode: extraction` are not a separate,
