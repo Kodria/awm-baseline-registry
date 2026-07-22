@@ -24,7 +24,7 @@ Fuera de alcance de este ciclo: desacople de registries (Parte 1 del issue), pre
 ### Contrato del brief
 
 - **R5** — THE brief SHALL ser un único `.md` con frontmatter YAML que incluya como mínimo: `awm: product-brief`, `schema` (entero), `title`, `mode`, `readiness`, `created`, `updated`, `open_decisions`, `project`.
-- **R5.1** — THE cuerpo del brief SHALL seguir la metodología brief-spec: necesidad (N#), mandato de no-asunción con lista de lo NO verificado, procesos (PR-#), requisitos (RF-x.y/RNF-x.y) con redacción EARS-compatible, decisiones abiertas (DA-#) en tabla con columna "bloquea", fuera-de-alcance explícito, releases con valor independiente, riesgos.
+- **R5.1** — THE cuerpo del brief SHALL seguir la metodología brief-spec: necesidad (N#), usuarios y contexto, restricciones, mandato de no-asunción con lista de lo NO verificado, procesos (PR-#), requisitos (RF-x.y/RNF-x.y) con redacción EARS-compatible, decisiones abiertas (DA-#) en tabla con columna "bloquea", fuera-de-alcance explícito, releases con valor independiente, riesgos. (Nota post-implementación: "usuarios y contexto" y "restricciones" se agregaron como secciones explícitas durante Task 2 al detectarse que G2/G5 del gate no tenían sección de origen — ver `skills/readiness-gate/references/brief-contract.md`.)
 - **R5.2** — THE sello `readiness` SHALL ser escrito exclusivamente por `readiness-gate`; las skills de modo no lo modifican.
 - **R5.3** — THE informes de assessment y extracción SHALL usar el mismo frontmatter (con su `mode`) para ser recuperables por re-ingesta.
 
