@@ -40,17 +40,17 @@ mode, to seal the artifact before handoff; (2) at the crossing point into
 Evaluate every criterion below against the brief's body content. Each
 criterion is independent — a pass on one never substitutes for another.
 
-| # | Criterio | Verifica |
-|---|----------|----------|
-| G1 | Problem defined | N# con dueño del dolor y costo de no resolverlo |
-| G2 | Users identified | quién usa/sufre, en qué contexto |
-| G3 | Scope bounded | Out-of-scope explícito y no vacío |
-| G4 | Business cases enumerated | catálogo de casos, excepciones y reglas |
-| G5 | Constraints declared | técnicas, costo, privacidad, infraestructura intocable |
-| G6 | Risks known | tabla riesgo/impacto/mitigación presente |
-| G7 | Requirements traceable | todo RF/RNF con ID estable y redacción testeable |
-| G8 | Open decisions managed | cada DA-# con "blocks"; ninguna DA bloquea el primer release |
-| G9 | Non-assumption intact | lista de lo NO verificado presente; nada afirmado sin fuente |
+| # | Criterion | Verifies |
+|---|-----------|----------|
+| G1 | Problem defined | N# entry names who bears the pain and the cost of leaving it unresolved |
+| G2 | Users identified | Users & Context section names who uses/suffers this, and in what context |
+| G3 | Scope bounded | Out of scope section is explicit and non-empty |
+| G4 | Business cases enumerated | catalog of cases, exceptions, and rules is present |
+| G5 | Constraints declared | Constraints section covers technical, cost, privacy, and untouchable-infrastructure limits |
+| G6 | Risks known | risk/impact/mitigation table is present |
+| G7 | Requirements traceable | every RF/RNF carries a stable ID and testable wording |
+| G8 | Open decisions managed | every DA-# has a `blocks` value; no DA blocks the first release |
+| G9 | Non-assumption intact | the not-verified list is present; nothing is asserted without a source |
 
 For each criterion, locate the concrete evidence in the document (or its
 concrete absence) — do not accept a criterion on the strength of a section

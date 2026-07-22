@@ -62,6 +62,12 @@ project: <slug or null>
   and re-ingestion:
   - **Business need** — one or more `N#` entries stating the problem, who
     bears its cost, and the cost of leaving it unresolved.
+  - **Users & context** — who uses or suffers this, and in what context they
+    encounter it. This is what G2 of the readiness gate checks; without this
+    section a brief has no home for that information.
+  - **Constraints** — technical, cost, privacy, and untouchable-infrastructure
+    limits the solution must respect. This is what G5 of the readiness gate
+    checks.
   - **Non-assumption mandate** — an explicit list of what has **not** been
     verified; nothing in the rest of the document may be asserted as fact
     beyond what this list discloses as unconfirmed.
