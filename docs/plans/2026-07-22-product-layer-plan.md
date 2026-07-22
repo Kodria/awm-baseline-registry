@@ -302,12 +302,12 @@ _Requirements: R8, R8.1, R8.2, R9.1_
 - [ ] **Step 1: Bump + description (R9.1).** En el frontmatter: `version: "1.1.0"` → `"1.2.0"`; a la description existente añadir al final: *" Explores SOLUTION space and is invoked via development-process; a raw business idea with no brief and no decision to build goes to product-process first."*
 
 - [ ] **Step 2: Nueva sección `## Brief Preload Mode`** inmediatamente después de `## Overview`, con este contenido normativo:
-  - Detección: al arrancar, si el contexto contiene un artefacto `awm: product-brief`, invocar `readiness-gate` para re-verificar (nunca confiar en el sello). Sello re-verificado `ready` → modo precargado. `draft` → informar y sugerir `product-process`; continuar solo si el usuario insiste (el brief se trata como notas, no como fuente).
+  - Detección: al arrancar, si el contexto contiene un documento con el discriminador `awm: product-brief` **y `mode: brief`** (único shape al que aplica este modo — `mode: discovery`/`assessment`/`extraction` quedan explícitamente excluidos, no tienen contenido brief-shaped que mapear), invocar `readiness-gate` para re-verificar (nunca confiar en el sello). Sello re-verificado `ready` → modo precargado. `draft` → informar y sugerir `product-process`; continuar solo si el usuario insiste (el brief se trata como notas, no como fuente).
   - Mapeo (R8): N#/business cases → contexto y propósito; RF/RNF → semilla de `## Requirements` (EARS); out-of-scope → no-objetivos; DA-# abiertas → primeras preguntas de clarificación.
   - Regla operativa literal (R8.1): *"Before asking any clarifying question, check whether the brief already answers it. If it does, record the answer as sourced from the brief (traceable by ID: 'from brief N3') and do NOT ask it."*
   - Gates intactos (R8.2): validación técnica contra el repo real, aprobación de diseño, spec self-review — regla literal: *"The brief accelerates; it never exempts."* Sin brief → comportamiento actual sin cambios.
 
-- [ ] **Step 3: Checklist item.** En el checklist numerado, insertar como item 1.5 (renumerar o usar "1b"): *"**Brief preload check** — if an `awm: product-brief` artifact is in context, enter Brief Preload Mode (see section)"*.
+- [ ] **Step 3: Checklist item.** En el checklist numerado, insertar como item "1a" (nunca "1.5" — no es un marcador de lista ordenada válido en CommonMark): *"**Brief preload check** — if a `mode: brief` document carrying the `awm: product-brief` discriminator is in context, enter Brief Preload Mode (see section)"*.
 
 - [ ] **Step 4: Verificar**
 
