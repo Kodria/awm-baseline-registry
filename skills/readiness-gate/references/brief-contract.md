@@ -43,7 +43,12 @@ project: <slug or null>
   future version of `readiness-gate` (and any other consumer) MUST remain able
   to read and evaluate every prior `schema` value — old briefs are never
   invalidated by a contract upgrade, and a gate that cannot parse a lower
-  `schema` than its own is a bug in the gate, not in the brief.
+  `schema` than its own is a bug in the gate, not in the brief. The reverse
+  direction is explicitly out of scope: a document whose `schema` is
+  **higher** than the reading gate/skill knows is a forward-compatibility
+  failure, not something to guess through — the correct response is to stop
+  and tell the user this document needs a newer AWM registry, never to read
+  it as if the newer contract were the old one.
 
 - **`readiness-gate` is the only writer of `ready` (and of any change to an
   existing value).** A mode skill creating a new document initializes

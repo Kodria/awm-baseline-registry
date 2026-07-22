@@ -25,15 +25,27 @@ mode, to seal the artifact before handoff; (2) at the crossing point into
 1. Read the target document and parse its YAML frontmatter.
 2. Validate the frontmatter against `references/brief-contract.md`:
    - Discriminator `awm: product-brief` must be present.
-   - `schema` must be an integer the gate knows how to read (any prior
-     schema value is valid — the gate never rejects a lower schema).
-   - `mode`, `title`, `readiness`, `created`, `updated`, `open_decisions`,
-     `project` must be present and well-formed per the contract.
-3. **If the document has no valid frontmatter** (missing discriminator,
-   malformed YAML, or not a `product-brief` at all): this is **not an error
-   of the gate**. Return control to the invoker with the message "not a
-   brief — offer adoption". Do not proceed to Phase 2. Do not attempt to
-   guess intent from body content.
+   - `schema` must be an integer. Any schema **at or below** the version
+     this gate knows (currently `1`) is valid. A schema **higher** than the
+     gate knows is a **forward-compatibility failure, not a lint failure**:
+     do not treat the document as invalid, do not guess at unknown fields —
+     stop and tell the user this document was written by a newer contract
+     version than this gate understands, and ask them to update the AWM
+     registry rather than proceeding on a possibly-incomplete read.
+   - `mode` must be exactly one of `discovery | brief | assessment |
+     extraction` (the contract's enum) — any other value, including a
+     plausible-looking typo, is malformed, not a fifth mode to guess at.
+   - `title`, `readiness`, `created`, `updated`, `open_decisions`, `project`
+     must be present and well-formed per the contract.
+3. **If the document has no valid frontmatter** — this covers every failure
+   above except the forward-compatibility case: missing discriminator,
+   malformed YAML, not a `product-brief` at all, `mode` outside the enum, or
+   any other field present but not well-formed. All of these are **the same
+   outcome**: this is **not an error of the gate**. Return control to the
+   invoker with the message "not a brief — offer adoption". Do not proceed
+   to Phase 2. Do not attempt to guess intent from body content, and do not
+   attempt to coerce a malformed field (e.g. an unrecognized `mode`) into
+   the closest-looking valid value.
 
 ## Phase 2 — Checklist G1–G9
 

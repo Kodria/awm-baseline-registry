@@ -38,13 +38,25 @@ to Graphify.
 | 1. Graphify | `graphify` CLI available, or installs trivially (`uv tool install graphifyy` or `pip install graphifyy`, bounded attempt) | Run on repo → use `graph.json` / `GRAPH_REPORT.md` as verified structural base. EXTRACTED edges → "verified"; INFERRED edges → "inferred — confirm with owner". |
 | 2. Manual | Graphify absent or install fails/times out | Agent-driven repo reconnaissance. Everything is "inferred" unless cited to file:line. |
 
-Detection procedure: check `command -v graphify` first. If absent, attempt
-exactly one bounded install (`uv tool install graphifyy` if `uv` exists,
-otherwise `pip install graphifyy`), with a short timeout. On any failure —
-missing tool, network error, timeout, non-zero exit — stop trying
-immediately and drop to Layer 2. Announce whichever layer is active:
-*"Architecture extraction: Graphify (layer 1)"* or *"Architecture
-extraction: manual reconnaissance (layer 2)"*.
+Detection procedure: check `command -v graphify` first. If absent, **tell
+the user before attempting anything** — one line: "Graphify isn't installed;
+attempting a one-time install (`uv tool install graphifyy` / `pip install
+graphifyy`) to speed this up — falling back to manual reconnaissance if it
+fails." Then attempt exactly one bounded install, with a short timeout. On
+any failure — missing tool, network error, timeout, non-zero exit — stop
+trying immediately and drop to Layer 2, no retry, no second package manager
+attempted. Announce whichever layer ends up active: *"Architecture
+extraction: Graphify (layer 1)"* or *"Architecture extraction: manual
+reconnaissance (layer 2)"*.
+
+**Validate Graphify's output before trusting it.** A successful (exit-0)
+`graphify` run is necessary but not sufficient — before treating `graph.json`
+as the verified structural base, confirm it actually parses as JSON and
+contains the expected top-level shape (nodes/edges with `EXTRACTED`/
+`INFERRED` tags). If it doesn't — corrupted output, an unexpected format
+from a newer/older Graphify version, a truncated file — treat this exactly
+like a Graphify failure: drop to Layer 2, do not attempt to partially parse
+or guess at malformed tool output.
 
 **Dependency rule (R11/R11.1/R11.2 — non-negotiable):** *Layer 2 is the
 contract: this skill is fully functional with zero external tools. Graphify
@@ -207,7 +219,7 @@ into the `readiness` field.
 
 **On body structure.** R5.3 requires frontmatter parity with other
 product-layer artifacts, not body parity — an extraction report's body is
-purpose-built for architecture, not the 11 business-oriented sections a
+purpose-built for architecture, not the 12 business-oriented sections a
 `product-brief` carries (Business need, JTBD-style Users, Processes,
 Requirements, Releases have no home in an architecture document). The body
 reuses only the ID-traceability discipline: every unconfirmed inference

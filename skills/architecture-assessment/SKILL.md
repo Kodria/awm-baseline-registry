@@ -213,7 +213,7 @@ project: <slug or null>
 the full rule — in short, `mode: assessment` reports write `readiness: n/a`
 (never a self-authored `draft`/`ready`), and the body is purpose-built for
 assessment content (drivers, scenarios, findings, recommendations), not the
-11 business-oriented sections a `mode: brief` document carries.
+12 business-oriented sections a `mode: brief` document carries.
 
 **On `open_decisions` — assessment findings are risks, not open
 decisions, unless they gate a real brief.** A Phase 4 finding does not, by
