@@ -798,7 +798,13 @@ Solo cambia `"version": "1.3.0"` → `"1.4.0"` (las skills tocadas — using-awm
 ```bash
 ls skills/code-to-design 2>&1                     # verifies R8.1 — expected "No such file or directory"
 grep -c "code-to-design" bundles/frontend/bundle.json   # verifies R8.1 — expected 0
-python3 -c "import json; [json.load(open(f)) for f in ['catalog.json','bundles/frontend/bundle.json','bundles/dev/bundle.json']]; print('json ok')"  # verifies R8.2 — expected "json ok"
+python3 -c "
+import json
+json.load(open('catalog.json'))
+assert json.load(open('bundles/frontend/bundle.json'))['version'] == '2.0.0'
+assert json.load(open('bundles/dev/bundle.json'))['version'] == '1.4.0'
+print('json ok, versions confirmed')
+"  # verifies R8.2 — expected "json ok, versions confirmed"
 git diff --stat awm-registry.json | wc -l          # verifies R8.3 — expected 0 (sin cambios)
 ```
 
@@ -879,14 +885,14 @@ Solo tras QA (post-implementation-qa) + retro, vía `finishing-a-development-bra
 | R7.4 | T11 | grep `SUBAGENT-STOP` = 0 y `SUBAGENT-POLICY` = 2 (T11·S2) |
 | R7.5 | T12 | grep `Frontend bundle gate` = 1 + fila 1.5 actualizada (T12·S3) |
 | R8.1 | T13 | `skills/code-to-design` inexistente; grep en bundle = 0 (T13·S5) |
-| R8.2 | T13, T15 | JSONs válidos con versiones 2.0.0/1.4.0; tag v1.4.0 (T13·S5, T15) |
+| R8.2 | T13, T15 | JSONs válidos y versiones 2.0.0/1.4.0 confirmadas programáticamente (assert sobre los valores leídos); tag v1.4.0 (T13·S5, T15) |
 | R8.3 | T13 | `git diff awm-registry.json` vacío (T13·S5) |
 
 *Nota de precisión:* los greps de R2.4, R3.5, R3.7 y R6.2 usan frases que también podrían aparecer en otro contexto del mismo archivo; el verificador debe confirmar que el match está dentro de la sección indicada (lectura dirigida, no solo conteo).
 
 **Nota de estado E2E (QA B4):** 6 requirements (R2.1, R2.2, R2.3, R3.7, R6.4, R7.2) están verificados estáticamente pero su confirmación E2E en vivo sigue pendiente — ver la nota de deferral de Task 14. Este pase de QA certifica la corrección estática de las instrucciones de skill entregadas, no su comportamiento en vivo contra Stitch/Playwright reales.
 
-**Analyze gate:** 33/33 requirements con ≥1 task y ≥1 verificación; ninguna task sin requirement (T1 ancla en R2.2 como spike habilitante; T14–T15 anclan en los requirements que ejercitan E2E). Sin gaps forward ni backward.
+**Analyze gate:** 34/34 requirements con ≥1 task y ≥1 verificación; ninguna task sin requirement (T1 ancla en R2.2 como spike habilitante; T14–T15 anclan en los requirements que ejercitan E2E). Sin gaps forward ni backward.
 
 ## Dependencias y orden
 
