@@ -27,8 +27,8 @@ mode, to seal the artifact before handoff; (2) at the crossing point into
    - Discriminator `awm: product-brief` must be present.
    - `schema` must be an integer the gate knows how to read (any prior
      schema value is valid — the gate never rejects a lower schema).
-   - `mode`, `title`, `created`, `updated`, `open_decisions`, `project` must
-     be present and well-formed per the contract.
+   - `mode`, `title`, `readiness`, `created`, `updated`, `open_decisions`,
+     `project` must be present and well-formed per the contract.
 3. **If the document has no valid frontmatter** (missing discriminator,
    malformed YAML, or not a `product-brief` at all): this is **not an error
    of the gate**. Return control to the invoker with the message "not a
@@ -45,7 +45,7 @@ criterion is independent — a pass on one never substitutes for another.
 | G1 | Problem defined | N# entry names who bears the pain and the cost of leaving it unresolved |
 | G2 | Users identified | Users & Context section names who uses/suffers this, and in what context |
 | G3 | Scope bounded | Out of scope section is explicit and non-empty |
-| G4 | Business cases enumerated | catalog of cases, exceptions, and rules is present |
+| G4 | Business cases enumerated | Business Cases section carries a catalog of cases, exceptions, and rules — not just the happy path |
 | G5 | Constraints declared | Constraints section covers technical, cost, privacy, and untouchable-infrastructure limits |
 | G6 | Risks known | risk/impact/mitigation table is present |
 | G7 | Requirements traceable | every RF/RNF carries a stable ID and testable wording |

@@ -19,9 +19,26 @@ This skill produces a single portable `.md` file conforming to the brief contrac
 Before drafting, make sure the conversation actually covers:
 
 - The business need.
+- The business cases: the catalog of cases, exceptions, and rules this brief must cover — not
+  just the happy path. Press until exhausted ("what else? which edge case would embarrass us
+  in production?") the same way `product-discovery`'s Phase 3 does; this catalog is what
+  `readiness-gate`'s G4 checks for, and a brief drafted without it fails that criterion.
 - The current process end-to-end, **as the owner describes it** — never as you imagine it.
 - Hard constraints: cost, subscriptions, privacy/NDA, existing infrastructure that cannot be touched.
 - Design agreements already closed in the conversation.
+
+**If a prior product-layer artifact is in context** (a `product-discovery` partial summary,
+or a `mode: assessment`/`mode: extraction` report from `architecture-assessment`/
+`architecture-extraction`), read it before asking anything above — it answers some of these
+points already:
+- A `product-discovery` summary's business-case catalog (its Phase 3) becomes this brief's
+  Business Cases section directly; its problem/JTBD findings seed Business Need.
+- An `architecture-assessment`/`architecture-extraction` report's confirmed (non-inferred)
+  findings become **verified** input to this brief — cite them in the Non-assumption
+  mandate's verified-vs-not-verified split as already confirmed, narrowing what still needs
+  discovery in R0. Anything the prior report left `inferred`/unconfirmed stays unverified here
+  too — a prior report's inference is not this brief's verification.
+Do not re-ask what a prior artifact already answers; only ask about what it leaves open.
 
 If any of this is missing, ask — **one question per turn**.
 
@@ -31,9 +48,9 @@ Never write the brief directly. First present the proposed content section by se
 
 ## Phase 3 — Draft Against the Template
 
-Draft using the structure of `references/brief-template.md` (read it while drafting — it lays out all 11 required sections in contract order). The non-negotiable rules while drafting:
+Draft using the structure of `references/brief-template.md` (read it while drafting — it lays out all 12 required sections in contract order). The non-negotiable rules while drafting:
 
-**Non-assumption mandate, immediately after Business Need / Users & Context / Constraints.** It includes: the statement that the brief was built without access to the code; the **explicit and exhaustive list of what has NOT been verified** (entities, integrations, conventions, external payload formats, deployment mechanisms); the rule that any contradiction between the brief and the real system is reported to the owner and never resolved by assuming; and the explicit delegation of all technical definition (schemas, routes, signatures, libraries) to the implementer after discovery.
+**Non-assumption mandate, immediately after Business Need / Business Cases / Users & Context / Constraints.** It includes: the statement that the brief was built without access to the code; the **explicit and exhaustive list of what has NOT been verified** (entities, integrations, conventions, external payload formats, deployment mechanisms); the rule that any contradiction between the brief and the real system is reported to the owner and never resolved by assuming; and the explicit delegation of all technical definition (schemas, routes, signatures, libraries) to the implementer after discovery.
 
 **Language calibrated to certainty.** References to system entities are conceptual and must be marked as such ("real structure: discover in R0", "verify in R0 whether this exists"). Never assert with certainty something the conversation did not verify. Thresholds and parameters are configurable and/or open decisions, never definitive magic numbers.
 

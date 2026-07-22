@@ -34,6 +34,18 @@ project: <slug or null>
   of leaving it unresolved>.
 - **N2** — <second need, if any>.
 
+## Business Cases
+
+<!-- guidance: the catalog of cases, exceptions, and rules this brief must cover — not just
+     the happy path. This is what readiness-gate's G4 checks; a brief that only describes
+     the main flow fails this criterion. Descriptive bullets, no ID scheme — same style as
+     Users & Context/Constraints below. If this brief followed a product-discovery session,
+     copy its Phase 3 catalog here rather than re-deriving it. -->
+
+- <primary case>: <what happens, what the system must do>.
+- <exception/edge case>: <what happens, what the system must do>.
+- <variant or rule>: <what happens, what the system must do>.
+
 ## Users & Context
 
 <!-- guidance: who uses or suffers this, and in what context they encounter it (device,

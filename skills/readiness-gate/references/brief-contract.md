@@ -1,10 +1,15 @@
 # Product Brief Contract
 
 The canonical specification for the `product-brief` artifact: a single portable
-`.md` file with a YAML frontmatter contract plus a structured body. Any skill
-that writes, reads, or re-ingests a brief (`product-brief`, `product-process`,
-`brainstorming`, `readiness-gate`, and future modes) MUST conform to this
-contract.
+`.md` file with a YAML frontmatter contract plus a structured body. Every skill
+that writes, reads, or re-ingests a document under this contract MUST conform
+to it. Current consumers: `product-process` (routing, re-ingestion),
+`product-brief` and `product-discovery` (writers of `mode: brief`/
+`mode: discovery`), `architecture-assessment` and `architecture-extraction`
+(writers of `mode: assessment`/`mode: extraction`), `readiness-gate` (the
+sole writer of `readiness`), `brainstorming` (reader, Brief Preload Mode),
+and `development-process` (reader, brief-ready entry state). Any future
+mode or consumer added later MUST conform to this contract too.
 
 ## Frontmatter (literal)
 
@@ -85,6 +90,11 @@ project: <slug or null>
   discipline, even where the section list itself doesn't apply:
   - **Business need** — one or more `N#` entries stating the problem, who
     bears its cost, and the cost of leaving it unresolved.
+  - **Business cases** — the catalog of cases, exceptions, and rules this
+    brief must cover (descriptive bullets, no ID scheme — same style as
+    Users & Context/Constraints below). This is what G4 of the readiness gate
+    checks; without this section a brief has no home for that catalog, and a
+    thin happy-path-only brief is exactly what G4 exists to catch.
   - **Users & context** — who uses or suffers this, and in what context they
     encounter it. This is what G2 of the readiness gate checks; without this
     section a brief has no home for that information.
