@@ -52,7 +52,7 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 1. **Explore project context** — check files, docs, recent commits
-1.5. **Brief preload check** — if an `awm: product-brief` artifact is in context, enter Brief Preload Mode (see section)
+1a. **Brief preload check** — if a `mode: brief` document carrying the `awm: product-brief` discriminator is in context, enter Brief Preload Mode (see section above; other modes are explicitly excluded there)
 2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria; do not exit this phase while any requirement still has an open ambiguity (see Clarify gate)
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
