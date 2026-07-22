@@ -1,6 +1,6 @@
 ---
 name: using-awm
-version: "1.1.0"
+version: "1.1.1"
 description: Use when starting any development conversation - establishes tiered skill invocation policy (spine skills always, specialized skills on clear signal)
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "1.2.1"
+version: "1.3.0"
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
 
