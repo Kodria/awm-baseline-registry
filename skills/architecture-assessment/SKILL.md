@@ -127,10 +127,11 @@ fragile").
 
 Per the Task 1 audit (`docs/plans/2026-07-22-product-layer-audit.md`),
 `architecture-advisor`'s verdict is **adapt**: its Phases 1-5 and Contextual
-Mode table are self-contained and directly reusable, but its Phase 6
-("Generate design artifact") routes to skills that don't exist in this
-registry (`docs-assistant`, `docs-brainstorming`, `docs-system-orchestrator`,
-`c4-architecture`) — never invoke that routing or reference those names.
+Mode table are self-contained and directly reusable. Its Phase 6 ("Generate
+design artifact") no longer routes anywhere dead — the 2026-07-23
+flow-cleanup (`docs/plans/2026-07-23-architecture-flow-cleanup-design.md`)
+replaced that routing with direct delivery, matching this skill's own
+Termination section.
 
 **Advisor gate (mandatory evaluation at the close of Phase 3).** When
 closing Phase 3, explicitly evaluate whether the analysis needs a second,
