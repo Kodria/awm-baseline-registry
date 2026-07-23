@@ -1,33 +1,9 @@
-<!--
-  PORT claude.ai — brief-spec
-
-  Qué es este archivo: un "port de entorno". El usuario trabaja también en entornos
-  SIN filesystem ni AWM (claude.ai web, Cowork móvil/web), donde las skills del
-  registry no se pueden instalar. Este archivo es el contenido COMPLETO, listo para
-  pegar como custom skill personal en claude.ai. Es un artefacto DERIVADO de la
-  skill canónica del registry:
-
-    skill canónica:  skills/product-brief/SKILL.md   (awm-baseline-registry)
-    contrato:        skills/readiness-gate/references/brief-contract.md
-    orden secciones: skills/product-brief/references/brief-template.md
-
-  No hay API para subir skills a claude.ai — la sincronización es MANUAL (R6.1):
-  cuando cambia la skill canónica o el contrato, se actualiza este port en el repo
-  (auditable vía git) y el usuario re-pega el contenido en claude.ai.
-
-  El idioma del port es español (idioma original de la skill personal del usuario);
-  la metodología es la misma que la canónica. Los briefs que produce este port
-  llevan el frontmatter del contrato (`awm: product-brief`) y son re-ingeribles
-  por `product-process` en Claude Code sin conversión.
-
-  Pegar en claude.ai TODO lo que sigue a este comentario (desde el `---` inicial).
--->
 ---
-name: brief-spec
+name: product-brief
 description: Metodología para construir briefs spec-driven destinados a handoff a un agente implementador (Claude Code), sin asumir nada del estado actual del sistema. Usar SIEMPRE que el usuario pida construir, redactar o cerrar un "brief", "spec", "documento de requerimientos" o "handoff para Claude Code" de una funcionalidad, módulo, pipeline o integración — incluso si no usa la palabra "brief" pero pide documentar un diseño acordado para que otro agente lo implemente. También usar cuando pida convertir una conversación de diseño/arquitectura en un documento ejecutable por releases. En entornos con AWM instalado (Claude Code), deferir a product-process/product-brief — este port es para entornos sin filesystem (claude.ai web, Cowork móvil/web).
 ---
 
-# brief-spec — Construcción de briefs spec-driven para handoff
+# product-brief — Construcción de briefs spec-driven para handoff
 
 Construye briefs de requerimientos y procesos (el QUÉ) que delegan explícitamente el diseño técnico (el CÓMO) a un agente implementador que sí tiene acceso al código. El principio fundacional: **el brief se escribe sin acceso al sistema real, y por lo tanto no debe asumir absolutamente nada que no esté verificado.**
 
@@ -37,7 +13,7 @@ Los briefs escritos desde una conversación fallan de una forma predecible: asum
 
 ## Contrato del artefacto
 
-Todo brief que produce esta skill es un artefacto de la capa de producto de AWM y abre con este bloque YAML literal (contrato normativo: `skills/readiness-gate/references/brief-contract.md` en `awm-baseline-registry`):
+Todo brief que produce esta skill es un artefacto de la capa de producto de AWM y abre con este bloque YAML literal (contrato normativo de la capa de producto de AWM, reproducido inline abajo):
 
 ```yaml
 ---
@@ -72,7 +48,7 @@ Nunca escribir el brief directamente. Presentar primero el contenido propuesto s
 
 ### 3. Redactar siguiendo el contrato
 
-El cuerpo del brief lleva estas **12 secciones, en este orden** (orden normativo del contrato; fuente canónica del esqueleto: `skills/product-brief/references/brief-template.md` en `awm-baseline-registry`). Usar los títulos canónicos en inglés tal como aparecen abajo — es lo que `readiness-gate` y la re-ingestión reconocen; el contenido de las secciones va en español:
+El cuerpo del brief lleva estas **12 secciones, en este orden** (orden normativo del contrato, reproducido inline abajo). Usar los títulos canónicos en inglés tal como aparecen abajo — es lo que `readiness-gate` y la re-ingestión reconocen; el contenido de las secciones va en español:
 
 1. **Business Need** — una o más entradas `N#`: el problema, quién carga su costo, y el costo de no resolverlo.
 2. **Business Cases** — el catálogo de casos, excepciones y reglas que el brief debe cubrir (bullets descriptivos, sin esquema de IDs). Un brief solo-happy-path falla el gate por esta sección.
