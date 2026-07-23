@@ -1,6 +1,6 @@
 ---
 name: architecture-extraction
-version: "1.0.0"
+version: "1.0.1"
 description: "Use when the current architecture of an existing system must be extracted, documented, or prepared for extension — reverse-engineering from code into a portable architecture document (arc42-lite + C4 views). Brownfield rule: document before touching."
 ---
 

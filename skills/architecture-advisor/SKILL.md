@@ -1,6 +1,6 @@
 ---
 name: architecture-advisor
-version: "1.0.0"
+version: "1.0.1"
 description: "Specialist in software architecture design. Use this skill when you need to define, review, or design the architecture of a system — from understanding the requirement to the full definition of components, patterns, technologies, integrations, and trade-offs. Activate on phrases like: 'design the architecture', 'which pattern should I use', 'system architecture', 'define components', 'review the architecture', 'architecture proposal', 'what risks does this integration have'."
 ---
 
