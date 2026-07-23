@@ -71,7 +71,7 @@ digraph brainstorming {
     "Visual questions ahead?" [shape=diamond];
     "Offer Visual Companion\n(own message, no other content)" [shape=box];
     "Ask clarifying questions" [shape=box];
-    "Propose 2-3 approaches" [shape=box];
+    "Propose 2-3 approaches" [shape=box, label="Propose 2-3 approaches\n(specialist gate first — visible verdicts)"];
     "Present design sections" [shape=box];
     "User approves design?" [shape=diamond];
     "UI screens detected?" [shape=diamond];
@@ -286,6 +286,8 @@ If they agree to the companion, read the detailed guide before proceeding:
 ## Specialist Gate (mandatory sub-step of "Propose 2-3 approaches")
 
 Before presenting approaches, evaluate each specialist domain explicitly — architecture pattern choice (`architecture-advisor`), technology selection (`technology-evaluator`), NFR definition (`nfr-checklist-generator`). For each: if the design involves it, invoke the specialist in contextual mode and integrate its output into the approaches; if it does not, state "not applicable" for that domain. Silence is not a valid gate outcome.
+
+**The three verdicts are user-visible, always.** The message that presents the approaches MUST open with the gate's outcome — one line per domain (e.g. *"Specialist gate: architecture — advisor consulted, shaped option B; technology — not applicable; NFRs — applies but trivial, folded into option A"*). An evaluation that happens only in the agent's head is indistinguishable from the gate never running — which is exactly the failure this gate exists to fix. This mirrors how the Visual Companion offer must be its own message: mandatory sub-behaviors leave visible traces.
 
 Domain reference — which skill covers which domain:
 
