@@ -17,7 +17,7 @@ Specialist in comparative technology evaluation. Guides the user in selecting an
 | Signal | Mode |
 |-------|------|
 | Invoked directly by the user or by an orchestrator with a full cycle | **Full Mode** |
-| Invoked by another skill (brainstorming, docs-brainstorming, discovery-assistant) that already has established context and requests targeted expertise | **Contextual Mode** |
+| Invoked by another skill (brainstorming, architecture-assessment, or any skill that already has context) that already has established context and requests targeted expertise | **Contextual Mode** |
 
 If unclear, ask: *"Do you want me to guide you through a complete evaluation from scratch, or do you need me to evaluate something specific within the work we are already doing?"*
 
@@ -101,13 +101,12 @@ For each candidate against each criterion:
 
 ### Phase 6: Generate design artifact
 
-Compile all decisions into a structured artifact. The destination depends on the invocation context:
+Compile all decisions into a structured artifact and deliver it directly:
 
 | Invoked from | Artifact | Who executes |
 |---|---|---|
 | `brainstorming` | Evaluation result returned to `brainstorming` to integrate into the design | `brainstorming` continues its flow (writes design doc, then calls `writing-plans`) |
-| `docs-brainstorming` / `docs-system-orchestrator` | Documentation plan | `docs-assistant` produces the document with templates |
-| Standalone | Documentation plan | `docs-assistant` |
+| Standalone | Evaluation document — a single portable `.md` | This skill delivers it directly: in an AWM repo, offer to save under `docs/` or download; standalone, deliver the file for the user to place |
 
 ---
 
