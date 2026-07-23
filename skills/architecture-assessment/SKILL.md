@@ -166,13 +166,15 @@ When a finding or scenario is clearer with a diagram (e.g. showing the
 sensitivity point's blast radius, or the flow a scalability scenario
 stresses), use the same layered-access discipline `architecture-extraction`
 applies to the same dependency (`skills/architecture-extraction/SKILL.md`,
-Step 0b) — `mermaid-diagrams` is a personal skill, not part of this
-baseline registry, so it is never an unconditional dependency:
+Step 0b) — `mermaid-diagrams` is a registry skill, shipped on-signal in the
+baseline `dev` bundle and guaranteed present in standard installations, but
+it is still never treated as an unconditional dependency, since partial
+installs may not carry it:
 
 | Layer | Condition | Behavior |
 |-------|-----------|----------|
 | 1. `mermaid-diagrams` skill | Listed among available skills | Invoke it for the relevant diagram type (flowchart, sequence, C4). |
-| 2. Inline fallback | Not installed | Use plain Mermaid `flowchart` syntax written directly in the report — no external reference needed. |
+| 2. Inline fallback | Not installed (partial install without the `dev` bundle) | Use plain Mermaid `flowchart` syntax written directly in the report — no external reference needed. |
 
 Diagrams are illustrative here, never a required deliverable — Phase 4's
 findings table is the actual output; a diagram only supports a finding that

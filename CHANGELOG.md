@@ -2,6 +2,24 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 1.7.0 / product 1.1.0 — 2026-07-23
+
+### Added — bundle `dev`
+- `mermaid-diagrams` 1.0.0 (on-signal): Mermaid diagram guide, native in the registry (adapted from a personal skill; claude.ai port in `docs/ports/`).
+
+### Changed — bundle `dev`
+- `brainstorming` 1.3.0: passive "Specialist Skills Awareness" replaced by a mandatory Specialist Gate — evaluate each domain explicitly, invoke or state "not applicable"; silence is not a valid outcome.
+- `architecture-advisor`, `technology-evaluator`, `nfr-checklist-generator`: dead Phase 5/6 delegation to `docs-assistant`/`docs-brainstorming`/`docs-system-orchestrator`/`c4-architecture` removed — artifacts are now delivered directly; advisor's diagram path points to `mermaid-diagrams`.
+
+### Removed — bundle `dev`
+- `cicd-proposal-builder`: retired. No real consumer (its only wiring was the passive specialist table that never fired) and no natural trigger in feature design. If pipeline design becomes a real need, a new skill will be designed with a real trigger (likely project setup, not brainstorming).
+
+### Changed — bundle `product` 1.1.0
+- `architecture-assessment` 1.1.0: advisor invocation hardened into an explicit gate (invoke or state "not applicable" in the report).
+- `architecture-extraction`: diagram layer 1 now points to the registry `mermaid-diagrams` skill (inline fallbacks preserved).
+
+Design: docs/plans/2026-07-23-architecture-flow-cleanup-design.md (issue #6, Parte 1 reformulada).
+
 ## product 1.0.0 / dev 1.6.0 — 2026-07-22
 
 ### Added — bundle `product` (new)
