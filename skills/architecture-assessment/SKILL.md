@@ -1,6 +1,6 @@
 ---
 name: architecture-assessment
-version: "1.0.0"
+version: "1.1.0"
 description: "Use when an existing architecture must be evaluated, critiqued, or diagnosed — scenario-based assessment (lightweight ATAM) producing prioritized findings with severity. Assessment only: it changes nothing."
 ---
 
@@ -132,11 +132,13 @@ Mode table are self-contained and directly reusable, but its Phase 6
 registry (`docs-assistant`, `docs-brainstorming`, `docs-system-orchestrator`,
 `c4-architecture`) — never invoke that routing or reference those names.
 
-When Phase 3's analysis of the real system would benefit from a second,
-architecture-design-trained pass — not a scenario check, but an opinion on
-whether the design itself makes sense — invoke `architecture-advisor`
-(`skills/architecture-advisor/SKILL.md`) **in its Contextual Mode**, using
-its own documented row for this exact case:
+**Advisor gate (mandatory evaluation at the close of Phase 3).** When
+closing Phase 3, explicitly evaluate whether the analysis needs a second,
+architecture-design-trained opinion: are there findings that question the
+design itself, not just its behavior against the scenarios? If yes —
+invoke `architecture-advisor` (`skills/architecture-advisor/SKILL.md`)
+**in its Contextual Mode**, using its own documented row for this exact
+case:
 
 > "Validate whether this architecture makes sense" → Review of the
 > existing + flag risks/improvements
@@ -150,8 +152,13 @@ returns a result to the invoker rather than producing its own artifact
 (its Phase 6 does not apply to Contextual Mode), so this skill remains the
 one producing the final report.
 
-This reuse is a consultative aid, not a required step — proceed with
-Phases 1-5 on their own whenever a second opinion isn't needed.
+If no — declare **"advisor pass: not applicable"** in the report, as a
+one-line note alongside the Phase 4 findings table. Either way the gate
+produces an explicit outcome: the advisor's integrated input, or the
+"not applicable" declaration. Silence is not a valid gate outcome. The
+evaluation itself is mandatory; only the invocation is conditional —
+Phases 1-5 still run on their own whenever the gate concludes a second
+opinion isn't needed.
 
 ## Diagrams (`mermaid-diagrams`, layered access)
 
