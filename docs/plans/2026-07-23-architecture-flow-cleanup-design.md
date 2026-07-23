@@ -47,7 +47,7 @@ Fuera de alcance: mover skills a un registry aparte (descartado explícitamente)
 
 ### F7 — Empaquetado
 
-- **R7** — THE bundle `dev` SHALL bumpear 1.6.0 → 1.7.0 (skill nueva + skill retirada + ediciones) y THE bundle `product` SHALL bumpear 1.0.0 → 1.1.0 (gate nuevo en `architecture-assessment` = minor, + referencias de capa 1 en `architecture-extraction`); `catalog.json` y `bundles/*/bundle.json` consistentes; entrada nueva en CHANGELOG (newest-on-top).
+- **R7** — THE bundle `dev` SHALL bumpear 1.6.0 → 2.0.0 y THE bundle `product` SHALL bumpear 1.0.0 → 1.1.0 (gate nuevo en `architecture-assessment` = minor, + referencias de capa 1 en `architecture-extraction`); `catalog.json` y `bundles/*/bundle.json` consistentes; entrada nueva en CHANGELOG (newest-on-top). Nota post-implementación: el bump de `dev` se corrigió de minor (1.7.0) a major (2.0.0) durante la revisión de calidad de Task 7 — retirar `cicd-proposal-builder` es una ruptura de contrato per la convención semver de `CONSTITUTION.md`, sin excepción por "cero consumidores conocidos".
 
 ## Diseño
 
@@ -57,7 +57,7 @@ Las tres advisory reemplazan su tabla de Fase 6 ("quién ejecuta el artefacto") 
 
 ### F2 — El gate activo
 
-El texto del gate en `brainstorming` (sub-paso del paso 4, redacción normativa): *"Before presenting approaches, evaluate each specialist domain explicitly — architecture pattern choice (`architecture-advisor`), technology selection (`technology-evaluator`), NFR definition (`nfr-checklist-generator`). For each: if the design involves it, invoke the specialist in contextual mode and integrate its output into the approaches; if it does not, state 'not applicable' for that domain. Silence is not a valid gate outcome."* La tabla pasiva se convierte en la referencia del gate (qué skill cubre qué dominio) y pierde el "you may invoke". En `architecture-assessment`, la frase "when Phase 3 would benefit" se reformula con la misma estructura evaluar→invocar-o-declarar.
+El texto del gate en `brainstorming` (sub-paso del paso 4, redacción normativa): *"Before presenting approaches, evaluate each specialist domain explicitly — architecture pattern choice (`architecture-advisor`), technology selection (`technology-evaluator`), NFR definition (`nfr-checklist-generator`). For each: if the design involves it, invoke the specialist in contextual mode and integrate its output into the approaches; if it does not, state 'not applicable' for that domain. Silence is not a valid gate outcome."* La tabla pasiva se convierte en la referencia del gate (qué skill cubre qué dominio) y pierde el "you may invoke". En `architecture-assessment`, la frase "when Phase 3 would benefit" se reformula con la misma estructura evaluar→invocar-o-declarar. Nota post-implementación (revisión de calidad de Task 3): el gate exige además que los tres verdicts sean **user-visible** — el mensaje que presenta los enfoques debe abrir con el resultado del gate (una línea por dominio); una evaluación que ocurre solo "en la cabeza del agente" es indistinguible de que el gate nunca corrió. Ver `skills/brainstorming/SKILL.md`, sección "Specialist Gate", para el texto exacto.
 
 ### F3 — Retiro
 

@@ -220,7 +220,7 @@ flowchart LR
 ## Cross-Cutting Rules
 
 - **Text, never images.** Diagrams are always delivered as Mermaid text blocks — version-controllable, never as rendered images.
-- **Serve the invoker.** When invoked by another skill (architecture-extraction, architecture-assessment, architecture-advisor, brainstorming), return the diagram to the invoker and end — never take over the flow or produce a standalone artifact the invoker didn't ask for.
+- **Serve the invoker.** When invoked by another skill (architecture-extraction, architecture-assessment, architecture-advisor), return the diagram to the invoker and end — never take over the flow or produce a standalone artifact the invoker didn't ask for.
 
 ## Termination
 

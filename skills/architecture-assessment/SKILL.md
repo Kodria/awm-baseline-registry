@@ -161,6 +161,14 @@ evaluation itself is mandatory; only the invocation is conditional —
 Phases 1-5 still run on their own whenever the gate concludes a second
 opinion isn't needed.
 
+**Availability.** `architecture-advisor` ships in the `dev` bundle, not
+`product` — a `product`-only install (`bundles/product/bundle.json`'s
+`dependsOn` is empty) may not have it. If the gate concludes a second
+opinion is needed but `architecture-advisor` is not among the available
+skills, declare **"advisor pass: not applicable (architecture-advisor not
+installed)"** instead of invoking it — same rule as the layered access
+below for `mermaid-diagrams`.
+
 ## Diagrams (`mermaid-diagrams`, layered access)
 
 When a finding or scenario is clearer with a diagram (e.g. showing the

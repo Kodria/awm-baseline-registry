@@ -10,13 +10,13 @@ Newest entry on top; append new releases directly below this line.
 ### Changed — bundle `dev`
 - `brainstorming` 1.3.0: passive "Specialist Skills Awareness" replaced by a mandatory Specialist Gate — evaluate each domain explicitly, invoke or state "not applicable"; silence is not a valid outcome. The gate's three verdicts must now be stated visibly in the message that presents approaches — an evaluation that only happens in the agent's head is indistinguishable from the gate never running.
 - `architecture-advisor`, `technology-evaluator`, `nfr-checklist-generator` (1.0.0→1.0.1, fix): dead Phase 5/6 delegation to `docs-assistant`/`docs-brainstorming`/`docs-system-orchestrator`/`c4-architecture` removed — artifacts are now delivered directly; advisor's diagram path points to `mermaid-diagrams`.
-- `using-awm`: dropped "CI" from the Specialized-tier advisory list and removed "configuring a pipeline" as a trigger example — both promised a capability that no longer exists after `cicd-proposal-builder`'s retirement.
+- `using-awm` (1.2.0→1.2.1, fix): dropped "CI" from the Specialized-tier advisory list and removed "configuring a pipeline" as a trigger example — both promised a capability that no longer exists after `cicd-proposal-builder`'s retirement.
 
 ### Removed — bundle `dev` (BREAKING)
 - `cicd-proposal-builder`: retired. No real consumer (its only wiring was the passive specialist table that never fired) and no natural trigger in feature design. If pipeline design becomes a real need, a new skill will be designed with a real trigger (likely project setup, not brainstorming). Bundle bump is major (1.6.0→2.0.0) per this repo's semver convention (ruptura de contrato → major) — a capability leaving the bundle is a contract change regardless of whether any project was actually consuming it.
 
 ### Changed — bundle `product` 1.1.0
-- `architecture-assessment` 1.1.0: advisor invocation hardened into an explicit gate (invoke or state "not applicable" in the report).
+- `architecture-assessment` 1.1.0: advisor invocation hardened into an explicit gate (invoke or state "not applicable" in the report); the gate also declares "not applicable" when `architecture-advisor` isn't installed (product-only installs lack the `dev` bundle).
 - `architecture-extraction` (1.0.0→1.0.1, fix): diagram layer 1 now points to the registry `mermaid-diagrams` skill (inline fallbacks preserved).
 
 Design: docs/plans/2026-07-23-architecture-flow-cleanup-design.md (issue #6, Parte 1 reformulada).

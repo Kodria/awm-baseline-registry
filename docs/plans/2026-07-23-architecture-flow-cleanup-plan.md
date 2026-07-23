@@ -253,17 +253,17 @@ git commit -m "docs: environment-port pattern + traceability issues for deferred
 _Requirements: R7_
 
 **Files:**
-- Modify: `bundles/dev/bundle.json` (solo `version`: `"1.6.0"` → `"1.7.0"`)
+- Modify: `bundles/dev/bundle.json` (solo `version`: `"1.6.0"` → `"2.0.0"` — corregido a major en la revisión de calidad, ver Step 4 nota)
 - Modify: `bundles/product/bundle.json` (solo `version`: `"1.0.0"` → `"1.1.0"`)
 - Modify: `catalog.json` (ambas versiones)
 - Modify: `CHANGELOG.md` (entrada nueva arriba, bajo la línea de convención)
 
-- [ ] **Step 1: Bumps.** dev → 1.7.0 en `bundles/dev/bundle.json` y `catalog.json`; product → 1.1.0 en `bundles/product/bundle.json` y `catalog.json`. (Releer los archivos primero — Task 1 y Task 4 los editaron.)
+- [x] **Step 1: Bumps.** dev → 2.0.0 en `bundles/dev/bundle.json` y `catalog.json` (corregido de 1.7.0 a 2.0.0 en la revisión de calidad — retiro de `cicd-proposal-builder` es ruptura de contrato, per CONSTITUTION.md); product → 1.1.0 en `bundles/product/bundle.json` y `catalog.json`. (Releer los archivos primero — Task 1 y Task 4 los editaron.)
 
 - [ ] **Step 2: CHANGELOG.** Insertar tras la línea "Newest entry on top...":
 
 ```markdown
-## dev 1.7.0 / product 1.1.0 — 2026-07-23
+## dev 2.0.0 / product 1.1.0 — 2026-07-23
 
 ### Added — bundle `dev`
 - `mermaid-diagrams` 1.0.0 (on-signal): Mermaid diagram guide, native in the registry (adapted from a personal skill; claude.ai port in `docs/ports/`).
@@ -272,8 +272,8 @@ _Requirements: R7_
 - `brainstorming` 1.3.0: passive "Specialist Skills Awareness" replaced by a mandatory Specialist Gate — evaluate each domain explicitly, invoke or state "not applicable"; silence is not a valid outcome.
 - `architecture-advisor`, `technology-evaluator`, `nfr-checklist-generator`: dead Phase 5/6 delegation to `docs-assistant`/`docs-brainstorming`/`docs-system-orchestrator`/`c4-architecture` removed — artifacts are now delivered directly; advisor's diagram path points to `mermaid-diagrams`.
 
-### Removed — bundle `dev`
-- `cicd-proposal-builder`: retired. No real consumer (its only wiring was the passive specialist table that never fired) and no natural trigger in feature design. If pipeline design becomes a real need, a new skill will be designed with a real trigger (likely project setup, not brainstorming).
+### Removed — bundle `dev` (BREAKING)
+- `cicd-proposal-builder`: retired. No real consumer (its only wiring was the passive specialist table that never fired) and no natural trigger in feature design. If pipeline design becomes a real need, a new skill will be designed with a real trigger (likely project setup, not brainstorming). Bundle bump is major (1.6.0→2.0.0) per this repo's semver convention (ruptura de contrato → major) — a capability leaving the bundle is a contract change regardless of whether any project was actually consuming it.
 
 ### Changed — bundle `product` 1.1.0
 - `architecture-assessment` 1.1.0: advisor invocation hardened into an explicit gate (invoke or state "not applicable" in the report).
@@ -282,18 +282,20 @@ _Requirements: R7_
 Design: docs/plans/2026-07-23-architecture-flow-cleanup-design.md (issue #6, Parte 1 reformulada).
 ```
 
+**Nota post-implementación (revisión de calidad de Task 7):** el bump de `dev` mostrado arriba (1.7.0 originalmente escrito en este plan) se corrigió a 2.0.0 antes del commit final — retirar `cicd-proposal-builder` es ruptura de contrato per CONSTITUTION.md, sin excepción por "cero consumidores conocidos". El CHANGELOG.md real también agrega bullets para `using-awm` y detalle de "visible verdicts" en `brainstorming`, ausentes del borrador de arriba — ver CHANGELOG.md para el texto final.
+
 - [ ] **Step 3: Nota — `architecture-extraction` Step 0b.** El CHANGELOG menciona la capa 1 de extraction: verificar que Task 1-4 no la actualizaron aún (el design R4.2 la asigna a este ciclo). Si sigue diciendo "personal skill", actualizar la tabla de Step 0b (~línea 74-90): capa 1 condición `Listed among available skills` se mantiene, pero la descripción aclara que la skill ahora es parte del bundle `dev` del registry (garantizada en instalaciones estándar; el fallback inline cubre instalaciones parciales). Mismo ajuste en la sección equivalente de `architecture-assessment` si referencia la personal.
 
 - [ ] **Step 4: Verificar**
 
-Run: `python3 -c "import json; c=json.load(open('catalog.json')); d={b['name']:b['version'] for b in c['bundles']}; assert d['dev']=='1.7.0' and d['product']=='1.1.0', d; print('VERSIONS-OK')" && grep -q 'dev 1.7.0 / product 1.1.0' CHANGELOG.md && echo CHANGELOG-OK`
+Run: `python3 -c "import json; c=json.load(open('catalog.json')); d={b['name']:b['version'] for b in c['bundles']}; assert d['dev']=='2.0.0' and d['product']=='1.1.0', d; print('VERSIONS-OK')" && grep -q 'dev 2.0.0 / product 1.1.0' CHANGELOG.md && echo CHANGELOG-OK`
 Expected: `VERSIONS-OK` + `CHANGELOG-OK`
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add bundles/dev/bundle.json bundles/product/bundle.json catalog.json CHANGELOG.md skills/architecture-extraction/SKILL.md skills/architecture-assessment/SKILL.md
-git commit -m "feat(product): bump dev 1.7.0 + product 1.1.0 — changelog del flow-cleanup (#6)"
+git commit -m "feat(product): bump dev 2.0.0 + product 1.1.0 — changelog del flow-cleanup (#6)"
 ```
 
 ---
