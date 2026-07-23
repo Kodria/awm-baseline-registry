@@ -1,6 +1,7 @@
 ---
 name: product-discovery
-version: "1.0.0"
+version: "1.1.0"
+portable: true
 description: "Use when the user brings a raw idea, an intuition about a module or product, or a problem without a formed requirement. Guides problem-space discovery (problem framing + JTBD) one question at a time — business level, never technical solutioning."
 ---
 
