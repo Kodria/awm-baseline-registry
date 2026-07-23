@@ -1,5 +1,7 @@
 # Flow-Cleanup de Skills de Arquitectura y Advisory — Implementation Plan
 
+<!-- awm-qa-complete: 2026-07-23 -->
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Limpiar referencias muertas y ambigüedades en las skills de arquitectura/advisory, activar el gate de specialists en brainstorming, retirar cicd-proposal-builder, llevar mermaid-diagrams al registry y formalizar el patrón environment-port con trazabilidad en issues.
