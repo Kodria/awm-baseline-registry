@@ -188,7 +188,7 @@ flowchart LR
 - VS Code - With Markdown Mermaid extension
 - Notion, Obsidian, Confluence - Built-in support
 
-**Export options:**
+**Export options** (for the user's own downstream needs — this skill itself always delivers Mermaid text, never rendered images; see Cross-Cutting Rules):
 - [Mermaid Live Editor](https://mermaid.live) - Online editor with PNG/SVG export
 - Mermaid CLI - `npm install -g @mermaid-js/mermaid-cli` then `mmdc -i input.mmd -o output.png`
 - Docker - `docker run --rm -v $(pwd):/data minlag/mermaid-cli -i /data/input.mmd -o /data/output.png`
