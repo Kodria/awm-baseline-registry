@@ -1,6 +1,6 @@
 ---
 name: nfr-checklist-generator
-version: "1.0.0"
+version: "1.0.1"
 description: "Specialist in non-functional requirements. Use this skill when you need to identify, prioritize, and define NFRs for a project — observability, security, data privacy, compliance, performance, operations/support. Activate on phrases like: 'what non-functionals do I need', 'NFR checklist', 'what to define early', 'security requirements', 'I need to define observability', 'what compliance applies'."
 ---
 
@@ -107,13 +107,12 @@ Present the complete matrix with justification for each classification.
 
 ### Phase 5: Generate design artifact
 
-Compile into a structured artifact. Destination based on invocation context:
+Compile into a structured artifact and deliver it directly:
 
 | Invoked from | Artifact | Who executes |
 |---|---|---|
 | `brainstorming` | Result returned to `brainstorming` to integrate into the design | `brainstorming` continues its flow (writes design doc, then calls `writing-plans`) |
-| `docs-brainstorming` / `docs-system-orchestrator` | Documentation plan | `docs-assistant` |
-| Standalone | Prioritized NFR document with timing matrix | `docs-assistant` |
+| Standalone | Prioritized NFR document with timing matrix — a single portable `.md` | This skill delivers it directly: in an AWM repo, offer to save under `docs/` or download; standalone, deliver the file for the user to place |
 
 ---
 

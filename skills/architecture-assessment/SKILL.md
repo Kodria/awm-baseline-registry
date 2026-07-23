@@ -1,6 +1,6 @@
 ---
 name: architecture-assessment
-version: "1.0.0"
+version: "1.1.0"
 description: "Use when an existing architecture must be evaluated, critiqued, or diagnosed — scenario-based assessment (lightweight ATAM) producing prioritized findings with severity. Assessment only: it changes nothing."
 ---
 
@@ -127,16 +127,19 @@ fragile").
 
 Per the Task 1 audit (`docs/plans/2026-07-22-product-layer-audit.md`),
 `architecture-advisor`'s verdict is **adapt**: its Phases 1-5 and Contextual
-Mode table are self-contained and directly reusable, but its Phase 6
-("Generate design artifact") routes to skills that don't exist in this
-registry (`docs-assistant`, `docs-brainstorming`, `docs-system-orchestrator`,
-`c4-architecture`) — never invoke that routing or reference those names.
+Mode table are self-contained and directly reusable. Its Phase 6 ("Generate
+design artifact") no longer routes anywhere dead — the 2026-07-23
+flow-cleanup (`docs/plans/2026-07-23-architecture-flow-cleanup-design.md`)
+replaced that routing with direct delivery, matching this skill's own
+Termination section.
 
-When Phase 3's analysis of the real system would benefit from a second,
-architecture-design-trained pass — not a scenario check, but an opinion on
-whether the design itself makes sense — invoke `architecture-advisor`
-(`skills/architecture-advisor/SKILL.md`) **in its Contextual Mode**, using
-its own documented row for this exact case:
+**Advisor gate (mandatory evaluation at the close of Phase 3).** When
+closing Phase 3, explicitly evaluate whether the analysis needs a second,
+architecture-design-trained opinion: are there findings that question the
+design itself, not just its behavior against the scenarios? If yes —
+invoke `architecture-advisor` (`skills/architecture-advisor/SKILL.md`)
+**in its Contextual Mode**, using its own documented row for this exact
+case:
 
 > "Validate whether this architecture makes sense" → Review of the
 > existing + flag risks/improvements
@@ -150,8 +153,21 @@ returns a result to the invoker rather than producing its own artifact
 (its Phase 6 does not apply to Contextual Mode), so this skill remains the
 one producing the final report.
 
-This reuse is a consultative aid, not a required step — proceed with
-Phases 1-5 on their own whenever a second opinion isn't needed.
+If no — declare **"advisor pass: not applicable"** in the report, as a
+one-line note alongside the Phase 4 findings table. Either way the gate
+produces an explicit outcome: the advisor's integrated input, or the
+"not applicable" declaration. Silence is not a valid gate outcome. The
+evaluation itself is mandatory; only the invocation is conditional —
+Phases 1-5 still run on their own whenever the gate concludes a second
+opinion isn't needed.
+
+**Availability.** `architecture-advisor` ships in the `dev` bundle, not
+`product` — a `product`-only install (`bundles/product/bundle.json`'s
+`dependsOn` is empty) may not have it. If the gate concludes a second
+opinion is needed but `architecture-advisor` is not among the available
+skills, declare **"advisor pass: not applicable (architecture-advisor not
+installed)"** instead of invoking it — same rule as the layered access
+below for `mermaid-diagrams`.
 
 ## Diagrams (`mermaid-diagrams`, layered access)
 
@@ -159,13 +175,15 @@ When a finding or scenario is clearer with a diagram (e.g. showing the
 sensitivity point's blast radius, or the flow a scalability scenario
 stresses), use the same layered-access discipline `architecture-extraction`
 applies to the same dependency (`skills/architecture-extraction/SKILL.md`,
-Step 0b) — `mermaid-diagrams` is a personal skill, not part of this
-baseline registry, so it is never an unconditional dependency:
+Step 0b) — `mermaid-diagrams` is a registry skill, shipped on-signal in the
+baseline `dev` bundle and guaranteed present in standard installations, but
+it is still never treated as an unconditional dependency, since partial
+installs may not carry it:
 
 | Layer | Condition | Behavior |
 |-------|-----------|----------|
 | 1. `mermaid-diagrams` skill | Listed among available skills | Invoke it for the relevant diagram type (flowchart, sequence, C4). |
-| 2. Inline fallback | Not installed | Use plain Mermaid `flowchart` syntax written directly in the report — no external reference needed. |
+| 2. Inline fallback | Not installed (partial install without the `dev` bundle) | Use plain Mermaid `flowchart` syntax written directly in the report — no external reference needed. |
 
 Diagrams are illustrative here, never a required deliverable — Phase 4's
 findings table is the actual output; a diagram only supports a finding that

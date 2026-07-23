@@ -1,5 +1,20 @@
 # Harness Retros
 
+## 2026-07-23 — Flow-cleanup de skills de arquitectura/advisory (8 tareas, panel QA de 4 lentes)
+
+- **Class:** structural (×1, nueva infraestructura de CI), process (×1)
+- **Occurrences (ledger count):** ledger de la rama con entradas de revisiones de calidad de Tasks 2/3/4/6/7 y del panel post-implementation-qa (Track A fidelidad + Track B robustness/logic/tests). Dos patrones recurrentes identificados por lectura manual (signatures distintas por revisor, no agrupadas automáticamente por `awm ledger recurring`):
+  - **Version bump olvidado en la misma tanda que la edición de contenido:** ≥5 ocurrencias en una sola sesión — 4 skills en la revisión de calidad de Task 7 (`architecture-extraction`, `architecture-advisor`, `technology-evaluator`, `nfr-checklist-generator`), y de nuevo `using-awm` en el panel de post-implementation-qa (confirmado independientemente por 4 lentes distintos: fidelity, robustness, logic, tests). Ocurrió pese a que la regla ya estaba escrita en `CONSTITUTION.md` — la primera vez que este repo demuestra que la prosa sola no basta.
+  - **Invoker-list accuracy:** un `SKILL.md` afirma que otra skill lo invoca sin que eso sea cierto. Dos ocurrencias en la misma sesión: `technology-evaluator` citaba `architecture-assessment` (solo `architecture-advisor` lo invoca de verdad, Task 2); `mermaid-diagrams` listaba `brainstorming` como invocador cuando `brainstorming` nunca lo menciona (post-implementation-qa).
+  - Adicional (no recurrente, blocker): el design doc y el plan quedaron desactualizados tras una corrección de bump (1.7.0→2.0.0 decidida en la revisión de calidad de Task 7) — el propio comando de verificación del plan quedó falso. Corregido junto con el resto del panel de QA.
+- **Reglas:**
+  - `scripts/check-skill-version-bumps.sh` + `.github/workflows/skill-version-check.yml` — **primer sensor real de este repo de contenido:** falla el PR si un `skills/*/SKILL.md` cambió de contenido sin bumpear su frontmatter `version`. Verificado: se manufacturó la falla exacta (revertir el bump de `using-awm` manteniendo su cambio de contenido), el script la atrapó, se revirtió y corrió limpio.
+  - `CONSTITUTION.md` ("Revisión de código") — nueva entrada: una afirmación de invoker-list sobre otra skill debe verificarse leyendo el archivo real de esa skill, no aceptarse tal como está escrita (fusionada junto a la lección existente de artefactos compartidos mutables — misma familia de error, forma distinta: acá la lista nunca fue verificada al escribirla, no es que el otro archivo cambiara después).
+  - `AGENTS.md` ("What works here") — bullet existente de bump-de-bundle extendido (no bullet nuevo) para señalar el nuevo backstop de CI.
+- **Sensor:** `skill-version-check.yml` (GitHub Actions, dispara en PRs que tocan `skills/**/SKILL.md`). Actualiza la nota del retro anterior ("ninguno — repo sin infraestructura de lint aplicable"): este patrón SÍ era mecánicamente detectable (diff cambió el archivo, frontmatter no) pese a ser un repo markdown/JSON puro — no todo lo de este repo requiere disciplina de lectura, algunos patrones sí caben en un chequeo de git diff + grep.
+
+**Descartes (modo desatendido):** dos hallazgos del panel de QA fueron investigados y confirmados NO accionables — (1) la mención de `docs-system-orchestrator` en `using-awm` ya estaba explícitamente adjudicada como legítima/fuera-de-alcance por la nota propia del Task 8 Step 1 del plan (entry point del registry de documentación opt-in, no una referencia muerta); (2) los links relativos `references/*.md` en `docs/ports/mermaid-diagrams.claude-ai.md` son intencionales según el propio header del archivo — resuelven contra la carpeta de skill personal existente del usuario en claude.ai, no contra este repo.
+
 ## 2026-07-22 — Capa de producto: contrato compartido entre 6 skills nuevas + 3 editadas (12 tareas, revisión de sistema completo, panel QA de 4 lentes)
 
 - **Class:** process (×1), agent/win (×1)

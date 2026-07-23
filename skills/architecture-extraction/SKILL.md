@@ -1,6 +1,6 @@
 ---
 name: architecture-extraction
-version: "1.0.0"
+version: "1.0.1"
 description: "Use when the current architecture of an existing system must be extracted, documented, or prepared for extension — reverse-engineering from code into a portable architecture document (arc42-lite + C4 views). Brownfield rule: document before touching."
 ---
 
@@ -73,16 +73,18 @@ tool-verified "EXTRACTED" edges.
 
 ## Step 0b — Diagram Layer (mermaid-diagrams)
 
-C4 and flow diagrams in this skill's output are Mermaid. The personal
-`mermaid-diagrams` skill (if installed) is a strong source of diagram
-patterns, but it is **not** part of the baseline registry and is not
-guaranteed present for every user — so it is treated with the same layered
-access discipline as Graphify, never as an unconditional dependency.
+C4 and flow diagrams in this skill's output are Mermaid. `mermaid-diagrams`
+is now a registry skill, shipped on-signal in the baseline `dev` bundle —
+guaranteed present in standard installations. It is still treated with the
+same layered access discipline as Graphify, never as an unconditional
+dependency, because partial installs (project-scoped registries that don't
+include `dev`, or a stripped-down install) may not have it — the inline
+fallback exists for exactly that case.
 
 | Layer | Condition | Behavior |
 |-------|-----------|----------|
 | 1. `mermaid-diagrams` skill | Listed among available skills | Invoke it for C4 Context/Container/Component syntax, sequence diagrams for key flows, and ERD syntax for the data model. |
-| 2. Inline fallback | Not installed | Use the Mermaid syntax embedded directly below — no external reference needed. |
+| 2. Inline fallback | Not installed (partial install without the `dev` bundle) | Use the Mermaid syntax embedded directly below — no external reference needed. |
 
 **Inline C4 Context fallback:**
 

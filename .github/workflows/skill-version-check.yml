@@ -1,0 +1,24 @@
+name: Skill version bump check
+
+# Fails a PR if any skills/*/SKILL.md changed content vs the PR's base
+# without also bumping its frontmatter `version` — see
+# scripts/check-skill-version-bumps.sh and CONSTITUTION.md, "Release de
+# contenido". Cures a pattern that recurred repeatedly (harness-retro,
+# 2026-07-23) even with that rule already written in prose.
+
+on:
+  pull_request:
+    paths:
+      - 'skills/**/SKILL.md'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check version bumps
+        run: ./scripts/check-skill-version-bumps.sh "origin/${{ github.base_ref }}"

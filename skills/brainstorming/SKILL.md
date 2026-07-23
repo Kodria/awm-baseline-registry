@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-version: "1.2.0"
+version: "1.3.0"
 description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation. Explores SOLUTION space and is invoked via development-process; a raw business idea with no brief and no decision to build goes to product-process first."
 ---
 
@@ -55,7 +55,7 @@ You MUST create a task for each of these items and complete them in order:
 1a. **Brief preload check** — if a `mode: brief` document carrying the `awm: product-brief` discriminator is in context, enter Brief Preload Mode (see section above; other modes are explicitly excluded there)
 2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria; do not exit this phase while any requirement still has an open ambiguity (see Clarify gate)
-4. **Propose 2-3 approaches** — with trade-offs and your recommendation
+4. **Propose 2-3 approaches** — run the specialist gate first (see Specialist Gate section), then present trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
 6. **UI Screen detection** — during/after presenting the design, evaluate if the feature needs UI screens (see the UI Screen Detection section)
 7. **Write design doc** — save to `docs/plans/YYYY-MM-DD-<topic>-design.md` with the `## Requirements` (EARS) section as its durable head (see below), plus the `## UI Screens` table when applicable, and commit
@@ -71,7 +71,7 @@ digraph brainstorming {
     "Visual questions ahead?" [shape=diamond];
     "Offer Visual Companion\n(own message, no other content)" [shape=box];
     "Ask clarifying questions" [shape=box];
-    "Propose 2-3 approaches" [shape=box];
+    "Propose 2-3 approaches" [shape=box, label="Propose 2-3 approaches\n(specialist gate first — visible verdicts)"];
     "Present design sections" [shape=box];
     "User approves design?" [shape=diamond];
     "UI screens detected?" [shape=diamond];
@@ -283,19 +283,22 @@ A question about a UI topic is not automatically a visual question. "What does p
 If they agree to the companion, read the detailed guide before proceeding:
 `skills/brainstorming/visual-companion.md`
 
-## Specialist Skills Awareness
+## Specialist Gate (mandatory sub-step of "Propose 2-3 approaches")
 
-During the approach exploration phase (Propose 2-3 approaches), if you detect the conversation involves decisions of significant complexity in these areas, you may invoke the corresponding specialist skill in **contextual mode** to enrich the discussion:
+Before presenting approaches, evaluate each specialist domain explicitly — architecture pattern choice (`architecture-advisor`), technology selection (`technology-evaluator`), NFR definition (`nfr-checklist-generator`). For each: if the design involves it, invoke the specialist in contextual mode and integrate its output into the approaches; if it does not, state "not applicable" for that domain. Silence is not a valid gate outcome.
 
-| Area | Skill | When to invoke |
+**The three verdicts are user-visible, always.** The message that presents the approaches MUST open with the gate's outcome — one line per domain (e.g. *"Specialist gate: architecture — advisor consulted, shaped option B; technology — not applicable; NFRs — applies but trivial, folded into option A"*). An evaluation that happens only in the agent's head is indistinguishable from the gate never running — which is exactly the failure this gate exists to fix. This mirrors how the Visual Companion offer must be its own message: mandatory sub-behaviors leave visible traces.
+
+Domain reference — which skill covers which domain:
+
+| Area | Skill | Domain covers |
 |------|-------|----------------|
 | Architecture design | `architecture-advisor` | Designing system architecture, choosing patterns, defining components, evaluating integrations |
-| CI/CD pipeline | `cicd-proposal-builder` | Defining delivery pipeline, branching strategy, environments, deploy strategy |
 | Non-functional requirements | `nfr-checklist-generator` | Identifying and prioritizing NFRs early in design |
 | Technology selection | `technology-evaluator` | Evaluating and comparing technology options with structured criteria |
 
-**Rules:**
-- Only invoke for decisions of **significant complexity** — do not invoke for trivial choices.
+**Rules (threshold criteria within the gate):**
+- Only invoke for decisions of **significant complexity** — a domain may apply but be trivial; declaring it so ("applies, but trivial — no specialist needed") counts as an explicit gate outcome.
 - Invoke in **contextual mode** — the specialist answers a specific question and returns control to you.
 - The specialist's output is integrated into the design document you are building, not written as a separate artifact.
 - You remain in control of the brainstorming flow. The specialist is a consultant, not a replacement.

@@ -1,6 +1,6 @@
 {
   "name": "dev",
-  "version": "1.6.0",
+  "version": "2.0.0",
   "description": "Agentic software development core: SDD spine, quality gates, sensors, and advisory.",
   "scope": "baseline",
   "dependsOn": [],
@@ -16,9 +16,9 @@
     { "name": "setup-sensors", "onSignal": true },
     { "name": "harness-retro", "onSignal": true },
     { "name": "architecture-advisor", "onSignal": true },
-    { "name": "cicd-proposal-builder", "onSignal": true },
     { "name": "nfr-checklist-generator", "onSignal": true },
-    { "name": "technology-evaluator", "onSignal": true }
+    { "name": "technology-evaluator", "onSignal": true },
+    { "name": "mermaid-diagrams", "onSignal": true }
   ],
   "workflows": ["development-process"],
   "agents": ["development-process"]

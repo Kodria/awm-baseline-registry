@@ -1,6 +1,6 @@
 ---
 name: using-awm
-version: "1.2.0"
+version: "1.2.1"
 description: Use when starting any development conversation - establishes tiered skill invocation policy (spine skills always, specialized skills on clear signal)
 ---
 
@@ -50,10 +50,10 @@ Not every skill competes equally for your attention. Apply two tiers:
 development work. Your default entry point is one of `development-process`
 or `product-process` — see the Orchestration section below for which.
 
-**Specialized — only on clear signal.** The remaining skills (architecture/CI/NFR
+**Specialized — only on clear signal.** The remaining skills (architecture/NFR
 advisory, frontend — `frontend-craft`, `design-fidelity`, `ui-ux-pro-max` — documentation,
 etc.) are invoked **only when the context explicitly calls for them** (you are discussing
-architecture, configuring a pipeline, working on a UI screen, verifying a UI against its
+architecture, working on a UI screen, verifying a UI against its
 design, documenting a module...). Do not invoke them "just in case": waiting for the
 signal avoids noise and unnecessary overhead.
 

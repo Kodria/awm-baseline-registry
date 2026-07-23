@@ -1,6 +1,6 @@
 ---
 name: architecture-advisor
-version: "1.0.0"
+version: "1.0.1"
 description: "Specialist in software architecture design. Use this skill when you need to define, review, or design the architecture of a system — from understanding the requirement to the full definition of components, patterns, technologies, integrations, and trade-offs. Activate on phrases like: 'design the architecture', 'which pattern should I use', 'system architecture', 'define components', 'review the architecture', 'architecture proposal', 'what risks does this integration have'."
 ---
 
@@ -110,15 +110,14 @@ For each integration with external systems, present as a matrix:
 
 ### Phase 6: Generate design artifact
 
-Compile all decisions into a structured artifact. The destination depends on the invocation context:
+Compile all decisions into a structured artifact and deliver it directly:
 
 | Invoked from | Artifact | Who executes |
 |---|---|---|
 | `brainstorming` | Result returned to `brainstorming` to integrate into the design | `brainstorming` continues its flow (writes design doc, then calls `writing-plans`) |
-| `docs-brainstorming` / `docs-system-orchestrator` | Architecture document | `docs-assistant` (produces the doc with templates and invokes `c4-architecture` for diagrams) |
-| Standalone | Architecture document | `docs-assistant` (produces the doc with templates and invokes `c4-architecture` for diagrams) |
+| Standalone | Architecture document — a single portable `.md` | This skill delivers it directly: in an AWM repo, offer to save under `docs/` or download; standalone, deliver the file for the user to place |
 
-**Important note on diagrams:** This skill does NOT generate diagrams directly. When `docs-assistant` produces the final document, it invokes `c4-architecture` to generate C4 diagrams (Context, Container, Component, Deployment) based on the documented architecture decisions.
+**Note on diagrams:** when the architecture document benefits from diagrams (context, container, key flows), invoke `mermaid-diagrams` (registry skill, dev bundle) to produce them as Mermaid text blocks embedded in the document.
 
 ---
 
@@ -129,7 +128,7 @@ Compile all decisions into a structured artifact. The destination depends on the
 | "I need to define the architecture of this module" | Phases 2-5 with context already provided |
 | "Which pattern should I use for this case?" | Phase 2 only — propose options with trade-offs |
 | "Validate whether this architecture makes sense" | Review of the existing + flag risks/improvements |
-| "I need diagrams for this" | Delegate directly to `c4-architecture` with the architectural context |
+| "I need diagrams for this" | Invoke `mermaid-diagrams` with the architectural context |
 | "What risks do you see in these integrations?" | Phase 5 only — generate risk matrix |
 
 In contextual mode: do not open a full cycle, use the invoker's context, return result. Phase 6 does not apply — the invoker handles artifact generation.
