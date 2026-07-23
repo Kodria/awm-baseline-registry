@@ -101,7 +101,7 @@ Compile all decisions into a structured artifact and deliver it directly:
 
   Además: en la tabla de Contextual Mode, la fila `"I need diagrams for this" | Delegate directly to c4-architecture...` cambia a `"I need diagrams for this" | Invoke mermaid-diagrams with the architectural context`.
 
-- [ ] **Step 2: `technology-evaluator`.** (a) En la fila de Contextual Mode (~línea 20), `(brainstorming, docs-brainstorming, discovery-assistant)` → `(brainstorming, architecture-assessment, or any skill that already has context)`. (b) Reemplazar la tabla de Phase 6 por el mismo patrón de entrega directa (invocador → devolver resultado; standalone → `.md` portable entregado por esta skill, repo→docs/ o descarga).
+- [ ] **Step 2: `technology-evaluator`.** (a) En la fila de Contextual Mode (~línea 20), `(brainstorming, docs-brainstorming, discovery-assistant)` → `(brainstorming, architecture-advisor, or any skill that already has context)` (corregido post-review: `architecture-advisor` SÍ la invoca — advisor:95; `architecture-assessment` no la invoca desde ningún lado). (b) Reemplazar la tabla de Phase 6 por el mismo patrón de entrega directa (invocador → devolver resultado; standalone → `.md` portable entregado por esta skill, repo→docs/ o descarga).
 
 - [ ] **Step 3: `nfr-checklist-generator`.** Reemplazar la tabla de Phase 5 igual: invocador → devolver; standalone → "Prioritized NFR document with timing matrix" como `.md` portable entregado directamente.
 

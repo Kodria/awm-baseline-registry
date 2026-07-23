@@ -17,7 +17,7 @@ Specialist in comparative technology evaluation. Guides the user in selecting an
 | Signal | Mode |
 |-------|------|
 | Invoked directly by the user or by an orchestrator with a full cycle | **Full Mode** |
-| Invoked by another skill (brainstorming, architecture-assessment, or any skill that already has context) that already has established context and requests targeted expertise | **Contextual Mode** |
+| Invoked by another skill (brainstorming, architecture-advisor, or any skill that already has context) that already has established context and requests targeted expertise | **Contextual Mode** |
 
 If unclear, ask: *"Do you want me to guide you through a complete evaluation from scratch, or do you need me to evaluate something specific within the work we are already doing?"*
 
