@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { lstat, readdir, readFile, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -139,6 +139,9 @@ async function loadAllowlist(errors) {
 }
 
 async function validateAllowlistedFiles(allowlist, errors) {
+  const resolvedRepoRoot = await realpath(repoRoot);
+  const resolvedRepoPrefix = `${resolvedRepoRoot}${path.sep}`;
+
   for (const allowedPath of allowlist) {
     const allowedFile = path.resolve(repoRoot, allowedPath);
     if (!allowedFile.startsWith(`${repoRoot}${path.sep}`)) {
@@ -147,8 +150,19 @@ async function validateAllowlistedFiles(allowlist, errors) {
     }
 
     try {
-      if (!(await stat(allowedFile)).isFile()) {
+      const details = await lstat(allowedFile);
+      if (details.isSymbolicLink()) {
+        errors.push(`tests/portability-allowlist.json: symbolic links are not allowed ${allowedPath}`);
+        continue;
+      }
+      if (!details.isFile()) {
         errors.push(`tests/portability-allowlist.json: path is not a file ${allowedPath}`);
+        continue;
+      }
+
+      const resolvedAllowedFile = await realpath(allowedFile);
+      if (!resolvedAllowedFile.startsWith(resolvedRepoPrefix)) {
+        errors.push(`tests/portability-allowlist.json: resolved path escapes repository ${allowedPath}`);
       }
     } catch {
       errors.push(`tests/portability-allowlist.json: missing file ${allowedPath}`);
