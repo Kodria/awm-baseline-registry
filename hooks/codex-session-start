@@ -1,0 +1,199 @@
+#!/usr/bin/env node
+// SessionStart adapter for Codex.
+//
+// Installed by `awm init --agent codex` as ~/.awm/hooks/codex/session-start and
+// wired into ~/.codex/hooks.json on the matcher 'startup|resume|clear|compact'.
+// It is the deterministic recovery point for those four events: it re-anchors
+// the durable, file-derived canonical state (project constitution, active plan
+// goal, open plan items, open ledger items) that a fresh, resumed, cleared or
+// compacted context does not carry.
+//
+// Two contracts this file must satisfy, both verified by
+// tests/codex-session-start.test.mjs:
+//
+//   1. stdout is a single JSON object with hookSpecificOutput.additionalContext.
+//   2. heartbeat.json, written next to the INSTALLED script, carries
+//      { hash, ts } where `hash` is the sha256 of that installed script. `awm
+//      hooks status --agent codex` compares it against the file on disk to
+//      decide healthy / stale / pending-trust.
+//
+// Failure-safe by design: every filesystem and subprocess probe degrades to
+// "omit that section" rather than throwing. A SessionStart hook that crashes
+// takes the whole session's context with it, so silent-in-absence beats loud.
+
+const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
+
+const AWM_DIRECTIVE = 'AWM is active. Load and follow `using-awm` and `development-process` before development work.';
+
+// The path the hook was INVOKED through, not its realpath. AWM installs the
+// hook as either a copy or a symlink; `__filename` resolves symlinks and would
+// point back into the registry, writing the heartbeat where the CLI never
+// looks for it. argv[1] preserves the installed location in both cases.
+function installedScriptPath() {
+    return typeof process.argv[1] === 'string' && process.argv[1].length > 0
+        ? process.argv[1]
+        : __filename;
+}
+
+function readInput() {
+    if (process.stdin.isTTY) return {};
+    try {
+        return JSON.parse(fs.readFileSync(0, 'utf8') || '{}');
+    } catch {
+        return {};
+    }
+}
+
+function readIfPresent(file) {
+    try {
+        return fs.statSync(file).size > 0 ? fs.readFileSync(file, 'utf8') : '';
+    } catch {
+        return '';
+    }
+}
+
+// Active plan = most-recently-modified plan (not a design doc) that still has
+// open checkboxes and is not marked complete. Deterministic and file-derived,
+// mirroring hooks/session-start so both providers re-anchor on the same plan.
+function activePlan(cwd) {
+    const plansDir = path.join(cwd, 'docs/plans');
+    let names;
+    try {
+        names = fs.readdirSync(plansDir);
+    } catch {
+        return null;
+    }
+
+    const candidates = [];
+    for (const name of names) {
+        if (!name.endsWith('.md') || name.includes('design')) continue;
+        const file = path.join(plansDir, name);
+        try {
+            const body = fs.readFileSync(file, 'utf8');
+            if (!/^- \[ \]/m.test(body)) continue;
+            if (/awm-(plan|qa)-complete/.test(body)) continue;
+            candidates.push({ file, body, mtime: fs.statSync(file).mtimeMs });
+        } catch {
+            // Unreadable plan: skip it rather than losing the whole re-anchor.
+        }
+    }
+
+    candidates.sort((a, b) => b.mtime - a.mtime || a.file.localeCompare(b.file));
+    return candidates[0] || null;
+}
+
+// Open findings for the current branch, via `awm ledger list`. Absent CLI or
+// absent ledger yields no section rather than an error.
+function ledgerItems(cwd) {
+    try {
+        return execFileSync('awm', ['ledger', 'list'], {
+            cwd,
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'ignore'],
+            timeout: 3000,
+        }).split(/\r?\n/).filter(Boolean).slice(0, 8);
+    } catch {
+        return [];
+    }
+}
+
+// Audit trail for genuine compaction boundaries only — same entry the Claude
+// hook records, so the ledger reads identically across providers.
+function recordCompactionRecovery(cwd, event) {
+    if (event !== 'compact') return;
+    try {
+        execFileSync('awm', [
+            'ledger', 'add',
+            '--phase', 'compaction-recovery',
+            '--source-skill', 'context-compaction-recovery',
+            '--polarity', 'finding',
+            '--class', 'proceso',
+            '--signature', 'compaction-reanchor',
+            '--severity', 'info',
+            '--desc', 're-anchored active plan + open items after compaction',
+        ], { cwd, stdio: 'ignore', timeout: 3000 });
+    } catch {
+        // Best-effort: no awm on PATH, or no ledger for this branch.
+    }
+}
+
+function buildContext(cwd, event) {
+    const sections = [AWM_DIRECTIVE];
+
+    const constitution = readIfPresent(path.join(cwd, 'CONSTITUTION.md'));
+    if (constitution.trim()) {
+        sections.push(`## Project Constitution\n\n${constitution.trim()}`);
+    }
+
+    const plan = activePlan(cwd);
+    if (plan) {
+        const goal = plan.body.match(/^\*\*Goal:\*\*\s*(.+)$/m)?.[1]
+            || plan.body.match(/^#\s+(.+)$/m)?.[1]
+            || path.basename(plan.file);
+        const openItems = plan.body.match(/^- \[ \].+$/gm)?.slice(0, 8) || [];
+        const ledger = ledgerItems(cwd);
+
+        sections.push([
+            '## Re-anchor (startup, resume, clear, compact)',
+            `Active plan: ${path.basename(plan.file)}`,
+            `Goal: ${goal}`,
+            ...(openItems.length ? ['Open plan items:', ...openItems] : []),
+            ...(ledger.length ? ['Open ledger items:', ...ledger] : []),
+        ].join('\n'));
+
+        recordCompactionRecovery(cwd, event);
+    }
+
+    return sections.join('\n\n');
+}
+
+function writeHeartbeat(scriptPath, event) {
+    try {
+        const heartbeat = {
+            version: 1,
+            // Field names are the CLI's contract — see computeCodexTrust in
+            // cli/src/commands/hooks/codex.ts. Renaming `hash` makes every
+            // installation report `stale`.
+            hash: crypto.createHash('sha256').update(fs.readFileSync(scriptPath)).digest('hex'),
+            ts: new Date().toISOString(),
+            event,
+        };
+        const file = path.join(path.dirname(scriptPath), 'heartbeat.json');
+        const temp = `${file}.${process.pid}.tmp`;
+        fs.writeFileSync(temp, `${JSON.stringify(heartbeat, null, 2)}\n`, { mode: 0o600 });
+        fs.renameSync(temp, file);
+    } catch {
+        // A read-only or missing hooks directory must not break the session;
+        // the CLI reports pending-trust, which is the honest observed state.
+    }
+}
+
+function main() {
+    const input = readInput();
+    const event = typeof input.source === 'string' && input.source ? input.source : 'startup';
+
+    let cwd = process.cwd();
+    if (typeof input.cwd === 'string' && input.cwd) {
+        try {
+            if (fs.statSync(input.cwd).isDirectory()) cwd = input.cwd;
+        } catch {
+            // Keep process.cwd() when the reported directory is unusable.
+        }
+    }
+
+    const scriptPath = installedScriptPath();
+    const additionalContext = buildContext(cwd, event);
+    writeHeartbeat(scriptPath, event);
+
+    process.stdout.write(`${JSON.stringify({
+        hookSpecificOutput: {
+            hookEventName: 'SessionStart',
+            additionalContext,
+        },
+    })}\n`);
+}
+
+main();

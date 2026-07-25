@@ -62,6 +62,19 @@ const requiredConstitutionDeliveryConcepts = [
   'AGENTS.md',
   'CONSTITUTION.md',
 ];
+// The Codex SessionStart adapter is what `awm init --agent codex` installs; the
+// CLI reads the heartbeat it writes to decide whether the hook is trusted.
+const requiredCodexHookConcepts = [
+  'startup',
+  'resume',
+  'clear',
+  'compact',
+  'CONSTITUTION.md',
+  'docs/plans',
+  'awm ledger',
+  'heartbeat.json',
+  'additionalContext',
+];
 // Every skill that resolves another skill on disk must search the shared global
 // root too — Claude-only roots make the lookup fail under OpenCode and Codex.
 const skillDiscoveryFiles = [
@@ -330,6 +343,33 @@ async function validateSkillDiscoveryRoots(errors) {
   }
 }
 
+async function validateCodexSessionHook(errors) {
+  const relativePath = 'hooks/codex-session-start';
+  const hookPath = path.join(repoRoot, relativePath);
+
+  let details;
+  try {
+    details = await stat(hookPath);
+  } catch {
+    errors.push(`${relativePath}: missing Codex session recovery adapter`);
+    return;
+  }
+  if (!details.isFile()) {
+    errors.push(`${relativePath}: is not a file`);
+    return;
+  }
+  if ((details.mode & 0o111) === 0) {
+    errors.push(`${relativePath}: is not executable`);
+  }
+
+  const source = await readFile(hookPath, 'utf8');
+  for (const concept of requiredCodexHookConcepts) {
+    if (!source.includes(concept)) {
+      errors.push(`${relativePath}: missing required concept ${JSON.stringify(concept)}`);
+    }
+  }
+}
+
 async function validateExecutionSpine(errors) {
   const relativePath = 'skills/development-process/SKILL.md';
   let source;
@@ -370,6 +410,7 @@ async function main() {
   await validateExecutionSpine(errors);
   await validateConstitutionDelivery(errors);
   await validateSkillDiscoveryRoots(errors);
+  await validateCodexSessionHook(errors);
 
   const developmentProcessPath = path.join(repoRoot, 'agents', 'development-process.md');
   let developmentProcessSource = '';
