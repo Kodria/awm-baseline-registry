@@ -53,15 +53,22 @@ const prohibitedRuntimeVocabulary = [
   { label: 'Claude Task tool call', pattern: /\bTask\(\s*["'`]/ },
   { label: 'superpowers plugin namespace', pattern: /\bsuperpowers:/ },
 ];
-const spineFiles = [
+// `CONSTITUTION.md` reaches an agent through a different channel per provider;
+// the skill that authors it must name all three, or a provider silently loses it.
+const requiredConstitutionDeliveryConcepts = [
+  'Claude Code',
+  'OpenCode',
+  'Codex',
+  'AGENTS.md',
+  'CONSTITUTION.md',
+];
+// Every skill that resolves another skill on disk must search the shared global
+// root too — Claude-only roots make the lookup fail under OpenCode and Codex.
+const skillDiscoveryFiles = [
   'skills/development-process/SKILL.md',
-  'skills/executing-plans/SKILL.md',
-  'skills/subagent-driven-development/SKILL.md',
-  'skills/subagent-driven-development/implementer-prompt.md',
-  'skills/subagent-driven-development/spec-reviewer-prompt.md',
-  'skills/subagent-driven-development/code-quality-reviewer-prompt.md',
-  'skills/dispatching-parallel-agents/SKILL.md',
-  'skills/writing-plans/SKILL.md',
+  'skills/product-process/SKILL.md',
+  'skills/ui-design/SKILL.md',
+  'skills/ui-ux-pro-max/SKILL.md',
 ];
 // The port must not quietly drop a lifecycle phase or the interactive gate.
 const requiredDevelopmentProcessLifecycle = [
@@ -273,6 +280,56 @@ async function validateRuntimeVocabulary(relativePaths, errors) {
   }
 }
 
+async function runtimeMarkdownFiles(allowlist) {
+  const found = [];
+  const walk = async (directory) => {
+    const entries = await readdir(directory, { withFileTypes: true });
+    for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
+      const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        await walk(absolute);
+        continue;
+      }
+      if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
+      const relativePath = path.relative(repoRoot, absolute).split(path.sep).join('/');
+      if (!allowlist.has(relativePath)) found.push(relativePath);
+    }
+  };
+  await walk(skillsRoot);
+  return found;
+}
+
+async function validateConstitutionDelivery(errors) {
+  const relativePath = 'skills/project-constitution/SKILL.md';
+  let source;
+  try {
+    source = await readFile(path.join(repoRoot, relativePath), 'utf8');
+  } catch {
+    errors.push(`${relativePath}: missing constitution authoring skill`);
+    return;
+  }
+  for (const concept of requiredConstitutionDeliveryConcepts) {
+    if (!source.includes(concept)) {
+      errors.push(`${relativePath}: missing provider delivery contract ${JSON.stringify(concept)}`);
+    }
+  }
+}
+
+async function validateSkillDiscoveryRoots(errors) {
+  for (const relativePath of skillDiscoveryFiles) {
+    let source;
+    try {
+      source = await readFile(path.join(repoRoot, relativePath), 'utf8');
+    } catch {
+      errors.push(`${relativePath}: missing skill-discovery consumer`);
+      continue;
+    }
+    if (!source.includes('$HOME/.agents/skills/')) {
+      errors.push(`${relativePath}: does not search the shared global skill root`);
+    }
+  }
+}
+
 async function validateExecutionSpine(errors) {
   const relativePath = 'skills/development-process/SKILL.md';
   let source;
@@ -309,8 +366,10 @@ async function main() {
     errors.push(...await validateSkillDirectory(directory));
   }
 
-  await validateRuntimeVocabulary(spineFiles, errors);
+  await validateRuntimeVocabulary(await runtimeMarkdownFiles(allowlist), errors);
   await validateExecutionSpine(errors);
+  await validateConstitutionDelivery(errors);
+  await validateSkillDiscoveryRoots(errors);
 
   const developmentProcessPath = path.join(repoRoot, 'agents', 'development-process.md');
   let developmentProcessSource = '';

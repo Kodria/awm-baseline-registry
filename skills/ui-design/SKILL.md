@@ -1,6 +1,6 @@
 ---
 name: ui-design
-version: "2.0.0"
+version: "2.0.1"
 description: "Design UI screens using Google Stitch with layered access (MCP, CLI via STITCH_API_KEY, or offline fallback). Reads screens from the design doc's ## UI Screens table, generates them one by one, downloads HTML+PNG artifacts to .stitch/designs/, and updates the design doc with artifact paths. Invoke after brainstorming when UI Screens section exists with pending screens."
 ---
 
@@ -131,7 +131,7 @@ If a design system was created or exists, call `apply_design_system` after gener
 
 **Execution order note:** this subsection is documented after Step 2's "Design system" prose for readability, but its consultation happens BEFORE any `create_design_system`/`update_design_system` call is actually made and before any screen is generated — go back and run it as the first thing you do inside Step 2, ahead of finalizing the design system described above, then return here for Step 3.
 
-Consult the `ui-ux-pro-max` skill (invoke it with the Skill tool if not yet loaded):
+Consult the `ui-ux-pro-max` skill (load it with the active platform's native skill-loading mechanism if not yet loaded):
 
 1. Derive keywords from the design doc: product type + industry + tone (e.g. `"team management dashboard dark professional"`).
 2. Run its `--design-system` search with `--persist --output-dir <project-root>` so `design-system/<slug>/MASTER.md` is written as the token artifact.
@@ -212,7 +212,8 @@ If either check fires, **stop** — do not proceed to download or generate furth
 
 ```bash
 UIDESIGN=""
-for d in "$HOME/.claude/skills/ui-design" ".claude/skills/ui-design" ".agents/skills/ui-design"; do
+for d in "$HOME/.agents/skills/ui-design" ".agents/skills/ui-design" \
+         "$HOME/.claude/skills/ui-design" ".claude/skills/ui-design"; do
   [ -f "$d/scripts/fetch-stitch.sh" ] && UIDESIGN="$d" && break
 done
 [ -z "$UIDESIGN" ] && { echo "ui-design skill not found in any known install location" >&2; exit 1; }
