@@ -14,6 +14,7 @@ make a skill's wording fit.
 | Wait for a subagent | `wait_agent` | Receiving its progress, completion, or request for attention. |
 | Stop a subagent | `interrupt_agent` | Interrupting work that is no longer wanted. |
 | Inspect available subagents | `list_agents` | Checking active workers and their status. |
+| Request user approval or input | Codex native user conversation (or its input-request capability when exposed) | Pausing for authority or a choice that cannot safely be inferred. |
 | Read, write, or edit files | Codex native file tools | Making scoped filesystem changes. |
 | Run commands | Codex native shell tools | Running verification or project commands. |
 
@@ -24,10 +25,13 @@ legacy feature setting is required. A session may nevertheless lack delegation
 tools. In that case, do not attempt to enable them through configuration; keep
 the work single-agent or explain the limitation to the user.
 
-The controller owns the user conversation, task plan, delegation decisions,
-integration, and final verification. A worker owns only its bounded assigned
-task, reports evidence and blockers to the controller, and does not expand its
-scope or make controller-level decisions.
+The controller owns routing, plan state, delegation decisions, reviews, ledger
+reconciliation, completion, the user conversation, integration, and final
+verification. A worker owns only its bounded assigned task, reports evidence
+and blockers to the controller, and does not expand its scope or make
+controller-level decisions. Workers do not begin a second lifecycle: they do
+not route follow-on work, own plan state, dispatch reviewers, reconcile the
+ledger, or mark work complete.
 
 ## Waiting is not command execution
 

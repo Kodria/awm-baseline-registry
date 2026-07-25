@@ -1,6 +1,6 @@
 ---
 name: using-awm
-version: "1.2.1"
+version: "1.2.2"
 description: Use when starting any development conversation - establishes tiered skill invocation policy (spine skills always, specialized skills on clear signal)
 ---
 
@@ -33,10 +33,11 @@ If CLAUDE.md or AGENTS.md says "don't use TDD" and a skill says "always use TDD,
 
 ## How to Access Skills
 
-Use the active platform’s native skill-loading mechanism. Load a skill when its
-trigger applies, then follow the instructions it provides directly. Do not
-replace skill loading with ad-hoc file reads or assume a particular provider's
-tool name: the active runtime owns skill discovery and loading.
+Use the active platform’s native skill-loading mechanism. The mechanism may be
+a dedicated skill loader or the ability to read a visible `SKILL.md`; load or
+read it when its trigger applies, then follow the instructions it provides
+directly. Do not assume a particular provider's tool name: the active runtime
+owns skill discovery and loading.
 
 ## Native Runtime Contract
 
@@ -47,7 +48,10 @@ platform's native mechanisms to:
 - dispatch, steer, wait for, or stop a subagent only when the session exposes
   delegation support; and
 - request user approval before an action that needs authority beyond the
-  current task.
+  current task;
+- inspect files, read files, or edit files through the active platform's native
+  filesystem capability; and
+- run shell commands through its native command-execution capability.
 
 If a capability is unavailable in the session, state the limitation and
 continue only with a safe, in-scope single-agent alternative. Do not invent a

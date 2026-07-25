@@ -32,12 +32,16 @@ const requiredCodexCapabilities = [
   'interrupt_agent',
   'list_agents',
   'update_plan',
+  'Request user approval or input',
 ];
 const requiredUsingAwmConcepts = [
   'Use the active platform’s native skill-loading mechanism',
+  'read a visible `SKILL.md`',
   'create or update a task plan',
   'dispatch, steer, wait for, or stop a subagent',
   'request user approval',
+  'inspect files, read files, or edit files',
+  'run shell commands',
 ];
 
 function parseFrontmatter(source, skillPath) {
