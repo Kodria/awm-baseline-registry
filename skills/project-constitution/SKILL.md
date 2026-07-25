@@ -1,6 +1,6 @@
 ---
 name: project-constitution
-version: "1.1.0"
+version: "1.1.1"
 description: Use when a repository needs to formalize its non-negotiable rules so every agent session receives them as feedforward context. Generates CONSTITUTION.md at the repo root from project context (CLAUDE.md, AGENTS.md, README, sensors manifest). AWM delivers this file automatically to every agent session — via the SessionStart hook (Claude Code), project-local config instructions (OpenCode), or the AWM-managed block in AGENTS.md (Codex).
 ---
 
@@ -39,7 +39,7 @@ You MUST create a task for each item and complete them in order:
 2. **Detect existing CONSTITUTION.md** — if present, treat as an update (preserve existing rules, surface conflicts)
 3. **Draft sections** — work through Section structure and Drafting rules to produce section drafts
 4. **Present sections to user one at a time** — get explicit approval before moving to the next
-5. **Write CONSTITUTION.md** to repo root using the Write tool
+5. **Write CONSTITUTION.md** to repo root with the native file-writing mechanism
 6. **Verify AWM delivery**
    - Claude Code: run `awm hooks status --agent claude-code`; tell the user to run `awm hooks install` if not HEALTHY.
    - OpenCode: confirm `opencode.json` in the project root contains `"CONSTITUTION.md"` in the `instructions` array (added automatically by `awm init --agent opencode`).
@@ -117,7 +117,7 @@ Wait for explicit approval before drafting the next section. Do not batch.
 
 After all sections approved:
 
-Use the Write tool to create `CONSTITUTION.md` at the repo root with all approved sections concatenated in order.
+Create `CONSTITUTION.md` at the repo root with the native file-writing mechanism, with all approved sections concatenated in order.
 
 Then verify the provider's delivery channel will pick it up:
 

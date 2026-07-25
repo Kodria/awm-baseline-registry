@@ -38,22 +38,67 @@ function installedScriptPath() {
         : __filename;
 }
 
+// One project file must never dominate a session's context window. Beyond
+// these caps the section is truncated with a visible marker rather than
+// dropped, so the agent knows to open the file itself.
+const MAX_CONSTITUTION_BYTES = 64 * 1024;
+const MAX_LINE_CHARS = 500;
+const MAX_LEDGER_BYTES = 256 * 1024;
+const AWM_TIMEOUT_MS = 2000;
+
+function truncate(text, limit, marker) {
+    return text.length > limit ? `${text.slice(0, limit)}\n${marker}` : text;
+}
+
+// Reading fd 0 can raise EAGAIN when the parent handed us a non-blocking pipe;
+// that is a "try again", not "no input". Distinguishing it from malformed JSON
+// matters: silently degrading loses `cwd` and mislabels a compact as a startup.
+function readStdin() {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+        try {
+            return fs.readFileSync(0, 'utf8');
+        } catch (error) {
+            if (error.code !== 'EAGAIN') return '';
+            try {
+                // Block briefly without a timer: sleep via a 0-byte read retry.
+                execFileSync(process.execPath, ['-e', 'setTimeout(()=>{},10)'], { stdio: 'ignore' });
+            } catch {
+                return '';
+            }
+        }
+    }
+    return '';
+}
+
+// Codex owns this payload, but a hook that trusts its shape crashes the whole
+// session on a stray `null` or `"text"` — both of which are valid JSON.
 function readInput() {
     if (process.stdin.isTTY) return {};
+    let parsed;
     try {
-        return JSON.parse(fs.readFileSync(0, 'utf8') || '{}');
+        parsed = JSON.parse(readStdin() || '{}');
     } catch {
         return {};
     }
+    return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
 }
 
-function readIfPresent(file) {
+function readIfPresent(file, limit) {
     try {
-        return fs.statSync(file).size > 0 ? fs.readFileSync(file, 'utf8') : '';
+        if (fs.statSync(file).size === 0) return '';
+        return truncate(fs.readFileSync(file, 'utf8'), limit, '[truncated by AWM — read the file for the rest]');
     } catch {
         return '';
     }
 }
+
+// A plan is "done" only when the marker appears as the HTML comment the
+// skills actually write. Matching the bare token would also silence any plan
+// whose own steps document the marker.
+const PLAN_COMPLETE = /<!--\s*awm-(plan|qa)-complete/;
+// Design docs are `<topic>-design.md`. Matching the bare word `design` would
+// also drop `2026-07-24-redesign-checkout-plan.md`, losing recovery entirely.
+const DESIGN_DOC = /-design\.md$/;
 
 // Active plan = most-recently-modified plan (not a design doc) that still has
 // open checkboxes and is not marked complete. Deterministic and file-derived,
@@ -69,12 +114,12 @@ function activePlan(cwd) {
 
     const candidates = [];
     for (const name of names) {
-        if (!name.endsWith('.md') || name.includes('design')) continue;
+        if (!name.endsWith('.md') || DESIGN_DOC.test(name)) continue;
         const file = path.join(plansDir, name);
         try {
             const body = fs.readFileSync(file, 'utf8');
             if (!/^- \[ \]/m.test(body)) continue;
-            if (/awm-(plan|qa)-complete/.test(body)) continue;
+            if (PLAN_COMPLETE.test(body)) continue;
             candidates.push({ file, body, mtime: fs.statSync(file).mtimeMs });
         } catch {
             // Unreadable plan: skip it rather than losing the whole re-anchor.
@@ -87,15 +132,27 @@ function activePlan(cwd) {
 
 // Open findings for the current branch, via `awm ledger list`. Absent CLI or
 // absent ledger yields no section rather than an error.
+// `maxBuffer` is explicit: on the 1 MB default a large ledger throws ENOBUFS,
+// which is indistinguishable here from "no ledger" and would drop the section
+// silently. `awmReachable` records whether the probe answered at all, so the
+// audit write below does not spend a second timeout against a wedged binary.
+let awmReachable = true;
+
 function ledgerItems(cwd) {
     try {
         return execFileSync('awm', ['ledger', 'list'], {
             cwd,
             encoding: 'utf8',
             stdio: ['ignore', 'pipe', 'ignore'],
-            timeout: 3000,
-        }).split(/\r?\n/).filter(Boolean).slice(0, 8);
-    } catch {
+            timeout: AWM_TIMEOUT_MS,
+            maxBuffer: MAX_LEDGER_BYTES,
+        })
+            .split(/\r?\n/)
+            .filter(Boolean)
+            .slice(0, 8)
+            .map((line) => truncate(line, MAX_LINE_CHARS, '[truncated]'));
+    } catch (error) {
+        if (error.code === 'ETIMEDOUT' || error.signal === 'SIGTERM') awmReachable = false;
         return [];
     }
 }
@@ -103,7 +160,7 @@ function ledgerItems(cwd) {
 // Audit trail for genuine compaction boundaries only — same entry the Claude
 // hook records, so the ledger reads identically across providers.
 function recordCompactionRecovery(cwd, event) {
-    if (event !== 'compact') return;
+    if (event !== 'compact' || !awmReachable) return;
     try {
         execFileSync('awm', [
             'ledger', 'add',
@@ -114,7 +171,7 @@ function recordCompactionRecovery(cwd, event) {
             '--signature', 'compaction-reanchor',
             '--severity', 'info',
             '--desc', 're-anchored active plan + open items after compaction',
-        ], { cwd, stdio: 'ignore', timeout: 3000 });
+        ], { cwd, stdio: 'ignore', timeout: AWM_TIMEOUT_MS });
     } catch {
         // Best-effort: no awm on PATH, or no ledger for this branch.
     }
@@ -123,17 +180,23 @@ function recordCompactionRecovery(cwd, event) {
 function buildContext(cwd, event) {
     const sections = [AWM_DIRECTIVE];
 
-    const constitution = readIfPresent(path.join(cwd, 'CONSTITUTION.md'));
+    const constitution = readIfPresent(path.join(cwd, 'CONSTITUTION.md'), MAX_CONSTITUTION_BYTES);
     if (constitution.trim()) {
         sections.push(`## Project Constitution\n\n${constitution.trim()}`);
     }
 
     const plan = activePlan(cwd);
     if (plan) {
-        const goal = plan.body.match(/^\*\*Goal:\*\*\s*(.+)$/m)?.[1]
+        // Leading `>`/whitespace tolerated: plans written by `writing-plans`
+        // put the goal inside a blockquote, and the Claude hook's unanchored
+        // grep finds it there. An anchored match would silently fall through
+        // to the H1 and re-anchor Codex on a different goal than Claude.
+        const goal = plan.body.match(/^[>\s]*\*\*Goal:\*\*\s*(.+)$/m)?.[1]
             || plan.body.match(/^#\s+(.+)$/m)?.[1]
             || path.basename(plan.file);
-        const openItems = plan.body.match(/^- \[ \].+$/gm)?.slice(0, 8) || [];
+        const openItems = (plan.body.match(/^- \[ \].+$/gm) || [])
+            .slice(0, 8)
+            .map((item) => truncate(item, MAX_LINE_CHARS, '[truncated]'));
         const ledger = ledgerItems(cwd);
 
         sections.push([
@@ -163,11 +226,36 @@ function writeHeartbeat(scriptPath, event) {
         };
         const file = path.join(path.dirname(scriptPath), 'heartbeat.json');
         const temp = `${file}.${process.pid}.tmp`;
-        fs.writeFileSync(temp, `${JSON.stringify(heartbeat, null, 2)}\n`, { mode: 0o600 });
-        fs.renameSync(temp, file);
+        try {
+            fs.writeFileSync(temp, `${JSON.stringify(heartbeat, null, 2)}\n`, { mode: 0o600 });
+            fs.renameSync(temp, file);
+        } catch (error) {
+            // Leave no orphan behind: a failing rename otherwise drops one
+            // stale .tmp into the install directory on every single session.
+            try { fs.unlinkSync(temp); } catch { /* already gone */ }
+            throw error;
+        }
     } catch {
         // A read-only or missing hooks directory must not break the session;
         // the CLI reports pending-trust, which is the honest observed state.
+    }
+}
+
+// The directory the session launched from may already be gone, in which case
+// `process.cwd()` throws ENOENT. Resolving the supplied cwd FIRST means a
+// perfectly valid payload still works from a deleted launch directory.
+function resolveCwd(input) {
+    if (typeof input.cwd === 'string' && input.cwd) {
+        try {
+            if (fs.statSync(input.cwd).isDirectory()) return input.cwd;
+        } catch {
+            // Fall through to the process's own directory.
+        }
+    }
+    try {
+        return process.cwd();
+    } catch {
+        return null;
     }
 }
 
@@ -175,17 +263,11 @@ function main() {
     const input = readInput();
     const event = typeof input.source === 'string' && input.source ? input.source : 'startup';
 
-    let cwd = process.cwd();
-    if (typeof input.cwd === 'string' && input.cwd) {
-        try {
-            if (fs.statSync(input.cwd).isDirectory()) cwd = input.cwd;
-        } catch {
-            // Keep process.cwd() when the reported directory is unusable.
-        }
-    }
-
+    const cwd = resolveCwd(input);
     const scriptPath = installedScriptPath();
-    const additionalContext = buildContext(cwd, event);
+    // With no usable directory there is nothing to re-anchor against, but the
+    // session still gets the AWM directive rather than an empty context.
+    const additionalContext = cwd === null ? AWM_DIRECTIVE : buildContext(cwd, event);
     writeHeartbeat(scriptPath, event);
 
     process.stdout.write(`${JSON.stringify({

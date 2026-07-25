@@ -1,6 +1,6 @@
 ---
 name: writing-skills
-version: "1.0.1"
+version: "1.0.2"
 description: Use when creating new skills, editing existing skills, or verifying skills work before deployment
 ---
 
@@ -284,8 +284,8 @@ wc -w skills/path/SKILL.md
 **When writing documentation that references other skills:**
 
 Use skill name only, with explicit requirement markers:
-- ✅ Good: `**REQUIRED SUB-SKILL:** Use `test-driven-development``
-- ✅ Good: `**REQUIRED BACKGROUND:** You MUST understand `systematic-debugging``
+- ✅ Good: ``**REQUIRED SUB-SKILL:** Use `test-driven-development` ``
+- ✅ Good: ``**REQUIRED BACKGROUND:** You MUST understand `systematic-debugging` ``
 - ❌ Bad: `See skills/testing/test-driven-development` (unclear if required)
 - ❌ Bad: `@skills/testing/test-driven-development/SKILL.md` (force-loads, burns context)
 

@@ -46,20 +46,36 @@ const requiredUsingAwmConcepts = [
 // Runtime instructions must name capabilities, never one provider's tool
 // surface. Each pattern is a vendor API a non-Claude runtime cannot honour.
 const prohibitedRuntimeVocabulary = [
-  { label: 'provider-coupled Skill tool reference', pattern: /\bthe `?Skill`? tool\b/i },
-  { label: 'provider-coupled Read tool reference', pattern: /\bthe `?Read`? tool\b/i },
+  // Any `<Name> tool` phrasing, not just "the X tool": the dispatch templates
+  // opened with a bare `Task tool (general-purpose):` header that the narrower
+  // rule could not see, and it survived a full port of those same files.
+  {
+    label: 'provider-coupled tool name',
+    pattern: /`?\b(?:Task|Read|Write|Edit|Bash|Glob|Grep|Skill|WebFetch|WebSearch|NotebookEdit)\b`? tool\b/i,
+  },
   { label: 'TodoWrite runtime API', pattern: /\bTodoWrite\b/ },
   { label: 'AskUserQuestion runtime API', pattern: /\bAskUserQuestion\b/ },
   { label: 'Claude Task tool call', pattern: /\bTask\(\s*["'`]/ },
   { label: 'superpowers plugin namespace', pattern: /\bsuperpowers:/ },
 ];
+// Runtime instructions live outside skills/ too. The orchestrator profile and
+// the provider mapping tables are read by agents at run time and were escaping
+// the gate entirely.
+const runtimeMarkdownRoots = ['skills', 'agents', 'references'];
+// A provider fork is the one thing R9 forbids outright. Counting directories
+// cannot see it: a fork can keep the count steady, or hide as a side-file
+// inside a legitimate skill directory.
+const providerForkPattern = /-(?:codex|claude|claude-code|opencode|gemini|copilot)$/;
+const providerForkFilePattern = /^SKILL\.[A-Za-z0-9-]+\.md$/;
 // `CONSTITUTION.md` reaches an agent through a different channel per provider;
 // the skill that authors it must name all three, or a provider silently loses it.
+// Full phrases, not bare provider names: naming "Codex" somewhere in the file
+// is not a delivery contract, and a token-presence check cannot tell the two
+// apart. Each entry below names the actual channel that carries the file.
 const requiredConstitutionDeliveryConcepts = [
-  'Claude Code',
-  'OpenCode',
-  'Codex',
-  'AGENTS.md',
+  'Claude Code: the AWM `SessionStart` hook',
+  'OpenCode: the project `opencode.json` `instructions[]` entry',
+  'Codex local/cloud/GitHub review: the AWM-managed project block in `AGENTS.md`',
   'CONSTITUTION.md',
 ];
 // The Codex SessionStart adapter is what `awm init --agent codex` installs; the
@@ -293,23 +309,51 @@ async function validateRuntimeVocabulary(relativePaths, errors) {
   }
 }
 
-async function runtimeMarkdownFiles(allowlist) {
+async function runtimeMarkdownFiles(allowlist, errors) {
   const found = [];
   const walk = async (directory) => {
     const entries = await readdir(directory, { withFileTypes: true });
     for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
       const absolute = path.join(directory, entry.name);
+      const relativePath = path.relative(repoRoot, absolute).split(path.sep).join('/');
+
+      // A symlink is not scannable content — `isFile()` is false for it, so a
+      // symlinked instruction file would slip past the vocabulary rules
+      // entirely. The registry ships plain files; reject the bypass outright.
+      if (entry.isSymbolicLink()) {
+        errors.push(`${relativePath}: symbolic links are not allowed in runtime content`);
+        continue;
+      }
       if (entry.isDirectory()) {
         await walk(absolute);
         continue;
       }
       if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
-      const relativePath = path.relative(repoRoot, absolute).split(path.sep).join('/');
       if (!allowlist.has(relativePath)) found.push(relativePath);
     }
   };
-  await walk(skillsRoot);
+
+  for (const root of runtimeMarkdownRoots) {
+    await walk(path.join(repoRoot, root));
+  }
   return found;
+}
+
+async function validateNoProviderForks(errors) {
+  const entries = await readdir(skillsRoot, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    if (providerForkPattern.test(entry.name)) {
+      errors.push(`skills/${entry.name}: provider-specific skill fork (R9 forbids one body per provider)`);
+    }
+
+    const files = await readdir(path.join(skillsRoot, entry.name), { withFileTypes: true });
+    for (const file of files) {
+      if (file.isFile() && providerForkFilePattern.test(file.name)) {
+        errors.push(`skills/${entry.name}/${file.name}: provider-specific SKILL fork`);
+      }
+    }
+  }
 }
 
 async function validateConstitutionDelivery(errors) {
@@ -387,6 +431,18 @@ async function validateBundleVersions(errors) {
     return;
   }
 
+  // Walk the directory too, not just the catalog: checking catalog→bundle only
+  // means a bundle dropped from catalog.json ships silently unreferenced.
+  const catalogued = new Set(catalog.bundles.map((entry) => entry?.name));
+  const onDisk = (await readdir(path.join(repoRoot, 'bundles'), { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+  for (const name of onDisk) {
+    if (!catalogued.has(name)) errors.push(`bundles/${name}: not listed in catalog.json`);
+  }
+
+  const skillDirectories = new Set(await immediateSkillDirectories());
+
   for (const entry of catalog.bundles) {
     if (!entry || typeof entry.name !== 'string' || typeof entry.version !== 'string') {
       errors.push('catalog.json: every bundle entry requires string name and version');
@@ -404,6 +460,19 @@ async function validateBundleVersions(errors) {
 
     if (bundle.version !== entry.version) {
       errors.push(`${bundlePath}: version ${JSON.stringify(bundle.version)} != catalog.json ${JSON.stringify(entry.version)}`);
+    }
+
+    // A bundle that lists a skill the registry does not have installs nothing
+    // for that entry — `awm add` resolves these names against skills/.
+    for (const skill of Array.isArray(bundle.skills) ? bundle.skills : []) {
+      const name = typeof skill === 'string' ? skill : skill?.name;
+      if (typeof name !== 'string') {
+        errors.push(`${bundlePath}: skill entries must be a string or an object with a name`);
+        continue;
+      }
+      if (!skillDirectories.has(name)) {
+        errors.push(`${bundlePath}: lists skill ${JSON.stringify(name)} which has no skills/ directory`);
+      }
     }
   }
 }
@@ -444,7 +513,8 @@ async function main() {
     errors.push(...await validateSkillDirectory(directory));
   }
 
-  await validateRuntimeVocabulary(await runtimeMarkdownFiles(allowlist), errors);
+  await validateRuntimeVocabulary(await runtimeMarkdownFiles(allowlist, errors), errors);
+  await validateNoProviderForks(errors);
   await validateExecutionSpine(errors);
   await validateConstitutionDelivery(errors);
   await validateSkillDiscoveryRoots(errors);

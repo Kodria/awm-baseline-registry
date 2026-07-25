@@ -1,6 +1,6 @@
 ---
 name: setup-sensors
-version: "1.0.0"
+version: "1.0.1"
 description: Use when a repository needs sensor configuration adapted to its actual installed tool versions (e.g. ESLint v9 flat config vs v8 extends, mypy vs ruff, monorepo tsconfig refs). Complements the `awm sensors init` CLI wizard by consulting Context7 for current docs and generating version-correct config files. Invoke when the wizard's templated configs don't fit the project.
 ---
 
@@ -132,7 +132,7 @@ Wait for explicit approval before moving to the next config. Do not batch.
 
 ### 6. Write the configs
 
-Use the `Write` tool for each approved config. Update `.awm/sensors.json` if a sensor's command needs to change (e.g. `--config eslint.config.awm.mjs` added).
+Write each approved config with the native file-writing mechanism. Update `.awm/sensors.json` if a sensor's command needs to change (e.g. `--config eslint.config.awm.mjs` added).
 
 ### 7. Re-run sensor status
 

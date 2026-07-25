@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "2.1.0"
+version: "2.1.1"
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
 
@@ -183,7 +183,7 @@ When writing to `CONSTITUTION.md` or `AGENTS.md`, **merge and prune**: fold the 
 
 ### 6. Apply
 
-Use the `Edit` or `Write` tool to add the rule to the target file. If the file doesn't exist (e.g. `tests/structural/` is new), create it and any required scaffolding.
+Use the native file-editing mechanism to add the rule to the target file. If the file doesn't exist (e.g. `tests/structural/` is new), create it and any required scaffolding.
 
 ### 7. Verify the rule fires
 
