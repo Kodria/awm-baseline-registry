@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-version: "1.0.0"
+version: "1.0.1"
 description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
 ---
 
@@ -20,7 +20,7 @@ Load plan, review critically, execute tasks in batches, report for review betwee
 1. Read plan file
 2. Review critically - identify any questions or concerns about the plan
 3. If concerns: Raise them with your human partner before starting
-4. If no concerns: Create TodoWrite and proceed
+4. If no concerns: Create or update the task plan with one item per checklist entry, then proceed
 
 ### Step 2: Execute Batch
 **Default: First 3 tasks**
@@ -48,7 +48,7 @@ Based on feedback:
 
 After all tasks complete and verified:
 - Announce: "I'm using the finishing-a-development-branch skill to complete this work."
-- **REQUIRED SUB-SKILL:** Use superpowers:finishing-a-development-branch
+- **REQUIRED SUB-SKILL:** Use `finishing-a-development-branch`
 - Follow that skill to verify tests, present options, execute choice
 
 ## When to Stop and Ask for Help
@@ -81,7 +81,7 @@ After all tasks complete and verified:
 ## Integration
 
 **Required workflow skills:**
-- **superpowers:using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
-- **superpowers:writing-plans** - Creates the plan this skill executes
+- **using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
+- **writing-plans** - Creates the plan this skill executes
 - **verification-before-completion** - Defines what "done" requires, including the AWM sensor gate (`awm sensors run`) applied per task and per batch <!-- AWM-INTEGRATION: executing-plans-sensor-gate -->
-- **superpowers:finishing-a-development-branch** - Complete development after all tasks
+- **finishing-a-development-branch** - Complete development after all tasks

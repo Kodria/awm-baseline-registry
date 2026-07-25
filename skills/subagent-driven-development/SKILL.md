@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.4.0"
+version: "1.4.1"
 description: Use when executing implementation plans with independent tasks in the current session
 ---
 
@@ -72,15 +72,15 @@ digraph process {
         "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [shape=box];
         "Code quality reviewer subagent approves?" [shape=diamond];
         "Implementer subagent fixes quality issues" [shape=box];
-        "Mark task complete in TodoWrite" [shape=box];
+        "Mark the matching task-plan item complete" [shape=box];
     }
 
-    "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
+    "Read plan, extract all tasks with full text, note context, create the task plan" [shape=box];
     "More tasks remain?" [shape=diamond];
     "Dispatch final code reviewer subagent for entire implementation" [shape=box];
     "STOP: Return control to orchestrator" [shape=doublecircle];
 
-    "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
+    "Read plan, extract all tasks with full text, note context, create the task plan" -> "Dispatch implementer subagent (./implementer-prompt.md)";
     "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
     "Answer questions, provide context" -> "Dispatch implementer subagent (./implementer-prompt.md)";
@@ -93,8 +93,8 @@ digraph process {
     "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" -> "Code quality reviewer subagent approves?";
     "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
     "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="re-review"];
-    "Code quality reviewer subagent approves?" -> "Mark task complete in TodoWrite" [label="yes"];
-    "Mark task complete in TodoWrite" -> "More tasks remain?";
+    "Code quality reviewer subagent approves?" -> "Mark the matching task-plan item complete" [label="yes"];
+    "Mark the matching task-plan item complete" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
     "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
     "Dispatch final code reviewer subagent for entire implementation" -> "STOP: Return control to orchestrator";
@@ -169,7 +169,7 @@ If the plan task declared `**Skills:**` or `**Design artifacts:**`, this is not 
 1. **In the implementer prompt:** the Required Skills and Design Artifacts sections already instruct the implementer to invoke declared skills and confirm design elements before reporting DONE, populating the report's new `design:` field.
 2. **At the controller, before marking the task complete:**
    - **Design artifacts:** if the task declared `**Design artifacts:**` and the report's `design:` field is missing, or blank, or contradicts the diff (e.g. says "3/3 confirmed" but the diff shows no corresponding UI changes), do not mark the task complete — send it back.
-   - **Skills:** if the task declared `**Skills:**`, check `concerns` for either failure mode the implementer prompt instructs it to report: (a) the Skill tool being unavailable in its harness, or (b) a declared skill not being installed. If neither is flagged, but the diff shows no evidence any declared skill's guidance was actually followed (e.g. a `frontend-craft` requirement with no sign of anti-slop/typography/color rules applied in the diff), do not mark the task complete — send it back for the implementer to confirm which skills were invoked and how.
+   - **Skills:** if the task declared `**Skills:**`, check `concerns` for either failure mode the implementer prompt instructs it to report: (a) the native skill-loading mechanism being unavailable in its harness, or (b) a declared skill not being installed. If neither is flagged, but the diff shows no evidence any declared skill's guidance was actually followed (e.g. a `frontend-craft` requirement with no sign of anti-slop/typography/color rules applied in the diff), do not mark the task complete — send it back for the implementer to confirm which skills were invoked and how.
 
 ## Reconciliation Gate (AWM)
 
@@ -202,7 +202,7 @@ You: I'm using Subagent-Driven Development to execute this plan.
 
 [Read plan file once: docs/plans/feature-plan.md]
 [Extract all 5 tasks with full text and context]
-[Create TodoWrite with all tasks]
+[Create the task plan with one item per task]
 
 Task 1: Hook installation script
 
@@ -276,7 +276,7 @@ Once all tasks are complete and the final code review is approved, you have **on
 > **Why not skip it:** The final code reviewer within this skill checks code quality. `post-implementation-qa` checks Track A fidelity (plan-vs-implementation, ID-driven) and Track B quality (robustness/logic/tests lenses) — a different review class that this skill's code reviewer does not perform. Skipping it means the branch reaches `finishing-a-development-branch` without a plan-vs-implementation audit.
 
 Your sequence — execute steps 1-2 in order, then branch by mode at step 3:
-1. **Invoke `post-implementation-qa`** via the Skill tool. It runs inline in this session: it reads the plan, diffs the branch, dispatches its own review subagent, runs the fix loop if needed, and adds `<!-- awm-qa-complete -->` to the plan. Let it complete fully before continuing.
+1. **Invoke `post-implementation-qa`** with the active platform's native skill-loading mechanism. It runs inline in this session: it reads the plan, diffs the branch, dispatches its own review subagent, runs the fix loop if needed, and adds `<!-- awm-qa-complete -->` to the plan. Let it complete fully before continuing.
 2. After QA completes, report a summary of all implemented tasks and the QA verdict.
 3. Then, depending on the plan's `**Modo de ejecución:**` field (mutually exclusive — apply only the one that matches):
    - **Modo interactivo:** Ask the user: *"Do you want to continue with the branch-closing phase? If you use `development-process`, the orchestrator will evaluate the project state and propose the next step."* Wait for confirmation.
@@ -351,15 +351,15 @@ Your sequence — execute steps 1-2 in order, then branch by mode at step 3:
 ## Integration
 
 **Required workflow skills:**
-- **superpowers:using-git-worktrees** - Ensures isolated workspace (creates one or verifies existing)
-- **superpowers:writing-plans** - Creates the plan this skill executes
-- **superpowers:requesting-code-review** - Code review template for reviewer subagents
+- **using-git-worktrees** - Ensures isolated workspace (creates one or verifies existing)
+- **writing-plans** - Creates the plan this skill executes
+- **requesting-code-review** - Code review template for reviewer subagents
 - **verification-before-completion** - Defines what "done" requires, including the AWM sensor gate (`awm sensors run`). The controller applies this before marking each task — and the whole plan — complete. <!-- AWM-INTEGRATION: subagent-sensor-gate -->
-- **superpowers:finishing-a-development-branch** - Invoked by the orchestrator (`development-process`) in the next phase, NOT automatically by this skill
+- **finishing-a-development-branch** - Invoked by the orchestrator (`development-process`) in the next phase, NOT automatically by this skill
 
 **Subagents should use:**
-- **superpowers:test-driven-development** - Subagents follow TDD for each task
+- **test-driven-development** - Subagents follow TDD for each task
 - **verification-before-completion** - Run `awm sensors run` (when `.awm/sensors.json` exists) before reporting DONE
 
 **Alternative workflow:**
-- **superpowers:executing-plans** - Use for parallel session instead of same-session execution
+- **executing-plans** - Use for parallel session instead of same-session execution

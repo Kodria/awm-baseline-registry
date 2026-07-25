@@ -1,6 +1,6 @@
 ---
 name: dispatching-parallel-agents
-version: "1.0.0"
+version: "1.0.1"
 description: Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies
 ---
 
@@ -66,13 +66,14 @@ Each agent gets:
 
 ### 3. Dispatch in Parallel
 
-```typescript
-// In Claude Code / AI environment
-Task("Fix agent-tool-abort.test.ts failures")
-Task("Fix batch-completion-behavior.test.ts failures")
-Task("Fix tool-approval-race-conditions.test.ts failures")
-// All three run concurrently
+```text
+Controller: Dispatch a subagent for "Fix agent-tool-abort.test.ts failures"
+Controller: Dispatch a separate subagent for "Fix batch-completion-behavior.test.ts failures"
+Controller: Dispatch a separate subagent for "Fix tool-approval-race-conditions.test.ts failures"
+Controller: Wait for all three results, then reconcile each diff against its task
 ```
+
+Use the active platform's native subagent-dispatch capability. All three run concurrently.
 
 ### 4. Review and Integrate
 

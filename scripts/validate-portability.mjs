@@ -43,6 +43,44 @@ const requiredUsingAwmConcepts = [
   'inspect files, read files, or edit files',
   'run shell commands',
 ];
+// Runtime instructions must name capabilities, never one provider's tool
+// surface. Each pattern is a vendor API a non-Claude runtime cannot honour.
+const prohibitedRuntimeVocabulary = [
+  { label: 'provider-coupled Skill tool reference', pattern: /\bthe `?Skill`? tool\b/i },
+  { label: 'provider-coupled Read tool reference', pattern: /\bthe `?Read`? tool\b/i },
+  { label: 'TodoWrite runtime API', pattern: /\bTodoWrite\b/ },
+  { label: 'AskUserQuestion runtime API', pattern: /\bAskUserQuestion\b/ },
+  { label: 'Claude Task tool call', pattern: /\bTask\(\s*["'`]/ },
+  { label: 'superpowers plugin namespace', pattern: /\bsuperpowers:/ },
+];
+const spineFiles = [
+  'skills/development-process/SKILL.md',
+  'skills/executing-plans/SKILL.md',
+  'skills/subagent-driven-development/SKILL.md',
+  'skills/subagent-driven-development/implementer-prompt.md',
+  'skills/subagent-driven-development/spec-reviewer-prompt.md',
+  'skills/subagent-driven-development/code-quality-reviewer-prompt.md',
+  'skills/dispatching-parallel-agents/SKILL.md',
+  'skills/writing-plans/SKILL.md',
+];
+// The port must not quietly drop a lifecycle phase or the interactive gate.
+const requiredDevelopmentProcessLifecycle = [
+  'brainstorming',
+  'writing-plans',
+  'subagent-driven-development',
+  'post-implementation-qa',
+  'harness-retro',
+  'finishing-a-development-branch',
+  'Never invoke the next skill without user confirmation.',
+];
+// Shared global root first (OpenCode/Codex), then Claude's roots — every
+// skill-discovery loop in the registry searches the same four locations.
+const requiredSkillLocations = [
+  '"$HOME/.agents/skills/',
+  '".agents/skills/',
+  '"$HOME/.claude/skills/',
+  '".claude/skills/',
+];
 
 function parseFrontmatter(source, skillPath) {
   const lines = source.replace(/\r\n/g, '\n').split('\n');
@@ -220,6 +258,43 @@ async function validateSkillDirectory(directory) {
   return errors;
 }
 
+async function validateRuntimeVocabulary(relativePaths, errors) {
+  for (const relativePath of relativePaths) {
+    let source;
+    try {
+      source = await readFile(path.join(repoRoot, relativePath), 'utf8');
+    } catch {
+      errors.push(`${relativePath}: missing runtime instruction file`);
+      continue;
+    }
+    for (const { label, pattern } of prohibitedRuntimeVocabulary) {
+      if (pattern.test(source)) errors.push(`${relativePath}: ${label}`);
+    }
+  }
+}
+
+async function validateExecutionSpine(errors) {
+  const relativePath = 'skills/development-process/SKILL.md';
+  let source;
+  try {
+    source = await readFile(path.join(repoRoot, relativePath), 'utf8');
+  } catch {
+    errors.push(`${relativePath}: missing lifecycle orchestrator`);
+    return;
+  }
+
+  for (const invariant of requiredDevelopmentProcessLifecycle) {
+    if (!source.includes(invariant)) {
+      errors.push(`${relativePath}: lifecycle invariant lost ${JSON.stringify(invariant)}`);
+    }
+  }
+  for (const location of requiredSkillLocations) {
+    if (!source.includes(location)) {
+      errors.push(`${relativePath}: missing skill location ${JSON.stringify(location)}`);
+    }
+  }
+}
+
 async function main() {
   const errors = [];
   const allowlist = await loadAllowlist(errors);
@@ -233,6 +308,9 @@ async function main() {
   for (const directory of directories) {
     errors.push(...await validateSkillDirectory(directory));
   }
+
+  await validateRuntimeVocabulary(spineFiles, errors);
+  await validateExecutionSpine(errors);
 
   const developmentProcessPath = path.join(repoRoot, 'agents', 'development-process.md');
   let developmentProcessSource = '';
