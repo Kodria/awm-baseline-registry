@@ -370,6 +370,44 @@ async function validateCodexSessionHook(errors) {
   }
 }
 
+// `catalog.json` and each `bundles/<name>/bundle.json` duplicate the bundle
+// version and must agree — CONSTITUTION.md, "Release de contenido". A bump
+// applied to only one of the two ships metadata that contradicts itself.
+async function validateBundleVersions(errors) {
+  let catalog;
+  try {
+    catalog = JSON.parse(await readFile(path.join(repoRoot, 'catalog.json'), 'utf8'));
+  } catch (error) {
+    errors.push(`catalog.json: ${error.message}`);
+    return;
+  }
+
+  if (!Array.isArray(catalog.bundles)) {
+    errors.push('catalog.json: bundles must be an array');
+    return;
+  }
+
+  for (const entry of catalog.bundles) {
+    if (!entry || typeof entry.name !== 'string' || typeof entry.version !== 'string') {
+      errors.push('catalog.json: every bundle entry requires string name and version');
+      continue;
+    }
+
+    const bundlePath = `bundles/${entry.name}/bundle.json`;
+    let bundle;
+    try {
+      bundle = JSON.parse(await readFile(path.join(repoRoot, bundlePath), 'utf8'));
+    } catch (error) {
+      errors.push(`${bundlePath}: ${error.message}`);
+      continue;
+    }
+
+    if (bundle.version !== entry.version) {
+      errors.push(`${bundlePath}: version ${JSON.stringify(bundle.version)} != catalog.json ${JSON.stringify(entry.version)}`);
+    }
+  }
+}
+
 async function validateExecutionSpine(errors) {
   const relativePath = 'skills/development-process/SKILL.md';
   let source;
@@ -411,6 +449,7 @@ async function main() {
   await validateConstitutionDelivery(errors);
   await validateSkillDiscoveryRoots(errors);
   await validateCodexSessionHook(errors);
+  await validateBundleVersions(errors);
 
   const developmentProcessPath = path.join(repoRoot, 'agents', 'development-process.md');
   let developmentProcessSource = '';

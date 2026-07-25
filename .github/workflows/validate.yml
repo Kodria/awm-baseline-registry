@@ -17,3 +17,4 @@ jobs:
         with:
           node-version: "20"
       - run: node scripts/validate-portability.mjs
+      - run: node tests/codex-session-start.test.mjs
