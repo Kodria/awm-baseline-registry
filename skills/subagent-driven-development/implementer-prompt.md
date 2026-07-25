@@ -3,7 +3,7 @@
 Use this template when dispatching an implementer subagent.
 
 ```
-Task tool (general-purpose):
+Dispatch a general-purpose subagent:
   description: "Implement Task N: [task name]"
   prompt: |
     You are implementing Task N: [task name]
@@ -23,9 +23,10 @@ Task tool (general-purpose):
     (If the plan task's **Skills:** field is empty or absent, DELETE this entire "Required
     Skills" section from the dispatched prompt — do not leave a placeholder or an empty list.)
 
-    Invoke each one with the Skill tool BEFORE implementing, and follow it. If the Skill tool
-    is unavailable in your context, OR a declared skill is not found when you try to invoke it
-    (not installed), say so in your report's `concerns` — do NOT silently skip it either way.
+    Load each one with the active platform's native skill-loading mechanism BEFORE
+    implementing, and follow it. If that mechanism is unavailable in your context, OR a
+    declared skill is not found when you try to load it (not installed), say so in your
+    report's `concerns` — do NOT silently skip it either way.
 
     ## Design Artifacts (UI tasks only)
 
@@ -34,7 +35,8 @@ Task tool (general-purpose):
     (If the plan task's **Design artifacts:** field is empty or absent, DELETE this entire
     "Design Artifacts" section from the dispatched prompt — do not leave a placeholder or an
     empty list.)
-    - Read the PNG with the Read tool — it is an image; LOOK at it before writing any code.
+    - Read the PNG with the native file-reading mechanism — it is an image; LOOK at it
+      before writing any code.
       (If the field declares no PNG — e.g. an offline-designed screen with only an HTML
       mockup — skip this bullet; the HTML alone is the ground truth.)
     - Read the design HTML for structure, content and styling detail.

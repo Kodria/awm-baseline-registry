@@ -1,6 +1,6 @@
 ---
 name: using-awm
-version: "1.2.1"
+version: "1.2.2"
 description: Use when starting any development conversation - establishes tiered skill invocation policy (spine skills always, specialized skills on clear signal)
 ---
 
@@ -33,7 +33,29 @@ If CLAUDE.md or AGENTS.md says "don't use TDD" and a skill says "always use TDD,
 
 ## How to Access Skills
 
-Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you — follow it directly. **Never use the Read tool on skill files.**
+Use the active platform’s native skill-loading mechanism. The mechanism may be
+a dedicated skill loader or the ability to read a visible `SKILL.md`; load or
+read it when its trigger applies, then follow the instructions it provides
+directly. Do not assume a particular provider's tool name: the active runtime
+owns skill discovery and loading.
+
+## Native Runtime Contract
+
+Runtime instructions describe capabilities, not vendor APIs. Use the active
+platform's native mechanisms to:
+
+- create or update a task plan when the active skill requires tracked work;
+- dispatch, steer, wait for, or stop a subagent only when the session exposes
+  delegation support; and
+- request user approval before an action that needs authority beyond the
+  current task;
+- inspect files, read files, or edit files through the active platform's native
+  filesystem capability; and
+- run shell commands through its native command-execution capability.
+
+If a capability is unavailable in the session, state the limitation and
+continue only with a safe, in-scope single-agent alternative. Do not invent a
+provider-specific configuration or tool as a workaround.
 
 # Using Skills
 
@@ -79,21 +101,23 @@ For documentation tasks, the equivalent entry point is `docs-system-orchestrator
 
 These thoughts mean STOP — you're rationalizing:
 
-- "I know what to do, I don't need the skill" → **INVOKE IT**
-- "It's a simple request, the skill is overkill" → **INVOKE IT**
-- "I'll just answer first, then check if a skill applies" → **INVOKE IT FIRST**
-- "The skill description doesn't exactly match" → **INVOKE IT if the spine/gates are relevant**
-- "The user just asked a question, no skill needed" → **CHECK FIRST for spine skills**
+- "I know what to do, I don't need the skill" → **LOAD AND FOLLOW IT**
+- "It's a simple request, the skill is overkill" → **LOAD AND FOLLOW IT**
+- "I'll just answer first, then check if a skill applies" → **LOAD AND FOLLOW IT FIRST**
+- "The skill description doesn't exactly match" → **LOAD AND FOLLOW IT if the spine/gates are relevant**
+- "The user just asked a question, no skill needed" → **CHECK FIRST, THEN LOAD AND FOLLOW relevant spine skills**
 
 The skill decides if it applies, not you.
 
 ## Announcing Skill Use
 
-When you invoke a skill, announce it briefly: *"I'm using the {skill-name} skill to {purpose}."* This makes the process visible to the user and confirms to yourself that you're following the discipline.
+When you load a skill, announce it briefly: *"I'm using the {skill-name} skill to {purpose}."* This makes the process visible to the user and confirms to yourself that you're following the discipline.
 
 ## Checklist-Driven Skills
 
-If a skill provides a checklist, create a task for each item with the task tool and complete them in order. Skills are designed to be followed exactly — do not skip steps or reorder them.
+If a skill provides a checklist, create or update a task plan with an item for
+each step and complete them in order. Skills are designed to be followed
+exactly — do not skip steps or reorder them.
 
 ## Robustness invariants (agnostic, AWM)
 

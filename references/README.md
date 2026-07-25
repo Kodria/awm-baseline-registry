@@ -1,10 +1,10 @@
 # Registry References
 
-Cross-skill reference documents that don't belong to any single skill. They describe how superpowers-family skills map onto each AI harness (tool naming, dispatch semantics, environment quirks).
+Cross-skill reference documents that don't belong to any single skill. They describe how portable AWM capabilities map onto each AI harness (native skill loading, task planning, delegation semantics, and environment quirks).
 
 ## Files
 
-- `codex-tools.md` — Codex CLI tool equivalence table (Bash, Read, Edit, Task → Codex tools, parallel subagent flag).
+- `codex-tools.md` — Codex native capability mapping (skills, task plans, delegation roles, waits, and worktree/finishing behavior).
 - `copilot-tools.md` — GitHub Copilot CLI tool equivalence table.
 - `gemini-tools.md` — Gemini CLI tool equivalence (`@agent-name` dispatch, parallel subagent calls).
 

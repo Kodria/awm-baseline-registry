@@ -1,6 +1,6 @@
 ---
 name: product-brief
-version: "1.1.0"
+version: "1.1.1"
 portable: true
 description: "Use when a matured idea must be structured into a formal, portable product brief for handoff to development — or when a discovery session concludes and its findings must crystallize. Produces a single self-describing .md following the brief contract."
 ---

@@ -1,5 +1,24 @@
 # Harness Retros
 
+## 2026-07-25 — Portabilidad del baseline a Codex, Tasks 3–6 (panel QA de 4 lentes)
+
+- **Class:** process (×4), agent (×2)
+- **Occurrences (ledger count):** 46 entradas (36 findings — 4 blockers, 20 important, 12 minor — y 10 wins) sobre 4 lentes de QA (fidelidad, robustez, lógica, tests). `awm ledger recurring --min 2`: sin clusters — cada lente usó su propia signature para el mismo defecto, así que la recurrencia acá es **sistémica** (mismo patrón en ≥2 archivos y confirmado por ≥2 lentes independientes), no mecánica. Es la segunda sesión consecutiva en que la herramienta de recurrencia no agrupa un patrón real; ver nota al pie.
+- **Raíz sistémica dominante — gates verdes que no estaban mirando:** cinco reglas distintas del mismo validador pasaban en verde por construcción, no por salud del repo (regex que no veía la cadena exacta que existía en 5 archivos; walk limitado a `skills/`; symlink que saltea el escaneo; prohibición de forks implementada como conteo de directorios; chequeo de versiones unidireccional). Ninguna revisión por lectura las habría encontrado: las destapó el testing por mutación del lente Tests.
+- **Reglas:**
+  - `CONSTITUTION.md` ("Gates ejecutables") — un gate no está terminado hasta que una mutación lo hace fallar con el mensaje correcto; toda regla nueva del validador suma su mutación a `tests/validate-portability.test.mjs` en la misma tanda.
+  - `CONSTITUTION.md` ("Portar un comportamiento…") — la paridad entre dos implementaciones se prueba ejecutando ambas contra el mismo fixture adversarial, nunca leyendo una y reflejándola; y se arregla el lado que está mal, aunque sea el original.
+  - `CONSTITUTION.md` ("Un hook de sesión degrada, nunca tira") — inversión documentada de la invariante global de AWM para hooks `SessionStart`: validar sigue siendo obligatorio, abortar no; más acotamiento obligatorio de todo recurso externo (tamaño, `maxBuffer`, timeout).
+  - `CONSTITUTION.md` ("Release de contenido", fusionado) — un gate solo condiciona el release si corre DENTRO del job que publica; workflows hermanos no se bloquean entre sí.
+  - `AGENTS.md` ("What works here") — una aserción que no puede fallar no es cobertura (fixtures con `mtime` explícito, no afirmar sobre estado global que el test no controla); y al implementar contra un consumidor ya publicado, el contrato es su código, no el plan que lo describe.
+- **Sensor:** `tests/validate-portability.test.mjs` (15 mutaciones), `tests/codex-session-start.test.mjs` y `tests/session-start.test.mjs`, corriendo en `validate.yml` **y** como paso previo dentro de `auto-tag.yml`. A diferencia de los tres retros anteriores, este repo ya no está en "ninguna regla es sensor-catchable": las reglas de gate y de paridad tienen chequeo ejecutable propio, y se verificó que las tres disparan reintroduciendo el defecto original antes de comitear.
+
+**Corregidos durante la sesión (sin regla propia, ya resueltos en el commit de QA):** los 5 templates de dispatch con `Task tool (general-purpose):`; `Write`/`Bash`/`Edit` tool en `project-constitution`, `setup-sensors`, `harness-retro` y `brainstorming/visual-companion`; `references/gemini-tools.md` y `copilot-tools.md` reescritas a columna de capacidad neutral; prosa de `ui-ux-pro-max` que justificaba el orden de búsqueda anterior al reordenado; backticks anidados que rompían los dos ejemplos de `writing-skills`; entrada de CHANGELOG faltante para el bump de los cuatro bundles; fuga de temp files del heartbeat y timeouts seriales de 3s+3s.
+
+**Descartes (modo desatendido):** `r21-public-registry-proof-deferred` — R21 (bootstrap cloud con registries públicos) no tiene chequeo automatizado en esta rama, pero el propio plan lo difiere explícitamente al plan 3 ("The complete cloud-public-registry proof for R21 is performed in plan 3"); no es un gap de esta entrega. El resto de los minors se curó en lugar de descartarse.
+
+**Nota de herramienta (2ª ocurrencia):** `awm ledger recurring --min 2` no agrupó un patrón sistémico real por segunda sesión consecutiva (ver retro 2026-07-06), porque cada lente/revisor acuña su propia `signature` para el mismo defecto. La recurrencia conceptual sigue requiriendo lectura manual del ledger completo. Si vuelve a pasar, conviene curarlo en la herramienta (agrupar por similitud de `desc`/`ref`, no solo por `signature` exacta) en vez de volver a anotarlo acá.
+
 ## 2026-07-23 — Skills de producto exportables a claude.ai (5 tareas, panel QA de 3 lentes)
 
 - **Class:** agent (AGENTS.md) + cross-repo tool follow-up (issue)

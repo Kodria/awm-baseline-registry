@@ -22,7 +22,7 @@ project: <slug or null>
 # <Project/Feature Title> — Product Brief
 
 <!-- guidance: one-line header restating audience and methodology, e.g.
-     "Audience: implementing agent (Claude Code) · Methodology: brief-spec (AWM product-brief)" -->
+     "Audience: implementing agent (provider-neutral) · Methodology: brief-spec (AWM product-brief)" -->
 
 ## Business Need
 

@@ -1,34 +1,36 @@
 # Gemini CLI Tool Mapping
 
-Skills use Claude Code tool names. When you encounter these in a skill, use your platform equivalent:
+AWM skills describe platform-neutral capabilities. On Gemini CLI, use these
+native equivalents when they are available in the session:
 
-| Skill references | Gemini CLI equivalent |
-|-----------------|----------------------|
-| `Read` (file reading) | `read_file` |
-| `Write` (file creation) | `write_file` |
-| `Edit` (file editing) | `replace` |
-| `Bash` (run commands) | `run_shell_command` |
-| `Grep` (search file content) | `grep_search` |
-| `Glob` (search files by name) | `glob` |
-| `TodoWrite` (task tracking) | `write_todos` |
-| `Skill` tool (invoke a skill) | `activate_skill` |
-| `WebSearch` | `google_web_search` |
-| `WebFetch` | `web_fetch` |
-| `Task` tool (dispatch subagent) | `@agent-name` (see [Subagent support](#subagent-support)) |
+| AWM capability | Gemini CLI equivalent |
+|---|---|
+| Read a file | `read_file` |
+| Create a file | `write_file` |
+| Edit a file | `replace` |
+| Run a shell command | `run_shell_command` |
+| Search file content | `grep_search` |
+| Search files by name | `glob` |
+| Create or update a task plan | `write_todos` |
+| Load a named skill | `activate_skill` |
+| Search the web | `google_web_search` |
+| Fetch a URL | `web_fetch` |
+| Dispatch a subagent | `@agent-name` (see [Subagent support](#subagent-support)) |
+| Request user approval or input | `ask_user` |
 
 ## Subagent support
 
 Gemini CLI supports subagents natively via the `@` syntax. Use the built-in `@generalist` agent to dispatch any task — it has access to all tools and follows the prompt you provide.
 
-When a skill says to dispatch a named agent type, use `@generalist` with the full prompt from the skill's prompt template:
+When a skill says to dispatch a named agent role, use `@generalist` with the full prompt from the skill's prompt template:
 
-| Skill instruction | Gemini CLI equivalent |
-|-------------------|----------------------|
-| `Task tool (superpowers:implementer)` | `@generalist` with the filled `implementer-prompt.md` template |
-| `Task tool (superpowers:spec-reviewer)` | `@generalist` with the filled `spec-reviewer-prompt.md` template |
-| `Task tool (superpowers:code-reviewer)` | `@code-reviewer` (bundled agent) or `@generalist` with the filled review prompt |
-| `Task tool (superpowers:code-quality-reviewer)` | `@generalist` with the filled `code-quality-reviewer-prompt.md` template |
-| `Task tool (general-purpose)` with inline prompt | `@generalist` with your inline prompt |
+| AWM dispatch role | Gemini CLI equivalent |
+|---|---|
+| Implementer | `@generalist` with the filled `implementer-prompt.md` template |
+| Spec reviewer | `@generalist` with the filled `spec-reviewer-prompt.md` template |
+| Code reviewer | `@code-reviewer` (bundled agent) or `@generalist` with the filled review prompt |
+| Code quality reviewer | `@generalist` with the filled `code-quality-reviewer-prompt.md` template |
+| General-purpose subagent with an inline prompt | `@generalist` with your inline prompt |
 
 ### Prompt filling
 
@@ -40,12 +42,14 @@ Gemini CLI supports parallel subagent dispatch. When a skill asks you to dispatc
 
 ## Additional Gemini CLI tools
 
-These tools are available in Gemini CLI but have no Claude Code equivalent:
+These tools have no AWM capability counterpart, but are worth knowing:
 
 | Tool | Purpose |
 |------|---------|
 | `list_directory` | List files and subdirectories |
 | `save_memory` | Persist facts to GEMINI.md across sessions |
-| `ask_user` | Request structured input from the user |
 | `tracker_create_task` | Rich task management (create, update, list, visualize) |
 | `enter_plan_mode` / `exit_plan_mode` | Switch to read-only research mode before making changes |
+
+A provider reference may map names, but it never overrides the callable tools
+exposed in the current session.

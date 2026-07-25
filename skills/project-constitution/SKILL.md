@@ -1,14 +1,21 @@
 ---
 name: project-constitution
-version: "1.0.0"
-description: Use when a repository needs to formalize its non-negotiable rules so every agent session receives them as feedforward context. Generates CONSTITUTION.md at the repo root from project context (CLAUDE.md, AGENTS.md, README, sensors manifest). AWM delivers this file automatically to every agent session — via the SessionStart hook (Claude Code) or via project-local config instructions (OpenCode).
+version: "1.1.1"
+description: Use when a repository needs to formalize its non-negotiable rules so every agent session receives them as feedforward context. Generates CONSTITUTION.md at the repo root from project context (CLAUDE.md, AGENTS.md, README, sensors manifest). AWM delivers this file automatically to every agent session — via the SessionStart hook (Claude Code), project-local config instructions (OpenCode), or the AWM-managed block in AGENTS.md (Codex).
 ---
 
 # Project Constitution
 
 ## Overview
 
-`CONSTITUTION.md` is the project's non-negotiable rulebook: testing discipline, architecture invariants, sensor obligations, code style, process. It lives at the repo root. AWM delivers it to the agent on every session — via the SessionStart hook (Claude Code) or the project-local config `instructions` (agents like OpenCode) — so the agent sees these rules from the first token.
+`CONSTITUTION.md` is the project's non-negotiable rulebook: testing discipline, architecture invariants, sensor obligations, code style, process. It lives at the repo root. AWM delivers it to the agent on every session, through the provider's supported context channel:
+
+- Claude Code: the AWM `SessionStart` hook;
+- OpenCode: the project `opencode.json` `instructions[]` entry;
+- Codex local/cloud/GitHub review: the AWM-managed project block in `AGENTS.md`,
+  which instructs Codex to read and obey `CONSTITUTION.md`.
+
+So the agent sees these rules from the first token.
 
 **Announce at start:** "I'm using the project-constitution skill to generate CONSTITUTION.md."
 
@@ -32,10 +39,13 @@ You MUST create a task for each item and complete them in order:
 2. **Detect existing CONSTITUTION.md** — if present, treat as an update (preserve existing rules, surface conflicts)
 3. **Draft sections** — work through Section structure and Drafting rules to produce section drafts
 4. **Present sections to user one at a time** — get explicit approval before moving to the next
-5. **Write CONSTITUTION.md** to repo root using the Write tool
-6. **Verify AWM delivery** — for Claude Code: run `awm hooks status`; tell user to run `awm hooks install` if not HEALTHY. For OpenCode: confirm `opencode.json` in the project root contains `"CONSTITUTION.md"` in the `instructions` array (added automatically by `awm init --agent opencode`).
+5. **Write CONSTITUTION.md** to repo root with the native file-writing mechanism
+6. **Verify AWM delivery**
+   - Claude Code: run `awm hooks status --agent claude-code`; tell the user to run `awm hooks install` if not HEALTHY.
+   - OpenCode: confirm `opencode.json` in the project root contains `"CONSTITUTION.md"` in the `instructions` array (added automatically by `awm init --agent opencode`).
+   - Codex: confirm the project `AGENTS.md` has exactly one `<!-- AWM:START -->` / `<!-- AWM:END -->` block that names `CONSTITUTION.md`; use `awm doctor --agent codex` for observed state.
 7. **Commit** the new file
-8. **Tell the user** how to verify delivery worked: start a new session and confirm the agent acknowledges or applies the rules. On Claude Code, `/clear` forces a fresh context load and the rules should appear in `additionalContext`. On OpenCode, the project-local `opencode.json` `instructions` entry ensures the file loads each session.
+8. **Tell the user** how to verify delivery worked: start a new session and confirm the agent acknowledges or applies the rules. On Claude Code, `/clear` forces a fresh context load and the rules should appear in `additionalContext`. On OpenCode, the project-local `opencode.json` `instructions` entry ensures the file loads each session. On Codex, the AWM-managed `AGENTS.md` block loads with every session.
 
 ## The Process
 
@@ -107,15 +117,16 @@ Wait for explicit approval before drafting the next section. Do not batch.
 
 After all sections approved:
 
-Use the Write tool to create `CONSTITUTION.md` at the repo root with all approved sections concatenated in order.
+Create `CONSTITUTION.md` at the repo root with the native file-writing mechanism, with all approved sections concatenated in order.
 
-Then verify the hook will pick it up:
+Then verify the provider's delivery channel will pick it up:
 
 ```bash
-awm hooks status
+awm hooks status --agent claude-code   # Claude Code: SessionStart hook
+awm doctor --agent codex               # Codex: AWM-managed AGENTS.md block
 ```
 
-If status is not `HEALTHY`, tell the user to run `awm hooks install` so the SessionStart hook is registered for their agent. The hook reads `$PWD/CONSTITUTION.md` automatically — no further configuration needed.
+For Claude Code, if status is not `HEALTHY`, tell the user to run `awm hooks install` so the SessionStart hook is registered. The hook reads `$PWD/CONSTITUTION.md` automatically — no further configuration needed. For OpenCode, confirm `opencode.json` lists `CONSTITUTION.md` in `instructions`. For Codex, confirm the project `AGENTS.md` carries exactly one AWM-managed block naming `CONSTITUTION.md`.
 
 ### 6. Commit
 
@@ -126,12 +137,12 @@ git commit -m "docs: add project constitution"
 
 ### 7. Verification
 
-Tell the user: the next agent session in this repo will receive `CONSTITUTION.md` as context — via the SessionStart hook (Claude Code) or via `opencode.json` `instructions` (OpenCode). To verify, start a new session and confirm the agent acknowledges or applies the rules. On Claude Code, `/clear` forces a fresh context load.
+Tell the user: the next agent session in this repo will receive `CONSTITUTION.md` as context — via the SessionStart hook (Claude Code), `opencode.json` `instructions` (OpenCode), or the AWM-managed `AGENTS.md` block (Codex). To verify, start a new session and confirm the agent acknowledges or applies the rules. On Claude Code, `/clear` forces a fresh context load.
 
 ## Anti-patterns
 
 - **Generating without user approval per section.** This file ships into every session — silent drift damages agent behavior. Always approve section by section.
 - **Copying AGENTS.md verbatim into CONSTITUTION.md.** AGENTS.md describes the repo (purpose, structure, commands). CONSTITUTION.md states the rules. Different purposes, different files.
 - **Aspirational rules ("we should write more tests").** Constitution rules are enforceable claims, not goals.
-- **Forgetting to verify AWM delivery.** A CONSTITUTION.md without the delivery mechanism set up is just a file. Run `awm hooks install` (Claude Code) or ensure `awm init --agent opencode` was run (OpenCode).
+- **Forgetting to verify AWM delivery.** A CONSTITUTION.md without the delivery mechanism set up is just a file. Run `awm hooks install` (Claude Code), ensure `awm init --agent opencode` was run (OpenCode), or confirm the AWM-managed `AGENTS.md` block exists (Codex).
 - **Adding the constitution itself as a rule** (e.g., "always update CONSTITUTION.md when X happens"). The constitution doesn't talk about itself.

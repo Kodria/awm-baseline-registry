@@ -29,6 +29,21 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # The tag is what `awm update` delivers, so it must never be cut over a
+      # red gate. validate.yml runs on the same push, but as a separate
+      # workflow it cannot block this job — re-running the checks here is what
+      # actually makes the release conditional on them.
+      - name: Verify registry before tagging
+        run: |
+          node scripts/validate-portability.mjs
+          node tests/validate-portability.test.mjs
+          node tests/codex-session-start.test.mjs
+          node tests/session-start.test.mjs
+
       - name: Compute and push next tag
         run: |
           set -euo pipefail

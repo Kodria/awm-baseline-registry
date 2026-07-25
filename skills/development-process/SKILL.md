@@ -1,6 +1,6 @@
 ---
 name: development-process
-version: "1.3.0"
+version: "1.3.1"
 description: Use when starting a new development task, resuming work, or when unsure which skill to invoke next - orchestrates the full development lifecycle from idea to merge
 ---
 
@@ -105,7 +105,8 @@ WHEN the detected state is **UI Design pending**, OR the active plan contains an
 MISSING=""
 for skill in ui-design frontend-craft; do
   FOUND=""
-  for d in "$HOME/.claude/skills/$skill" ".claude/skills/$skill" ".agents/skills/$skill"; do
+  for d in "$HOME/.agents/skills/$skill" ".agents/skills/$skill" \
+           "$HOME/.claude/skills/$skill" ".claude/skills/$skill"; do
     [ -d "$d" ] && FOUND="$d" && break
   done
   [ -z "$FOUND" ] && MISSING="$MISSING $skill"

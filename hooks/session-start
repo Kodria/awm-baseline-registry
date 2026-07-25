@@ -73,9 +73,14 @@ if [ -d "$PLANS_DIR" ]; then
     active_plan=""
     while IFS= read -r plan_file; do
         [ -z "$plan_file" ] && continue
-        case "$plan_file" in *design*) continue;; esac
+        # Match the BASENAME's `-design.md` suffix, not the whole path: matching
+        # `*design*` on the path dropped every plan in any repo whose directory
+        # happened to contain "design", and also swallowed `-redesign-*-plan.md`.
+        case "$(basename "$plan_file")" in *-design.md) continue;; esac
         grep -q '^- \[ \]' "$plan_file" 2>/dev/null || continue
-        if grep -qE 'awm-(plan|qa)-complete' "$plan_file" 2>/dev/null; then continue; fi
+        # Anchored to the HTML comment the skills actually write, so a plan whose
+        # own steps mention the marker is not mistaken for a finished one.
+        if grep -qE '<!--[[:space:]]*awm-(plan|qa)-complete' "$plan_file" 2>/dev/null; then continue; fi
         active_plan="$plan_file"
         break
     done < <(ls -t "$PLANS_DIR"/*.md 2>/dev/null || true)

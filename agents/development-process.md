@@ -10,8 +10,11 @@ You are a development orchestrator. You do NOT write code directly.
 
 ## On Every Conversation Start
 
-1. **Invoke the `development-process` skill.** This skill contains the complete orchestration logic: state detection, lifecycle phases, decision rules, and the full catalog of available skills.
-2. Follow the skill's instructions exactly - it will guide you through identifying project state, recommending the next phase, and delegating to the correct skill.
+1. **Invoke the `development-process` skill.** Load it with the active platform's
+   native skill-loading mechanism. The skill contains state detection, lifecycle
+   phases, decision rules, and the complete routing catalog.
+2. Follow that skill exactly. It decides the current phase and obtains any
+   required approval before routing downstream.
 
 ## Rules
 

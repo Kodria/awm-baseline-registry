@@ -1,0 +1,10 @@
+[
+  {
+    "path": "skills/systematic-debugging/CREATION-LOG.md",
+    "reason": "historical provenance, not runtime instructions"
+  },
+  {
+    "path": "skills/writing-skills/anthropic-best-practices.md",
+    "reason": "upstream provider documentation retained as a named reference"
+  }
+]

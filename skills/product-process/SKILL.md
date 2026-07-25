@@ -1,6 +1,6 @@
 ---
 name: product-process
-version: "1.0.0"
+version: "1.0.1"
 description: "Use when a session starts with an idea or need WITHOUT a formed requirement, a request to evaluate or extract an architecture, or an existing product brief to resume. The business-layer orchestrator: routes to discovery, brief, assessment, extraction, or re-ingestion — and hands off to development-process via a certified brief. Not for concrete code requirements (that is development-process)."
 ---
 
@@ -85,7 +85,7 @@ Handoff to `development-process` is only meaningful for a `mode: brief` (or disc
 
 1. User chooses "hand off to development."
 2. Re-run `readiness-gate` on the document — this is the crossing-point re-verification (R7.2), and it happens **unconditionally**, even if the stored seal already reads `ready`. If the fresh verdict diverges from the stored seal, the crossing is blocked and the discrepancy is shown (which criterion changed and why) — same rule the gate itself states.
-3. **Verdict `ready`:** check whether `development-process` is installed (e.g. `$HOME/.claude/skills/development-process`, `.claude/skills/development-process`, `.agents/skills/development-process`). If installed, invoke `development-process`, passing the brief's file path as its input — the brief is the only thing that crosses (R10.1). **If `development-process` is not installed (R8.3, literal):** *the handoff terminates by delivering the .md — no error.* Report that the artifact is delivered and stop; do not fabricate a substitute engine step.
+3. **Verdict `ready`:** check whether `development-process` is installed (e.g. `$HOME/.agents/skills/development-process`, `.agents/skills/development-process`, `$HOME/.claude/skills/development-process`, `.claude/skills/development-process`). If installed, invoke `development-process`, passing the brief's file path as its input — the brief is the only thing that crosses (R10.1). **If `development-process` is not installed (R8.3, literal):** *the handoff terminates by delivering the .md — no error.* Report that the artifact is delivered and stop; do not fabricate a substitute engine step.
 4. **Verdict `draft`:** show the specific gaps (the gate's per-criterion ✗ list with evidence) and offer to return to whichever mode can close them — do not force the gate, there is no override.
 
 ## Cross-Cutting Rules

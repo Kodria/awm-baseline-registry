@@ -1,6 +1,6 @@
 ---
 name: ui-ux-pro-max
-version: "1.0.0"
+version: "1.0.2"
 description: "UI/UX design intelligence for web and mobile. Searchable local database with 84 styles, 192 color palettes, 74 font pairings, 192 product types, 98 UX guidelines, 104 icon entries, 16 GSAP motion presets, and 25 chart types across 22 stacks (React, Next.js, Vue, Nuxt, Svelte, Astro, SwiftUI, React Native, Flutter, Tailwind, shadcn/ui, Jetpack Compose, Angular, Laravel, JavaFX, WPF, WinUI, Avalonia, Uno Platform, UWP, Three.js, and HTML/CSS). Use when designing, building, or reviewing UI: pages, components, color schemes, typography, layout, accessibility, animation, or data visualization."
 ---
 
@@ -37,11 +37,12 @@ For the full rule list per category (all ~98 UX guidelines with rationale), read
 
 ## Running the search tool
 
-The search script lives inside this skill's own directory, not the project directory. Resolve the skill root once per session (first match wins — AWM installs are directory symlinks, so executing through them works; no `readlink` needed). The two relative candidates resolve against whatever directory the agent is currently in (typically the project root) — that's why `$HOME/.claude/...` is checked first, before any cwd-dependent path:
+The search script lives inside this skill's own directory, not the project directory. Resolve the skill root once per session (first match wins — AWM installs are directory symlinks, so executing through them works; no `readlink` needed). Within each provider family the global root is checked before the cwd-relative one (the relative candidates resolve against whatever directory the agent is currently in, typically the project root); the shared `.agents` family is checked before the Claude-specific `.claude` family, so a project that ships its own copy under `.agents/skills` deliberately wins over a global Claude install:
 
 ```bash
 UIPRO=""
-for d in "$HOME/.claude/skills/ui-ux-pro-max" ".claude/skills/ui-ux-pro-max" ".agents/skills/ui-ux-pro-max"; do
+for d in "$HOME/.agents/skills/ui-ux-pro-max" ".agents/skills/ui-ux-pro-max" \
+         "$HOME/.claude/skills/ui-ux-pro-max" ".claude/skills/ui-ux-pro-max"; do
   [ -f "$d/scripts/search.py" ] && UIPRO="$d" && break
 done
 [ -z "$UIPRO" ] && { echo "ui-ux-pro-max not found in any known install location" >&2; exit 1; }
