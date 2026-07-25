@@ -138,6 +138,24 @@ async function loadAllowlist(errors) {
     .map(({ path: allowedPath }) => allowedPath));
 }
 
+async function validateAllowlistedFiles(allowlist, errors) {
+  for (const allowedPath of allowlist) {
+    const allowedFile = path.resolve(repoRoot, allowedPath);
+    if (!allowedFile.startsWith(`${repoRoot}${path.sep}`)) {
+      errors.push(`tests/portability-allowlist.json: path escapes repository ${allowedPath}`);
+      continue;
+    }
+
+    try {
+      if (!(await stat(allowedFile)).isFile()) {
+        errors.push(`tests/portability-allowlist.json: path is not a file ${allowedPath}`);
+      }
+    } catch {
+      errors.push(`tests/portability-allowlist.json: missing file ${allowedPath}`);
+    }
+  }
+}
+
 async function validateSkillDirectory(directory) {
   const skillPath = path.join(skillsRoot, directory, 'SKILL.md');
   const errors = [];
@@ -172,6 +190,7 @@ async function validateSkillDirectory(directory) {
 async function main() {
   const errors = [];
   const allowlist = await loadAllowlist(errors);
+  await validateAllowlistedFiles(allowlist, errors);
   const directories = await immediateSkillDirectories();
 
   if (directories.length !== 37) {
@@ -181,8 +200,6 @@ async function main() {
   for (const directory of directories) {
     errors.push(...await validateSkillDirectory(directory));
   }
-
-  // Future vocabulary checks use allowlist.has(rel(file)) in this scope.
 
   const developmentProcessPath = path.join(repoRoot, 'agents', 'development-process.md');
   let developmentProcessSource = '';
