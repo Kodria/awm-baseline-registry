@@ -74,19 +74,34 @@ try {
     );
 
     // --- A symlinked install writes the heartbeat at the install location. ---
+    // Node resolves symlinks for `__filename`, so a hook that derives its
+    // heartbeat directory from the module path would write back into the
+    // registry instead of ~/.awm/hooks/codex, where `awm hooks status` looks.
     const linkDir = path.join(workspace, 'awm-hooks-linked');
     fs.mkdirSync(linkDir, { recursive: true });
     const linked = path.join(linkDir, 'session-start');
     fs.symlinkSync(hookSource, linked);
+
+    // Snapshot the registry-side heartbeat rather than asserting it is absent:
+    // running the hook straight out of the checkout legitimately creates one
+    // (it is gitignored), and this test must not depend on that global state.
+    const registryHeartbeat = path.join(repoRoot, 'hooks/heartbeat.json');
+    const registryHeartbeatBefore = fs.existsSync(registryHeartbeat)
+        ? fs.readFileSync(registryHeartbeat, 'utf8')
+        : null;
 
     parseContext(runHook(linked, { source: 'resume', cwd: project }));
     assert.ok(
         fs.existsSync(path.join(linkDir, 'heartbeat.json')),
         'symlinked install must write heartbeat.json beside the link, not beside the registry source',
     );
-    assert.ok(
-        !fs.existsSync(path.join(repoRoot, 'hooks/heartbeat.json')),
-        'the hook must never write a heartbeat into the registry checkout',
+    const registryHeartbeatAfter = fs.existsSync(registryHeartbeat)
+        ? fs.readFileSync(registryHeartbeat, 'utf8')
+        : null;
+    assert.equal(
+        registryHeartbeatAfter,
+        registryHeartbeatBefore,
+        'a symlinked run must not touch the heartbeat in the registry checkout',
     );
 
     // --- A bare project still emits valid JSON with the AWM directive. ---
