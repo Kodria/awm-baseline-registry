@@ -2,6 +2,17 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 2.1.0 / product 1.2.0 — 2026-07-23
+
+### Added — exportabilidad a claude.ai (`awm export --target claude-ai`)
+- `product-discovery` 1.1.0, `product-brief` 1.1.0 (bundle `product`) y `mermaid-diagrams` 1.1.0 (bundle `dev`) marcadas `portable: true`: ahora se exportan como custom skills subibles a claude.ai vía el comando `awm export` (agentic-workflow#9/#11).
+- `skills/product-brief/port.claude-ai.md`: override self-contained para `product-brief` — el SKILL.md canónico defiere el contrato del brief a `skills/readiness-gate/references/brief-contract.md`, un archivo que no viaja en el export; el override reproduce el contrato inline para que el port funcione standalone en claude.ai. `product-discovery` y `mermaid-diagrams` no necesitan override (son self-contained por transform mecánico).
+
+### Removed
+- `docs/ports/` (ports manuales `brief-spec.claude-ai.md` y `mermaid-diagrams.claude-ai.md`): reemplazados por el flujo automatizado de `awm export`. `docs/environment-ports.md` reescrito para documentar el comando en vez del pegado manual. El contenido de `brief-spec.claude-ai.md` se migró a `skills/product-brief/port.claude-ai.md`.
+
+Diseño: docs/plans/2026-07-23-portable-product-skills-design.md (relacionado agentic-workflow#9).
+
 ## dev 2.0.0 / product 1.1.0 — 2026-07-23
 
 ### Added — bundle `dev`

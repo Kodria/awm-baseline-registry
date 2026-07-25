@@ -1,5 +1,15 @@
 # Harness Retros
 
+## 2026-07-23 — Skills de producto exportables a claude.ai (5 tareas, panel QA de 3 lentes)
+
+- **Class:** agent (AGENTS.md) + cross-repo tool follow-up (issue)
+- **Occurrences (ledger count):** 15 entradas (2 findings minor, 13 wins) sobre 5 tasks SDD + revisor final + panel post-implementation-qa (Track A fidelity 0 findings; Track B content-fidelity 0 findings — diff verbatim conclusivo del override de `product-brief`; Track B exported-artifact-soundness 2 findings minor). `awm ledger recurring --min 2`: sin clusters.
+- **Raíz sistémica de los 2 minors** (`discovery-dead-registry-paths`, `brief-template-dead-paths`): el transform mecánico de `awm export` (en `agentic-workflow`, `cli/src/core/export/transform.ts`) no reescribe paths intra-registry (`skills/<x>/SKILL.md`, `skills/<x>/references/...`) del body de una skill portable; quedan muertos en claude.ai. `pack.ts` además copia `references/` incondicionalmente (dead weight cuando hay override self-contained). Ninguno es blocker — QA confirmó que las 3 skills funcionan standalone (contenido inline tras cada path, sin dependencia dura).
+- **Curado en AGENTS.md** ("What works here"): al marcar una skill `portable: true`, clasificar cada path intra-registry de su body como dependencia dura (necesita override `port.claude-ai.md` self-contained, como `product-brief`) o mención blanda (funciona standalone; el ruido cosmético lo limpia el tool). Advertencia explícita: NO curar path-cleanup cosmético con overrides per-skill (layer equivocado — reintroduce el sync manual que `awm export` elimina; editar el canónico degrada Claude Code).
+- **Curado cross-repo:** [`agentic-workflow#12`](https://github.com/Kodria/agentic-workflow/issues/12) — el transform mecánico debería strip/suavizar paths intra-registry al exportar. El fix pertenece a la herramienta, no a overrides de contenido.
+- **Sensor:** ninguno — repo de contenido markdown/JSON sin lint/semgrep auto-aplicado (el `eslint.config.awm.mjs` del repo es un asset distribuible para proyectos consumidores, no CI de este repo). La regla es de disciplina de lectura + una mejora de tool trackeada, no sensor-catchable acá.
+- **Descartes (modo desatendido):** ninguno. Los 2 findings se curaron (sistémicos: mismo patrón en 2 skills). No hubo wins/findings duplicados por reintentos de reviewer en esta rama.
+
 ## 2026-07-23 — Flow-cleanup de skills de arquitectura/advisory (8 tareas, panel QA de 4 lentes)
 
 - **Class:** structural (×1, nueva infraestructura de CI), process (×1)

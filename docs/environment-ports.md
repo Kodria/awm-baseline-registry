@@ -10,38 +10,53 @@ adaptada, lista para pegar como custom skill personal, de una skill canónica de
 Un port:
 
 - Es un **artefacto derivado**, nunca la fuente de verdad. La skill canónica en
-  `skills/<nombre>/SKILL.md` manda; el port en `docs/ports/` la sigue.
-- Vive en este repo (`docs/ports/`), auditable vía git, aunque su destino de uso sea
-  externo (pegado manualmente en la UI de claude.ai).
+  `skills/<nombre>/SKILL.md` manda; el port la sigue.
+- Se genera con `awm export` (transform mecánico) o vive como override
+  `skills/<name>/port.claude-ai.md` junto a la skill canónica, auditable vía git.
 - Preserva la metodología de la canónica completa; solo cae lo específico de AWM que no
   aplica sin filesystem (p. ej. el campo `version` del frontmatter, o cross-cutting rules
   que nombran invokers del registry).
 
-## Ports vigentes
+## Cómo exportar (flujo vigente)
 
-| Port (claude.ai) | Skill canónica (registry) | Contenido listo |
+Las skills que funcionan standalone en claude.ai se marcan `portable: true` en su
+frontmatter. El comando `awm export --target claude-ai <skill>` (ver
+[agentic-workflow#9](https://github.com/Kodria/agentic-workflow/issues/9), implementado
+en agentic-workflow#11) genera el artefacto subible — una carpeta con `SKILL.md` +
+`references/` más un `.zip` cuando hay binario `zip`:
+
+| Skill (registry) | Comando de export | Adaptación |
 |---|---|---|
-| brief-spec | `skills/product-brief/` | [`docs/ports/brief-spec.claude-ai.md`](ports/brief-spec.claude-ai.md) |
-| mermaid-diagrams | `skills/mermaid-diagrams/` | [`docs/ports/mermaid-diagrams.claude-ai.md`](ports/mermaid-diagrams.claude-ai.md) |
+| `product-discovery` | `awm export --target claude-ai product-discovery` | Transform mecánico |
+| `product-brief` | `awm export --target claude-ai product-brief` | Override self-contained (`skills/product-brief/port.claude-ai.md`) |
+| `mermaid-diagrams` | `awm export --target claude-ai mermaid-diagrams` | Transform mecánico |
+
+El **transform mecánico** quita los campos internos de AWM del frontmatter (`version`,
+`portable`) y agrega una línea de deferencia a la `description`. Cuando una skill defiere
+contenido a un archivo de otra skill (que no viaja en el export), lleva un **override**
+`skills/<name>/port.claude-ai.md` self-contained que `awm export` usa verbatim.
 
 ## Pacto de sincronización
 
-No existe API para subir o actualizar skills en claude.ai. La sincronización es
-**manual y responsabilidad del dueño del port**:
+No existe API para subir o actualizar skills en claude.ai; el paso de subir sigue siendo
+manual. Lo que cambió: ya no se mantiene una copia pegada a mano en `docs/ports/`. El flujo
+vigente es:
 
-1. Al editar la skill canónica en `skills/<nombre>/`, actualizar el port correspondiente
-   en `docs/ports/` **en el mismo PR** (no en un follow-up).
-2. Re-subir (copiar/pegar) el contenido actualizado del port a claude.ai manualmente.
-3. La latencia entre "port actualizado en el repo" y "port re-pegado en claude.ai" es
-   esperada — no se automatiza. No hay gate que lo fuerce; el pacto es de disciplina.
+1. Al editar la skill canónica en `skills/<nombre>/` (y su override si lo tiene), bumpear
+   la versión según la convención de `CONSTITUTION.md`.
+2. Re-exportar con `awm export --target claude-ai <skill>` y re-subir el artefacto a
+   claude.ai manualmente.
+3. La latencia entre "skill actualizada en el repo" y "artefacto re-subido en claude.ai" es
+   esperada — no se automatiza el upload. El comando elimina el paso de copiar/pegar y
+   adaptar a mano, no el de subir.
 
 ## Dirección futura
 
-Pegar contenido a mano no escala más allá de 1-2 skills personales. La dirección
-prevista es un **bundle exportable**: un comando de CLI que empaquete un bundle del
-registry en un formato subible a claude.ai (zip o carpeta), eliminando el paso manual
-de copiar y pegar. Ver issue de seguimiento:
-[Kodria/agentic-workflow#9](https://github.com/Kodria/agentic-workflow/issues/9).
+El **bundle exportable** que esta capa preveía ya está **implementado**: el comando
+`awm export --target claude-ai <skill>` empaqueta la skill del registry en un formato
+subible a claude.ai (carpeta + `.zip`), eliminando el paso manual de copiar y pegar. Ver
+[Kodria/agentic-workflow#9](https://github.com/Kodria/agentic-workflow/issues/9)
+(implementado en agentic-workflow#11 — merged).
 
 ## Trabajo relacionado diferido
 
