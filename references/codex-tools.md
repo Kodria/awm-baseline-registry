@@ -1,33 +1,39 @@
-# Codex Tool Mapping
+# Codex Capability Mapping
 
-Skills use Claude Code tool names. When you encounter these in a skill, use your platform equivalent:
+AWM skills describe portable capabilities. In Codex, use the currently exposed
+native capability that matches the intent; do not add provider settings just to
+make a skill's wording fit.
 
-| Skill references | Codex equivalent |
-|-----------------|------------------|
-| `Task` tool (dispatch subagent) | `spawn_agent` (see [Subagent dispatch requires multi-agent support](#subagent-dispatch-requires-multi-agent-support)) |
-| Multiple `Task` calls (parallel) | Multiple `spawn_agent` calls |
-| Task returns result | `wait_agent` |
-| Task completes automatically | `close_agent` to free slot |
-| `TodoWrite` (task tracking) | `update_plan` |
-| `Skill` tool (invoke a skill) | Skills load natively — just follow the instructions |
-| `Read`, `Write`, `Edit` (files) | Use your native file tools |
-| `Bash` (run commands) | Use your native shell tools |
+| Portable capability | Codex native capability | Use it for |
+|---|---|---|
+| Load and follow a skill | Codex native skill loading | Applying a skill's instructions when its trigger matches. |
+| Create or update a task plan | `update_plan` | Keeping controller-owned implementation steps visible. |
+| Dispatch a subagent | `spawn_agent` | Starting a bounded, independent worker task. |
+| Steer a running subagent | `send_message` | Providing information without starting a new worker turn. |
+| Continue an idle subagent | `followup_task` | Sending a follow-up task and triggering its next turn. |
+| Wait for a subagent | `wait_agent` | Receiving its progress, completion, or request for attention. |
+| Stop a subagent | `interrupt_agent` | Interrupting work that is no longer wanted. |
+| Inspect available subagents | `list_agents` | Checking active workers and their status. |
+| Read, write, or edit files | Codex native file tools | Making scoped filesystem changes. |
+| Run commands | Codex native shell tools | Running verification or project commands. |
 
-## Subagent dispatch requires multi-agent support
+## Delegation availability and roles
 
-Add to your Codex config (`~/.codex/config.toml`):
+Codex treats multi-agent collaboration as a default runtime capability: no
+legacy feature setting is required. A session may nevertheless lack delegation
+tools. In that case, do not attempt to enable them through configuration; keep
+the work single-agent or explain the limitation to the user.
 
-```toml
-[features]
-multi_agent = true
-```
+The controller owns the user conversation, task plan, delegation decisions,
+integration, and final verification. A worker owns only its bounded assigned
+task, reports evidence and blockers to the controller, and does not expand its
+scope or make controller-level decisions.
 
-This enables `spawn_agent`, `wait_agent`, and `close_agent` for skills like `dispatching-parallel-agents` and `subagent-driven-development`.
+## Waiting is not command execution
 
-Legacy note: Codex builds before `rust-v0.115.0` exposed spawned-agent
-waiting as `wait`. Current Codex uses `wait_agent` for spawned agents. The
-`wait` name now belongs to code-mode `exec/wait`, which resumes a yielded exec
-cell by `cell_id`; it is not the spawned-agent result tool.
+Use `wait_agent` only to wait for a spawned worker. A code-execution wait
+resumes a yielded command or execution cell by its execution identifier; it
+does not return a worker result and must not be used for delegation control.
 
 ## Environment Detection
 

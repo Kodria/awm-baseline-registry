@@ -24,6 +24,21 @@ const requiredDevelopmentProcessConcepts = [
   'You do NOT write code directly.',
   'NEVER invoke a downstream skill without user approval',
 ];
+const requiredCodexCapabilities = [
+  'spawn_agent',
+  'send_message',
+  'followup_task',
+  'wait_agent',
+  'interrupt_agent',
+  'list_agents',
+  'update_plan',
+];
+const requiredUsingAwmConcepts = [
+  'Use the active platform’s native skill-loading mechanism',
+  'create or update a task plan',
+  'dispatch, steer, wait for, or stop a subagent',
+  'request user approval',
+];
 
 function parseFrontmatter(source, skillPath) {
   const lines = source.replace(/\r\n/g, '\n').split('\n');
@@ -226,6 +241,40 @@ async function main() {
   for (const concept of requiredDevelopmentProcessConcepts) {
     if (!developmentProcessSource.includes(concept)) {
       errors.push(`agents/development-process.md: missing required concept ${JSON.stringify(concept)}`);
+    }
+  }
+
+  const codexReferencePath = path.join(repoRoot, 'references', 'codex-tools.md');
+  let codexReferenceSource = '';
+  try {
+    codexReferenceSource = await readFile(codexReferencePath, 'utf8');
+  } catch {
+    errors.push('references/codex-tools.md: missing required Codex capability reference');
+  }
+
+  if (codexReferenceSource.includes('close_agent')) {
+    errors.push('references/codex-tools.md: obsolete close_agent capability is not portable');
+  }
+  if (/^\s*multi_agent\s*=\s*true\s*(?:#.*)?$/m.test(codexReferenceSource)) {
+    errors.push('references/codex-tools.md: obsolete multi-agent feature flag is not portable');
+  }
+  for (const capability of requiredCodexCapabilities) {
+    if (!codexReferenceSource.includes(capability)) {
+      errors.push(`references/codex-tools.md: missing required capability ${JSON.stringify(capability)}`);
+    }
+  }
+
+  const usingAwmPath = path.join(repoRoot, 'skills', 'using-awm', 'SKILL.md');
+  let usingAwmSource = '';
+  try {
+    usingAwmSource = await readFile(usingAwmPath, 'utf8');
+  } catch {
+    errors.push('skills/using-awm/SKILL.md: missing required runtime contract');
+  }
+
+  for (const concept of requiredUsingAwmConcepts) {
+    if (!usingAwmSource.includes(concept)) {
+      errors.push(`skills/using-awm/SKILL.md: missing required concept ${JSON.stringify(concept)}`);
     }
   }
 
