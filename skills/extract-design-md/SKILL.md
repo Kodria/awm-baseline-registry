@@ -1,5 +1,5 @@
 ---
-name: stitch::extract-design-md
+name: extract-design-md
 version: "1.0.0"
 description: >-
   Extract a comprehensive design system (DESIGN.md) directly from frontend source

@@ -7,6 +7,16 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const skillsRoot = path.join(repoRoot, 'skills');
 const allowlistPath = path.join(repoRoot, 'tests', 'portability-allowlist.json');
+const expectedAllowlistEntries = [
+  {
+    path: 'skills/systematic-debugging/CREATION-LOG.md',
+    reason: 'historical provenance, not runtime instructions',
+  },
+  {
+    path: 'skills/writing-skills/anthropic-best-practices.md',
+    reason: 'upstream provider documentation retained as a named reference',
+  },
+];
 const requiredDevelopmentProcessConcepts = [
   'name: development-process',
   'description:',
@@ -84,6 +94,50 @@ async function immediateSkillDirectories() {
     .sort((left, right) => left.localeCompare(right));
 }
 
+async function loadAllowlist(errors) {
+  let entries;
+  try {
+    entries = JSON.parse(await readFile(allowlistPath, 'utf8'));
+  } catch (error) {
+    errors.push(`tests/portability-allowlist.json: ${error.message}`);
+    return new Set();
+  }
+
+  if (!Array.isArray(entries)) {
+    errors.push('tests/portability-allowlist.json: expected an array');
+    return new Set();
+  }
+
+  const expectedReasons = new Map(expectedAllowlistEntries.map((entry) => [entry.path, entry.reason]));
+  const actualReasons = new Map();
+  for (const entry of entries) {
+    if (!entry || typeof entry.path !== 'string' || typeof entry.reason !== 'string') {
+      errors.push('tests/portability-allowlist.json: entries require string path and reason');
+      continue;
+    }
+    if (actualReasons.has(entry.path)) {
+      errors.push(`tests/portability-allowlist.json: duplicate path ${entry.path}`);
+      continue;
+    }
+    actualReasons.set(entry.path, entry.reason);
+  }
+
+  for (const { path: allowedPath, reason } of expectedAllowlistEntries) {
+    if (actualReasons.get(allowedPath) !== reason) {
+      errors.push(`tests/portability-allowlist.json: missing exact entry ${allowedPath}`);
+    }
+  }
+  for (const [actualPath, actualReason] of actualReasons) {
+    if (expectedReasons.get(actualPath) !== actualReason) {
+      errors.push(`tests/portability-allowlist.json: unexpected entry ${actualPath}`);
+    }
+  }
+
+  return new Set(expectedAllowlistEntries
+    .filter(({ path: allowedPath, reason }) => actualReasons.get(allowedPath) === reason)
+    .map(({ path: allowedPath }) => allowedPath));
+}
+
 async function validateSkillDirectory(directory) {
   const skillPath = path.join(skillsRoot, directory, 'SKILL.md');
   const errors = [];
@@ -117,7 +171,7 @@ async function validateSkillDirectory(directory) {
 
 async function main() {
   const errors = [];
-  await readFile(allowlistPath, 'utf8').then(JSON.parse);
+  const allowlist = await loadAllowlist(errors);
   const directories = await immediateSkillDirectories();
 
   if (directories.length !== 37) {
@@ -127,6 +181,8 @@ async function main() {
   for (const directory of directories) {
     errors.push(...await validateSkillDirectory(directory));
   }
+
+  // Future vocabulary checks use allowlist.has(rel(file)) in this scope.
 
   const developmentProcessPath = path.join(repoRoot, 'agents', 'development-process.md');
   let developmentProcessSource = '';
