@@ -2,23 +2,30 @@
 //
 // El template se copia tal cual a la raíz de cada proyecto (`awm sensors init`
 // hace un `copyFileSync` de cada archivo del pack, sin sustituir nada), así que
-// lo que diga este archivo es exactamente lo que corre en casa del usuario. Su
-// único trabajo interesante es heredar la configuración de ESLint del proyecto:
-// sin los `ignores` del proyecto, el sensor lintea `dist/` y devuelve cientos de
-// hallazgos sobre código generado mientras el código fuente pasa limpio. Eso
-// pasó de verdad (agent-vps-mobile, 2026-07-27: 136 hallazgos, todos en `dist/`)
-// porque el template fijaba un solo nombre de archivo, `eslint.config.mjs`, y se
-// tragaba el fallo del import en un `catch {}` vacío.
+// lo que diga este archivo es exactamente lo que corre en casa del usuario. Y
+// corre en TODA clase de repo: un monorepo con workspaces y un repo estándar de
+// un solo `package.json` reciben el mismo archivo.
 //
-// El mismo defecto tenía una segunda cara (caso 9): el bloque de reglas de AWM
-// no acotaba `files`, así que se aplicaba al final y pisaba en TypeScript
-// justamente las reglas base que el proyecto había desactivado a propósito.
-// Arreglar solo la herencia dejaba 47 hallazgos igual de falsos.
+// Su trabajo es heredar la configuración de ESLint del proyecto. Sin los
+// `ignores` del proyecto el sensor lintea `dist/` y devuelve cientos de hallazgos
+// sobre código generado mientras el código fuente pasa limpio — pasó de verdad
+// (agent-vps-mobile, 2026-07-27: 136 hallazgos, todos en `dist/`) porque el
+// template fijaba un solo nombre, `eslint.config.mjs`, y se tragaba el fallo del
+// import en un `catch {}` vacío.
 //
-// Por eso el caso 1 no es cosmético y el caso 10 es obligatorio: correr la misma
-// aserción contra el template viejo y exigir que FALLE es lo que distingue "el
-// repo está sano" de "el test no está mirando" (CONSTITUTION.md, "romper
-// deliberadamente lo que el chequeo dice cuidar").
+// Los casos 6 a 9 existen porque el consumidor del template no es una persona
+// sino el runner de sensores, y eso restringe cómo se puede fallar:
+//
+//  - stderr NO es un canal libre. Cuando ESLint sale != 0 el runner concatena
+//    `stdout + stderr` y hace `JSON.parse` del resultado. Un aviso de una línea
+//    rompe el parseo y un repo con errores reales se reporta con cero.
+//  - un throw NO pone el sensor en rojo. Produce `status: "skipped"`, que no
+//    rompe el `overall`. Matar el sensor es la forma más callada de fallar.
+//
+// El caso 13 es obligatorio por otra razón: correr la misma aserción contra el
+// template viejo y exigir que FALLE es lo que distingue "el repo está sano" de
+// "el test no está mirando" (CONSTITUTION.md, "romper deliberadamente lo que el
+// chequeo dice cuidar").
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -50,14 +57,16 @@ export default [
 `;
 
 // Importa el template como lo hace ESLint y vuelca lo que importa por stdout;
-// los avisos del template van por stderr, así que stdout queda JSON limpio.
+// stderr se captura aparte porque su contenido es, en sí, una aserción.
 const DRIVER = `import config from './eslint.config.awm.mjs';
 const flat = config.flat(Infinity);
 process.stdout.write(JSON.stringify({
   ignores: flat.flatMap((e) => (e && Array.isArray(e.ignores) ? e.ignores : [])),
   names: flat.flatMap((e) => (e && typeof e.name === 'string' ? [e.name] : [])),
   rules: flat.flatMap((e) => (e && e.rules ? Object.keys(e.rules) : [])),
-  awmEntry: flat[flat.length - 1],
+  ruleEntries: flat
+    .filter((e) => e && e.rules)
+    .map((e) => ({ files: e.files ?? null, rules: Object.keys(e.rules) })),
 }));
 `;
 
@@ -86,6 +95,11 @@ function runFixture(files, templateSource = TEMPLATE) {
   };
 }
 
+// El template se ignora a sí mismo (caso 12); el resto de los casos mira solo
+// los `ignores` que vienen del proyecto.
+const SELF_IGNORE = 'eslint.config.awm.mjs';
+const heredados = (run) => run.config.ignores.filter((glob) => glob !== SELF_IGNORE);
+
 const ESM_PKG = '{ "type": "module" }';
 const CJS_PKG = '{ "type": "commonjs" }';
 
@@ -96,21 +110,42 @@ const CJS_PKG = '{ "type": "commonjs" }';
     'eslint.config.js': `export default [{ name: 'proyecto', ignores: ['dist/**', 'coverage/**'] }];`,
   });
   assert.equal(run.status, 0, `el template falló:\n${run.stderr}`);
-  assert.deepEqual(run.config.ignores, ['dist/**', 'coverage/**']);
+  assert.deepEqual(heredados(run), ['dist/**', 'coverage/**']);
   assert.ok(run.config.names.includes('proyecto'));
 }
 
-// 2 — El nombre que ya funcionaba sigue funcionando.
+// 2 — El nombre que ya funcionaba antes del fix sigue funcionando.
 {
   const run = runFixture({
     'package.json': ESM_PKG,
     'eslint.config.mjs': `export default [{ name: 'proyecto', ignores: ['build/**'] }];`,
   });
   assert.equal(run.status, 0, `el template falló:\n${run.stderr}`);
-  assert.deepEqual(run.config.ignores, ['build/**']);
+  assert.deepEqual(heredados(run), ['build/**']);
 }
 
-// 3 — Con varios candidatos presentes gana el primero del orden de ESLint.
+// 3 — Repo estándar CommonJS: `package.json` sin `type` y `eslint.config.js`
+//     escrito con `module.exports`. Es la forma más común fuera de un monorepo.
+{
+  const run = runFixture({
+    'package.json': '{ "name": "repo-estandar" }',
+    'eslint.config.js': `module.exports = [{ name: 'proyecto', ignores: ['dist/**'] }];`,
+  });
+  assert.equal(run.status, 0, `el template falló:\n${run.stderr}`);
+  assert.deepEqual(heredados(run), ['dist/**']);
+}
+
+// 4 — `eslint.config.cjs` explícito.
+{
+  const run = runFixture({
+    'package.json': CJS_PKG,
+    'eslint.config.cjs': `module.exports = [{ name: 'proyecto', ignores: ['lib/**'] }];`,
+  });
+  assert.equal(run.status, 0, `el template falló:\n${run.stderr}`);
+  assert.deepEqual(heredados(run), ['lib/**']);
+}
+
+// 5 — Con varios candidatos presentes gana el primero del orden de ESLint.
 {
   const run = runFixture({
     'package.json': ESM_PKG,
@@ -122,40 +157,46 @@ const CJS_PKG = '{ "type": "commonjs" }';
   assert.ok(!run.config.names.includes('pierde-mjs'));
 }
 
-// 4 — Un proyecto CommonJS con `eslint.config.cjs` también se hereda.
-{
-  const run = runFixture({
-    'package.json': CJS_PKG,
-    'eslint.config.cjs': `module.exports = [{ name: 'proyecto', ignores: ['lib/**'] }];`,
-  });
-  assert.equal(run.status, 0, `el template falló:\n${run.stderr}`);
-  assert.deepEqual(run.config.ignores, ['lib/**']);
-}
-
-// 5 — Sin configuración del proyecto el sensor corre igual, pero lo dice.
+// 6 — Sin configuración del proyecto el sensor sigue vivo y en silencio, con
+//     `ignores` conservadores para no recorrer lo generado. El silencio no es
+//     cosmético: cualquier línea en stderr se concatena al JSON cuando ESLint
+//     sale != 0, y el repo entero pasa a reportar cero hallazgos.
 {
   const run = runFixture({ 'package.json': ESM_PKG });
   assert.equal(run.status, 0, `el template falló:\n${run.stderr}`);
-  assert.deepEqual(run.config.ignores, []);
-  assert.match(run.stderr, /no se encontró configuración de ESLint/);
-  assert.match(run.stderr, /eslint\.config\.js/);
-  // Las reglas de AWM se aplican igual: degradar no es dejar de lintear.
+  assert.equal(run.stderr, '', 'el template no puede escribir en stderr');
+  assert.ok(run.config.ignores.includes('**/dist/**'));
+  assert.ok(run.config.ignores.includes('**/coverage/**'));
+  // Degradar no es dejar de lintear.
   assert.ok(run.config.rules.includes('no-unreachable'));
 }
 
-// 6 — Una configuración que existe pero no carga rompe el sensor en vez de
-//     degradarlo en silencio: un informe sin `ignores` parece verde y no lo es.
+// 7 — Configuración en TypeScript: ESLint la carga con jiti, este archivo no
+//     puede. No es un repo roto, así que el sensor degrada en vez de morir — un
+//     throw aquí sería `skipped`, y `skipped` no rompe el `overall`.
+{
+  const run = runFixture({
+    'package.json': ESM_PKG,
+    'eslint.config.ts': `export default [{ name: 'proyecto' }];`,
+  });
+  assert.equal(run.status, 0, 'una config en TypeScript no puede matar el sensor');
+  assert.equal(run.stderr, '', 'el template no puede escribir en stderr');
+  assert.ok(run.config.ignores.includes('**/dist/**'));
+}
+
+// 8 — Una configuración con un nombre que ESLint también importa y que no carga
+//     sí está rota: el `eslint` del propio proyecto fallaría igual.
 {
   const run = runFixture({
     'package.json': ESM_PKG,
     'eslint.config.js': `throw new Error('la config del proyecto explota');`,
   });
   assert.notEqual(run.status, 0, 'el template debía fallar y no falló');
-  assert.match(run.stderr, /no se pudo cargar eslint\.config\.js/);
+  assert.match(run.stderr, /eslint\.config\.js existe pero no se pudo cargar/);
   assert.match(run.stderr, /la config del proyecto explota/);
 }
 
-// 7 — Lo mismo si el archivo carga pero no exporta un flat config.
+// 9 — Lo mismo si carga pero no exporta un flat config.
 {
   const run = runFixture({
     'package.json': ESM_PKG,
@@ -165,36 +206,56 @@ const CJS_PKG = '{ "type": "commonjs" }';
   assert.match(run.stderr, /no tiene `export default`/);
 }
 
-// 8 — Las reglas de AWM se añaden después de la configuración del proyecto.
+// 10 — Los `ignores` de reserva no pisan al proyecto: si su configuración cargó,
+//      manda ella, aunque no ignore nada.
 {
   const run = runFixture({
     'package.json': ESM_PKG,
-    'eslint.config.js': `export default [{ name: 'proyecto', rules: { eqeqeq: 'error' } }];`,
+    'eslint.config.js': `export default [{ name: 'proyecto', ignores: ['solo-esto/**'] }];`,
   });
   assert.equal(run.status, 0, `el template falló:\n${run.stderr}`);
-  assert.deepEqual(run.config.rules, ['eqeqeq', 'no-unused-vars', 'no-undef', 'no-unreachable']);
+  assert.deepEqual(heredados(run), ['solo-esto/**']);
+  assert.ok(!run.config.names.includes('awm/fallback-ignores'));
 }
 
-// 9 — Las reglas base de AWM no alcanzan a TypeScript. Un bloque sin `files` se
-//     aplica al final y pisa lo que el proyecto desactivó a propósito:
-//     `no-undef` no ve los tipos ambientales y `no-unused-vars` marca los
-//     nombres de parámetro de una firma en una interfaz. Son falsos positivos
-//     estructurales — la misma clase de ruido que el `catch {}` vacío producía
-//     desde `dist/`, y con el mismo efecto: un informe que nadie puede leer.
+// 11 — Reparto de reglas por lenguaje. `no-unreachable` vale en cualquier
+//      archivo que ESLint parsee; `no-undef` y `no-unused-vars` son falsos
+//      positivos estructurales en TypeScript y se acotan a JavaScript. Un bloque
+//      sin `files` iba al final y las reencendía por encima del proyecto.
 {
   const run = runFixture({
     'package.json': ESM_PKG,
     'eslint.config.js': `export default [{ name: 'proyecto' }];`,
   });
   assert.equal(run.status, 0, `el template falló:\n${run.stderr}`);
-  const { awmEntry } = run.config;
-  assert.ok(Array.isArray(awmEntry.files), 'el bloque de AWM debe acotar `files`');
-  assert.deepEqual(awmEntry.files.filter((glob) => /\.tsx?$/.test(glob)), []);
-  assert.deepEqual(awmEntry.files, ['**/*.js', '**/*.jsx', '**/*.mjs', '**/*.cjs']);
-  assert.deepEqual(Object.keys(awmEntry.rules), ['no-unused-vars', 'no-undef', 'no-unreachable']);
+  const awmEntries = run.config.ruleEntries.filter((e) => !e.rules.includes('placeholder'));
+
+  const sinAcotar = awmEntries.filter((e) => e.files === null);
+  assert.deepEqual(
+    sinAcotar.flatMap((e) => e.rules),
+    ['no-unreachable'],
+    'solo `no-unreachable` puede aplicarse sin acotar `files`',
+  );
+
+  const soloJs = awmEntries.find((e) => Array.isArray(e.files));
+  assert.deepEqual(soloJs.files, ['**/*.js', '**/*.jsx', '**/*.mjs', '**/*.cjs']);
+  assert.deepEqual(soloJs.files.filter((glob) => /\.tsx?$/.test(glob)), []);
+  assert.deepEqual(soloJs.rules, ['no-unused-vars', 'no-undef']);
 }
 
-// 10 — Mutación: el template viejo debe fallar el caso 1. Si esto pasara, el
+// 12 — El template se ignora a sí mismo. Lo genera AWM, no el proyecto: un
+//      hallazgo sobre él es ruido que su autor no puede accionar desde su repo.
+//      Lo destapó el propio sensor corriendo sobre un repo estándar de prueba.
+{
+  const run = runFixture({
+    'package.json': ESM_PKG,
+    'eslint.config.js': `export default [{ name: 'proyecto' }];`,
+  });
+  assert.equal(run.status, 0, `el template falló:\n${run.stderr}`);
+  assert.ok(run.config.ignores.includes('eslint.config.awm.mjs'));
+}
+
+// 13 — Mutación: el template viejo debe fallar el caso 1. Si esto pasara, el
 //      test estaría verde sin mirar nada.
 {
   const run = runFixture(
@@ -206,7 +267,7 @@ const CJS_PKG = '{ "type": "commonjs" }';
   );
   assert.equal(run.status, 0, 'el template viejo no fallaba: se tragaba el error');
   assert.deepEqual(
-    run.config.ignores,
+    heredados(run),
     [],
     'el template viejo heredó los `ignores`: la mutación no reproduce el defecto y el caso 1 no prueba nada',
   );
@@ -214,4 +275,4 @@ const CJS_PKG = '{ "type": "commonjs" }';
 
 for (const dir of workspaces) fs.rmSync(dir, { recursive: true, force: true });
 
-console.log('sensor-pack-eslint: 10 casos OK');
+console.log('sensor-pack-eslint: 13 casos OK');
