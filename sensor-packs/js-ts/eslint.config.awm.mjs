@@ -71,11 +71,21 @@ if (projectConfigPath === undefined) {
 export default [
   ...projectConfig,
   {
+    // Las reglas base de ESLint se aplican solo a JavaScript. En TypeScript son
+    // falsos positivos estructurales, no hallazgos: `no-undef` no ve los tipos
+    // ambientales (`NodeJS.Timeout`, el namespace `React`) porque no existen en
+    // tiempo de ejecución, y `no-unused-vars` marca como no usados los nombres
+    // de parámetro de una firma dentro de una interfaz. typescript-eslint
+    // documenta desactivar ambas en `.ts` por esa razón. Un bloque sin `files`
+    // se aplicaba al final y pisaba justamente eso: en `agent-vps-mobile` los 47
+    // hallazgos restantes tras arreglar la herencia eran todos de esta clase.
+    //
+    // En TypeScript manda la configuración del proyecto — y `tsc`, que es el
+    // sensor `typecheck` y sabe de tipos.
+    files: ['**/*.js', '**/*.jsx', '**/*.mjs', '**/*.cjs'],
     rules: {
       // `_`-prefixed args/vars are intentionally unused (callback signatures,
-      // interface method types, destructure-and-drop). This is the canonical
-      // TS/ESLint convention; without it, type-only param names in interfaces
-      // get flagged as unused. See @typescript-eslint/no-unused-vars docs.
+      // destructure-and-drop). This is the canonical ESLint convention.
       'no-unused-vars': ['error', { vars: 'all', args: 'after-used', argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       'no-undef': 'error',
       'no-unreachable': 'error',

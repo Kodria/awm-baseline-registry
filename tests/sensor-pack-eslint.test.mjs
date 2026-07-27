@@ -10,7 +10,12 @@
 // porque el template fijaba un solo nombre de archivo, `eslint.config.mjs`, y se
 // tragaba el fallo del import en un `catch {}` vacío.
 //
-// Por eso el caso 1 no es cosmético y el caso 9 es obligatorio: correr la misma
+// El mismo defecto tenía una segunda cara (caso 9): el bloque de reglas de AWM
+// no acotaba `files`, así que se aplicaba al final y pisaba en TypeScript
+// justamente las reglas base que el proyecto había desactivado a propósito.
+// Arreglar solo la herencia dejaba 47 hallazgos igual de falsos.
+//
+// Por eso el caso 1 no es cosmético y el caso 10 es obligatorio: correr la misma
 // aserción contra el template viejo y exigir que FALLE es lo que distingue "el
 // repo está sano" de "el test no está mirando" (CONSTITUTION.md, "romper
 // deliberadamente lo que el chequeo dice cuidar").
@@ -52,6 +57,7 @@ process.stdout.write(JSON.stringify({
   ignores: flat.flatMap((e) => (e && Array.isArray(e.ignores) ? e.ignores : [])),
   names: flat.flatMap((e) => (e && typeof e.name === 'string' ? [e.name] : [])),
   rules: flat.flatMap((e) => (e && e.rules ? Object.keys(e.rules) : [])),
+  awmEntry: flat[flat.length - 1],
 }));
 `;
 
@@ -169,8 +175,27 @@ const CJS_PKG = '{ "type": "commonjs" }';
   assert.deepEqual(run.config.rules, ['eqeqeq', 'no-unused-vars', 'no-undef', 'no-unreachable']);
 }
 
-// 9 — Mutación: el template viejo debe fallar el caso 1. Si esto pasara, el
-//     test estaría verde sin mirar nada.
+// 9 — Las reglas base de AWM no alcanzan a TypeScript. Un bloque sin `files` se
+//     aplica al final y pisa lo que el proyecto desactivó a propósito:
+//     `no-undef` no ve los tipos ambientales y `no-unused-vars` marca los
+//     nombres de parámetro de una firma en una interfaz. Son falsos positivos
+//     estructurales — la misma clase de ruido que el `catch {}` vacío producía
+//     desde `dist/`, y con el mismo efecto: un informe que nadie puede leer.
+{
+  const run = runFixture({
+    'package.json': ESM_PKG,
+    'eslint.config.js': `export default [{ name: 'proyecto' }];`,
+  });
+  assert.equal(run.status, 0, `el template falló:\n${run.stderr}`);
+  const { awmEntry } = run.config;
+  assert.ok(Array.isArray(awmEntry.files), 'el bloque de AWM debe acotar `files`');
+  assert.deepEqual(awmEntry.files.filter((glob) => /\.tsx?$/.test(glob)), []);
+  assert.deepEqual(awmEntry.files, ['**/*.js', '**/*.jsx', '**/*.mjs', '**/*.cjs']);
+  assert.deepEqual(Object.keys(awmEntry.rules), ['no-unused-vars', 'no-undef', 'no-unreachable']);
+}
+
+// 10 — Mutación: el template viejo debe fallar el caso 1. Si esto pasara, el
+//      test estaría verde sin mirar nada.
 {
   const run = runFixture(
     {
@@ -189,4 +214,4 @@ const CJS_PKG = '{ "type": "commonjs" }';
 
 for (const dir of workspaces) fs.rmSync(dir, { recursive: true, force: true });
 
-console.log('sensor-pack-eslint: 9 casos OK');
+console.log('sensor-pack-eslint: 10 casos OK');
