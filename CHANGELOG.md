@@ -2,6 +2,21 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 2.2.1 — 2026-07-27
+
+### Fixed
+- `sensor-packs/js-ts/eslint.config.awm.mjs` no heredaba la configuración de ESLint del proyecto salvo que se llamara exactamente `eslint.config.mjs`, y se tragaba el fallo en un `catch {}` vacío. El efecto no era un sensor apagado sino uno que mentía: sin los `ignores` del proyecto, el sensor `lint` recorría `dist/`, `build/` y `coverage/` y devolvía cientos de hallazgos sobre código generado mientras el código fuente pasaba limpio (observado en `agent-vps-mobile`: 136 hallazgos, todos en `dist/`, cero en `src/`). Ahora se importan los tres nombres que Node puede cargar (`.js`, `.mjs`, `.cjs`), en el orden de resolución de ESLint. Cuando no hay ninguno — o cuando la configuración está en TypeScript, que ESLint carga con jiti y un `import()` de Node no puede — el sensor degrada con `ignores` conservadores en vez de recorrer lo generado. Solo se lanza ante una configuración que el propio `eslint` del proyecto tampoco podría cargar.
+
+- `sensor-packs/js-ts/eslint.config.awm.mjs` aplicaba `no-unused-vars` y `no-undef` sin acotar `files`, así que iban al final del flat config y pisaban en TypeScript lo que el proyecto había desactivado a propósito: `no-undef` no ve los tipos ambientales (`NodeJS.Timeout`, el namespace `React`) y `no-unused-vars` marca los nombres de parámetro de una firma dentro de una interfaz. Eran los 47 hallazgos que quedaban en `agent-vps-mobile` tras arreglar la herencia, todos falsos. Esas dos pasan a `**/*.{js,jsx,mjs,cjs}`; `no-unreachable` se mantiene en todos los lenguajes, porque ahí no tiene falsos positivos.
+
+- `sensor-packs/js-ts/eslint.config.awm.mjs` se ignora a sí mismo. Lo genera AWM, no el proyecto: un hallazgo sobre él es ruido que su autor no puede accionar desde su repo.
+
+### Added
+- `tests/sensor-pack-eslint.test.mjs`: primera cobertura ejecutable del template del pack `js-ts` — trece casos sobre fixtures reales (repo estándar ESM, repo estándar CommonJS, configuración en TypeScript, sin configuración, configuración rota), incluido uno que corre el template viejo y exige que falle. Añadido a `validate.yml` y al gate previo al tag en `auto-tag.yml`.
+
+### Nota para quien toque este template
+Su consumidor no es una persona sino `cli/src/commands/sensors/run.js`, y eso restringe cómo puede fallar. **No escribas en stderr:** cuando ESLint sale con código != 0 —el caso normal cuando hay hallazgos— el runner concatena `stdout + stderr` y hace `JSON.parse` del resultado; un aviso de una línea rompe el parseo, el formateador devuelve `[]`, y un repo con errores reales se reporta con cero. **Un `throw` no pone el sensor en rojo:** produce `status: "skipped"`, que no rompe el `overall` mientras otro sensor pase. Ambas invariantes están fijadas en los casos 6 a 9 del test.
+
 ## dev 2.2.0 / product 1.3.0 / frontend 2.1.0 / authoring 1.1.0 — 2026-07-25
 
 ### Added — portabilidad de providers y recuperación de sesión en Codex
