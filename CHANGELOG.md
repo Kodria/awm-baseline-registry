@@ -2,6 +2,14 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 2.2.1 — 2026-07-27
+
+### Fixed
+- `sensor-packs/js-ts/eslint.config.awm.mjs` no heredaba la configuración de ESLint del proyecto salvo que se llamara exactamente `eslint.config.mjs`, y se tragaba el fallo en un `catch {}` vacío. El efecto no era un sensor apagado sino uno que mentía: sin los `ignores` del proyecto, el sensor `lint` recorría `dist/`, `build/` y `coverage/` y devolvía cientos de hallazgos sobre código generado mientras el código fuente pasaba limpio (observado en `agent-vps-mobile`: 136 hallazgos, todos en `dist/`, cero en `src/`). Ahora se buscan los seis nombres que ESLint reconoce, en su mismo orden de resolución; si no hay ninguno se avisa por stderr (stdout es del JSON que el sensor parsea), y si hay uno que no carga o no exporta un flat config el sensor falla en vez de degradarse en silencio.
+
+### Added
+- `tests/sensor-pack-eslint.test.mjs`: primera cobertura ejecutable del template del pack `js-ts` — nueve casos sobre fixtures reales, incluido uno que corre el template viejo y exige que falle. Añadido a `validate.yml` y al gate previo al tag en `auto-tag.yml`.
+
 ## dev 2.2.0 / product 1.3.0 / frontend 2.1.0 / authoring 1.1.0 — 2026-07-25
 
 ### Added — portabilidad de providers y recuperación de sesión en Codex

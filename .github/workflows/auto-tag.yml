@@ -43,6 +43,7 @@ jobs:
           node tests/validate-portability.test.mjs
           node tests/codex-session-start.test.mjs
           node tests/session-start.test.mjs
+          node tests/sensor-pack-eslint.test.mjs
 
       - name: Compute and push next tag
         run: |

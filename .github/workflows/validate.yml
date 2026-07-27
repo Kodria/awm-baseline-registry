@@ -20,3 +20,4 @@ jobs:
       - run: node tests/validate-portability.test.mjs
       - run: node tests/codex-session-start.test.mjs
       - run: node tests/session-start.test.mjs
+      - run: node tests/sensor-pack-eslint.test.mjs
