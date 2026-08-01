@@ -28,6 +28,43 @@ El modo desatendido quita pausas, no controles: los gates (sensor, ledger, recon
 
 La ejecución continua entre tareas es el comportamiento default en AMBOS modos (no cambia). WHEN el modo es `desatendido`, lo único que cambia es la TERMINATION_PHASE: no preguntes al usuario si continuar con el cierre — devuelve el control al orquestador, que rutea la fase siguiente automáticamente. IF un subagente reporta BLOCKED irresoluble o hay ambigüedad que impide el progreso, THEN detente y escala al usuario igual que en modo interactivo — BLOCKED nunca se salta.
 
+## Modo journal-first (continuidad durable — opt-in)
+
+<!-- AWM-INTEGRATION: subagent-journal-gate -->
+
+WHEN el proyecto tiene journal inicializado (`<repo>/.awm/journal/<rama>/state.json`
+existe — se crea con `awm watch --init`), el controlador opera journal-first.
+IF el journal NO esta inicializado, THEN este modo entero NO aplica: el skill se
+comporta exactamente como esta descrito en el resto del documento, sin cambios
+(el flujo default de Claude Code es intocable).
+
+Con journal inicializado:
+
+1. **Apertura de turno:** correr `awm job reconcile` y leer `next_action` del
+   journal ANTES de cualquier otra cosa. El journal es la autoridad del punto
+   de continuacion — nunca la memoria conversacional.
+2. **Registro antes de accion:** cada tarea/despacho/ReviewObligation se
+   registra via `awm job register --generation <token> --entity <kind> --json
+   <payload>` ANTES de ejecutarse (el token de generacion lo entrega el
+   supervisor en el prompt de lanzamiento). El plan de ciclo se registra con
+   `--entity cycle-plan`. El Verdict se registra con `awm job verdict` al
+   RECIBIRSE el reporte del revisor — nunca antes.
+3. **Heartbeat:** emitir `awm job controller-heartbeat --generation <token>` al
+   completar cada paso del protocolo (despacho enviado, reporte recibido, task
+   marcada). Importante: el silencio de heartbeat + inactividad de proceso
+   NUNCA autorizan el relevo por si solos — el supervisor solo releva cuando
+   ademas su adapter emite la señal POSITIVA `safeToReplace`; sin esa señal el
+   ciclo queda BLOCKED en custodia, sin matar nada.
+4. **Verificaciones mecanicas:** pedirlas con
+   `awm job request --generation <token> --satisfies <itemId> -- <comando>` —
+   NUNCA ejecutarlas inline en providers donde el proceso muere con el turno.
+   El supervisor las corre via exec-wrapper (claim durable) y el resultado
+   aparece en el journal (`awm job ps`).
+5. **Cierre:** `awm job gate` es el interlock — exit != 0 significa que hay
+   trabajo pendiente, obligaciones sin verdict `pass`, evidencia con
+   fingerprint no vigente, fixes abiertos o corrupcion: NO se cierra el ciclo.
+   Solo con gate verde se declara COMPLETE.
+
 ## When to Use
 
 ```dot
