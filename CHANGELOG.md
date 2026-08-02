@@ -2,6 +2,11 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 2.3.0 — 2026-08-02
+
+### Added
+- `skills/subagent-driven-development/SKILL.md`: nueva sección opt-in "Modo journal-first (continuidad durable)" — cuando el proyecto tiene el journal AWM R1 inicializado (`awm watch --init`), el controlador opera anclado al journal (`awm job reconcile`/`register`/`controller-heartbeat`/`request`/`gate`) en vez de a la memoria conversacional. Sin journal inicializado, el skill se comporta exactamente igual que antes — no rompe ningún flujo existente.
+
 ## dev 2.2.1 — 2026-07-27
 
 ### Fixed
