@@ -91,6 +91,8 @@ Los skills lectores (`development-process`, `subagent-driven-development`, `post
 
 _Requirements: R1.1, R2.3_
 
+**Track:** core            ← only for plans using Parallel track declaration below; single line, right after _Requirements:_ and before **Files:** (omit line if the plan is serial)
+
 **Files:**
 - Create: `exact/path/to/file.py`
 - Modify: `exact/path/to/existing.py:123-145`
@@ -173,8 +175,9 @@ serial execution. `Shared resources` must be explicit, including `[]`; omitted
 means serial. Resource IDs use `<class>:<value>` such as `port:5432`, `db:dev`,
 or `path:.cache/tool`.
 
-No plan se marca paralelo por cantidad de tasks; se deriva del análisis de
-Files/recursos y conserva fallback serial.
+A plan is never marked parallel because of how many tasks it has; whether it
+can run in parallel is derived from analyzing Files/declared-resources overlap
+(or the lack of it), and the design always preserves a serial fallback.
 
 ## No Placeholders
 

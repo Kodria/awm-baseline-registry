@@ -334,6 +334,13 @@ Final reviewer: All requirements met, ready to merge
 
 ## <TERMINATION_PHASE>
 
+**Track mode exception:** if this run is in an authenticated track worktree
+(per the "Track mode" section above — `.awm/track.json` exists and was
+authenticated via `awm track status`), do NOT invoke `post-implementation-qa`
+here; that section already governs termination for this case (commit, clean
+worktree, request `awm track join <trackId>`, then stop and wait for the plan
+supervisor). Everything below applies to the non-track-mode case only.
+
 Once all tasks are complete and the final code review is approved, you have **one mandatory step before stopping**: invoke `post-implementation-qa`.
 
 > **Why not skip it:** The final code reviewer within this skill checks code quality. `post-implementation-qa` checks Track A fidelity (plan-vs-implementation, ID-driven) and Track B quality (robustness/logic/tests lenses) — a different review class that this skill's code reviewer does not perform. Skipping it means the branch reaches `finishing-a-development-branch` without a plan-vs-implementation audit.

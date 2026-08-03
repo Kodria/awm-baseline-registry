@@ -15,7 +15,7 @@ test('writing-plans emits mechanically parseable track contract (R1.1, R1.5, C4)
 
 test('SDD track mode scopes tasks and skips plan writes/global QA (R2.2, R3.2-R3.5, C6)', async () => {
   const text = await skill('subagent-driven-development');
-  for (const token of ['AWM-INTEGRATION: track-mode', 'trackContext.taskIds', 'computeTrackGate', 'planDigest', 'DO NOT modify the plan', 'DO NOT invoke `post-implementation-qa`']) {
+  for (const token of ['AWM-INTEGRATION: track-mode', 'trackContext.taskIds', 'computeTrackGate', 'planDigest', 'DO NOT modify the plan', 'DO NOT invoke', 'post-implementation-qa']) {
     assert.ok(text.includes(token), `subagent-driven-development missing ${token}`);
   }
 });
