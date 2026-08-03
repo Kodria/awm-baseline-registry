@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "1.4.1"
+version: "1.5.0"
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
 
@@ -139,6 +139,42 @@ git commit -m "feat: add specific feature"
 A task counts as touching a designed screen when its `**Files:**` list includes a route/component/page file that corresponds to a screen listed in the design doc's `## UI Screens` table — cross-check the Files list against that table's Screen column before deciding.
 
 `frontend-craft` alone is normally sufficient — it consults `ui-ux-pro-max` internally when a color/typography/UX decision needs it. Only declare `ui-ux-pro-max` directly in `**Skills:**` if the task needs to invoke its search independent of frontend-craft (e.g. a task that's purely about generating/persisting a design system, with no frontend-craft escalation).
+
+## Parallel track declaration (optional, fail-closed)
+
+<!-- AWM-INTEGRATION: track-plan-contract -->
+
+Use this only when two or more task groups have no overlap in files,
+dependencies, declared resources, lockfiles, manifests, migrations, snapshots,
+or generated outputs. If that claim cannot be made explicitly, omit all track
+fields and keep the plan serial.
+
+Add one `**Track:** <id>` line to every tracked task immediately after its
+`_Requirements:_` line and before `**Files:**`. Add one plan-level block:
+
+```markdown
+## Tracks
+
+**Integration argv:** ["npm","test","--","--runInBand"]
+**Integration paths:** ["src/**","tests/**"]
+
+| Track | Depends on | Shared resources |
+|---|---|---|
+| core | none | [] |
+| docs | none | [] |
+```
+
+`Integration argv` and `Integration paths` are JSON string[] values, not shell
+text. Derive argv from a command already verified in the repository; preserve
+each token as a separate array element.
+
+`Depends on` is `none` only when there is no dependency; any other value forces
+serial execution. `Shared resources` must be explicit, including `[]`; omitted
+means serial. Resource IDs use `<class>:<value>` such as `port:5432`, `db:dev`,
+or `path:.cache/tool`.
+
+No plan se marca paralelo por cantidad de tasks; se deriva del análisis de
+Files/recursos y conserva fallback serial.
 
 ## No Placeholders
 
