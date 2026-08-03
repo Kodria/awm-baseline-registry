@@ -1,6 +1,6 @@
 ---
 name: post-implementation-qa
-version: "1.3.0"
+version: "1.4.0"
 description: Use after implementation is complete and before finishing the branch — runs two-track QA (Track A fidelity vs. the plan, Track B plan-agnostic quality lenses), drives a fix loop until clean. Also works standalone when a bug is found independently.
 ---
 
@@ -37,6 +37,20 @@ Invoked when `subagent-driven-development` or `executing-plans` reports all task
 The user invokes directly when finding a bug or wanting a QA pass without prior development.
 - If `*-plan.md` exists for the current branch in `docs/plans/` → use it as reference
 - If no plan → delegate directly to `systematic-debugging`
+
+## Parallel-track final-head guard
+
+<!-- AWM-INTEGRATION: final-head-only -->
+
+IF `.awm/track.json` exists, refuse invocation: QA global never runs inside a
+track. The track controller returns to its local gate instead.
+
+IF the plan journal declares tracks, run only when every track is
+`MERGED_UNVERIFIED` and the plan supervisor identifies the current HEAD as the
+final integrated candidate. Apply every QA fix, commit the fixes, and require a
+clean committed HEAD before reporting QA pass. The supervisor then runs the
+canonical integration argv and interlock; no mutation is allowed after that
+fingerprint is created.
 
 ## Two Tracks
 
