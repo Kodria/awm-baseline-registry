@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "1.5.0"
+version: "1.6.0"
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
 
@@ -191,6 +191,36 @@ Before offering the execution choice, run this gate on the traceability matrix. 
 - **No task or test lacks a requirement ID.** Anything unanchored is orphan scope — resolve it before handoff.
 
 Do not proceed to the execution handoff while the gate reports gaps. *(Tier: skipped for trivial single-file diffs with no `## Requirements` section.)*
+
+## Harness Preflight Gate (pre-handoff) — BLOCKING
+
+Everything past the execution handoff consumes `awm sensors run`: the implementer, both
+reviewers, `post-implementation-qa`. **None of them verify the sensors can actually run.**
+If the harness is not configured, or declares tools that are not installed, those phases
+report on checks that never happened — and on an unattended run nobody finds out until a
+bad change is already merged.
+
+```bash
+awm preflight
+```
+
+- **Exit 0 (`ready`)** — proceed to the Context Budget Gate.
+- **Non-zero (`degraded` / `not_configured`)** — **stop. Do not offer the execution
+  choice.** Show the report, walk the user through the remedy it prints (usually
+  `awm sensors init`, installing a missing tool, or deliberately disabling a sensor), and
+  re-run until it is green.
+
+This is the one gate here that genuinely blocks, and the reason is the boundary itself: it
+is the last point where a person can fix the harness. A misconfigured harness discovered
+at 3 AM is not a slower run, it is a run whose entire quality apparatus was decorative.
+
+**Do not route around it.** If the user asks to skip, the honest options are to fix the
+config, or to opt out deliberately (`awm sensors init`, then set the sensors to
+`"enabled": false`) so the decision is recorded in a committed file rather than implied by
+silence. Never proceed by treating "not configured" as "no findings".
+
+*(If `awm preflight` reports an unknown command, the project is on an older AWM CLI — say
+so once and continue; do not improvise a substitute check.)*
 
 ## Context Budget Gate (pre-handoff)
 

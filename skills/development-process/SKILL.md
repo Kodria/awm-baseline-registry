@@ -1,6 +1,6 @@
 ---
 name: development-process
-version: "1.4.0"
+version: "1.5.0"
 description: Use when starting a new development task, resuming work, or when unsure which skill to invoke next - orchestrates the full development lifecycle from idea to merge
 ---
 
@@ -98,6 +98,25 @@ El `Context Budget Gate` de `writing-plans` es el caso testigo: mide el contexto
 típicamente desatendido — solo registra el delta para que aparezca en el próximo gate de plan.
 
 ## Orchestration Process
+
+### Step 0: Harness Preflight (advisory at entry)
+
+Before reading state, check that this project can be gated at all:
+
+```bash
+awm preflight
+```
+
+Report the result to the user in one line and continue either way — at entry this is
+**advisory, not blocking**. The project may not be theirs, the session may be exploratory,
+and a hard stop here would be hostile to a first look at a repo.
+
+Its purpose at this point is timing, not enforcement: knowing the harness is not configured
+BEFORE designing and planning is worth minutes, and it puts the fix in the cheapest place.
+The blocking check is the **Harness Preflight Gate** in `writing-plans`, immediately before
+the execution handoff — the boundary past which nobody is present.
+
+*(Unknown command → the project is on an older AWM CLI. Say so once and continue.)*
 
 ### Step 1: Identify Project State
 
