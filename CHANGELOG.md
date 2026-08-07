@@ -2,6 +2,17 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 2.7.0 — 2026-08-07
+
+### Added
+- `skills/finishing-a-development-branch/SKILL.md` (1.2.0→1.3.0) y `skills/receiving-code-review/SKILL.md` (1.0.0→1.1.0): creación de PR/MR y respuesta a comentarios de revisión inline ahora son host-agnósticas. Ambos skills detectan el host desde el remote `origin` (Step 3.5 en `finishing-a-development-branch`; el mismo check en `receiving-code-review`) y usan `gh pr create` / `gh api .../replies` en GitHub, `glab mr create` / `glab` en GitLab (con la guía hedged en vez de un flag no verificado, porque las superficies de CLI cambian con el tiempo), o degradan honestamente cuando el host no se reconoce o su CLI no está instalada: el push (o la respuesta) igual se completa y el operador recibe instrucciones concretas para terminar a mano, sin que el skill lo trate como un fallo. Antes, ambos skills asumían GitHub/`gh` sin condición — un proyecto en GitLab, o sin `gh`/`glab` instalado, no tenía un camino documentado.
+
+### Fixed
+- `skills/finishing-a-development-branch/SKILL.md`: la rama `HOST=github` de la Opción 2 asumía que `gh` siempre estaba presente y no tenía el mismo resguardo que la rama `HOST=gitlab` (que sí contemplaba `glab` ausente). Ahora, si `gh` no está instalado o no está en el PATH, reusa el mismo camino degradado que ya cubre host desconocido/CLI ausente — en vez de fallar en silencio o asumir `gh` sin verificarlo.
+
+### Nota de versión
+Bundle `dev` 2.6.0 → 2.7.0 (minor): capacidad aditiva (host-agnóstico en PR/MR), sin ruptura de contrato.
+
 ## dev 2.3.0 — 2026-08-02
 
 ### Added

@@ -178,7 +178,7 @@ The push always happens first and never depends on `gh`/`glab`. What differs by 
 git push -u origin <feature-branch>
 ```
 
-**`HOST=github` → use `gh`:**
+**`HOST=github` → use `gh`, if installed:**
 
 ```bash
 gh pr create --title "<title>" --body "$(cat <<'EOF'
@@ -190,6 +190,8 @@ gh pr create --title "<title>" --body "$(cat <<'EOF'
 EOF
 )"
 ```
+
+If `gh` isn't installed (or not on PATH), treat this the same as the degraded path below.
 
 **`HOST=gitlab` → use `glab`, if installed:**
 
