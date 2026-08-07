@@ -1,7 +1,7 @@
 ---
 name: finishing-a-development-branch
 version: "1.3.0"
-description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup
+description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR/MR, or cleanup
 ---
 
 # Finishing a Development Branch
@@ -26,7 +26,7 @@ El modo desatendido quita pausas, no controles: los gates (sensor, ledger, recon
 
 ### Modo desatendido
 
-WHEN el modo es `desatendido` AND los tests del Step 1 pasan: omite el menú del Step 3 y ejecuta directamente la **Opción 2 (Push and Create PR)**, que corre primero el Step 3.5 (detección de host) y luego el Step 4.0 (retiro de artefactos de diseño) automáticamente, sin prompt. IF los tests fallan, THEN detente y reporta los fallos sin pushear ni crear el PR/MR — igual que en modo interactivo; tests rojos son una pausa legítima que ningún modo salta. La **Opción 4 (Discard)** NUNCA está disponible en modo desatendido: descartar trabajo es una acción destructiva que siempre requiere a un humano.
+WHEN el modo es `desatendido` AND los tests del Step 1 pasan: omite el menú del Step 3 y ejecuta directamente la **Opción 2 (Push and Create PR/MR)**, que corre primero el Step 3.5 (detección de host) y luego el Step 4.0 (retiro de artefactos de diseño) automáticamente, sin prompt. IF los tests fallan, THEN detente y reporta los fallos sin pushear ni crear el PR/MR — igual que en modo interactivo; tests rojos son una pausa legítima que ningún modo salta. La **Opción 4 (Discard)** NUNCA está disponible en modo desatendido: descartar trabajo es una acción destructiva que siempre requiere a un humano.
 
 **El push siempre corre; el PR/MR es best-effort.** Si `$HOST=unknown` (o el host es reconocido pero su CLI no está instalado), la Opción 2 degrada a "push + instrucciones para abrir el PR/MR a mano" — ese es un resultado **final y válido** del modo desatendido, no un fallo. El skill nunca debe: (a) bloquear/escalar porque no pudo crear el PR/MR, ni (b) terminar en silencio sin decir que el PR/MR no se creó. El reporte final del modo desatendido siempre debe indicar explícitamente si el PR/MR se creó o si quedó pendiente de creación manual.
 
@@ -47,7 +47,7 @@ Tests failing (<N> failures). Must fix before completing:
 
 [Show failures]
 
-Cannot proceed with merge/PR until tests pass.
+Cannot proceed with merge/PR/MR until tests pass.
 ```
 
 Stop. Don't proceed to Step 2.
@@ -65,7 +65,7 @@ Or ask: "This branch split from main - is that correct?"
 
 ### Step 3: Present Options
 
-**Modo desatendido:** no presentes el menú — ejecuta directamente la Opción 2 (Push and Create PR) del Step 4 (que corre el Step 3.5 de detección de host y el Step 4.0 de retiro de artefactos primero) y continúa con el cleanup del Step 5. La Opción 4 (Discard) no existe en este modo. Recordá: si la creación del PR/MR degrada (host desconocido o CLI ausente), el push + instrucciones manuales sigue siendo un cierre válido de la Opción 2 — no un fallo que deba escalarse.
+**Modo desatendido:** no presentes el menú — ejecuta directamente la Opción 2 (Push and Create PR/MR) del Step 4 (que corre el Step 3.5 de detección de host y el Step 4.0 de retiro de artefactos primero) y continúa con el cleanup del Step 5. La Opción 4 (Discard) no existe en este modo. Recordá: si la creación del PR/MR degrada (host desconocido o CLI ausente), el push + instrucciones manuales sigue siendo un cierre válido de la Opción 2 — no un fallo que deba escalarse.
 
 **Modo interactivo:** present exactly these 4 options:
 
@@ -73,7 +73,7 @@ Or ask: "This branch split from main - is that correct?"
 Implementation complete. What would you like to do?
 
 1. Merge back to <base-branch> locally
-2. Push and create a Pull Request
+2. Push and create a PR/MR
 3. Keep the branch as-is (I'll handle it later)
 4. Discard this work
 
@@ -103,7 +103,7 @@ esac
 
 #### Step 4.0: Retire design artifacts (Options 1 & 2 only)
 
-**Runs only on the integration paths (Option 1 Merge, Option 2 PR), before the merge/push below. Skip entirely for Options 3 and 4.**
+**Runs only on the integration paths (Option 1 Merge, Option 2 PR/MR), before the merge/push below. Skip entirely for Options 3 and 4.**
 
 Reaching this skill means QA already passed — `development-process` gates `finishing` behind the `awm-qa-complete` + `awm-retro-complete` markers, so any screen marked `completed` in a design doc's `## UI Screens` table has already cleared the design-fidelity gate. Its `.stitch/designs/` artifacts (HTML + PNG) were consumed by implementation and QA and are dead weight in the merged history from here on. Stitch keeps the project (`> Stitch Project: projects/<id>` in the design doc) as the durable source of truth.
 
@@ -167,7 +167,7 @@ git branch -d <feature-branch>
 
 Then: Cleanup worktree (Step 5)
 
-#### Option 2: Push and Create PR
+#### Option 2: Push and Create PR/MR
 
 **First, run Step 4.0 (retire design artifacts).**
 
@@ -193,18 +193,7 @@ EOF
 
 **`HOST=gitlab` → use `glab`, if installed:**
 
-```bash
-glab mr create --title "<title>" --description "$(cat <<'EOF'
-## Summary
-<2-3 bullets of what changed>
-
-## Test Plan
-- [ ] <verification steps>
-EOF
-)"
-```
-
-`glab mr create` is the MR equivalent of `gh pr create`. Verify the exact flags against `glab --help` at the time — CLI surfaces drift, and asserting an untested flag with false confidence is worse than checking. If `glab` isn't installed, treat this the same as the degraded path below.
+`glab mr create` is the MR equivalent of `gh pr create` — open it with a title and a description covering the summary and test plan (e.g. `glab mr create --title "<title>" --description "..."`, though verify the exact flags against `glab --help` at the time — CLI surfaces drift, and asserting an untested flag with false confidence is worse than checking). If `glab` isn't installed, treat this the same as the degraded path below.
 
 **`HOST=unknown` (unrecognized remote domain, or the host's CLI isn't installed) → honest degradation, not a failure:**
 
@@ -271,14 +260,14 @@ git worktree remove <worktree-path>
 | Option | Merge | Push | Keep Worktree | Cleanup Branch | Retire artifacts |
 |--------|-------|------|---------------|----------------|------------------|
 | 1. Merge locally | ✓ | - | - | ✓ | ✓ (if any) |
-| 2. Create PR | - | ✓ | ✓ | - | ✓ (if any) |
+| 2. Create PR/MR | - | ✓ | ✓ | - | ✓ (if any) |
 | 3. Keep as-is | - | - | ✓ | - | - |
 | 4. Discard | - | - | - | ✓ (force) | - |
 
 ## Common Mistakes
 
 **Skipping test verification**
-- **Problem:** Merge broken code, create failing PR
+- **Problem:** Merge broken code, create failing PR/MR
 - **Fix:** Always verify tests before offering options
 
 **Open-ended questions**
