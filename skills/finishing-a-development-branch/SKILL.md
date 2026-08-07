@@ -1,6 +1,6 @@
 ---
 name: finishing-a-development-branch
-version: "1.2.0"
+version: "1.3.0"
 description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup
 ---
 
@@ -26,7 +26,9 @@ El modo desatendido quita pausas, no controles: los gates (sensor, ledger, recon
 
 ### Modo desatendido
 
-WHEN el modo es `desatendido` AND los tests del Step 1 pasan: omite el menú del Step 3 y ejecuta directamente la **Opción 2 (Push and Create PR)**. IF los tests fallan, THEN detente y reporta los fallos sin crear el PR — igual que en modo interactivo; tests rojos son una pausa legítima que ningún modo salta. La **Opción 4 (Discard)** NUNCA está disponible en modo desatendido: descartar trabajo es una acción destructiva que siempre requiere a un humano. El path de auto-PR corre primero el **Step 4.0 (retiro de artefactos de diseño)** automáticamente, sin prompt.
+WHEN el modo es `desatendido` AND los tests del Step 1 pasan: omite el menú del Step 3 y ejecuta directamente la **Opción 2 (Push and Create PR)**, que corre primero el Step 3.5 (detección de host) y luego el Step 4.0 (retiro de artefactos de diseño) automáticamente, sin prompt. IF los tests fallan, THEN detente y reporta los fallos sin pushear ni crear el PR/MR — igual que en modo interactivo; tests rojos son una pausa legítima que ningún modo salta. La **Opción 4 (Discard)** NUNCA está disponible en modo desatendido: descartar trabajo es una acción destructiva que siempre requiere a un humano.
+
+**El push siempre corre; el PR/MR es best-effort.** Si `$HOST=unknown` (o el host es reconocido pero su CLI no está instalado), la Opción 2 degrada a "push + instrucciones para abrir el PR/MR a mano" — ese es un resultado **final y válido** del modo desatendido, no un fallo. El skill nunca debe: (a) bloquear/escalar porque no pudo crear el PR/MR, ni (b) terminar en silencio sin decir que el PR/MR no se creó. El reporte final del modo desatendido siempre debe indicar explícitamente si el PR/MR se creó o si quedó pendiente de creación manual.
 
 ## The Process
 
@@ -63,7 +65,7 @@ Or ask: "This branch split from main - is that correct?"
 
 ### Step 3: Present Options
 
-**Modo desatendido:** no presentes el menú — ejecuta directamente la Opción 2 (Push and Create PR) del Step 4 (que corre el Step 4.0 de retiro de artefactos primero) y continúa con el cleanup del Step 5. La Opción 4 (Discard) no existe en este modo.
+**Modo desatendido:** no presentes el menú — ejecuta directamente la Opción 2 (Push and Create PR) del Step 4 (que corre el Step 3.5 de detección de host y el Step 4.0 de retiro de artefactos primero) y continúa con el cleanup del Step 5. La Opción 4 (Discard) no existe en este modo. Recordá: si la creación del PR/MR degrada (host desconocido o CLI ausente), el push + instrucciones manuales sigue siendo un cierre válido de la Opción 2 — no un fallo que deba escalarse.
 
 **Modo interactivo:** present exactly these 4 options:
 
@@ -79,6 +81,23 @@ Which option?
 ```
 
 **Don't add explanation** - keep options concise.
+
+### Step 3.5: Detect Git Host
+
+**Runs before any git operation in Step 4** (both Option 1 and Option 2 potentially care which host is in play, though only Option 2 branches on it today).
+
+```bash
+REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+case "$REMOTE_URL" in
+  *github.com*) HOST=github ;;
+  *gitlab*)     HOST=gitlab ;;
+  *)            HOST=unknown ;;
+esac
+```
+
+- `HOST=github` → use `gh` (GitHub CLI).
+- `HOST=gitlab` → use `glab` (GitLab CLI), if installed.
+- `HOST=unknown` → no host CLI applies, or the CLI isn't installed even when the host is recognized (e.g. `gitlab` but no `glab` binary): degrade honestly — see Option 2 below. This is never a hard failure.
 
 ### Step 4: Execute Choice
 
@@ -152,11 +171,16 @@ Then: Cleanup worktree (Step 5)
 
 **First, run Step 4.0 (retire design artifacts).**
 
-```bash
-# Push branch
-git push -u origin <feature-branch>
+The push always happens first and never depends on `gh`/`glab`. What differs by `$HOST` (from Step 3.5) is only how — or whether — a PR/MR gets opened after.
 
-# Create PR
+```bash
+# Push branch (always — independent of host/CLI)
+git push -u origin <feature-branch>
+```
+
+**`HOST=github` → use `gh`:**
+
+```bash
 gh pr create --title "<title>" --body "$(cat <<'EOF'
 ## Summary
 <2-3 bullets of what changed>
@@ -166,6 +190,35 @@ gh pr create --title "<title>" --body "$(cat <<'EOF'
 EOF
 )"
 ```
+
+**`HOST=gitlab` → use `glab`, if installed:**
+
+```bash
+glab mr create --title "<title>" --description "$(cat <<'EOF'
+## Summary
+<2-3 bullets of what changed>
+
+## Test Plan
+- [ ] <verification steps>
+EOF
+)"
+```
+
+`glab mr create` is the MR equivalent of `gh pr create`. Verify the exact flags against `glab --help` at the time — CLI surfaces drift, and asserting an untested flag with false confidence is worse than checking. If `glab` isn't installed, treat this the same as the degraded path below.
+
+**`HOST=unknown` (unrecognized remote domain, or the host's CLI isn't installed) → honest degradation, not a failure:**
+
+The push already succeeded. Report exactly that, plus what's left to do manually:
+
+```
+Pushed to <feature-branch>. Could not create a PR/MR automatically — no gh/glab detected or unrecognized git host.
+
+Open one manually:
+- If the remote is GitHub-shaped: <remote-url-without-.git>/compare/<base-branch>...<feature-branch>
+- Otherwise: push is done — open a merge/pull request for <feature-branch> against <base-branch> from your host's web UI.
+```
+
+This IS a valid, complete outcome of Option 2 — the branch is pushed and the operator has a clear, unambiguous next action. It is never treated as an error or a reason to escalate.
 
 Then: Cleanup worktree (Step 5)
 
@@ -244,6 +297,14 @@ git worktree remove <worktree-path>
 - **Problem:** Removing `.stitch/designs/` on Option 3 or 4 deletes design refs when the work isn't being integrated
 - **Fix:** Step 4.0 runs only on Options 1 & 2, and only for `completed` screens
 
+**Treating a degraded PR/MR as a failure**
+- **Problem:** `$HOST=unknown` (no `gh`/`glab`, or unrecognized remote) is mistaken for an error and the skill blocks, escalates, or refuses to finish
+- **Fix:** The push already succeeded and never depended on the CLI — report the degraded PR/MR step and stop there; that's a complete Option 2 outcome, in both interactive and unattended mode
+
+**Silently skipping PR/MR creation**
+- **Problem:** Push succeeds, `gh`/`glab` isn't available, and the skill ends without telling the operator a PR/MR was NOT created
+- **Fix:** Always state explicitly whether a PR/MR was created or is pending manual creation, with the compare/MR URL or instructions
+
 ## Red Flags
 
 **Never:**
@@ -252,6 +313,8 @@ git worktree remove <worktree-path>
 - Delete work without confirmation
 - Force-push without explicit request
 - Retire design artifacts on Option 3/4, or for non-`completed` screens
+- Treat a degraded PR/MR (no `gh`/`glab`, or unrecognized host) as a blocking failure
+- Finish Option 2 without stating whether a PR/MR was actually created
 
 **Always:**
 - Verify tests before offering options
@@ -259,6 +322,7 @@ git worktree remove <worktree-path>
 - Get typed confirmation for Option 4
 - Clean up worktree for Options 1 & 4 only
 - Retire `completed`-screen `.stitch/designs/` artifacts before integrating (Options 1 & 2, via Step 4.0)
+- Detect the git host (Step 3.5) before any Option 2 git-host operation
 
 ## Integration
 
