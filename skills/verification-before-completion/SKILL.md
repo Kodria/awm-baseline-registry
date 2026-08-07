@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-version: "1.0.0"
+version: "1.1.0"
 description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
 ---
 
@@ -105,6 +105,30 @@ Skip any step = lying, not verifying
 ✅ Agent reports success → Check VCS diff → Verify changes → Report actual state
 ❌ Trust agent report
 ```
+
+## Scoping the test gate
+
+A growing suite eventually costs minutes, and demanding the whole thing at every task — times every
+parallel subagent — puts most of a session's wall clock inside the inner loop. Scope it by gate:
+
+| Gate | Command that proves the claim |
+|------|-------------------------------|
+| A task / a subagent's work is done | The tests **related to the files changed** — whatever the stack calls that (`vitest related`, `jest --findRelatedTests`, `pytest --testmon`, a targeted path) |
+| The **branch** is done | The **full suite**, exactly once, run by `finishing-a-development-branch` before merge/PR |
+
+**This narrows which command proves the claim. It never licenses claiming without running one.**
+The Iron Law is unchanged: no completion claim without fresh output from the gate you are at. "Related
+tests are enough here" is a statement about scope, never about skipping.
+
+**The limit — state it, do not paper over it.** Related-test selection follows the *static* import
+graph. It does not see runtime coupling: shared setup files, global mocks, fixtures, environment
+variables, dynamic imports, generated clients. When a change touches something at the root of the
+graph or outside it — test setup, build or test config, a schema, a global type, a util imported by
+half the repo — related tests are **not** sufficient evidence, and the full suite is the gate even
+mid-branch.
+
+When in doubt about whether a change is leaf or root, run the full suite. The scoping exists to make
+the common case cheap, not to let a risky change through on a technicality.
 
 ## Why This Matters
 

@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "2.1.1"
+version: "2.2.0"
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
 
@@ -180,6 +180,30 @@ test('parseConfig returns explicit error on empty input', () => {
 ### 5. Cure, don't append raw
 
 When writing to `CONSTITUTION.md` or `AGENTS.md`, **merge and prune**: fold the new lesson into the relevant existing section and drop entries that no longer apply. These docs are delivered every session — keep them a curated index, not an append-only log, so context never saturates.
+
+**This step has a sensor, because on its own it does not hold.** Measured on a real repo, `AGENTS.md`
+went 73KB → 141KB across **45 revisions and never shrank once**, while this exact instruction was
+already in force. Curing is an append; pruning is a judgement call nobody is forced to make, so the
+append wins every time. Treat the rule as necessary but not sufficient.
+
+The `context-budget` sensor in the `generic` pack is what actually holds the line. It pins the current
+total on first run and reports a finding — failing `awm sensors run` — whenever the injected files grow
+past it. So after applying a lesson:
+
+```bash
+awm sensors run --fast    # context-budget is a fast sensor
+```
+
+If it fires, you have two honest options, and picking one is part of closing the retro:
+
+1. **Prune** until you are back under budget — the default. A lesson that has been internalized, or one
+   superseded by the rule you just wrote, is exactly what should go.
+2. **Raise `maxBytes`** in `.awm/context-budget.json` — allowed, but it is a committed diff someone
+   reviews, and the retro log should say why the growth was worth paying for in every future session.
+
+What you must NOT do is run `awm sensors baseline` to make it quiet. Baseline fingerprints mask digit
+runs, so a single baseline suppresses this finding at *every* future size and the budget silently stops
+meaning anything.
 
 ### 6. Apply
 
