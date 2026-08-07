@@ -19,6 +19,8 @@ El campo `sensors.<name>.formatter` de estos dos packs describe la herramienta r
 ### Nota de versión
 Bundle `dev` 2.7.0 → 2.8.0 (minor): capacidad aditiva (packs Python y Shell), sin ruptura de contrato. `sensor-packs/` no vive dentro de ningún `source` de bundle en `catalog.json` — es contenido de registry top-level, entregado por el tag del repo (`auto-tag.yml`) independientemente de versión de bundle — el bump aquí sigue la convención de este CHANGELOG de versionar `dev` ante cualquier cambio de contenido notable (ver `dev 2.2.1`, fix de `sensor-packs/js-ts` sin cambios de skills).
 
+## dev 2.7.0 — 2026-08-07
+
 ### Added
 - `skills/finishing-a-development-branch/SKILL.md` (1.2.0→1.3.0) y `skills/receiving-code-review/SKILL.md` (1.0.0→1.1.0): creación de PR/MR y respuesta a comentarios de revisión inline ahora son host-agnósticas. Ambos skills detectan el host desde el remote `origin` (Step 3.5 en `finishing-a-development-branch`; el mismo check en `receiving-code-review`) y usan `gh pr create` / `gh api .../replies` en GitHub, `glab mr create` / `glab` en GitLab (con la guía hedged en vez de un flag no verificado, porque las superficies de CLI cambian con el tiempo), o degradan honestamente cuando el host no se reconoce o su CLI no está instalada: el push (o la respuesta) igual se completa y el operador recibe instrucciones concretas para terminar a mano, sin que el skill lo trate como un fallo. Antes, ambos skills asumían GitHub/`gh` sin condición — un proyecto en GitLab, o sin `gh`/`glab` instalado, no tenía un camino documentado.
 

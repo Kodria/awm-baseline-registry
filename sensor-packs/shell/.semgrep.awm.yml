@@ -3,7 +3,13 @@
 
 rules:
   - id: awm-sh-no-eval
-    pattern: eval $X
+    patterns:
+      - pattern: eval $X
+      # eval $(...) is command substitution, not a plain variable — that
+      # specific shape is `awm-sh-unquoted-command-substitution`'s case
+      # (more specific message about substitution/word-splitting). Without
+      # this exclusion both rules fire on the same line for the same call.
+      - pattern-not: eval $(...)
     message: >
       SENSOR[security] Avoid eval on a variable — it executes arbitrary code
       built from data the script doesn't fully control.
