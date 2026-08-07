@@ -1,6 +1,6 @@
 ---
 name: receiving-code-review
-version: "1.0.0"
+version: "1.1.0"
 description: Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performative agreement or blind implementation
 ---
 
@@ -201,9 +201,22 @@ You understand 1,2,3,6. Unclear on 4,5.
 ✅ "Understand 1,2,3,6. Need clarification on 4 and 5 before implementing."
 ```
 
-## GitHub Thread Replies
+## Inline Thread Replies (host-aware)
 
-When replying to inline review comments on GitHub, reply in the comment thread (`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies`), not as a top-level PR comment.
+When replying to inline review comments, reply in the comment thread, not as a top-level PR/MR comment. Detect the host first (same check as `finishing-a-development-branch`'s Step 3.5):
+
+```bash
+REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+case "$REMOTE_URL" in
+  *github.com*) HOST=github ;;
+  *gitlab*)     HOST=gitlab ;;
+  *)            HOST=unknown ;;
+esac
+```
+
+- `HOST=github` → `gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies`.
+- `HOST=gitlab` → reply via `glab` if installed; verify the exact subcommand against `glab --help` at the time (CLI surfaces drift — don't assert a specific flag with false confidence).
+- `HOST=unknown` (no host CLI, or unrecognized remote) → don't drop the reply. Include it in the session's own output/report instead, clearly labeled as the reply content for that thread, so the operator can post it manually.
 
 ## Recurring Feedback (AWM)
 
