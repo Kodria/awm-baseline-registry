@@ -9,12 +9,6 @@
       "changedCmd": "semgrep --config .semgrep.awm.yml --json {files}",
       "configFile": ".semgrep.awm.yml",
       "formatter": "semgrep"
-    },
-    "context-budget": {
-      "fast": true,
-      "defaultCmd": "node awm-context-budget.cjs",
-      "configFile": "awm-context-budget.cjs",
-      "formatter": "generic"
     }
   }
 }

@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "1.4.1"
+version: "1.5.0"
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
 
@@ -191,6 +191,41 @@ Before offering the execution choice, run this gate on the traceability matrix. 
 - **No task or test lacks a requirement ID.** Anything unanchored is orphan scope — resolve it before handoff.
 
 Do not proceed to the execution handoff while the gate reports gaps. *(Tier: skipped for trivial single-file diffs with no `## Requirements` section.)*
+
+## Context Budget Gate (pre-handoff)
+
+**This is the last moment the human is guaranteed to be here.** Everything past the execution
+handoff can run unattended — `development-process` only skips approval for post-plan phases, and
+the phases before the plan exists are always interactive. So a check that needs a person must
+happen here, not later.
+
+Run it before offering the execution choice:
+
+```bash
+awm context-budget
+```
+
+*(Requires the AWM CLI that ships this command. If it reports an unknown command, the
+project is on an older CLI — say so once and continue; do not improvise a substitute.)*
+
+It measures the files injected into **every** session — `AGENTS.md`, `CONSTITUTION.md`,
+`CLAUDE.md` — against the budget pinned in `.awm/context-budget.json`. Silence means within
+budget; proceed. If it reports, present the three options and let the user pick:
+
+1. **Prune now.** The cheapest moment there is: that context is already loaded, and the user is
+   deciding what matters for the work about to start. Lessons already internalized, or superseded
+   by a newer rule, are what should go.
+2. **Raise `maxBytes`** in `.awm/context-budget.json` — a committed, reviewed decision to keep
+   paying for that context in every future session.
+3. **Proceed and note it** in the plan, if the growth is not worth interrupting for right now.
+
+**Never let this block execution on its own.** Blocking here would strand exactly the overnight
+runs it exists to protect — the user came back in the morning expecting a PR, not a stalled gate.
+It is a decision point while someone is present, never a gate that fires when nobody is.
+
+Note the one-session lag this design accepts: `harness-retro` grows these files at the *end* of a
+run, so growth from this session surfaces at the *next* plan gate. That is deliberate. The
+alternative — gating at retro time — is precisely what fires while nobody is watching.
 
 ## Execution Handoff
 

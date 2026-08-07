@@ -1,6 +1,6 @@
 ---
 name: development-process
-version: "1.3.1"
+version: "1.4.0"
 description: Use when starting a new development task, resuming work, or when unsure which skill to invoke next - orchestrates the full development lifecycle from idea to merge
 ---
 
@@ -79,6 +79,23 @@ Al arrancar, localiza el plan activo (`docs/plans/*-plan.md` de la rama actual) 
 - Cualquier otro valor → trátalo como `interactivo` y avisa al usuario: "Valor inválido en `Modo de ejecución`: `<valor>` — usando modo interactivo."
 
 El modo desatendido quita pausas, no controles: los gates (sensor, ledger, reconciliation, anti-bias, drift plan-vs-código) corren idénticos en ambos modos.
+
+### La frontera atendido/desatendido
+
+El modo vive en el plan, así que las fases anteriores a que el plan exista (`brainstorming`,
+`ui-design`, `writing-plans`) son SIEMPRE interactivas. Eso convierte al final de `writing-plans` en
+**el último momento garantizado por contrato en que hay una persona presente** — de ahí en adelante la
+corrida puede ser desatendida de punta a punta.
+
+Consecuencia de diseño, no detalle de implementación: **todo control que requiera una decisión humana
+va antes de ese punto.** Un chequeo que necesita que alguien pode, elija o autorice, colocado en una
+fase post-plan, no protege nada — frena la corrida a las 3 AM y el usuario se levanta sin PR, que es
+peor que no haberlo puesto. Las fases post-plan solo pueden llevar controles que un agente resuelve
+solo, o que reportan sin bloquear.
+
+El `Context Budget Gate` de `writing-plans` es el caso testigo: mide el contexto feedforward
+(`AGENTS.md`, `CONSTITUTION.md`, `CLAUDE.md`) mientras el usuario está, y `harness-retro` — terminal y
+típicamente desatendido — solo registra el delta para que aparezca en el próximo gate de plan.
 
 ## Orchestration Process
 
