@@ -1,0 +1,22 @@
+{
+  "name": "shell",
+  "description": "Shell script sensor pack (bash/sh)",
+  "detects": [],
+  "sensors": {
+    "lint": {
+      "fast": true,
+      "defaultCmd": "find . -type f \\( -name \"*.sh\" -o -name \"*.bash\" \\) -not -path \"*/node_modules/*\" -not -path \"*/.git/*\" -exec shellcheck --format json {} +",
+      "changedCmd": "shellcheck --format json {files}",
+      "changedExtensions": [".sh", ".bash"],
+      "formatter": "shellcheck"
+    },
+    "security": {
+      "fast": false,
+      "defaultCmd": "semgrep --config .semgrep.awm.yml --json .",
+      "changedCmd": "semgrep --config .semgrep.awm.yml --json {files}",
+      "changedExtensions": [".sh", ".bash"],
+      "configFile": ".semgrep.awm.yml",
+      "formatter": "semgrep"
+    }
+  }
+}
