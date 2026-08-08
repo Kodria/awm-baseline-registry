@@ -21,3 +21,4 @@ jobs:
       - run: node tests/codex-session-start.test.mjs
       - run: node tests/session-start.test.mjs
       - run: node tests/sensor-pack-eslint.test.mjs
+      - run: node tests/sensor-pack-shape.test.mjs

@@ -1,5 +1,4 @@
 .awm
-*.awm.*
 
 # Running hooks/codex-session-start directly from the checkout (while developing
 # it, or from a review agent) drops a heartbeat beside the script. It is runtime

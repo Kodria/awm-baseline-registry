@@ -1,0 +1,65 @@
+# AWM Semgrep rules — security patterns for shell scripts (bash/sh)
+# Usage: semgrep --config .semgrep.awm.yml --json .
+
+rules:
+  - id: awm-sh-no-eval
+    patterns:
+      - pattern: eval $X
+      # eval $(...) is command substitution, not a plain variable — that
+      # specific shape is `awm-sh-unquoted-command-substitution`'s case
+      # (more specific message about substitution/word-splitting). Without
+      # this exclusion both rules fire on the same line for the same call.
+      - pattern-not: eval $(...)
+    message: >
+      SENSOR[security] Avoid eval on a variable — it executes arbitrary code
+      built from data the script doesn't fully control.
+      Fix: avoid eval; if dynamic dispatch is unavoidable, validate/allowlist
+      the value first.
+    languages: [bash]
+    severity: ERROR
+
+  - id: awm-sh-curl-pipe-shell
+    patterns:
+      - pattern-either:
+          - pattern: curl $...ARGS | sh
+          - pattern: curl $...ARGS | bash
+          - pattern: wget $...ARGS -O - | sh
+          - pattern: wget $...ARGS -O - | bash
+    message: >
+      SENSOR[security] Piping a remote download straight into a shell
+      (curl|sh, curl|bash, wget|sh) executes unreviewed, unpinned remote code.
+      Fix: download to a file, verify its checksum/signature, then execute.
+    languages: [bash]
+    severity: ERROR
+
+  - id: awm-sh-unquoted-command-substitution
+    patterns:
+      - pattern-either:
+          - pattern: rm $...FLAGS $(...)
+          - pattern: eval $(...)
+    message: >
+      SENSOR[security] Unquoted command substitution in a dangerous position
+      (rm/eval) — word-splitting and globbing on the substituted output can
+      turn attacker-controlled data into extra arguments or commands.
+      Fix: quote the substitution ("$(...)") and validate its contents before
+      use.
+    languages: [bash]
+    severity: ERROR
+
+  - id: awm-sh-no-hardcoded-secrets
+    patterns:
+      - pattern-either:
+          - pattern: $VAR=$VAL
+          - pattern: export $VAR=$VAL
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i).*(PASSWORD|SECRET|API_KEY|APIKEY|TOKEN|PASSWD)$
+      - metavariable-regex:
+          metavariable: $VAL
+          regex: ^[^$]*$
+    message: >
+      SENSOR[security] Potential hardcoded secret in variable '$VAR'.
+      Fix: read it from the environment or a secrets manager instead of
+      hardcoding it in the script.
+    languages: [bash]
+    severity: WARNING
