@@ -28,9 +28,14 @@ rules:
     patterns:
       - pattern: |
           $QUERY + $VAR
+      # `$QUERY` liga el literal CON sus comillas, así que una regex sin ellas no matchea
+      # NUNCA: la regla anterior daba 0 hallazgos sobre casos que debía detectar — patrón
+      # base 4/4, regla completa 0/4. Anclada al inicio del literal en vez de libre: ambas
+      # dan 4/4 en verdaderos positivos, pero la libre marca "Please select an option: " +
+      # name como inyección SQL. Un sensor con falsos positivos se termina desactivando.
       - metavariable-regex:
           metavariable: $QUERY
-          regex: (SELECT|INSERT|UPDATE|DELETE|DROP)
+          regex: "(?i)^[\"'`]\\s*(SELECT|INSERT|UPDATE|DELETE|DROP)\\b"
     message: >
       SENSOR[security] Possible SQL injection via string concatenation.
       Fix: use parameterized queries or a query builder.
