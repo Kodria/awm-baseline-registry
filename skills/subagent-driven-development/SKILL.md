@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.5.0"
+version: "1.6.0"
 description: Use when executing implementation plans with independent tasks in the current session
 ---
 
@@ -64,6 +64,32 @@ Con journal inicializado:
    trabajo pendiente, obligaciones sin verdict `pass`, evidencia con
    fingerprint no vigente, fixes abiertos o corrupción: NO se cierra el ciclo.
    Solo con gate verde se declara COMPLETE.
+
+## Track mode (authenticated worktree only)
+
+<!-- AWM-INTEGRATION: track-mode -->
+
+WHEN `<repo>/.awm/track.json` exists, first authenticate it through
+`awm track status`. If authentication fails, stop; never infer track mode from
+the directory name. Read assignment only from the local journal's
+`trackContext.taskIds`; do not derive it again from the plan and do not read
+dynamic state from sibling tracks.
+
+Before acting on a task, verify its id belongs to `trackContext.taskIds` and
+the current plan digest equals `trackContext.planDigest`. A mismatch is
+BLOCKED. In track mode use `computeTrackGate` through `awm job gate`; it covers
+local tasks, reviews, fixes, and declared local verification only.
+
+In track mode:
+
+- DO NOT modify the plan: no checkboxes, reconciliation edits, QA markers, or
+  retro markers.
+- DO NOT invoke `post-implementation-qa`; global QA belongs to the plan
+  supervisor after every track is `MERGED_UNVERIFIED`.
+- Commit all owned changes and leave worktree/index clean before requesting
+  `awm track join <trackId>`.
+- A join request freezes the track. After requesting it, do not dispatch or
+  mutate until the plan supervisor reports the result.
 
 ## When to Use
 
@@ -307,6 +333,13 @@ Final reviewer: All requirements met, ready to merge
 ```
 
 ## <TERMINATION_PHASE>
+
+**Track mode exception:** if this run is in an authenticated track worktree
+(per the "Track mode" section above — `.awm/track.json` exists and was
+authenticated via `awm track status`), do NOT invoke `post-implementation-qa`
+here; that section already governs termination for this case (commit, clean
+worktree, request `awm track join <trackId>`, then stop and wait for the plan
+supervisor). Everything below applies to the non-track-mode case only.
 
 Once all tasks are complete and the final code review is approved, you have **one mandatory step before stopping**: invoke `post-implementation-qa`.
 
