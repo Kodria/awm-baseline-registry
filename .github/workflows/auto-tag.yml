@@ -45,6 +45,8 @@ jobs:
           node tests/session-start.test.mjs
           node tests/sensor-pack-eslint.test.mjs
           node tests/sensor-pack-shape.test.mjs
+          node tests/sensor-pack-coverage.test.mjs
+          node tests/sensor-pack-coverage-mutations.test.mjs
 
       - name: Compute and push next tag
         run: |

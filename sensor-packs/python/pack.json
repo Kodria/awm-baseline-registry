@@ -2,6 +2,51 @@
   "name": "python",
   "description": "Python sensor pack",
   "detects": ["pyproject.toml", "requirements.txt", "setup.py", "setup.cfg", "Pipfile"],
+  "coverage": {
+    "schemaVersion": 1,
+    "classes": {
+      "static-type-errors": {
+        "description": "Static type errors",
+        "detectors": [{ "sensor": "typecheck", "evidence": { "commandIncludes": ["mypy"] } }],
+        "remedy": { "summary": "Enable Python type checking", "command": "python -m pip install mypy" }
+      },
+      "lint-errors": {
+        "description": "Lint rule violations",
+        "detectors": [{ "sensor": "lint", "evidence": { "commandIncludes": ["ruff", "check"] } }],
+        "remedy": { "summary": "Enable Python linting", "command": "python -m pip install ruff" }
+      },
+      "regression-tests": {
+        "description": "Regression test failures",
+        "detectors": [{ "sensor": "test", "evidence": { "commandIncludes": ["pytest"] } }],
+        "remedy": { "summary": "Add Python regression tests", "command": "python -m pip install pytest" }
+      },
+      "dynamic-code-execution": {
+        "description": "Dynamic code execution risks",
+        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-py-no-eval-exec"] }] } }],
+        "remedy": { "summary": "Enable Python security scanning", "command": "awm sensors init --pack python" }
+      },
+      "subprocess-shell-injection": {
+        "description": "Shell injection through subprocess execution",
+        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-py-subprocess-shell-true"] }] } }],
+        "remedy": { "summary": "Enable Python subprocess security scanning", "command": "awm sensors init --pack python" }
+      },
+      "sql-string-construction": {
+        "description": "Unsafe SQL string construction",
+        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-py-no-sql-string-building"] }] } }],
+        "remedy": { "summary": "Enable Python SQL security scanning", "command": "awm sensors init --pack python" }
+      },
+      "unsafe-deserialization": {
+        "description": "Unsafe data deserialization",
+        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-py-unsafe-deserialization"] }] } }],
+        "remedy": { "summary": "Enable Python deserialization security scanning", "command": "awm sensors init --pack python" }
+      },
+      "hardcoded-secrets": {
+        "description": "Hardcoded credentials and secret values",
+        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-py-no-hardcoded-secrets"] }] } }],
+        "remedy": { "summary": "Enable Python secret scanning", "command": "awm sensors init --pack python" }
+      }
+    }
+  },
   "sensors": {
     "typecheck": {
       "fast": true,

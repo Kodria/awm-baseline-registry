@@ -2,6 +2,14 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 2.10.0 — 2026-08-11
+
+### Added
+- Contrato `coverage.schemaVersion: 1` para los cuatro sensor packs (`generic`, `js-ts`, `python`, `shell`): clases genéricas, detectores literales y remedios read-only consumidos por `awm sensors coverage`. Los gates ejecutables de coverage y mutaciones validan la forma del catálogo, referencias a sensores, comandos, paths y markers de evidencia, además del desacoplamiento de proyectos concretos.
+
+### Nota de versión
+Bundle `dev` 2.9.0 → 2.10.0 (minor): contrato aditivo de metadata de coverage y gates de release. No se modifica ninguna skill ni su frontmatter.
+
 ## dev 2.8.0 — 2026-08-07
 
 ### Added

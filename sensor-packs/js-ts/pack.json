@@ -2,6 +2,63 @@
   "name": "js-ts",
   "description": "JavaScript / TypeScript sensor pack",
   "detects": ["package.json"],
+  "coverage": {
+    "schemaVersion": 1,
+    "classes": {
+      "static-type-errors": {
+        "description": "Static type errors",
+        "detectors": [{ "sensor": "typecheck", "evidence": { "commandIncludes": ["tsc", "--noEmit"] } }],
+        "remedy": { "summary": "Enable TypeScript type checking", "command": "npm install --save-dev typescript" }
+      },
+      "lint-errors": {
+        "description": "Lint rule violations",
+        "detectors": [{ "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config", "eslint.config.awm.mjs"], "files": [{ "path": "eslint.config.awm.mjs", "containsAll": ["no-unreachable"] }] } }],
+        "remedy": { "summary": "Enable JavaScript and TypeScript linting", "command": "awm sensors init --pack js-ts" }
+      },
+      "project-style-conventions": {
+        "description": "Project style conventions",
+        "detectors": [
+          { "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config"], "files": [{ "path": "eslint.config.js", "containsAll": [] }] } },
+          { "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config"], "files": [{ "path": "eslint.config.mjs", "containsAll": [] }] } },
+          { "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config"], "files": [{ "path": "eslint.config.cjs", "containsAll": [] }] } },
+          { "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config"], "files": [{ "path": "eslint.config.ts", "containsAll": [] }] } },
+          { "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config"], "files": [{ "path": "eslint.config.mts", "containsAll": [] }] } },
+          { "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config"], "files": [{ "path": "eslint.config.cts", "containsAll": [] }] } }
+        ],
+        "remedy": { "summary": "Create an ESLint project config and re-run awm sensors init --pack js-ts", "command": "awm sensors init --pack js-ts" }
+      },
+      "formatting": {
+        "description": "Formatting consistency",
+        "detectors": [{ "sensor": "format", "evidence": { "commandIncludes": ["prettier"] } }],
+        "remedy": { "summary": "Enable formatting checks", "command": "npm install --save-dev prettier" }
+      },
+      "dependency-boundaries": {
+        "description": "Dependency boundary violations",
+        "detectors": [{ "sensor": "depcheck", "evidence": { "commandIncludes": ["depcruise", "--config", ".dep-cruiser.awm.js"], "files": [{ "path": ".dep-cruiser.awm.js", "containsAll": ["forbidden"] }] } }],
+        "remedy": { "summary": "Enable dependency boundary checks", "command": "npm install --save-dev dependency-cruiser" }
+      },
+      "regression-tests": {
+        "description": "Regression test failures",
+        "detectors": [{ "sensor": "test", "evidence": { "commandIncludes": ["npm test"] } }],
+        "remedy": { "summary": "Add a deterministic npm test script", "command": "npm test" }
+      },
+      "dynamic-code-execution": {
+        "description": "Dynamic code execution risks",
+        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-no-eval"] }] } }],
+        "remedy": { "summary": "Enable JavaScript and TypeScript security scanning", "command": "awm sensors init --pack js-ts" }
+      },
+      "hardcoded-secrets": {
+        "description": "Hardcoded credentials and secret values",
+        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-no-hardcoded-secrets"] }] } }],
+        "remedy": { "summary": "Enable JavaScript and TypeScript secret scanning", "command": "awm sensors init --pack js-ts" }
+      },
+      "sql-string-construction": {
+        "description": "Unsafe SQL string construction",
+        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-no-sql-concat"] }] } }],
+        "remedy": { "summary": "Enable JavaScript and TypeScript SQL security scanning", "command": "awm sensors init --pack js-ts" }
+      }
+    }
+  },
   "sensors": {
     "typecheck": {
       "fast": true,
@@ -35,6 +92,11 @@
       "enabled": true,
       "defaultCmd": "npm test --silent",
       "formatter": "test"
+    },
+    "format": {
+      "fast": true,
+      "defaultCmd": "npx prettier --check .",
+      "formatter": "generic"
     },
     "mutation": {
       "fast": false,
