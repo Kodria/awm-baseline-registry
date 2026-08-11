@@ -23,6 +23,17 @@ function mutatePack(destination, packName, mutate) {
   fs.writeFileSync(filename, `${JSON.stringify(pack, null, 2)}\n`);
 }
 
+function createExternalEvidenceSymlink(linkPath, externalFile) {
+  try {
+    fs.symlinkSync(externalFile, linkPath, 'file');
+  } catch (error) {
+    if (process.platform === 'win32' && ['EACCES', 'EPERM'].includes(error?.code)) {
+      assert.fail(`Windows no permitió crear el symlink de mutación (${error.code}); habilitá Developer Mode o ejecutá el runner con privilegio CreateSymbolicLink para no ocultar este gate de seguridad`);
+    }
+    throw error;
+  }
+}
+
 async function importValidatorWithoutLiteralMarkerCheck(destination) {
   const sourceFile = path.join(destination, 'tests', 'support', 'sensor-pack-coverage-validator.mjs');
   const source = fs.readFileSync(sourceFile, 'utf8');
@@ -30,6 +41,18 @@ async function importValidatorWithoutLiteralMarkerCheck(destination) {
   const weakenedSource = source.replace('contents.includes(marker)', 'true');
   assert.notEqual(weakenedSource, source, 'la variante histórica debe omitir solo el check literal');
   const weakenedFile = path.join(destination, 'tests', 'support', 'sensor-pack-coverage-validator-without-marker-check.mjs');
+  fs.writeFileSync(weakenedFile, weakenedSource);
+  return import(pathToFileURL(weakenedFile).href);
+}
+
+async function importValidatorWithoutRealpathContainmentCheck(destination) {
+  const sourceFile = path.join(destination, 'tests', 'support', 'sensor-pack-coverage-validator.mjs');
+  const source = fs.readFileSync(sourceFile, 'utf8');
+  const realpathCheck = "assert.ok(relativeRealCandidate && !relativeRealCandidate.startsWith(`..${path.sep}`) && relativeRealCandidate !== '..' && !path.isAbsolute(relativeRealCandidate), `${packName}.${classId}: archivo de evidencia '${relativePath}' sale del pack`);";
+  assert.ok(source.includes(realpathCheck), 'la variante histórica debe partir del check de realpath actual');
+  const weakenedSource = source.replace(realpathCheck, "assert.ok(true, `${packName}.${classId}: archivo de evidencia '${relativePath}' sale del pack`);");
+  assert.notEqual(weakenedSource, source, 'la variante histórica debe omitir solo el check de salida real');
+  const weakenedFile = path.join(destination, 'tests', 'support', 'sensor-pack-coverage-validator-without-realpath-containment.mjs');
   fs.writeFileSync(weakenedFile, weakenedSource);
   return import(pathToFileURL(weakenedFile).href);
 }
@@ -51,13 +74,33 @@ try {
   assert.doesNotThrow(() => validateWithoutLiteralMarkerCheck(historicalMarkerFixture), 'sin la comprobación literal, el marker histórico habría sobrevivido');
   assert.throws(() => validateRegistryCoverage(historicalMarkerFixture), /marker-that-does-not-exist/, 'el gate real debe rechazar el marker histórico');
 
+  const symlinkFixture = path.join(tempRoot, 'external-evidence-symlink');
+  const externalEvidence = path.join(tempRoot, 'outside-the-pack.txt');
+  copyRegistry(symlinkFixture);
+  fs.writeFileSync(externalEvidence, 'awm-generic-no-hardcoded-secrets\n');
+  const symlinkPath = path.join(symlinkFixture, 'sensor-packs', 'generic', 'outside-the-pack.txt');
+  createExternalEvidenceSymlink(symlinkPath, externalEvidence);
+  mutatePack(symlinkFixture, 'generic', (pack) => {
+    pack.coverage.classes['hardcoded-secrets'].detectors[0].evidence.files[0].path = 'outside-the-pack.txt';
+  });
+  const { validateRegistryCoverage: validateWithoutRealpathContainmentCheck } = await importValidatorWithoutRealpathContainmentCheck(symlinkFixture);
+  assert.doesNotThrow(
+    () => validateWithoutRealpathContainmentCheck(symlinkFixture),
+    'sin la comprobación de salida real, el symlink externo habría sobrevivido',
+  );
+  assert.throws(
+    () => validateRegistryCoverage(symlinkFixture),
+    /generic\.hardcoded-secrets: archivo de evidencia 'outside-the-pack\.txt' sale del pack/,
+    'un evidence.file enlazado fuera del pack debe ser rechazado',
+  );
+
   for (const [name, mutate] of mutations) {
     const fixture = path.join(tempRoot, name.replaceAll(' ', '-'));
     copyRegistry(fixture);
     mutate(fixture);
     assert.throws(() => validateRegistryCoverage(fixture), undefined, `mutación '${name}' sobrevivió`);
   }
-  console.log('sensor-pack-coverage-mutations: 6 mutations rejected');
+  console.log('sensor-pack-coverage-mutations: 7 mutations rejected');
 } finally {
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }
