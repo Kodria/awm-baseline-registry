@@ -2,6 +2,22 @@
   "name": "generic",
   "description": "Generic sensor pack — Semgrep only, works with any language",
   "detects": [],
+  "coverage": {
+    "schemaVersion": 1,
+    "classes": {
+      "hardcoded-secrets": {
+        "description": "Hardcoded credentials and secret values",
+        "detectors": [{
+          "sensor": "security",
+          "evidence": {
+            "commandIncludes": ["semgrep", ".semgrep.awm.yml"],
+            "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-generic-no-hardcoded-secrets"] }]
+          }
+        }],
+        "remedy": { "summary": "Enable a generic secret scanner", "command": "awm sensors init --pack generic" }
+      }
+    }
+  },
   "sensors": {
     "security": {
       "fast": false,

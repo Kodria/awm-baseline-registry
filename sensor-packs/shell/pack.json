@@ -2,6 +2,36 @@
   "name": "shell",
   "description": "Shell script sensor pack (bash/sh)",
   "detects": [],
+  "coverage": {
+    "schemaVersion": 1,
+    "classes": {
+      "shell-lint-errors": {
+        "description": "Shell lint rule violations",
+        "detectors": [{ "sensor": "lint", "evidence": { "commandIncludes": ["shellcheck", "--format json"] } }],
+        "remedy": { "summary": "Install ShellCheck and re-run awm sensors init --pack shell", "command": "awm sensors init --pack shell" }
+      },
+      "dynamic-code-execution": {
+        "description": "Dynamic shell code execution risks",
+        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-sh-no-eval"] }] } }],
+        "remedy": { "summary": "Enable shell security scanning", "command": "awm sensors init --pack shell" }
+      },
+      "remote-code-pipe-to-shell": {
+        "description": "Remote code piped to a shell",
+        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-sh-curl-pipe-shell"] }] } }],
+        "remedy": { "summary": "Enable shell remote-code security scanning", "command": "awm sensors init --pack shell" }
+      },
+      "unquoted-command-substitution": {
+        "description": "Unquoted command substitution",
+        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-sh-unquoted-command-substitution"] }] } }],
+        "remedy": { "summary": "Enable shell command substitution security scanning", "command": "awm sensors init --pack shell" }
+      },
+      "hardcoded-secrets": {
+        "description": "Hardcoded credentials and secret values",
+        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-sh-no-hardcoded-secrets"] }] } }],
+        "remedy": { "summary": "Enable shell secret scanning", "command": "awm sensors init --pack shell" }
+      }
+    }
+  },
   "sensors": {
     "lint": {
       "fast": true,
