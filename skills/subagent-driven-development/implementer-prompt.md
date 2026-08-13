@@ -60,7 +60,13 @@ Dispatch a general-purpose subagent:
     Once you're clear on requirements:
     1. Implement exactly what the task specifies
     2. Write tests (following TDD if task says to)
-    3. Verify implementation works (run the test/build commands; read the output)
+    3. Verify implementation works (run the test/build commands; read the output).
+       **Run the tests reachable from what you changed, not the whole suite** — e.g.
+       `vitest --changed`, `jest --findRelatedTests <files>`, `pytest --testmon`, or
+       naming the affected test files. Your controller runs the full suite once, at
+       the end, on the settled tree; you running it too only competes for the same
+       cores with every other agent doing the same. Report your result as a scoped
+       run (see the `tests:` field) — never word it as "the suite passes".
     4. **Run sensors if this repo has them.** If `.awm/sensors.json` exists, run
        `awm sensors run` (NO flag — that runs all sensors; do NOT use `--slow`,
        which skips lint and typecheck). Fix every **new** finding it reports
@@ -153,7 +159,7 @@ Dispatch a general-purpose subagent:
 
         status: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
         files: <path — change ≤10 words>          (one line per file changed)
-        tests: <N pass / M fail — command run>
+        tests: scoped: <N pass / M fail — command run>    (scoped to your change; the controller owns the full suite)
         sensors: overall: pass | fail | not_certified — new findings fixed: N
         design: n/a (no Design Artifacts declared) | <N/M elements confirmed present — list any not found>
         self-review: clean | <≤3 bullets>

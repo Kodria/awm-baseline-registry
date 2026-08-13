@@ -1,6 +1,6 @@
 ---
 name: dispatching-parallel-agents
-version: "1.0.1"
+version: "1.1.0"
 description: Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies
 ---
 
@@ -80,7 +80,11 @@ Use the active platform's native subagent-dispatch capability. All three run con
 When agents return:
 - Read each summary
 - Verify fixes don't conflict
-- Run full test suite
+- Run the full test suite **once, here** — after every agent has returned and the
+  tree has settled. Each agent verified only the tests reachable from its own scope,
+  on purpose: N agents each running the whole suite in parallel just makes them
+  contend for the same cores, and a suite that "passed" under that contention is not
+  something the controller can certify with. This run is the authoritative one.
 - Integrate all changes
 
 ## Agent Prompt Structure

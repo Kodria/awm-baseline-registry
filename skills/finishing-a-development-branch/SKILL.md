@@ -1,6 +1,6 @@
 ---
 name: finishing-a-development-branch
-version: "1.2.0"
+version: "1.3.0"
 description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup
 ---
 
@@ -32,12 +32,32 @@ WHEN el modo es `desatendido` AND los tests del Step 1 pasan: omite el menú del
 
 ### Step 1: Verify Tests
 
-**Before presenting options, verify tests pass:**
+**This is the one place the FULL suite runs — and it runs here exactly once.**
+
+The inner loop and the intermediate gates use scoped runs (only the tests reachable
+from what changed) because re-running everything at every checkpoint is what makes a
+growing suite unaffordable. That scoping is deliberate, and it is also why the full
+run cannot be skipped here: a scoped run misses tests reached by dynamic import or
+mock indirection, tests affected by a config/schema change, and structural tests that
+scan the tree. See `verification-before-completion` → *Scoped vs. full verification*.
+
+Preconditions, so the run is worth its cost and does not have to be repeated:
+
+1. **The working tree is clean and all work is committed.** A full suite over a dirty
+   tree certifies something nobody will merge.
+2. **Every dispatched agent has finished.** If subagents ran in parallel, their
+   individual suite reports are indicative only — they competed for the same cores.
+   This run, by the closer, on the settled tree, is the authoritative one.
+3. **Nothing else heavy is running.** Concurrent builds or a second suite make this
+   run slower and its timings meaningless.
 
 ```bash
-# Run project's test suite
+# Run project's FULL test suite — not a scoped/--changed run
 npm test / cargo test / pytest / go test ./...
 ```
+
+Report it as a full-suite result, with counts. If you ran anything narrower, say so
+and run this before proceeding.
 
 **If tests fail:**
 ```

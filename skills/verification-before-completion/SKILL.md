@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-version: "1.0.0"
+version: "1.1.0"
 description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
 ---
 
@@ -43,6 +43,7 @@ Skip any step = lying, not verifying
 | Claim | Requires | Not Sufficient |
 |-------|----------|----------------|
 | Tests pass | Test command output: 0 failures | Previous run, "should pass" |
+| The suite is green | A **full-suite** run, this message | A scoped/changed-only run (see below) |
 | Linter clean | Linter output: 0 errors | Partial check, extrapolation |
 | Build succeeds | Build command: exit 0 | Linter passing, logs look good |
 | Bug fixed | Test original symptom: passes | Code changed, assumed fixed |
@@ -57,6 +58,7 @@ Skip any step = lying, not verifying
 - About to commit/push/PR without verification
 - Trusting agent success reports
 - Relying on partial verification
+- Reporting a scoped/changed-only test run in words that imply the full suite
 - Thinking "just this once"
 - Tired and wanting work over
 - **ANY wording implying success without having run verification**
@@ -105,6 +107,41 @@ Skip any step = lying, not verifying
 ✅ Agent reports success → Check VCS diff → Verify changes → Report actual state
 ❌ Trust agent report
 ```
+
+## Scoped vs. full verification
+
+<!-- AWM-INTEGRATION: verification-tiers -->
+
+On a suite that has grown past a few minutes, re-running everything at every gate is
+what turns a one-hour change into an all-day one — and the cost is paid again on each
+retry, and again by each agent working in parallel. So a verification run has two
+tiers, and **they are not interchangeable evidence**.
+
+| | Scoped run | Full run |
+|---|---|---|
+| What | Only the tests reachable from what changed (`vitest --changed`, `jest --findRelatedTests`, `pytest --testmon`, `cargo test -p <crate>`, or naming the affected files) | The whole suite |
+| When | The TDD inner loop, and every intermediate gate | **Once**, at branch close, on a clean tree |
+| Proves | No regression in what you touched | The branch is green |
+| Certifies done | **No** | Yes |
+
+**A scoped run is real evidence — of a smaller claim.** It is not a weaker version of
+the full suite; it answers a different question. Use it freely and often. Just never
+launder it into the bigger claim:
+
+```
+✅ [Run scoped tests] [See: 30 files, 239 pass] "Tests related to this change pass (scoped run — not the full suite)"
+✅ [Run full suite]   [See: 918 files, 6263 pass] "Full suite green"
+❌ [Run scoped tests] [See: 239 pass] "Tests pass" / "Suite is green" / "All green"
+```
+
+**Why the scoped tier can't certify.** It selects by the module graph, so it
+systematically misses tests that reach the changed code by dynamic import or mock
+indirection, tests affected by a config/schema/global change, and structural or
+snapshot tests that scan the tree rather than importing it. Those gaps are exactly
+why the full run still happens — once — before the branch is called done.
+
+If you cannot tell which tier a command ran, you have no evidence for either claim.
+Say so and run the one you actually need.
 
 ## Why This Matters
 

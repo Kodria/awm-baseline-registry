@@ -2,6 +2,16 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 2.4.0 — 2026-08-13
+
+### Changed
+- **Verificación en dos niveles.** En una suite que creció, correr todo en cada gate — y de nuevo en cada reintento, y de nuevo en cada subagente en paralelo — es el costo dominante de un ciclo de desarrollo. Los skills ahora distinguen dos niveles que **no son evidencia intercambiable**: una corrida *scoped* (solo los tests alcanzables desde el diff) para el loop interno y los gates intermedios, y la suite *completa* una sola vez al cerrar la rama.
+  - `verification-before-completion` (1.1.0): nueva sección "Scoped vs. full verification" con la tabla de qué prueba cada nivel, más una fila en Common Failures y un Red Flag. La regla dura: un resultado scoped se reporta **diciendo que es scoped** — "los tests pasan" sobre una corrida `--changed` afirma algo que no se midió. Incluye por qué el scoped no puede certificar (selecciona por grafo de módulos, así que se pierde imports dinámicos, indirección por mocks, cambios de config/schema y tests estructurales que escanean el árbol).
+  - `finishing-a-development-branch` (1.3.0): el Step 1 es explícitamente el único lugar donde corre la suite completa, y corre una sola vez, con precondiciones (árbol limpio, todo agente despachado terminó, nada pesado corriendo en paralelo).
+  - `subagent-driven-development` (1.6.0): nueva sección "Test Scope Gate" — los subagentes verifican scoped y el controller corre la completa una vez sobre el árbol asentado. El reporte de suite completa de un subagente no es evidencia aunque venga verde: compitió por CPU con los demás. `implementer-prompt.md` instruye la corrida scoped y el campo `tests:` del reporte ahora se etiqueta `scoped:`.
+  - `dispatching-parallel-agents` (1.1.0): el paso de integración del controller explicita que la suite completa corre ahí, una vez, y por qué cada agente no debe correrla.
+
+
 ## dev 2.3.0 — 2026-08-02
 
 ### Added

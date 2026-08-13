@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.5.0"
+version: "1.6.0"
 description: Use when executing implementation plans with independent tasks in the current session
 ---
 
@@ -185,6 +185,35 @@ If the repo has `.awm/sensors.json`, a task is **not complete** until sensors pa
 **Pitfall — do not use `awm sensors run --slow` as the gate.** `--slow` runs only `semgrep`/`mutation` and skips `lint`/`typecheck`, where most new findings surface. The completion gate is the full run (no flag).
 
 **Recurring sensor failure** (same `name` + `rule` as a prior session) → invoke `harness-retro` instead of just fixing it.
+
+## Test Scope Gate (AWM)
+
+<!-- AWM-INTEGRATION: subagent-test-scope -->
+
+**Subagents verify scoped. The controller runs the full suite once, at the end.**
+
+Every implementer and reviewer running the whole suite is the most expensive
+mistake available here, and it scales the wrong way: N agents × the full suite, all
+competing for the same cores. On a box with a handful of cores the agents make each
+other slow, and none of them produces a number anyone should trust anyway.
+
+1. **In subagent prompts:** the agent runs only the tests reachable from what it
+   changed — `vitest --changed`, `jest --findRelatedTests`, `pytest --testmon`, or
+   naming the affected files directly. It reports that result **labelled as scoped**,
+   never as "the suite passes".
+2. **At the controller, after every agent has returned and the tree is clean:** run
+   `awm sensors run` and the full suite **once**. That single run is the
+   authoritative gate — not the union of the agents' reports.
+
+**A subagent's full-suite report is not evidence, even when it is green.** Agents
+that ran concurrently contended for CPU with each other; a suite that "passed" under
+that contention, or that never printed its summary line before the agent's turn
+ended, tells the controller nothing it can certify with. Do not accept "verified" built
+from partial or competing runs — re-run it yourself, once, on the settled tree.
+
+This is the same boundary `finishing-a-development-branch` enforces at branch close;
+here it also keeps the parallel phase from being N times more expensive than it needs
+to be.
 
 ## Ledger Gate (AWM)
 
