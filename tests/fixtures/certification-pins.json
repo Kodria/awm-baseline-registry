@@ -31,6 +31,11 @@
       "version": "16.10.4",
       "source": "https://registry.npmjs.org/dependency-cruiser"
     },
+    "semgrep": {
+      "package": "semgrep",
+      "version": "1.172.0",
+      "source": "https://pypi.org/pypi/semgrep/json"
+    },
     "stryker": {
       "package": "@stryker-mutator/core",
       "version": "8.7.1",

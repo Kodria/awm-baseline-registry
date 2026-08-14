@@ -19,10 +19,8 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const semgrepAvailable = (() => {
-  try { execFileSync('semgrep', ['--version'], { stdio: 'ignore' }); return true; }
-  catch { return false; }
-})();
+try { execFileSync('semgrep', ['--version'], { stdio: 'ignore' }); }
+catch (error) { throw new Error(`Semgrep certification pin is required for rules-fire: ${error.message}`); }
 
 /** Corpus de violaciones por pack: cada regla declarada debe encontrar al menos una acá.
  *  Si se agrega una regla nueva al pack sin agregarle su caso, el test falla — que es
@@ -65,7 +63,7 @@ const declaredRules = (pack) => [
 ].map((m) => m[1]);
 
 for (const [pack, files] of Object.entries(CORPUS)) {
-  test(`sensor-pack ${pack}: cada regla declarada dispara al menos una vez`, { skip: semgrepAvailable ? false : 'semgrep no instalado (CI de este repo es solo-Node por diseño)' }, () => {
+  test(`sensor-pack ${pack}: cada regla declarada dispara al menos una vez`, () => {
     const dir = mkdtempSync(join(tmpdir(), `awm-rules-${pack}-`));
     try {
       for (const [name, body] of Object.entries(files)) writeFileSync(join(dir, name), `${body}\n`);
