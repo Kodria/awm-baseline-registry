@@ -58,7 +58,7 @@
     },
     "pytest": {
       "package": "pytest",
-      "version": "9.1.1",
+      "version": "8.4.2",
       "source": "https://pypi.org/pypi/pytest/json"
     },
     "semgrep": {

@@ -13,12 +13,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            python: "3.9"
+            python-profile: minimum
+          - os: ubuntu-latest
+            python: "3.12"
+            python-profile: current
+          - os: macos-latest
+            python: "3.12"
+            python-profile: current
+          - os: windows-latest
+            python: "3.12"
+            python-profile: current
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
       - name: Validate frozen pack contracts and generated support
         run: |
           node tests/sensor-pack-variants.test.mjs
@@ -28,6 +43,20 @@ jobs:
           node tests/sensor-pack-support-matrix.test.mjs
       - name: Exercise pinned ESLint minimum and current variants
         run: node tests/sensor-pack-eslint.test.mjs
+      - name: Exercise pinned Python minimum toolchain
+        if: matrix.python-profile == 'minimum'
+        run: |
+          python -m pip install "mypy==2.3.0" "ruff==0.16.3" "pytest==8.4.2"
+          python -m mypy tests/fixtures/python-certification
+          python -m ruff check tests/fixtures/python-certification --output-format json
+          python -m pytest tests/fixtures/python-certification
+      - name: Smoke-test pinned Python current toolchain
+        if: matrix.python-profile == 'current'
+        run: |
+          python -m pip install "mypy==2.3.0" "ruff==0.16.3" "pytest==8.4.2"
+          python -m mypy tests/fixtures/python-certification
+          python -m ruff check tests/fixtures/python-certification --output-format json
+          python -m pytest tests/fixtures/python-certification
       - name: Exercise Ubuntu security and shell tooling
         if: matrix.os == 'ubuntu-latest'
         run: |

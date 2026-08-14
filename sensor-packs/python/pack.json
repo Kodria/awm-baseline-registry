@@ -322,11 +322,11 @@
           "priority": 10,
           "requirements": {
             "tool": "pytest",
-            "toolRange": ">=9.0.0 <10.0.0",
+            "toolRange": ">=8.0.0 <9.0.0",
             "runtime": "python",
             "runtimeRange": ">=3.9.0"
           },
-          "certifiedRange": ">=9.0.0 <10.0.0",
+          "certifiedRange": ">=8.0.0 <9.0.0",
           "command": {
             "executable": "pytest",
             "args": [

@@ -28,10 +28,6 @@ function assertReusableCertification(workflow) {
   const jobs = block(workflow, 0, 'jobs');
   assert.deepEqual(childJobNames(jobs), ['certify'], 'certification must expose one scoped certify job');
   const certify = block(jobs, 2, 'certify');
-  const strategy = block(certify, 4, 'strategy');
-  const matrix = block(strategy, 6, 'matrix');
-  assert.match(matrix, /^ {8}os: \[ubuntu-latest, macos-latest, windows-latest\]$/m,
-    'certification must execute its single job on exactly the three supported OSes');
   for (const command of [
     'node tests/sensor-pack-python-shell-generic.test.mjs',
     'node tests/sensor-pack-certification.test.mjs',
@@ -40,6 +36,32 @@ function assertReusableCertification(workflow) {
   ]) assert.match(certify, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${command} must run in certify`);
   assert.match(certify, /semgrep==1\.173\.0/, 'Ubuntu certification must exercise the pinned real security tool');
   assert.match(certify, /shellcheck/, 'Ubuntu certification must exercise the pinned real shell tool');
+}
+
+function assertPythonToolchainCertification(workflow) {
+  const certify = block(block(workflow, 0, 'jobs'), 2, 'certify');
+  const strategy = block(certify, 4, 'strategy');
+  const matrix = block(strategy, 6, 'matrix');
+  assert.match(matrix, /^ {8}include:\s*$/m, 'certification matrix must explicitly distinguish Python toolchains');
+  for (const entry of [
+    '- os: ubuntu-latest\n            python: "3.9"\n            python-profile: minimum',
+    '- os: ubuntu-latest\n            python: "3.12"\n            python-profile: current',
+    '- os: macos-latest\n            python: "3.12"\n            python-profile: current',
+    '- os: windows-latest\n            python: "3.12"\n            python-profile: current',
+  ]) assert.match(matrix, new RegExp(entry), `certification matrix must include ${entry.replaceAll('\n', ' ')}`);
+  assert.match(certify, /actions\/setup-python@v5/, 'certification must install the selected Python runtime');
+  assert.match(certify, /python-version: \$\{\{ matrix\.python \}\}/, 'certification must bind setup-python to the selected matrix runtime');
+  for (const tool of ['mypy', 'ruff', 'pytest'].map((name) => `${name}==${pins.pins[name].version}`)) {
+    assert.match(certify, new RegExp(tool.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `certification must install pinned ${tool}`);
+  }
+  for (const command of [
+    'python -m mypy tests/fixtures/python-certification',
+    'python -m ruff check tests/fixtures/python-certification --output-format json',
+    'python -m pytest tests/fixtures/python-certification',
+  ]) assert.match(certify, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `certification must exercise ${command}`);
+  assert.match(certify, /if: matrix\.python-profile == 'minimum'/, 'minimum Python execution must be limited to Ubuntu');
+  assert.match(certify, /if: matrix\.python-profile == 'current'/, 'current Python execution must smoke-test every supported OS');
+  assert.equal(pins.pins.pytest.version, '8.4.2', 'the frozen pytest pin must support the certified Python 3.9 minimum runtime');
 }
 
 function assertReusableCall(workflow, workflowName) {
@@ -62,6 +84,17 @@ const autoTag = read('.github/workflows/auto-tag.yml');
 
 test('certification is a reusable, scoped three-OS workflow', () => {
   assertReusableCertification(workflow);
+});
+
+test('certification exercises the pinned Python pack toolchain on its supported runtimes', () => {
+  assertPythonToolchainCertification(workflow);
+});
+
+test('RED mutation: removing pytest execution invalidates Python certification', () => {
+  assert.throws(
+    () => assertPythonToolchainCertification(workflow.replaceAll('python -m pytest tests/fixtures/python-certification', 'echo skipped')),
+    /pytest/,
+  );
 });
 
 test('validate and auto-tag invoke certification as reusable jobs', () => {

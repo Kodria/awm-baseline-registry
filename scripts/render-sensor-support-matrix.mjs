@@ -77,9 +77,19 @@ function validateInputs(packs, pinsDocument) {
 
 export function renderSensorSupport(packs, pinsDocument) {
   validateInputs(packs, pinsDocument);
-  const rows = stableRows(packs, pinsDocument.pins).map(({ pack, sensor, variant, tool, range, status, evidence }) =>
+  const variants = stableRows(packs, pinsDocument.pins);
+  const rows = variants.map(({ pack, sensor, variant, tool, range, status, evidence }) =>
     `| \`${pack}\` | \`${sensor}\` | \`${variant}\` | \`${tool}\` | \`${range}\` | ${operatingSystems} | ${status} | ${evidence} |`,
   );
+  const statusSummary = ['certified', 'compatible-unverified', 'not-applicable'].map((status) => {
+    const count = variants.filter((variant) => variant.status === status).length;
+    const meaning = {
+      certified: 'Matching frozen tool pin',
+      'compatible-unverified': 'No matching frozen tool pin',
+      'not-applicable': 'Variant has no tool contract',
+    }[status];
+    return `| ${status} | ${count} | ${meaning} |`;
+  });
   return [
     '# Sensor pack support',
     '',
@@ -91,6 +101,10 @@ export function renderSensorSupport(packs, pinsDocument) {
     '| Pack | Sensor | Variant | Tool | Certified range | OS | Status | Evidence |',
     '| --- | --- | --- | --- | --- | --- | --- | --- |',
     ...rows,
+    '',
+    '| Certification status | Derived variant count | Meaning |',
+    '| --- | --- | --- |',
+    ...statusSummary,
     '<!-- END GENERATED: sensor-pack-support -->',
     '',
   ].join('\n');

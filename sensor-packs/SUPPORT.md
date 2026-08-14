@@ -24,8 +24,14 @@ Status: `certified` has a matching frozen tool pin; `compatible-unverified` has 
 | `python` | `lint` | `ruff-native` | `ruff` | `>=0.1.0` | Ubuntu, macOS, Windows | certified | pin: `ruff@0.16.3` |
 | `python` | `mutation` | `mutmut-opt-in` | `mutmut` | `>=2.0.0` | Ubuntu, macOS, Windows | compatible-unverified | no matching pinned tool |
 | `python` | `security` | `semgrep-python` | `semgrep` | `>=1.0.0` | Ubuntu, macOS, Windows | certified | pin: `semgrep@1.173.0` |
-| `python` | `test` | `pytest-native` | `pytest` | `>=9.0.0 <10.0.0` | Ubuntu, macOS, Windows | certified | pin: `pytest@9.1.1` |
+| `python` | `test` | `pytest-native` | `pytest` | `>=8.0.0 <9.0.0` | Ubuntu, macOS, Windows | certified | pin: `pytest@8.4.2` |
 | `python` | `typecheck` | `mypy-native` | `mypy` | `>=2.0.0 <3.0.0` | Ubuntu, macOS, Windows | certified | pin: `mypy@2.3.0` |
 | `shell` | `lint` | `shellcheck-files` | `shellcheck` | `>=0.9.0` | Ubuntu, macOS, Windows | certified | pin: `shellcheck@0.11.0` |
 | `shell` | `security` | `semgrep-shell` | `semgrep` | `>=1.0.0` | Ubuntu, macOS, Windows | certified | pin: `semgrep@1.173.0` |
+
+| Certification status | Derived variant count | Meaning |
+| --- | --- | --- |
+| certified | 15 | Matching frozen tool pin |
+| compatible-unverified | 6 | No matching frozen tool pin |
+| not-applicable | 0 | Variant has no tool contract |
 <!-- END GENERATED: sensor-pack-support -->
