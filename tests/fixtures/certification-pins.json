@@ -69,7 +69,7 @@
     "shellcheck": {
       "package": "shellcheck",
       "version": "0.11.0",
-      "source": "https://api.github.com/repos/koalaman/shellcheck/releases/latest"
+      "source": "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz"
     }
   }
 }

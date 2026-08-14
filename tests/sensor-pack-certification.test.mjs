@@ -89,6 +89,17 @@ function assertPythonToolchainCertification(workflow) {
   );
 }
 
+function assertShellCheckCertification(workflow) {
+  const step = namedStep(workflow, 'Exercise Ubuntu security and shell tooling');
+  const version = pins.pins.shellcheck.version;
+  assert.match(step, new RegExp(`SHELLCHECK_VERSION=${version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`), 'Ubuntu certification must declare the frozen ShellCheck version');
+  assert.match(step, /SHELLCHECK_ARCHIVE="shellcheck-v\$\{SHELLCHECK_VERSION\}\.linux\.x86_64\.tar\.xz"/, 'Ubuntu certification must derive the frozen ShellCheck archive');
+  assert.match(step, /https:\/\/github\.com\/koalaman\/shellcheck\/releases\/download\/v\$\{SHELLCHECK_VERSION\}\/\$\{SHELLCHECK_ARCHIVE\}/, 'Ubuntu certification must download the declared ShellCheck release');
+  assert.match(step, /shellcheck --version \| grep -F/, 'Ubuntu certification must verify the installed ShellCheck version');
+  assert.match(step, /version: \$\{SHELLCHECK_VERSION\}/, 'Ubuntu certification must verify ShellCheck against its frozen version variable');
+  assert.match(step, /shellcheck \/tmp\/awm-shellcheck-certification\.sh/, 'Ubuntu certification must execute ShellCheck against a controlled shell fixture');
+}
+
 function assertReusableCall(workflow, workflowName) {
   const jobs = block(workflow, 0, 'jobs');
   const certification = block(jobs, 2, 'sensor-certification');
@@ -116,6 +127,18 @@ test('certification exercises the pinned Python pack toolchain on its supported 
   assert.match(pythonFixtureConfig, /^\[tool\.ruff\]$/m, 'the Python certification fixture must exercise native Ruff configuration');
   assert.match(pythonFixtureConfig, /^exclude = \["ruff_only_excluded\.py"\]$/m, 'the native Ruff fixture must exclude its dedicated lint fixture');
   assert.match(ruffExcludedFixture, /^import os$/m, 'the dedicated Ruff fixture must fail F401 if native config is ignored');
+});
+
+test('certification installs, verifies, and executes the frozen ShellCheck release', () => {
+  assertShellCheckCertification(workflow);
+});
+
+test('RED mutation: removing ShellCheck execution invalidates shell certification', () => {
+  const step = namedStep(workflow, 'Exercise Ubuntu security and shell tooling');
+  assert.throws(
+    () => assertShellCheckCertification(workflow.replace(step, step.replace('shellcheck /tmp/awm-shellcheck-certification.sh', 'echo skipped'))),
+    /execute ShellCheck/,
+  );
 });
 
 test('RED mutation: removing pytest execution invalidates Python certification', () => {
