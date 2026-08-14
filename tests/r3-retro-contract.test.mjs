@@ -117,3 +117,10 @@ test('keeps empirical coverage terminal and out of implementation QA (R6.7)', ()
   assert.doesNotMatch(read('skills/post-implementation-qa/SKILL.md'), /awm sensors coverage/);
   assert.match(read('skills/harness-retro/SKILL.md'), /awm sensors coverage --json/);
 });
+
+test('runs the R3 retro contract in validation and release gates', () => {
+  for (const workflow of ['validate.yml', 'auto-tag.yml']) {
+    assert.match(read(`.github/workflows/${workflow}`), /node tests\/r3-retro-contract\.test\.mjs/,
+      `${workflow} must execute the R3 retro contract before accepting or releasing registry content`);
+  }
+});

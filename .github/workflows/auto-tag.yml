@@ -46,6 +46,7 @@ jobs:
           python -m pip install "semgrep==1.173.0"
           node scripts/validate-portability.mjs
           node tests/validate-portability.test.mjs
+          node tests/r3-retro-contract.test.mjs
           node tests/codex-session-start.test.mjs
           node tests/session-start.test.mjs
           node tests/sensor-pack-eslint.test.mjs
