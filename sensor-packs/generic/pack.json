@@ -45,13 +45,8 @@
         {
           "id": "semgrep-generic",
           "priority": 10,
-          "requirements": {
-            "tool": "semgrep",
-            "toolRange": ">=1.0.0",
-            "runtime": "python",
-            "runtimeRange": ">=3.9.0"
-          },
           "certifiedRange": ">=1.0.0",
+          "policyRef": "shared/semgrep-policy.json",
           "command": {
             "executable": "semgrep",
             "args": [
@@ -65,10 +60,7 @@
           "assets": [
             ".semgrep.awm.yml"
           ],
-          "formatter": "semgrep",
-          "probe": {
-            "kind": "semgrep-validate"
-          }
+          "formatter": "semgrep"
         }
       ]
     }
