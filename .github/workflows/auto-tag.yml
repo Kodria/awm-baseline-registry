@@ -39,6 +39,7 @@ jobs:
       # actually makes the release conditional on them.
       - name: Verify registry before tagging
         run: |
+          python -m pip install "semgrep==1.173.0"
           node scripts/validate-portability.mjs
           node tests/validate-portability.test.mjs
           node tests/codex-session-start.test.mjs
@@ -47,6 +48,7 @@ jobs:
           node tests/sensor-pack-shape.test.mjs
           node tests/sensor-pack-coverage.test.mjs
           node tests/sensor-pack-coverage-mutations.test.mjs
+          node --test tests/sensor-pack-rules-fire.test.mjs
 
       - name: Compute and push next tag
         run: |

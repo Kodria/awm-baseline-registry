@@ -1,5 +1,5 @@
 {
-  "resolvedAt": "2026-08-14T21:46:19.530Z",
+  "resolvedAt": "2026-08-14T22:14:34.365Z",
   "pins": {
     "eslint-8": {
       "package": "eslint",
@@ -31,15 +31,45 @@
       "version": "16.10.4",
       "source": "https://registry.npmjs.org/dependency-cruiser"
     },
-    "semgrep": {
-      "package": "semgrep",
-      "version": "1.172.0",
-      "source": "https://pypi.org/pypi/semgrep/json"
-    },
     "stryker": {
       "package": "@stryker-mutator/core",
       "version": "8.7.1",
       "source": "https://registry.npmjs.org/%40stryker-mutator%2Fcore"
+    },
+    "python-3-9": {
+      "package": "python",
+      "version": "3.9.0",
+      "source": "https://www.python.org/downloads/"
+    },
+    "python-current": {
+      "package": "python",
+      "version": "3.12.0",
+      "source": "https://www.python.org/downloads/"
+    },
+    "mypy": {
+      "package": "mypy",
+      "version": "2.3.0",
+      "source": "https://pypi.org/pypi/mypy/json"
+    },
+    "ruff": {
+      "package": "ruff",
+      "version": "0.16.3",
+      "source": "https://pypi.org/pypi/ruff/json"
+    },
+    "pytest": {
+      "package": "pytest",
+      "version": "9.1.1",
+      "source": "https://pypi.org/pypi/pytest/json"
+    },
+    "semgrep": {
+      "package": "semgrep",
+      "version": "1.173.0",
+      "source": "https://pypi.org/pypi/semgrep/json"
+    },
+    "shellcheck": {
+      "package": "shellcheck",
+      "version": "0.11.0",
+      "source": "https://api.github.com/repos/koalaman/shellcheck/releases/latest"
     }
   }
 }

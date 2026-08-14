@@ -16,6 +16,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "semgrep==1.173.0"
       - run: node scripts/validate-portability.mjs
       - run: node tests/validate-portability.test.mjs
       - run: node tests/codex-session-start.test.mjs
@@ -24,3 +28,4 @@ jobs:
       - run: node tests/sensor-pack-shape.test.mjs
       - run: node tests/sensor-pack-coverage.test.mjs
       - run: node tests/sensor-pack-coverage-mutations.test.mjs
+      - run: node --test tests/sensor-pack-rules-fire.test.mjs
