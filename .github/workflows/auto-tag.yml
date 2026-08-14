@@ -46,6 +46,8 @@ jobs:
           node tests/session-start.test.mjs
           node tests/sensor-pack-eslint.test.mjs
           node tests/sensor-pack-shape.test.mjs
+          node tests/sensor-pack-python-shell-generic.test.mjs
+          node tests/sensor-pack-variants.test.mjs
           node tests/sensor-pack-coverage.test.mjs
           node tests/sensor-pack-coverage-mutations.test.mjs
           node --test tests/sensor-pack-rules-fire.test.mjs

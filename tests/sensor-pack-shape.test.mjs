@@ -44,6 +44,8 @@ assert.ok(documentedCoverage.remedy && typeof documentedCoverage.remedy === 'obj
 for (const workflow of ['validate.yml', 'auto-tag.yml']) {
   const contents = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', workflow), 'utf8');
   assert.match(contents, /node tests\/sensor-pack-shape\.test\.mjs/, `${workflow} must execute schema equivalence through the shape gate`);
+  assert.match(contents, /node tests\/sensor-pack-python-shell-generic\.test\.mjs/, `${workflow} must execute the Python, shell, and generic sensor-pack contract gate`);
+  assert.match(contents, /node tests\/sensor-pack-variants\.test\.mjs/, `${workflow} must execute the sensor-pack variants gate`);
 }
 const packNames = fs
   .readdirSync(packsDir, { withFileTypes: true })

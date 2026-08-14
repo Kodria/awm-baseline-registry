@@ -26,6 +26,8 @@ jobs:
       - run: node tests/session-start.test.mjs
       - run: node tests/sensor-pack-eslint.test.mjs
       - run: node tests/sensor-pack-shape.test.mjs
+      - run: node tests/sensor-pack-python-shell-generic.test.mjs
+      - run: node tests/sensor-pack-variants.test.mjs
       - run: node tests/sensor-pack-coverage.test.mjs
       - run: node tests/sensor-pack-coverage-mutations.test.mjs
       - run: node --test tests/sensor-pack-rules-fire.test.mjs
