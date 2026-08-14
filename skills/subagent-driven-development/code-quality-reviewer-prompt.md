@@ -40,6 +40,8 @@ One `-` line per issue, sorted file → line ascending; omit the list when verdi
 
 After forming your verdict, persist each result to the branch ledger so harness-retro can learn from this session:
 
+Append `--defect-class <exact-catalog-id>` only when the finding maps to an exact class in the active sensor-pack coverage catalog. Omit the flag when the class is not known; do not infer it from the code, prose, signature, or severity.
+
 For each quality issue found:
 ```
 awm ledger add --phase code-quality-review --source-skill subagent-driven-development --polarity finding --class <structural|logica|seguridad> --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>" --ref <file:line>

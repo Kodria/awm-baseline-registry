@@ -159,6 +159,8 @@ A finding with an empty `evidence` field is invalid — do not emit it.
 
 After classifying findings, emit one `awm ledger add` command per finding and per win:
 
+Append `--defect-class <exact-catalog-id>` only when the finding maps to an exact class in the active sensor-pack coverage catalog. Omit the flag when the class is not known; do not infer it from the review lens, prose, signature, or severity.
+
 For each Track A finding (plan-vs-implementation gap):
 ```
 awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity finding --class proceso --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>"

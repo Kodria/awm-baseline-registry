@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-version: "1.1.0"
+version: "1.2.0"
 description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
 ---
 
@@ -184,6 +184,8 @@ Run with **no flag** — that runs *all* sensors (fast: `tsc`, `lint`; slow: `se
 If the SAME sensor (same `name` + same `rule`) has failed in a prior session for this repo, do not just fix it — invoke the `harness-retro` skill. Recurring sensor failures mean the harness has a gap; `harness-retro` turns the recurrence into a structural rule.
 
 When a sensor failure recurs (same `name` + `rule` as a prior fix in this session), log it before fixing so the recurrence is counted:
+
+Append `--defect-class <exact-catalog-id>` only when the recurring finding maps to an exact class in the active sensor-pack coverage catalog. Omit the flag when the class is not known; do not infer it from the sensor name or rule.
 
 ```
 awm ledger add --phase sensors --source-skill verification-before-completion --polarity finding --class structural --signature <sensor>:<rule> --severity important --desc "<sensor> recurred on <rule>"

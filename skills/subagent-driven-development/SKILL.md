@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.6.0"
+version: "1.7.0"
 description: Use when executing implementation plans with independent tasks in the current session
 ---
 
@@ -222,6 +222,8 @@ The per-branch ledger (`awm ledger`) is what `harness-retro` learns from. Review
 2. **At the controller, before marking the task complete:** if a reviewer reported findings or wins, run `awm ledger list` and confirm the ledger grew accordingly. If the reviewer's report shows issues but the ledger has no matching entries, send the reviewer back to emit them. Trust-but-verify: `awm ledger list` is cheap and authoritative.
 
 A clean review with genuinely zero findings and zero wins is the only case where no ledger growth is acceptable.
+
+**Typed defect classes:** reviewer templates may append `--defect-class <exact-catalog-id>` only when the finding maps to an exact class in the active sensor-pack coverage catalog. Omit the flag when the class is not known; a reviewer must never infer one from prose, signatures, or a nearby category.
 
 ## Design Fidelity Propagation Gate (AWM)
 
