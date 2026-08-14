@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://awm.dev/schemas/sensor-pack-v2.json",
+  "title": "AWM sensor pack v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "name", "description", "detects", "sensors", "coverage"],
+  "properties": {
+    "schemaVersion": { "const": 2 }, "name": { "$ref": "#/$defs/id" }, "description": { "$ref": "#/$defs/text" },
+    "detects": { "$ref": "#/$defs/nonemptyTextArray" },
+    "sensors": { "type": "object", "minProperties": 1, "additionalProperties": { "$ref": "#/$defs/sensor" }, "propertyNames": { "$ref": "#/$defs/id" } },
+    "coverage": { "$ref": "#/$defs/coverage" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "text": { "type": "string", "minLength": 1, "pattern": "^[^\\u0000\\r\\n]+$" },
+    "nonemptyTextArray": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/text" } },
+    "asset": { "type": "string", "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|/)\\.?(?:/|$))(?!.*\\\\)[^\\u0000\\r\\n]+$" },
+    "sensor": { "type": "object", "additionalProperties": false, "required": ["applicability", "variants"], "properties": { "fast": { "type": "boolean" }, "applicability": { "$ref": "#/$defs/applicability" }, "variants": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/variant" } } } },
+    "applicability": { "type": "object", "additionalProperties": false, "minProperties": 1, "properties": { "allFiles": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/asset" } }, "anyFiles": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/asset" } }, "kind": { "$ref": "#/$defs/text" } } },
+    "variant": { "type": "object", "additionalProperties": false, "required": ["id", "priority", "requirements", "certifiedRange", "command", "assets", "formatter", "probe"], "properties": { "id": { "$ref": "#/$defs/id" }, "priority": { "type": "integer" }, "requirements": { "$ref": "#/$defs/requirements" }, "certifiedRange": { "$ref": "#/$defs/text" }, "command": { "$ref": "#/$defs/command" }, "assets": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/asset" } }, "formatter": { "$ref": "#/$defs/text" }, "probe": { "$ref": "#/$defs/probe" } } },
+    "requirements": { "type": "object", "additionalProperties": false, "required": ["tool", "toolRange", "runtime", "runtimeRange"], "properties": { "tool": { "$ref": "#/$defs/text" }, "toolRange": { "$ref": "#/$defs/text" }, "runtime": { "$ref": "#/$defs/text" }, "runtimeRange": { "$ref": "#/$defs/text" }, "configFiles": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/asset" } } } },
+    "command": { "type": "object", "additionalProperties": false, "required": ["executable", "resolution", "args"], "properties": { "executable": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" }, "resolution": { "enum": ["node-modules-bin", "python-environment", "path"] }, "args": { "$ref": "#/$defs/nonemptyTextArray" }, "fileInput": { "type": "object", "additionalProperties": false, "required": ["placeholder", "extensions"], "properties": { "placeholder": { "const": "{files}" }, "extensions": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^\\.[A-Za-z0-9]+$" } } } } } },
+    "probe": { "type": "object", "additionalProperties": false, "required": ["kind"], "properties": { "kind": { "enum": ["version", "eslint-print-config", "typescript-show-config", "semgrep-validate", "package-script-present", "config-present"] } } },
+    "coverage": { "type": "object", "additionalProperties": false, "required": ["schemaVersion", "classes"], "properties": { "schemaVersion": { "const": 1 }, "classes": { "type": "object" } } }
+  }
+}

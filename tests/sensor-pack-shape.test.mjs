@@ -21,9 +21,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validatePackV2 } from './support/sensor-pack-v2-validator.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packsDir = path.join(repoRoot, 'sensor-packs');
+const schemaPath = path.join(packsDir, 'pack.schema.json');
+assert.ok(fs.existsSync(schemaPath), 'sensor-packs/pack.schema.json is required for pack v2 authors');
+assert.doesNotThrow(() => JSON.parse(fs.readFileSync(schemaPath, 'utf8')), 'pack.schema.json must be valid JSON');
 const packNames = fs
   .readdirSync(packsDir, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
@@ -49,6 +53,11 @@ for (const name of packNames) {
     pack = JSON.parse(raw);
   } catch (error) {
     assert.fail(`${name}/pack.json no es JSON válido: ${error.message}`);
+  }
+
+  if (Object.hasOwn(pack, 'schemaVersion')) {
+    validatePackV2(pack, packDir);
+    continue;
   }
 
   assert.equal(typeof pack.name, 'string', `${name}: 'name' debe ser string`);
