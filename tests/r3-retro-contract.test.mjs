@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -8,7 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 const count = (text, value) => text.split(value).length - 1;
 
-const TYPED_LEDGER_EMITTERS = [
+const DIRECT_LEDGER_EMITTERS = [
   'skills/post-implementation-qa/deep-review-prompt.md',
   'skills/subagent-driven-development/code-quality-reviewer-prompt.md',
   'skills/subagent-driven-development/spec-reviewer-prompt.md',
@@ -16,19 +17,29 @@ const TYPED_LEDGER_EMITTERS = [
   'skills/verification-before-completion/SKILL.md',
 ];
 
-function walkMarkdown(directory) {
-  return fs.readdirSync(path.join(root, directory), { withFileTypes: true }).flatMap(entry => {
+const LEDGER_ADD_WITH_PHASE = /^\s*awm ledger add\s+--phase\b/m;
+const LEDGER_EMITTER_ROOTS = ['docs', 'skills'];
+
+function walkMarkdown(directory, projectRoot = root) {
+  return fs.readdirSync(path.join(projectRoot, directory), { withFileTypes: true }).flatMap(entry => {
     const relative = path.posix.join(directory, entry.name);
-    if (entry.isDirectory()) return walkMarkdown(relative);
+    assert.ok(!entry.isSymbolicLink(),
+      `Markdown discovery must fail closed on symlinks so ledger emitters cannot be hidden`);
+    if (entry.isDirectory()) return walkMarkdown(relative, projectRoot);
     return entry.isFile() && entry.name.endsWith('.md') ? [relative] : [];
   });
 }
 
-function typedLedgerEmitters() {
-  return walkMarkdown('skills').filter(relative => {
-    const text = read(relative);
-    return /^\s*awm ledger add\b/m.test(text) && text.includes('--defect-class <exact-catalog-id>');
-  }).sort();
+function directLedgerEmitters(projectRoot = root) {
+  return LEDGER_EMITTER_ROOTS.flatMap(directory => walkMarkdown(directory, projectRoot))
+    .filter(relative => LEDGER_ADD_WITH_PHASE.test(fs.readFileSync(path.join(projectRoot, relative), 'utf8')))
+    .sort();
+}
+
+function assertLedgerEmittersHaveCatalogGuidance(projectRoot = root) {
+  for (const emitter of directLedgerEmitters(projectRoot)) {
+    assertCatalogKnownOnlyGuidance(fs.readFileSync(path.join(projectRoot, emitter), 'utf8'), emitter);
+  }
 }
 
 function assertCatalogKnownOnlyGuidance(text, emitter) {
@@ -51,10 +62,43 @@ function assertRetroAuthority(text) {
     'unattended mode may use existing triage only and must not gain new authority');
 }
 
-test('discovers every typed ledger emitter and requires exact catalog-known-only guidance', () => {
-  assert.deepEqual(typedLedgerEmitters(), TYPED_LEDGER_EMITTERS,
-    'the authoritative typed-emitter catalog must track every actual ledger emitter');
-  for (const emitter of typedLedgerEmitters()) assertCatalogKnownOnlyGuidance(read(emitter), emitter);
+test('discovers every direct ledger emitter independently of defect-class guidance', () => {
+  assert.deepEqual(directLedgerEmitters(), DIRECT_LEDGER_EMITTERS,
+    'the authoritative direct-emitter catalog must track every actual `awm ledger add --phase` emitter');
+  assertLedgerEmittersHaveCatalogGuidance();
+});
+
+test('RED mutation: a real ledger emitter without catalog guidance is rejected', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'r3-retro-emitter-'));
+  const emitter = DIRECT_LEDGER_EMITTERS[0];
+  try {
+    fs.mkdirSync(path.join(fixture, 'docs'), { recursive: true });
+    fs.mkdirSync(path.dirname(path.join(fixture, emitter)), { recursive: true });
+    const command = read(emitter).match(/^\s*awm ledger add\s+--phase.*$/m)?.[0];
+    assert.ok(command, `${emitter} must contain a direct phase-bearing ledger command`);
+    fs.writeFileSync(path.join(fixture, emitter), `${command}\n`, 'utf8');
+
+    assert.deepEqual(directLedgerEmitters(fixture), [emitter]);
+    assert.throws(() => assertLedgerEmittersHaveCatalogGuidance(fixture),
+      /must permit defect classes only for an exact active-catalog match/i);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('RED mutation: a symlinked Markdown emitter fails closed instead of being skipped', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'r3-retro-symlink-'));
+  try {
+    fs.mkdirSync(path.join(fixture, 'docs'), { recursive: true });
+    fs.mkdirSync(path.join(fixture, 'skills'), { recursive: true });
+    fs.writeFileSync(path.join(fixture, 'target.md'),
+      'awm ledger add --phase injected --source-skill fixture\n', 'utf8');
+    fs.symlinkSync('../target.md', path.join(fixture, 'skills', 'linked.md'));
+
+    assert.throws(() => directLedgerEmitters(fixture), /fail closed on symlinks/i);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
 });
 
 test('retro authority keeps coverage read-only, human approval interactive, and unattended triage bounded', () => {
