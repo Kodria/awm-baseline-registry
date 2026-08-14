@@ -20,7 +20,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  sensor-certification:
+    uses: ./.github/workflows/sensor-pack-certification.yml
+
   tag:
+    needs: sensor-certification
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (full history + tags)

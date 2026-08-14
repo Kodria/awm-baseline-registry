@@ -9,6 +9,9 @@ permissions:
   contents: read
 
 jobs:
+  sensor-certification:
+    uses: ./.github/workflows/sensor-pack-certification.yml
+
   portability:
     runs-on: ubuntu-latest
     steps:
