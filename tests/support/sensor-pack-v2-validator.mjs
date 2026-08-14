@@ -81,6 +81,27 @@ function normalizeExecutable(executable) {
   return executable.toLowerCase().replace(/\.exe$/, '');
 }
 
+function readSemgrepPolicy(packRoot, policyRef, where) {
+  assert.equal(policyRef, 'shared/semgrep-policy.json', `${where}: policyRef must name the contained shared Semgrep policy`);
+  const sensorPacksRoot = path.resolve(packRoot, '..');
+  const policyPath = path.resolve(sensorPacksRoot, policyRef);
+  const relative = path.relative(sensorPacksRoot, policyPath);
+  assert.ok(relative && !relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative), `${where}: policyRef must remain inside sensor-packs`);
+  const stat = fs.lstatSync(policyPath);
+  assert.ok(stat.isFile() && !stat.isSymbolicLink(), `${where}: policyRef must resolve to a regular policy file`);
+  const policy = object(JSON.parse(fs.readFileSync(policyPath, 'utf8')), `${where}: policy must contain JSON object`);
+  exactFields(policy, ['tool', 'toolRange', 'runtime', 'runtimeRange', 'probe'], `${where}: policy has unknown fields`);
+  text(policy.tool, `${where}: policy tool required`);
+  text(policy.runtime, `${where}: policy runtime required`);
+  text(policy.probe, `${where}: policy probe required`);
+  assert.equal(policy.tool, 'semgrep', `${where}: policy tool must be semgrep`);
+  assert.equal(policy.runtime, 'python', `${where}: policy runtime must be python`);
+  assert.equal(policy.probe, 'semgrep-validate', `${where}: policy probe must be semgrep-validate`);
+  parseRange(policy.toolRange, `${where}: policy toolRange invalid`);
+  parseRange(policy.runtimeRange, `${where}: policy runtimeRange invalid`);
+  return policy;
+}
+
 function validateCommand(command, where, assets) {
   object(command, `${where}: structured command must be an object`);
   exactFields(command, ['executable', 'resolution', 'args', 'packageManager', 'environment', 'fileInput'], `${where}: structured command has unknown fields`);
@@ -90,6 +111,7 @@ function validateCommand(command, where, assets) {
   assert.ok(!shells.has(normalizedExecutable), `${where}: structured command must not use a shell`);
   assert.ok(resolutions.has(command.resolution), `${where}: structured command resolution invalid`);
   const args = nonemptyStrings(command.args, `${where}: structured command args required`);
+  assert.ok(!args.includes('find'), `${where}: structured command must not contain find traversal`);
   for (const arg of args) assert.ok(!arg.includes('{files}') || arg === '{files}', `${where}: structured command cannot embed {files}`);
   if (packageManagers.has(normalizedExecutable)) assert.ok(Object.hasOwn(command, 'packageManager'), `${where}: packageManager required for package-manager executable`);
   if (Object.hasOwn(command, 'packageManager')) {
@@ -136,12 +158,15 @@ export function validatePackV2(pack, packRoot) {
     const seen = [];
     for (const variant of sensor.variants) {
       object(variant, `${sensorId}: variant must be object`);
-      exactFields(variant, ['id', 'priority', 'requirements', 'certifiedRange', 'command', 'assets', 'formatter', 'probe'], `${sensorId}: variant has unknown fields`);
+      exactFields(variant, ['id', 'priority', 'requirements', 'certifiedRange', 'command', 'assets', 'formatter', 'probe', 'policyRef'], `${sensorId}: variant has unknown fields`);
       const variantId = stableId(variant.id, `${sensorId}: variant id must be stable`);
       assert.ok(!allVariantIds.has(variantId), `${sensorId}: variant id '${variantId}' must be globally unique`);
       allVariantIds.add(variantId);
       assert.ok(Number.isSafeInteger(variant.priority), `${sensorId}: variant priority must be an integer`);
-      const requirements = object(variant.requirements, `${sensorId}: requirements required`);
+      const policy = Object.hasOwn(variant, 'policyRef') ? readSemgrepPolicy(packRoot, variant.policyRef, `${sensorId}: variant`) : undefined;
+      if (policy) assert.ok(!Object.hasOwn(variant, 'requirements') && !Object.hasOwn(variant, 'probe'), `${sensorId}: policyRef is authoritative over requirements and probe`);
+      else assert.ok(Object.hasOwn(variant, 'requirements') && Object.hasOwn(variant, 'probe'), `${sensorId}: requirements and probe required without policyRef`);
+      const requirements = policy ?? object(variant.requirements, `${sensorId}: requirements required`);
       exactFields(requirements, ['tool', 'toolRange', 'runtime', 'runtimeRange', 'configFiles'], `${sensorId}: requirements has unknown fields`);
       text(requirements.tool, `${sensorId}: tool required`); text(requirements.runtime, `${sensorId}: runtime required`);
       const toolRange = parseRange(requirements.toolRange, `${sensorId}: toolRange invalid`);
@@ -154,8 +179,9 @@ export function validatePackV2(pack, packRoot) {
       if ('configFiles' in requirements) nonemptyStrings(requirements.configFiles, `${sensorId}: configFiles required`).forEach((configFile) => assetPath(configFile, `${sensorId}: configFile invalid`));
       validateCommand(variant.command, `${sensorId}: variant`, assets);
       text(variant.formatter, `${sensorId}: formatter required`);
-      object(variant.probe, `${sensorId}: probe required`); exactFields(variant.probe, ['kind'], `${sensorId}: probe has unknown fields`);
-      assert.ok(probes.has(variant.probe.kind), `${sensorId}: probe must be a closed supported kind`);
+      const probe = policy ? { kind: policy.probe } : object(variant.probe, `${sensorId}: probe required`);
+      exactFields(probe, ['kind'], `${sensorId}: probe has unknown fields`);
+      assert.ok(probes.has(probe.kind), `${sensorId}: probe must be a closed supported kind`);
       seen.push({ id: variantId, priority: variant.priority, toolRange, runtimeRange });
     }
     for (let left = 0; left < seen.length; left += 1) for (let right = left + 1; right < seen.length; right += 1) {
