@@ -53,6 +53,9 @@ function assertPinFitsVariant(pack, toolPin, runtimePins) {
 }
 
 for (const [name, pack] of [['python', python], ['shell', shell], ['generic', generic]]) assert.equal(pack.schemaVersion, 2, `${name} must use v2`);
+for (const [name, pack] of [['python', python], ['shell', shell], ['generic', generic]]) {
+  assert.doesNotThrow(() => validatePackV2(pack, path.join(root, 'sensor-packs', name)), `${name} policy-backed production pack must satisfy the v2 contract`);
+}
 for (const sensor of ['typecheck', 'lint', 'test', 'security']) assert.ok(python.sensors[sensor].variants.length > 0, `${sensor} without variants`);
 assert.ok(python.sensors.typecheck.variants.some((variant) => variant.requirements.configFiles.includes('pyproject.toml')));
 const command = shell.sensors.lint.variants[0].command;

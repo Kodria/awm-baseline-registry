@@ -166,7 +166,9 @@ export function validatePackV2(pack, packRoot) {
       const policy = Object.hasOwn(variant, 'policyRef') ? readSemgrepPolicy(packRoot, variant.policyRef, `${sensorId}: variant`) : undefined;
       if (policy) assert.ok(!Object.hasOwn(variant, 'requirements') && !Object.hasOwn(variant, 'probe'), `${sensorId}: policyRef is authoritative over requirements and probe`);
       else assert.ok(Object.hasOwn(variant, 'requirements') && Object.hasOwn(variant, 'probe'), `${sensorId}: requirements and probe required without policyRef`);
-      const requirements = policy ?? object(variant.requirements, `${sensorId}: requirements required`);
+      const requirements = policy
+        ? { tool: policy.tool, toolRange: policy.toolRange, runtime: policy.runtime, runtimeRange: policy.runtimeRange }
+        : object(variant.requirements, `${sensorId}: requirements required`);
       exactFields(requirements, ['tool', 'toolRange', 'runtime', 'runtimeRange', 'configFiles'], `${sensorId}: requirements has unknown fields`);
       text(requirements.tool, `${sensorId}: tool required`); text(requirements.runtime, `${sensorId}: runtime required`);
       const toolRange = parseRange(requirements.toolRange, `${sensorId}: toolRange invalid`);
