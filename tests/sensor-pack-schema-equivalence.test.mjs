@@ -35,6 +35,7 @@ function valid(value, definition) {
   }
   if (definition.items && !value.every((item) => valid(item, definition.items))) return false;
   if (definition.allOf && !definition.allOf.every((child) => valid(value, child))) return false;
+  if (definition.anyOf && !definition.anyOf.some((child) => valid(value, child))) return false;
   if (definition.not && valid(value, definition.not)) return false;
   if (definition.if && valid(value, definition.if) && definition.then && !valid(value, definition.then)) return false;
   return true;
@@ -58,6 +59,20 @@ const windowsManager = clone();
 windowsManager.sensors.lint.variants[0].command = { executable: 'npm.exe', resolution: 'path', args: ['run', 'lint'], packageManager: 'npm' };
 const normalizedManagerMismatch = clone();
 normalizedManagerMismatch.sensors.lint.variants[0].command = { executable: 'NPM.exe', resolution: 'path', args: ['run', 'lint'], packageManager: 'yarn' };
+const canonicalManagerSpelling = clone();
+canonicalManagerSpelling.sensors.lint.variants[0].command = { executable: 'NPM.exe', resolution: 'path', args: ['run', 'lint'], packageManager: 'NPM.exe' };
+const parentAsset = clone();
+parentAsset.sensors.lint.variants[0].assets = ['../outside'];
+const nestedParentAsset = clone();
+nestedParentAsset.sensors.lint.variants[0].assets = ['dir/../x'];
+const dotAsset = clone();
+dotAsset.sensors.lint.variants[0].assets = ['.'];
+const dotDotAsset = clone();
+dotDotAsset.sensors.lint.variants[0].assets = ['..'];
+const absoluteAsset = clone();
+absoluteAsset.sensors.lint.variants[0].assets = ['/outside'];
+const windowsAsset = clone();
+windowsAsset.sensors.lint.variants[0].assets = ['dir\\outside'];
 const badCoverage = clone();
 badCoverage.coverage.classes['lint-errors'] = { detectors: [{ sensor: 'lint' }] };
 const shell = clone();
@@ -71,6 +86,10 @@ for (const [name, pack, expected] of [
   ['uppercase package manager executable', uppercaseManager, true], ['Windows package manager executable', windowsManager, true],
   ['uppercase package manager executable without manager', uppercaseManagerMissing, false],
   ['normalized package manager mismatch', normalizedManagerMismatch, false],
+  ['canonical package manager spelling', canonicalManagerSpelling, true],
+  ['parent asset', parentAsset, false], ['nested parent asset', nestedParentAsset, false],
+  ['dot asset', dotAsset, false], ['dot-dot asset', dotDotAsset, false],
+  ['absolute asset', absoluteAsset, false], ['backslash asset', windowsAsset, false],
   ['case-insensitive shell', shell, false], ['embedded files placeholder', embeddedFiles, false],
 ]) {
   assert.equal(valid(pack, schema), expected, `formal schema verdict for ${name}`);

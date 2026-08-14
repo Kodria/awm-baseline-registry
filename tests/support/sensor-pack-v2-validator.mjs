@@ -93,8 +93,8 @@ function validateCommand(command, where, assets) {
   for (const arg of args) assert.ok(!arg.includes('{files}') || arg === '{files}', `${where}: structured command cannot embed {files}`);
   if (packageManagers.has(normalizedExecutable)) assert.ok(Object.hasOwn(command, 'packageManager'), `${where}: packageManager required for package-manager executable`);
   if (Object.hasOwn(command, 'packageManager')) {
-    assert.ok(typeof command.packageManager === 'string' && packageManagers.has(command.packageManager), `${where}: packageManager must be npm, pnpm, yarn, or bun`);
-    assert.equal(command.packageManager, normalizedExecutable, `${where}: packageManager must match normalized executable`);
+    assert.ok(typeof command.packageManager === 'string' && packageManagers.has(normalizeExecutable(command.packageManager)), `${where}: packageManager must be npm, pnpm, yarn, or bun`);
+    assert.equal(normalizeExecutable(command.packageManager), normalizedExecutable, `${where}: packageManager must match normalized executable`);
   }
   if (Object.hasOwn(command, 'environment')) {
     object(command.environment, `${where}: environment must be object`);
