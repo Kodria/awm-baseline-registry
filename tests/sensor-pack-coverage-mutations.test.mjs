@@ -101,9 +101,17 @@ function assertJsTsV2CoverageEvidenceMutations() {
   copyRegistry(changedLintConfig);
   mutatePack(changedLintConfig, 'js-ts', (pack) => {
     for (const variant of pack.sensors.lint.variants) {
-      if (variant.command.args.includes('eslint.config.awm.mjs')) variant.command.args = variant.command.args.map((arg) => arg === 'eslint.config.awm.mjs' ? 'other.config.awm.mjs' : arg);
+      if (variant.command.args.includes('eslint.config.awm.mjs')) {
+        variant.command.args = variant.command.args.map((arg) => arg === 'eslint.config.awm.mjs' ? 'eslint.config.awm.cjs' : arg);
+        variant.assets = ['eslint.config.awm.cjs'];
+      }
     }
   });
+  const v2Pack = JSON.parse(fs.readFileSync(packFile(changedLintConfig, 'js-ts'), 'utf8'));
+  assert.doesNotThrow(
+    () => validatePackV2(v2Pack, path.join(changedLintConfig, 'sensor-packs', 'js-ts')),
+    'the alternate lint config mutation must remain a valid v2 pack',
+  );
   assert.throws(
     () => validateRegistryCoverage(changedLintConfig),
     /lint-errors: commandIncludes 'eslint\.config\.awm\.mjs' no está en lint/,
