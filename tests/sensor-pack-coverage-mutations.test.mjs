@@ -85,9 +85,36 @@ function assertJsTsV2EvidenceMutations() {
   assert.throws(() => validatePackV2(missingLintAsset, packDirectory), /command asset/, 'v2 lint command config must remain a declared asset');
 }
 
+function assertJsTsV2CoverageEvidenceMutations() {
+  const missingNoEmit = path.join(tempRoot, 'js-ts-missing-no-emit');
+  copyRegistry(missingNoEmit);
+  mutatePack(missingNoEmit, 'js-ts', (pack) => {
+    pack.sensors.typecheck.variants[0].command.args = ['--pretty'];
+  });
+  assert.throws(
+    () => validateRegistryCoverage(missingNoEmit),
+    /static-type-errors: commandIncludes '--noEmit' no está en typecheck/,
+    'coverage must reject a valid-shaped v2 typecheck command that loses --noEmit',
+  );
+
+  const changedLintConfig = path.join(tempRoot, 'js-ts-changed-lint-config');
+  copyRegistry(changedLintConfig);
+  mutatePack(changedLintConfig, 'js-ts', (pack) => {
+    for (const variant of pack.sensors.lint.variants) {
+      if (variant.command.args.includes('eslint.config.awm.mjs')) variant.command.args = variant.command.args.map((arg) => arg === 'eslint.config.awm.mjs' ? 'other.config.awm.mjs' : arg);
+    }
+  });
+  assert.throws(
+    () => validateRegistryCoverage(changedLintConfig),
+    /lint-errors: commandIncludes 'eslint\.config\.awm\.mjs' no está en lint/,
+    'coverage must reject a valid-shaped v2 lint command that stops using the evidenced config',
+  );
+}
+
 try {
   assertV2CoverageSchemaMutation();
   assertJsTsV2EvidenceMutations();
+  assertJsTsV2CoverageEvidenceMutations();
   const historicalMarkerFixture = path.join(tempRoot, 'historical-missing-marker');
   copyRegistry(historicalMarkerFixture);
   mutations[5][1](historicalMarkerFixture);
