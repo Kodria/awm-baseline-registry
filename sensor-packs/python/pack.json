@@ -211,7 +211,7 @@
           "priority": 10,
           "requirements": {
             "tool": "mypy",
-            "toolRange": ">=1.0.0",
+            "toolRange": ">=2.0.0 <3.0.0",
             "runtime": "python",
             "runtimeRange": ">=3.9.0",
             "configFiles": [
@@ -220,7 +220,7 @@
               "setup.cfg"
             ]
           },
-          "certifiedRange": ">=1.0.0",
+          "certifiedRange": ">=2.0.0 <3.0.0",
           "command": {
             "executable": "mypy",
             "args": [
@@ -330,11 +330,11 @@
           "priority": 10,
           "requirements": {
             "tool": "pytest",
-            "toolRange": ">=7.0.0",
+            "toolRange": ">=9.0.0 <10.0.0",
             "runtime": "python",
             "runtimeRange": ">=3.9.0"
           },
-          "certifiedRange": ">=7.0.0",
+          "certifiedRange": ">=9.0.0 <10.0.0",
           "command": {
             "executable": "pytest",
             "args": [
