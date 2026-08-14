@@ -1,0 +1,40 @@
+{
+  "resolvedAt": "2026-08-14T21:46:19.530Z",
+  "pins": {
+    "eslint-8": {
+      "package": "eslint",
+      "version": "8.57.1",
+      "source": "https://registry.npmjs.org/eslint"
+    },
+    "eslint-9": {
+      "package": "eslint",
+      "version": "9.39.5",
+      "source": "https://registry.npmjs.org/eslint"
+    },
+    "eslint-10": {
+      "package": "eslint",
+      "version": "10.8.1",
+      "source": "https://registry.npmjs.org/eslint"
+    },
+    "typescript": {
+      "package": "typescript",
+      "version": "5.9.3",
+      "source": "https://registry.npmjs.org/typescript"
+    },
+    "prettier": {
+      "package": "prettier",
+      "version": "3.9.6",
+      "source": "https://registry.npmjs.org/prettier"
+    },
+    "dependency-cruiser": {
+      "package": "dependency-cruiser",
+      "version": "16.10.4",
+      "source": "https://registry.npmjs.org/dependency-cruiser"
+    },
+    "stryker": {
+      "package": "@stryker-mutator/core",
+      "version": "8.7.1",
+      "source": "https://registry.npmjs.org/%40stryker-mutator%2Fcore"
+    }
+  }
+}

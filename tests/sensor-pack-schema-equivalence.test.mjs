@@ -49,6 +49,8 @@ const hardening = clone();
 hardening.hardening = { 'strict-mode': { assets: ['eslint.config.awm.mjs'] } };
 const badEnvironment = clone();
 badEnvironment.sensors.lint.variants[0].command.environment = { NODE_OPTIONS: 'unsafe' };
+const flatEnvironment = clone();
+flatEnvironment.sensors.lint.variants[0].command.environment = { ESLINT_USE_FLAT_CONFIG: 'true' };
 const badManager = clone();
 badManager.sensors.lint.variants[0].command = { executable: 'npm', resolution: 'path', args: ['run', 'lint'] };
 const uppercaseManager = clone();
@@ -82,7 +84,7 @@ embeddedFiles.sensors.lint.variants[0].command.args = ['--files={files}'];
 
 for (const [name, pack, expected] of [
   ['native', native, true], ['baseline', base, true], ['hardening', hardening, true],
-  ['environment', badEnvironment, false], ['package manager', badManager, false], ['coverage', badCoverage, false],
+  ['environment', badEnvironment, false], ['flat environment', flatEnvironment, true], ['package manager', badManager, false], ['coverage', badCoverage, false],
   ['uppercase package manager executable', uppercaseManager, true], ['Windows package manager executable', windowsManager, true],
   ['uppercase package manager executable without manager', uppercaseManagerMissing, false],
   ['normalized package manager mismatch', normalizedManagerMismatch, false],

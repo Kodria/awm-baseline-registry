@@ -98,7 +98,7 @@ function validateCommand(command, where, assets) {
   }
   if (Object.hasOwn(command, 'environment')) {
     object(command.environment, `${where}: environment must be object`);
-    assert.deepEqual(command.environment, { ESLINT_USE_FLAT_CONFIG: 'false' }, `${where}: environment must be the allowlisted ESLINT_USE_FLAT_CONFIG=false mapping`);
+    assert.ok(['true', 'false'].includes(command.environment.ESLINT_USE_FLAT_CONFIG) && Object.keys(command.environment).length === 1, `${where}: environment must be the allowlisted ESLINT_USE_FLAT_CONFIG=true|false mapping`);
   }
   if (command.fileInput) {
     object(command.fileInput, `${where}: fileInput must be object`);

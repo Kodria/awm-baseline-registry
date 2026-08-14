@@ -44,13 +44,19 @@ for (const [name, mutate, message] of [
   ['unsupported package manager', (pack) => { pack.sensors.lint.variants[0].command.packageManager = 'volta'; }, /packageManager/],
   ['mismatched package manager', (pack) => { pack.sensors.lint.variants[0].command = { executable: 'pnpm', resolution: 'path', args: ['lint'], packageManager: 'npm' }; }, /packageManager/],
   ['unallowlisted command environment', (pack) => { pack.sensors.lint.variants[0].command.environment = { NODE_OPTIONS: '--trace-warnings' }; }, /environment/],
-  ['nonexact command environment', (pack) => { pack.sensors.lint.variants[0].command.environment = { ESLINT_USE_FLAT_CONFIG: 'true' }; }, /environment/],
+  ['nonexact command environment', (pack) => { pack.sensors.lint.variants[0].command.environment = { ESLINT_USE_FLAT_CONFIG: 'invalid' }; }, /environment/],
   ['extra command environment key', (pack) => { pack.sensors.lint.variants[0].command.environment = { ESLINT_USE_FLAT_CONFIG: 'false', PATH: 'unsafe' }; }, /environment/],
   ['loose coverage class', (pack) => { pack.coverage.classes['lint-errors'] = { detectors: [{ sensor: 'lint' }] }; }, /coverage/],
 ]) {
   const pack = readFixture('valid/js-ts');
   mutate(pack);
   assert.throws(() => validatePackV2(pack, fixtureRoot('valid/js-ts')), message, `rejects ${name}`);
+}
+
+{
+  const pack = readFixture('valid/js-ts');
+  pack.sensors.lint.variants[0].command.environment = { ESLINT_USE_FLAT_CONFIG: 'true' };
+  assert.doesNotThrow(() => validatePackV2(pack, fixtureRoot('valid/js-ts')), 'the flat-config environment explicitly allows true');
 }
 
 for (const [fixture, message] of [
@@ -64,9 +70,9 @@ for (const [fixture, message] of [
   assert.throws(() => validatePackV2(readFixture(`invalid/${fixture}`), fixtureRoot(`invalid/${fixture}`)), message, `rejects ${fixture}`);
 }
 
-for (const name of ['generic', 'js-ts', 'python', 'shell']) {
+for (const name of ['generic', 'python', 'shell']) {
   const pack = JSON.parse(fs.readFileSync(path.join(root, 'sensor-packs', name, 'pack.json'), 'utf8'));
   assert.ok(!Object.hasOwn(pack, 'schemaVersion'), `${name} must remain legacy until T11`);
 }
 
-console.log('sensor-pack-variants: v2 fixtures rejected/accepted; 4 legacy packs accepted');
+console.log('sensor-pack-variants: v2 fixtures rejected/accepted; 3 legacy packs accepted');

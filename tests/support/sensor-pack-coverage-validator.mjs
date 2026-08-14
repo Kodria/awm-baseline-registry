@@ -65,7 +65,12 @@ export function validateCoverage(packName, pack, packDirectory) {
       assert.ok(nonEmptyString(detector.sensor) && id.test(detector.sensor), `${packName}.${classId}: sensor inválido`);
       const sensor = pack.sensors?.[detector.sensor];
       assert.ok(sensor && typeof sensor === 'object' && !Array.isArray(sensor), `${packName}.${classId}: sensor '${detector.sensor}' no existe en pack.sensors`);
-      assert.ok(nonEmptyString(sensor.defaultCmd), `${packName}.${classId}: sensor '${detector.sensor}' no tiene defaultCmd válido`);
+      const commands = nonEmptyString(sensor.defaultCmd)
+        ? [sensor.defaultCmd]
+        : Array.isArray(sensor.variants)
+          ? sensor.variants.map((variant) => `${variant.command?.executable ?? ''} ${(variant.command?.args ?? []).join(' ')}`.trim())
+          : [];
+      assert.ok(commands.length > 0 && commands.every(nonEmptyString), `${packName}.${classId}: sensor '${detector.sensor}' no tiene comando válido`);
       if (!detector.evidence) continue;
 
       assert.ok(typeof detector.evidence === 'object' && !Array.isArray(detector.evidence), `${packName}.${classId}: evidence debe ser objeto`);
@@ -75,7 +80,7 @@ export function validateCoverage(packName, pack, packDirectory) {
         assert.ok(Array.isArray(detector.evidence.commandIncludes) && detector.evidence.commandIncludes.length > 0, `${packName}.${classId}: commandIncludes debe ser array no vacío`);
         detector.evidence.commandIncludes.forEach((part) => {
           assert.ok(nonEmptyString(part), `${packName}.${classId}: commandIncludes contiene texto vacío`);
-          assert.ok(sensor.defaultCmd.includes(part), `${packName}.${classId}: commandIncludes '${part}' no está en ${detector.sensor}.defaultCmd`);
+          assert.ok(commands.some((command) => command.includes(part)), `${packName}.${classId}: commandIncludes '${part}' no está en ${detector.sensor}`);
         });
       }
       if ('files' in detector.evidence) {
