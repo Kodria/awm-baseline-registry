@@ -215,7 +215,9 @@
             "runtime": "python",
             "runtimeRange": ">=3.9.0",
             "configFiles": [
-              "pyproject.toml"
+              "pyproject.toml",
+              "mypy.ini",
+              "setup.cfg"
             ]
           },
           "certifiedRange": ">=1.0.0",
@@ -253,7 +255,9 @@
             "runtime": "python",
             "runtimeRange": ">=3.9.0",
             "configFiles": [
-              "pyproject.toml"
+              "pyproject.toml",
+              "ruff.toml",
+              ".ruff.toml"
             ]
           },
           "certifiedRange": ">=0.1.0",
@@ -336,7 +340,7 @@
             "args": [
               "."
             ],
-            "resolution": "path"
+            "resolution": "python-environment"
           },
           "assets": [],
           "formatter": "test",
