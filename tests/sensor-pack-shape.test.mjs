@@ -22,12 +22,27 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validatePackV2 } from './support/sensor-pack-v2-validator.mjs';
+import './sensor-pack-schema-equivalence.test.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packsDir = path.join(repoRoot, 'sensor-packs');
 const schemaPath = path.join(packsDir, 'pack.schema.json');
 assert.ok(fs.existsSync(schemaPath), 'sensor-packs/pack.schema.json is required for pack v2 authors');
 assert.doesNotThrow(() => JSON.parse(fs.readFileSync(schemaPath, 'utf8')), 'pack.schema.json must be valid JSON');
+const readme = fs.readFileSync(path.join(packsDir, 'README.md'), 'utf8');
+const readmeExample = readme.match(/```json\n(\{[\s\S]*?\n\})\n```/);
+assert.ok(readmeExample, 'sensor-packs README must contain a JSON v2 example');
+const documentedPack = JSON.parse(readmeExample[1]);
+assert.ok(Object.keys(documentedPack.coverage.classes).length > 0, 'sensor-packs README v2 example must declare a coverage class');
+const documentedCoverage = documentedPack.coverage.classes[Object.keys(documentedPack.coverage.classes)[0]];
+assert.equal(typeof documentedCoverage.description, 'string');
+assert.ok(Array.isArray(documentedCoverage.detectors) && documentedCoverage.detectors.length > 0);
+assert.ok(documentedCoverage.remedy && typeof documentedCoverage.remedy === 'object');
+
+for (const workflow of ['validate.yml', 'auto-tag.yml']) {
+  const contents = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', workflow), 'utf8');
+  assert.match(contents, /node tests\/sensor-pack-shape\.test\.mjs/, `${workflow} must execute schema equivalence through the shape gate`);
+}
 const packNames = fs
   .readdirSync(packsDir, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())

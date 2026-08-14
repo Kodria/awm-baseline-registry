@@ -53,7 +53,19 @@ tool and runtime ranges.
       }]
     }
   },
-  "coverage": { "schemaVersion": 1, "classes": {} }
+  "coverage": {
+    "schemaVersion": 1,
+    "classes": {
+      "lint-errors": {
+        "description": "Generic lint rule violations",
+        "detectors": [{ "sensor": "lint" }],
+        "remedy": {
+          "summary": "Configure the lint sensor for this project",
+          "command": "awm sensors init --pack example-js"
+        }
+      }
+    }
+  }
 }
 ```
 

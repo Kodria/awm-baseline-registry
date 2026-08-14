@@ -77,19 +77,24 @@ function assertAsset(packRoot, asset, message) {
   assert.ok(fs.statSync(realTarget).isFile(), `${message}: asset '${asset}' must be a regular file`);
 }
 
+function normalizeExecutable(executable) {
+  return executable.toLowerCase().replace(/\.exe$/, '');
+}
+
 function validateCommand(command, where, assets) {
   object(command, `${where}: structured command must be an object`);
   exactFields(command, ['executable', 'resolution', 'args', 'packageManager', 'environment', 'fileInput'], `${where}: structured command has unknown fields`);
   const executable = text(command.executable, `${where}: structured command executable required`);
   assert.match(executable, /^[A-Za-z0-9][A-Za-z0-9._-]*$/, `${where}: structured command executable must be logical`);
-  assert.ok(!shells.has(executable.toLowerCase().replace(/\.exe$/, '')), `${where}: structured command must not use a shell`);
+  const normalizedExecutable = normalizeExecutable(executable);
+  assert.ok(!shells.has(normalizedExecutable), `${where}: structured command must not use a shell`);
   assert.ok(resolutions.has(command.resolution), `${where}: structured command resolution invalid`);
   const args = nonemptyStrings(command.args, `${where}: structured command args required`);
   for (const arg of args) assert.ok(!arg.includes('{files}') || arg === '{files}', `${where}: structured command cannot embed {files}`);
-  if (packageManagers.has(executable)) assert.ok(Object.hasOwn(command, 'packageManager'), `${where}: packageManager required for package-manager executable`);
+  if (packageManagers.has(normalizedExecutable)) assert.ok(Object.hasOwn(command, 'packageManager'), `${where}: packageManager required for package-manager executable`);
   if (Object.hasOwn(command, 'packageManager')) {
     assert.ok(typeof command.packageManager === 'string' && packageManagers.has(command.packageManager), `${where}: packageManager must be npm, pnpm, yarn, or bun`);
-    assert.equal(command.packageManager, executable, `${where}: packageManager must match executable`);
+    assert.equal(command.packageManager, normalizedExecutable, `${where}: packageManager must match normalized executable`);
   }
   if (Object.hasOwn(command, 'environment')) {
     object(command.environment, `${where}: environment must be object`);

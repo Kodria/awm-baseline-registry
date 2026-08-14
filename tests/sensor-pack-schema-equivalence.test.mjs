@@ -50,6 +50,14 @@ const badEnvironment = clone();
 badEnvironment.sensors.lint.variants[0].command.environment = { NODE_OPTIONS: 'unsafe' };
 const badManager = clone();
 badManager.sensors.lint.variants[0].command = { executable: 'npm', resolution: 'path', args: ['run', 'lint'] };
+const uppercaseManager = clone();
+uppercaseManager.sensors.lint.variants[0].command = { executable: 'NPM', resolution: 'path', args: ['run', 'lint'], packageManager: 'npm' };
+const uppercaseManagerMissing = clone();
+uppercaseManagerMissing.sensors.lint.variants[0].command = { executable: 'NPM', resolution: 'path', args: ['run', 'lint'] };
+const windowsManager = clone();
+windowsManager.sensors.lint.variants[0].command = { executable: 'npm.exe', resolution: 'path', args: ['run', 'lint'], packageManager: 'npm' };
+const normalizedManagerMismatch = clone();
+normalizedManagerMismatch.sensors.lint.variants[0].command = { executable: 'NPM.exe', resolution: 'path', args: ['run', 'lint'], packageManager: 'yarn' };
 const badCoverage = clone();
 badCoverage.coverage.classes['lint-errors'] = { detectors: [{ sensor: 'lint' }] };
 const shell = clone();
@@ -60,6 +68,9 @@ embeddedFiles.sensors.lint.variants[0].command.args = ['--files={files}'];
 for (const [name, pack, expected] of [
   ['native', native, true], ['baseline', base, true], ['hardening', hardening, true],
   ['environment', badEnvironment, false], ['package manager', badManager, false], ['coverage', badCoverage, false],
+  ['uppercase package manager executable', uppercaseManager, true], ['Windows package manager executable', windowsManager, true],
+  ['uppercase package manager executable without manager', uppercaseManagerMissing, false],
+  ['normalized package manager mismatch', normalizedManagerMismatch, false],
   ['case-insensitive shell', shell, false], ['embedded files placeholder', embeddedFiles, false],
 ]) {
   assert.equal(valid(pack, schema), expected, `formal schema verdict for ${name}`);
