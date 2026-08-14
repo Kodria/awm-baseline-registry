@@ -4,6 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const shapeGate = fs.readFileSync(path.join(root, 'tests/sensor-pack-shape.test.mjs'), 'utf8');
+assert.match(shapeGate, /import '\.\/sensor-pack-js-ts-variants\.test\.mjs';/, 'shape gate must execute the js-ts v2 variant contract');
 const pack = JSON.parse(fs.readFileSync(path.join(root, 'sensor-packs/js-ts/pack.json'), 'utf8'));
 
 assert.equal(pack.schemaVersion, 2, 'js-ts is the first v2 pack');

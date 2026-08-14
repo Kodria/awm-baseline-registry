@@ -23,6 +23,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validatePackV2 } from './support/sensor-pack-v2-validator.mjs';
 import './sensor-pack-schema-equivalence.test.mjs';
+import './sensor-pack-js-ts-variants.test.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packsDir = path.join(repoRoot, 'sensor-packs');
