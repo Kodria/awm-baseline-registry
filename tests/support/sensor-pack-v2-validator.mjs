@@ -6,6 +6,8 @@ const id = /^[a-z][a-z0-9-]*$/;
 const probes = new Set(['version', 'eslint-print-config', 'typescript-show-config', 'semgrep-validate', 'package-script-present', 'config-present']);
 const resolutions = new Set(['node-modules-bin', 'python-environment', 'path']);
 const shells = new Set(['sh', 'bash', 'cmd', 'powershell']);
+const packageManagers = new Set(['npm', 'pnpm', 'yarn', 'bun']);
+const coverageEvidencePaths = new Set(['eslint.config.awm.mjs', 'eslint.config.js', 'eslint.config.mjs', 'eslint.config.cjs', 'eslint.config.ts', 'eslint.config.mts', 'eslint.config.cts', '.semgrep.awm.yml', '.dep-cruiser.awm.js']);
 
 function object(value, message) {
   assert.ok(value && typeof value === 'object' && !Array.isArray(value), message);
@@ -77,13 +79,22 @@ function assertAsset(packRoot, asset, message) {
 
 function validateCommand(command, where, assets) {
   object(command, `${where}: structured command must be an object`);
-  exactFields(command, ['executable', 'resolution', 'args', 'fileInput'], `${where}: structured command has unknown fields`);
+  exactFields(command, ['executable', 'resolution', 'args', 'packageManager', 'environment', 'fileInput'], `${where}: structured command has unknown fields`);
   const executable = text(command.executable, `${where}: structured command executable required`);
   assert.match(executable, /^[A-Za-z0-9][A-Za-z0-9._-]*$/, `${where}: structured command executable must be logical`);
   assert.ok(!shells.has(executable.toLowerCase().replace(/\.exe$/, '')), `${where}: structured command must not use a shell`);
   assert.ok(resolutions.has(command.resolution), `${where}: structured command resolution invalid`);
   const args = nonemptyStrings(command.args, `${where}: structured command args required`);
   for (const arg of args) assert.ok(!arg.includes('{files}') || arg === '{files}', `${where}: structured command cannot embed {files}`);
+  if (packageManagers.has(executable)) assert.ok(Object.hasOwn(command, 'packageManager'), `${where}: packageManager required for package-manager executable`);
+  if (Object.hasOwn(command, 'packageManager')) {
+    assert.ok(typeof command.packageManager === 'string' && packageManagers.has(command.packageManager), `${where}: packageManager must be npm, pnpm, yarn, or bun`);
+    assert.equal(command.packageManager, executable, `${where}: packageManager must match executable`);
+  }
+  if (Object.hasOwn(command, 'environment')) {
+    object(command.environment, `${where}: environment must be object`);
+    assert.deepEqual(command.environment, { ESLINT_USE_FLAT_CONFIG: 'false' }, `${where}: environment must be the allowlisted ESLINT_USE_FLAT_CONFIG=false mapping`);
+  }
   if (command.fileInput) {
     object(command.fileInput, `${where}: fileInput must be object`);
     exactFields(command.fileInput, ['placeholder', 'extensions'], `${where}: fileInput unknown field`);
@@ -97,7 +108,7 @@ function validateCommand(command, where, assets) {
 export function validatePackV2(pack, packRoot) {
   object(pack, 'pack must be an object');
   assert.ok(typeof packRoot === 'string' && packRoot, 'pack root required');
-  exactFields(pack, ['schemaVersion', 'name', 'description', 'detects', 'sensors', 'coverage'], 'pack has unknown fields');
+  exactFields(pack, ['schemaVersion', 'name', 'description', 'detects', 'sensors', 'coverage', 'hardening'], 'pack has unknown fields');
   assert.equal(pack.schemaVersion, 2, 'unsupported schemaVersion; supported: 2');
   stableId(pack.name, 'pack name must be a stable id');
   text(pack.description, 'pack description required');
@@ -131,7 +142,8 @@ export function validatePackV2(pack, packRoot) {
       const toolRange = parseRange(requirements.toolRange, `${sensorId}: toolRange invalid`);
       const runtimeRange = parseRange(requirements.runtimeRange, `${sensorId}: runtimeRange invalid`);
       parseRange(variant.certifiedRange, `${sensorId}: certifiedRange invalid`);
-      const assets = nonemptyStrings(variant.assets, `${sensorId}: assets must be nonempty`).map((asset) => assetPath(asset, `${sensorId}: asset path invalid`));
+      assert.ok(Array.isArray(variant.assets), `${sensorId}: assets must be an array`);
+      const assets = variant.assets.map((asset) => assetPath(asset, `${sensorId}: asset path invalid`));
       assert.equal(new Set(assets).size, assets.length, `${sensorId}: duplicate assets`);
       assets.forEach((asset) => assertAsset(packRoot, asset, `${sensorId}: asset`));
       if ('configFiles' in requirements) nonemptyStrings(requirements.configFiles, `${sensorId}: configFiles required`).forEach((asset) => assert.ok(assets.includes(assetPath(asset, `${sensorId}: configFile invalid`)), `${sensorId}: configFile must be an asset`));
@@ -151,15 +163,50 @@ export function validatePackV2(pack, packRoot) {
   exactFields(coverage, ['schemaVersion', 'classes'], 'coverage has unknown fields');
   assert.equal(coverage.schemaVersion, 1, 'coverage.schemaVersion must remain 1');
   const classes = object(coverage.classes, 'coverage classes required');
+  assert.ok(Object.keys(classes).length > 0, 'coverage classes must be nonempty');
   for (const [classId, definition] of Object.entries(classes)) {
     stableId(classId, 'coverage class id must be stable');
     object(definition, `${classId}: coverage class must be object`);
+    exactFields(definition, ['description', 'detectors', 'remedy'], `${classId}: coverage class has unknown fields`);
+    text(definition.description, `${classId}: coverage description required`);
     assert.ok(Array.isArray(definition.detectors) && definition.detectors.length > 0, `${classId}: coverage detectors required`);
-    assert.doesNotMatch(`${classId} ${definition.description ?? ''}`.toLowerCase(), /agentic-workflow|kodria/, `${classId}: coverage class must be generic`);
+    const remedy = object(definition.remedy, `${classId}: coverage remedy required`);
+    exactFields(remedy, ['summary', 'command'], `${classId}: coverage remedy has unknown fields`);
+    text(remedy.summary, `${classId}: coverage remedy summary required`);
+    text(remedy.command, `${classId}: coverage remedy command required`);
     for (const detector of definition.detectors) {
       object(detector, `${classId}: detector must be object`);
+      exactFields(detector, ['sensor', 'evidence'], `${classId}: detector has unknown fields`);
       stableId(detector.sensor, `${classId}: detector sensor invalid`);
       assert.ok(Object.hasOwn(sensors, detector.sensor), `${classId}: detector references undeclared sensor '${detector.sensor}'`);
+      if (Object.hasOwn(detector, 'evidence')) {
+        const evidence = object(detector.evidence, `${classId}: detector evidence must be object`);
+        exactFields(evidence, ['commandIncludes', 'files'], `${classId}: detector evidence has unknown fields`);
+        if (Object.hasOwn(evidence, 'commandIncludes')) nonemptyStrings(evidence.commandIncludes, `${classId}: commandIncludes required`);
+        if (Object.hasOwn(evidence, 'files')) {
+          assert.ok(Array.isArray(evidence.files) && evidence.files.length > 0, `${classId}: evidence files required`);
+          for (const file of evidence.files) {
+            object(file, `${classId}: evidence file must be object`);
+            exactFields(file, ['path', 'containsAll'], `${classId}: evidence file has unknown fields`);
+            assert.ok(coverageEvidencePaths.has(text(file.path, `${classId}: evidence path required`)), `${classId}: evidence path unsupported`);
+            assert.ok(Array.isArray(file.containsAll), `${classId}: evidence containsAll must be an array`);
+            file.containsAll.forEach((item) => text(item, `${classId}: evidence containsAll invalid`));
+          }
+        }
+      }
+    }
+  }
+
+  if (Object.hasOwn(pack, 'hardening')) {
+    const hardening = object(pack.hardening, 'hardening must be an object');
+    assert.ok(Object.keys(hardening).length > 0, 'hardening must be nonempty when declared');
+    for (const [hardeningId, entry] of Object.entries(hardening)) {
+      stableId(hardeningId, 'hardening id must be stable');
+      object(entry, `${hardeningId}: hardening entry must be object`);
+      exactFields(entry, ['assets'], `${hardeningId}: hardening entry has unknown fields`);
+      const assets = nonemptyStrings(entry.assets, `${hardeningId}: hardening assets must be nonempty`).map((asset) => assetPath(asset, `${hardeningId}: hardening asset path invalid`));
+      assert.equal(new Set(assets).size, assets.length, `${hardeningId}: duplicate hardening assets`);
+      assets.forEach((asset) => assertAsset(packRoot, asset, `${hardeningId}: hardening asset`));
     }
   }
 }

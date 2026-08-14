@@ -22,6 +22,37 @@ function fixtureRoot(name) {
   assert.doesNotThrow(() => validatePackV2(pack, fixtureRoot('valid/js-ts')));
 }
 
+// v2 has three deliberately distinct asset states.  Native variants carry no
+// pack assets, baseline variants carry the config they materialize, and future
+// hardening choices carry their own contained assets at the top level.
+{
+  const native = readFixture('valid/js-ts');
+  native.sensors.lint.variants[0].assets = [];
+  native.sensors.lint.variants[0].command.args = ['.'];
+  assert.doesNotThrow(() => validatePackV2(native, fixtureRoot('valid/js-ts')), 'native variant permits no assets');
+
+  const baseline = readFixture('valid/js-ts');
+  assert.doesNotThrow(() => validatePackV2(baseline, fixtureRoot('valid/js-ts')), 'baseline variant materializes its asset');
+
+  const hardening = readFixture('valid/js-ts');
+  hardening.hardening = { 'strict-mode': { assets: ['eslint.config.awm.mjs'] } };
+  assert.doesNotThrow(() => validatePackV2(hardening, fixtureRoot('valid/js-ts')), 'hardening is a nonempty ID-to-contained-assets mapping');
+}
+
+for (const [name, mutate, message] of [
+  ['missing package-manager declaration', (pack) => { pack.sensors.lint.variants[0].command = { executable: 'npm', resolution: 'path', args: ['run', 'lint'] }; }, /packageManager/],
+  ['unsupported package manager', (pack) => { pack.sensors.lint.variants[0].command.packageManager = 'volta'; }, /packageManager/],
+  ['mismatched package manager', (pack) => { pack.sensors.lint.variants[0].command = { executable: 'pnpm', resolution: 'path', args: ['lint'], packageManager: 'npm' }; }, /packageManager/],
+  ['unallowlisted command environment', (pack) => { pack.sensors.lint.variants[0].command.environment = { NODE_OPTIONS: '--trace-warnings' }; }, /environment/],
+  ['nonexact command environment', (pack) => { pack.sensors.lint.variants[0].command.environment = { ESLINT_USE_FLAT_CONFIG: 'true' }; }, /environment/],
+  ['extra command environment key', (pack) => { pack.sensors.lint.variants[0].command.environment = { ESLINT_USE_FLAT_CONFIG: 'false', PATH: 'unsafe' }; }, /environment/],
+  ['loose coverage class', (pack) => { pack.coverage.classes['lint-errors'] = { detectors: [{ sensor: 'lint' }] }; }, /coverage/],
+]) {
+  const pack = readFixture('valid/js-ts');
+  mutate(pack);
+  assert.throws(() => validatePackV2(pack, fixtureRoot('valid/js-ts')), message, `rejects ${name}`);
+}
+
 for (const [fixture, message] of [
   ['overlap', /equal-priority overlap/],
   ['asset-escape', /asset.*outside/],
