@@ -1,84 +1,384 @@
 {
   "name": "python",
   "description": "Python sensor pack",
-  "detects": ["pyproject.toml", "requirements.txt", "setup.py", "setup.cfg", "Pipfile"],
+  "detects": [
+    "pyproject.toml",
+    "requirements.txt",
+    "setup.py",
+    "setup.cfg",
+    "Pipfile"
+  ],
   "coverage": {
     "schemaVersion": 1,
     "classes": {
       "static-type-errors": {
         "description": "Static type errors",
-        "detectors": [{ "sensor": "typecheck", "evidence": { "commandIncludes": ["mypy"] } }],
-        "remedy": { "summary": "Enable Python type checking", "command": "python -m pip install mypy" }
+        "detectors": [
+          {
+            "sensor": "typecheck",
+            "evidence": {
+              "commandIncludes": [
+                "mypy"
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable Python type checking",
+          "command": "python -m pip install mypy"
+        }
       },
       "lint-errors": {
         "description": "Lint rule violations",
-        "detectors": [{ "sensor": "lint", "evidence": { "commandIncludes": ["ruff", "check"] } }],
-        "remedy": { "summary": "Enable Python linting", "command": "python -m pip install ruff" }
+        "detectors": [
+          {
+            "sensor": "lint",
+            "evidence": {
+              "commandIncludes": [
+                "ruff",
+                "check"
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable Python linting",
+          "command": "python -m pip install ruff"
+        }
       },
       "regression-tests": {
         "description": "Regression test failures",
-        "detectors": [{ "sensor": "test", "evidence": { "commandIncludes": ["pytest"] } }],
-        "remedy": { "summary": "Add Python regression tests", "command": "python -m pip install pytest" }
+        "detectors": [
+          {
+            "sensor": "test",
+            "evidence": {
+              "commandIncludes": [
+                "pytest"
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Add Python regression tests",
+          "command": "python -m pip install pytest"
+        }
       },
       "dynamic-code-execution": {
         "description": "Dynamic code execution risks",
-        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-py-no-eval-exec"] }] } }],
-        "remedy": { "summary": "Enable Python security scanning", "command": "awm sensors init --pack python" }
+        "detectors": [
+          {
+            "sensor": "security",
+            "evidence": {
+              "commandIncludes": [
+                "semgrep",
+                ".semgrep.awm.yml"
+              ],
+              "files": [
+                {
+                  "path": ".semgrep.awm.yml",
+                  "containsAll": [
+                    "awm-py-no-eval-exec"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable Python security scanning",
+          "command": "awm sensors init --pack python"
+        }
       },
       "subprocess-shell-injection": {
         "description": "Shell injection through subprocess execution",
-        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-py-subprocess-shell-true"] }] } }],
-        "remedy": { "summary": "Enable Python subprocess security scanning", "command": "awm sensors init --pack python" }
+        "detectors": [
+          {
+            "sensor": "security",
+            "evidence": {
+              "commandIncludes": [
+                "semgrep",
+                ".semgrep.awm.yml"
+              ],
+              "files": [
+                {
+                  "path": ".semgrep.awm.yml",
+                  "containsAll": [
+                    "awm-py-subprocess-shell-true"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable Python subprocess security scanning",
+          "command": "awm sensors init --pack python"
+        }
       },
       "sql-string-construction": {
         "description": "Unsafe SQL string construction",
-        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-py-no-sql-string-building"] }] } }],
-        "remedy": { "summary": "Enable Python SQL security scanning", "command": "awm sensors init --pack python" }
+        "detectors": [
+          {
+            "sensor": "security",
+            "evidence": {
+              "commandIncludes": [
+                "semgrep",
+                ".semgrep.awm.yml"
+              ],
+              "files": [
+                {
+                  "path": ".semgrep.awm.yml",
+                  "containsAll": [
+                    "awm-py-no-sql-string-building"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable Python SQL security scanning",
+          "command": "awm sensors init --pack python"
+        }
       },
       "unsafe-deserialization": {
         "description": "Unsafe data deserialization",
-        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-py-unsafe-deserialization"] }] } }],
-        "remedy": { "summary": "Enable Python deserialization security scanning", "command": "awm sensors init --pack python" }
+        "detectors": [
+          {
+            "sensor": "security",
+            "evidence": {
+              "commandIncludes": [
+                "semgrep",
+                ".semgrep.awm.yml"
+              ],
+              "files": [
+                {
+                  "path": ".semgrep.awm.yml",
+                  "containsAll": [
+                    "awm-py-unsafe-deserialization"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable Python deserialization security scanning",
+          "command": "awm sensors init --pack python"
+        }
       },
       "hardcoded-secrets": {
         "description": "Hardcoded credentials and secret values",
-        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-py-no-hardcoded-secrets"] }] } }],
-        "remedy": { "summary": "Enable Python secret scanning", "command": "awm sensors init --pack python" }
+        "detectors": [
+          {
+            "sensor": "security",
+            "evidence": {
+              "commandIncludes": [
+                "semgrep",
+                ".semgrep.awm.yml"
+              ],
+              "files": [
+                {
+                  "path": ".semgrep.awm.yml",
+                  "containsAll": [
+                    "awm-py-no-hardcoded-secrets"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable Python secret scanning",
+          "command": "awm sensors init --pack python"
+        }
       }
     }
   },
   "sensors": {
     "typecheck": {
       "fast": true,
-      "defaultCmd": "mypy .",
-      "formatter": "mypy"
+      "applicability": {
+        "anyFiles": [
+          "pyproject.toml",
+          "mypy.ini",
+          "setup.cfg"
+        ]
+      },
+      "variants": [
+        {
+          "id": "mypy-native",
+          "priority": 10,
+          "requirements": {
+            "tool": "mypy",
+            "toolRange": ">=1.0.0",
+            "runtime": "python",
+            "runtimeRange": ">=3.9.0",
+            "configFiles": [
+              "pyproject.toml"
+            ]
+          },
+          "certifiedRange": ">=1.0.0",
+          "command": {
+            "executable": "mypy",
+            "args": [
+              "."
+            ],
+            "resolution": "python-environment"
+          },
+          "assets": [],
+          "formatter": "mypy",
+          "probe": {
+            "kind": "version"
+          }
+        }
+      ]
     },
     "lint": {
       "fast": true,
-      "defaultCmd": "ruff check . --output-format json",
-      "changedCmd": "ruff check {files} --output-format json",
-      "changedExtensions": [".py"],
-      "formatter": "ruff"
+      "applicability": {
+        "anyFiles": [
+          "pyproject.toml",
+          "ruff.toml",
+          ".ruff.toml"
+        ]
+      },
+      "variants": [
+        {
+          "id": "ruff-native",
+          "priority": 10,
+          "requirements": {
+            "tool": "ruff",
+            "toolRange": ">=0.1.0",
+            "runtime": "python",
+            "runtimeRange": ">=3.9.0",
+            "configFiles": [
+              "pyproject.toml"
+            ]
+          },
+          "certifiedRange": ">=0.1.0",
+          "command": {
+            "executable": "ruff",
+            "args": [
+              "check",
+              ".",
+              "--output-format",
+              "json"
+            ],
+            "resolution": "python-environment"
+          },
+          "assets": [],
+          "formatter": "ruff",
+          "probe": {
+            "kind": "version"
+          }
+        }
+      ]
     },
     "security": {
       "fast": false,
-      "defaultCmd": "semgrep --config .semgrep.awm.yml --json .",
-      "changedCmd": "semgrep --config .semgrep.awm.yml --json {files}",
-      "changedExtensions": [".py"],
-      "configFile": ".semgrep.awm.yml",
-      "formatter": "semgrep"
+      "applicability": {
+        "allFiles": [
+          "pyproject.toml"
+        ]
+      },
+      "variants": [
+        {
+          "id": "semgrep-python",
+          "priority": 10,
+          "requirements": {
+            "tool": "semgrep",
+            "toolRange": ">=1.0.0",
+            "runtime": "python",
+            "runtimeRange": ">=3.9.0"
+          },
+          "certifiedRange": ">=1.0.0",
+          "command": {
+            "executable": "semgrep",
+            "args": [
+              "--config",
+              ".semgrep.awm.yml",
+              "--json",
+              "."
+            ],
+            "resolution": "path"
+          },
+          "assets": [
+            ".semgrep.awm.yml"
+          ],
+          "formatter": "semgrep",
+          "probe": {
+            "kind": "semgrep-validate"
+          }
+        }
+      ]
     },
     "test": {
       "fast": false,
-      "enabled": true,
-      "defaultCmd": "pytest",
-      "formatter": "test"
+      "applicability": {
+        "allFiles": [
+          "pyproject.toml"
+        ]
+      },
+      "variants": [
+        {
+          "id": "pytest-native",
+          "priority": 10,
+          "requirements": {
+            "tool": "pytest",
+            "toolRange": ">=7.0.0",
+            "runtime": "python",
+            "runtimeRange": ">=3.9.0"
+          },
+          "certifiedRange": ">=7.0.0",
+          "command": {
+            "executable": "pytest",
+            "args": [
+              "."
+            ],
+            "resolution": "path"
+          },
+          "assets": [],
+          "formatter": "test",
+          "probe": {
+            "kind": "version"
+          }
+        }
+      ]
     },
     "mutation": {
       "fast": false,
-      "enabled": false,
-      "defaultCmd": "mutmut run",
-      "formatter": "generic"
+      "applicability": {
+        "allFiles": [
+          "pyproject.toml"
+        ]
+      },
+      "variants": [
+        {
+          "id": "mutmut-opt-in",
+          "priority": 10,
+          "requirements": {
+            "tool": "mutmut",
+            "toolRange": ">=2.0.0",
+            "runtime": "python",
+            "runtimeRange": ">=3.9.0"
+          },
+          "certifiedRange": ">=2.0.0",
+          "command": {
+            "executable": "mutmut",
+            "args": [
+              "run"
+            ],
+            "resolution": "python-environment"
+          },
+          "assets": [],
+          "formatter": "generic",
+          "probe": {
+            "kind": "version"
+          }
+        }
+      ]
     }
-  }
+  },
+  "schemaVersion": 2
 }

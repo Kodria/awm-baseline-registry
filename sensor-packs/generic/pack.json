@@ -1,30 +1,77 @@
 {
   "name": "generic",
   "description": "Generic sensor pack — Semgrep only, works with any language",
-  "detects": [],
+  "detects": [
+    "package.json"
+  ],
   "coverage": {
     "schemaVersion": 1,
     "classes": {
       "hardcoded-secrets": {
         "description": "Hardcoded credentials and secret values",
-        "detectors": [{
-          "sensor": "security",
-          "evidence": {
-            "commandIncludes": ["semgrep", ".semgrep.awm.yml"],
-            "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-generic-no-hardcoded-secrets"] }]
+        "detectors": [
+          {
+            "sensor": "security",
+            "evidence": {
+              "commandIncludes": [
+                "semgrep",
+                ".semgrep.awm.yml"
+              ],
+              "files": [
+                {
+                  "path": ".semgrep.awm.yml",
+                  "containsAll": [
+                    "awm-generic-no-hardcoded-secrets"
+                  ]
+                }
+              ]
+            }
           }
-        }],
-        "remedy": { "summary": "Enable a generic secret scanner", "command": "awm sensors init --pack generic" }
+        ],
+        "remedy": {
+          "summary": "Enable a generic secret scanner",
+          "command": "awm sensors init --pack generic"
+        }
       }
     }
   },
   "sensors": {
     "security": {
       "fast": false,
-      "defaultCmd": "semgrep --config .semgrep.awm.yml --json .",
-      "changedCmd": "semgrep --config .semgrep.awm.yml --json {files}",
-      "configFile": ".semgrep.awm.yml",
-      "formatter": "semgrep"
+      "applicability": {
+        "kind": "explicit-or-supported-language"
+      },
+      "variants": [
+        {
+          "id": "semgrep-generic",
+          "priority": 10,
+          "requirements": {
+            "tool": "semgrep",
+            "toolRange": ">=1.0.0",
+            "runtime": "python",
+            "runtimeRange": ">=3.9.0"
+          },
+          "certifiedRange": ">=1.0.0",
+          "command": {
+            "executable": "semgrep",
+            "args": [
+              "--config",
+              ".semgrep.awm.yml",
+              "--json",
+              "."
+            ],
+            "resolution": "path"
+          },
+          "assets": [
+            ".semgrep.awm.yml"
+          ],
+          "formatter": "semgrep",
+          "probe": {
+            "kind": "semgrep-validate"
+          }
+        }
+      ]
     }
-  }
+  },
+  "schemaVersion": 2
 }

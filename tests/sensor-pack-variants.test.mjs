@@ -70,9 +70,9 @@ for (const [fixture, message] of [
   assert.throws(() => validatePackV2(readFixture(`invalid/${fixture}`), fixtureRoot(`invalid/${fixture}`)), message, `rejects ${fixture}`);
 }
 
-for (const name of ['generic', 'python', 'shell']) {
+for (const name of ['generic', 'js-ts', 'python', 'shell']) {
   const pack = JSON.parse(fs.readFileSync(path.join(root, 'sensor-packs', name, 'pack.json'), 'utf8'));
-  assert.ok(!Object.hasOwn(pack, 'schemaVersion'), `${name} must remain legacy until T11`);
+  assert.equal(pack.schemaVersion, 2, `${name} must use v2`);
 }
 
-console.log('sensor-pack-variants: v2 fixtures rejected/accepted; 3 legacy packs accepted');
+console.log('sensor-pack-variants: v2 fixtures rejected/accepted; 4 production packs use v2');

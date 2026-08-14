@@ -47,7 +47,7 @@ for (const workflow of ['validate.yml', 'auto-tag.yml']) {
 }
 const packNames = fs
   .readdirSync(packsDir, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory())
+  .filter((entry) => entry.isDirectory() && entry.name !== 'shared')
   .map((entry) => entry.name)
   .sort();
 
@@ -156,11 +156,8 @@ for (const name of packNames) {
   const pythonPack = JSON.parse(
     fs.readFileSync(path.join(packsDir, 'python', 'pack.json'), 'utf8'),
   );
-  assert.equal(
-    pythonPack.sensors.mutation?.enabled,
-    false,
-    "python.sensors.mutation debe ser 'enabled: false' (placeholder, no cableado)",
-  );
+  assert.equal(pythonPack.schemaVersion, 2);
+  assert.equal(pythonPack.sensors.mutation.variants[0].id, 'mutmut-opt-in');
 }
 
 // python.typecheck (mypy) es whole-program, igual que js-ts.typecheck (tsc):

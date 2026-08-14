@@ -151,7 +151,7 @@ export function validatePackV2(pack, packRoot) {
       const assets = variant.assets.map((asset) => assetPath(asset, `${sensorId}: asset path invalid`));
       assert.equal(new Set(assets).size, assets.length, `${sensorId}: duplicate assets`);
       assets.forEach((asset) => assertAsset(packRoot, asset, `${sensorId}: asset`));
-      if ('configFiles' in requirements) nonemptyStrings(requirements.configFiles, `${sensorId}: configFiles required`).forEach((asset) => assert.ok(assets.includes(assetPath(asset, `${sensorId}: configFile invalid`)), `${sensorId}: configFile must be an asset`));
+      if ('configFiles' in requirements) nonemptyStrings(requirements.configFiles, `${sensorId}: configFiles required`).forEach((configFile) => assetPath(configFile, `${sensorId}: configFile invalid`));
       validateCommand(variant.command, `${sensorId}: variant`, assets);
       text(variant.formatter, `${sensorId}: formatter required`);
       object(variant.probe, `${sensorId}: probe required`); exactFields(variant.probe, ['kind'], `${sensorId}: probe has unknown fields`);
