@@ -8,6 +8,8 @@ import { classifyCertification } from '../scripts/render-sensor-support-matrix.m
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 const pins = JSON.parse(read('tests/fixtures/certification-pins.json'));
+const pythonFixtureConfig = read('tests/fixtures/python-certification/pyproject.toml');
+const ruffExcludedFixture = read('tests/fixtures/python-certification/ruff_only_excluded.py');
 
 function block(text, indent, key) {
   const lines = text.split(/\r?\n/);
@@ -20,6 +22,14 @@ function block(text, indent, key) {
 
 function childJobNames(jobs) {
   return [...jobs.matchAll(/^ {2}([A-Za-z][\w-]*):\s*(?:#.*)?$/gm)].map(match => match[1]);
+}
+
+function namedStep(workflow, name) {
+  const lines = workflow.split(/\r?\n/);
+  const start = lines.findIndex((line) => line === `      - name: ${name}`);
+  assert.notEqual(start, -1, `missing certification step '${name}'`);
+  const endOffset = lines.slice(start + 1).findIndex((line) => /^      - (?:name:|uses:)/.test(line));
+  return lines.slice(start, endOffset === -1 ? undefined : start + 1 + endOffset).join('\n');
 }
 
 function assertReusableCertification(workflow) {
@@ -51,17 +61,31 @@ function assertPythonToolchainCertification(workflow) {
   ]) assert.match(matrix, new RegExp(entry), `certification matrix must include ${entry.replaceAll('\n', ' ')}`);
   assert.match(certify, /actions\/setup-python@v5/, 'certification must install the selected Python runtime');
   assert.match(certify, /python-version: \$\{\{ matrix\.python \}\}/, 'certification must bind setup-python to the selected matrix runtime');
-  for (const tool of ['mypy', 'ruff', 'pytest'].map((name) => `${name}==${pins.pins[name].version}`)) {
-    assert.match(certify, new RegExp(tool.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `certification must install pinned ${tool}`);
-  }
-  for (const command of [
+  const toolchain = ['mypy', 'ruff', 'pytest'];
+  const commands = [
     'python -m mypy tests/fixtures/python-certification',
     'python -m ruff check tests/fixtures/python-certification --output-format json',
     'python -m pytest tests/fixtures/python-certification',
-  ]) assert.match(certify, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `certification must exercise ${command}`);
+  ];
+  for (const [profile, stepName] of Object.entries({
+    minimum: 'Exercise pinned Python minimum toolchain',
+    current: 'Smoke-test pinned Python current toolchain',
+  })) {
+    const step = namedStep(workflow, stepName);
+    for (const tool of toolchain.map((name) => `${name}==${pins.pins[name].version}`)) {
+      assert.match(step, new RegExp(tool.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${profile} Python step must install pinned ${tool}`);
+    }
+    for (const command of commands) {
+      assert.match(step, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${profile} Python step must exercise ${command}`);
+    }
+  }
   assert.match(certify, /if: matrix\.python-profile == 'minimum'/, 'minimum Python execution must be limited to Ubuntu');
   assert.match(certify, /if: matrix\.python-profile == 'current'/, 'current Python execution must smoke-test every supported OS');
-  assert.equal(pins.pins.pytest.version, '8.4.2', 'the frozen pytest pin must support the certified Python 3.9 minimum runtime');
+  assert.deepEqual(
+    Object.fromEntries(toolchain.map((name) => [name, pins.pins[name].version])),
+    { mypy: '1.18.2', ruff: '0.16.3', pytest: '8.4.2' },
+    'the frozen Python toolchain must support the certified Python 3.9 minimum runtime',
+  );
 }
 
 function assertReusableCall(workflow, workflowName) {
@@ -88,12 +112,16 @@ test('certification is a reusable, scoped three-OS workflow', () => {
 
 test('certification exercises the pinned Python pack toolchain on its supported runtimes', () => {
   assertPythonToolchainCertification(workflow);
+  assert.match(pythonFixtureConfig, /^\[tool\.ruff\]$/m, 'the Python certification fixture must exercise native Ruff configuration');
+  assert.match(pythonFixtureConfig, /^exclude = \["ruff_only_excluded\.py"\]$/m, 'the native Ruff fixture must exclude its dedicated lint fixture');
+  assert.match(ruffExcludedFixture, /^import os$/m, 'the dedicated Ruff fixture must fail F401 if native config is ignored');
 });
 
 test('RED mutation: removing pytest execution invalidates Python certification', () => {
+  const current = namedStep(workflow, 'Smoke-test pinned Python current toolchain');
   assert.throws(
-    () => assertPythonToolchainCertification(workflow.replaceAll('python -m pytest tests/fixtures/python-certification', 'echo skipped')),
-    /pytest/,
+    () => assertPythonToolchainCertification(workflow.replace(current, current.replace('python -m pytest tests/fixtures/python-certification', 'echo skipped'))),
+    /current Python step must exercise.*pytest/,
   );
 });
 

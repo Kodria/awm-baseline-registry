@@ -48,7 +48,7 @@
     },
     "mypy": {
       "package": "mypy",
-      "version": "2.3.0",
+      "version": "1.18.2",
       "source": "https://pypi.org/pypi/mypy/json"
     },
     "ruff": {

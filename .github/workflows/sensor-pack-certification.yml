@@ -46,14 +46,14 @@ jobs:
       - name: Exercise pinned Python minimum toolchain
         if: matrix.python-profile == 'minimum'
         run: |
-          python -m pip install "mypy==2.3.0" "ruff==0.16.3" "pytest==8.4.2"
+          python -m pip install "mypy==1.18.2" "ruff==0.16.3" "pytest==8.4.2"
           python -m mypy tests/fixtures/python-certification
           python -m ruff check tests/fixtures/python-certification --output-format json
           python -m pytest tests/fixtures/python-certification
       - name: Smoke-test pinned Python current toolchain
         if: matrix.python-profile == 'current'
         run: |
-          python -m pip install "mypy==2.3.0" "ruff==0.16.3" "pytest==8.4.2"
+          python -m pip install "mypy==1.18.2" "ruff==0.16.3" "pytest==8.4.2"
           python -m mypy tests/fixtures/python-certification
           python -m ruff check tests/fixtures/python-certification --output-format json
           python -m pytest tests/fixtures/python-certification

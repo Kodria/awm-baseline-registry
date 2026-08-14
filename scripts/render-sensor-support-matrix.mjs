@@ -36,6 +36,12 @@ function requirementsFor(variant) {
   return variant.requirements ?? (variant.policyRef === 'shared/semgrep-policy.json' ? semgrepPolicy : null);
 }
 
+function certificationEvidenceFor(tool) {
+  if (['mypy', 'ruff', 'pytest'].includes(tool)) return 'Ubuntu: 3.9 + 3.12 real; macOS/Windows: 3.12 smoke';
+  if (['semgrep', 'shellcheck'].includes(tool)) return 'Ubuntu: real tool; macOS/Windows: contract';
+  return 'Ubuntu/macOS/Windows: contract';
+}
+
 export function classifyCertification(variant, pins) {
   assert.ok(variant && typeof variant === 'object' && !Array.isArray(variant), 'variant must be an object');
   assert.ok(pins && typeof pins === 'object' && !Array.isArray(pins), 'pins must be an object');
@@ -58,7 +64,7 @@ function stableRows(packs, pins) {
     const range = variant.certifiedRange;
     const status = classifyCertification(variant, pins);
     const evidence = matchingPin ? `pin: \`${matchingPin.package}@${matchingPin.version}\`` : 'no matching pinned tool';
-    return { pack: pack.name, sensor, variant: variant.id, tool, range, status, evidence };
+    return { pack: pack.name, sensor, variant: variant.id, tool, range, osEvidence: certificationEvidenceFor(tool), status, evidence };
   }))).sort((left, right) => [left.pack, left.sensor, left.variant].join('\0').localeCompare([right.pack, right.sensor, right.variant].join('\0')));
 }
 
@@ -78,8 +84,8 @@ function validateInputs(packs, pinsDocument) {
 export function renderSensorSupport(packs, pinsDocument) {
   validateInputs(packs, pinsDocument);
   const variants = stableRows(packs, pinsDocument.pins);
-  const rows = variants.map(({ pack, sensor, variant, tool, range, status, evidence }) =>
-    `| \`${pack}\` | \`${sensor}\` | \`${variant}\` | \`${tool}\` | \`${range}\` | ${operatingSystems} | ${status} | ${evidence} |`,
+  const rows = variants.map(({ pack, sensor, variant, tool, range, osEvidence, status, evidence }) =>
+    `| \`${pack}\` | \`${sensor}\` | \`${variant}\` | \`${tool}\` | \`${range}\` | ${operatingSystems} | ${osEvidence} | ${status} | ${evidence} |`,
   );
   const statusSummary = ['certified', 'compatible-unverified', 'not-applicable'].map((status) => {
     const count = variants.filter((variant) => variant.status === status).length;
@@ -98,8 +104,8 @@ export function renderSensorSupport(packs, pinsDocument) {
     '',
     'Status: `certified` has a matching frozen tool pin; `compatible-unverified` has no matching frozen pin; `not-applicable` is reserved for variants without a tool contract.',
     '',
-    '| Pack | Sensor | Variant | Tool | Certified range | OS | Status | Evidence |',
-    '| --- | --- | --- | --- | --- | --- | --- | --- |',
+    '| Pack | Sensor | Variant | Tool | Certified range | Supported OS | OS certification evidence | Status | Evidence |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
     ...rows,
     '',
     '| Certification status | Derived variant count | Meaning |',
