@@ -220,7 +220,7 @@
               "setup.cfg"
             ]
           },
-          "certifiedRange": ">=1.18.0 <2.0.0",
+          "certifiedRange": "=1.18.2",
           "command": {
             "executable": "mypy",
             "args": [
@@ -260,7 +260,7 @@
               ".ruff.toml"
             ]
           },
-          "certifiedRange": ">=0.1.0",
+          "certifiedRange": "=0.16.3",
           "command": {
             "executable": "ruff",
             "args": [
@@ -290,7 +290,7 @@
         {
           "id": "semgrep-python",
           "priority": 10,
-          "certifiedRange": ">=1.0.0",
+          "certifiedRange": "=1.173.0",
           "policyRef": "shared/semgrep-policy.json",
           "command": {
             "executable": "semgrep",
@@ -326,7 +326,7 @@
             "runtime": "python",
             "runtimeRange": ">=3.9.0"
           },
-          "certifiedRange": ">=8.0.0 <9.0.0",
+          "certifiedRange": "=8.4.2",
           "command": {
             "executable": "pytest",
             "args": [

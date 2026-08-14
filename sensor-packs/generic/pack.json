@@ -45,7 +45,7 @@
         {
           "id": "semgrep-generic",
           "priority": 10,
-          "certifiedRange": ">=1.0.0",
+          "certifiedRange": "=1.173.0",
           "policyRef": "shared/semgrep-policy.json",
           "command": {
             "executable": "semgrep",

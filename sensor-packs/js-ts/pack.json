@@ -29,7 +29,7 @@
             "runtime": "node",
             "runtimeRange": ">=16.0.0"
           },
-          "certifiedRange": ">=8.57.0 <9.0.0",
+          "certifiedRange": "=8.57.1",
           "command": {
             "executable": "eslint",
             "resolution": "node-modules-bin",
@@ -59,7 +59,7 @@
             "runtime": "node",
             "runtimeRange": ">=16.0.0"
           },
-          "certifiedRange": ">=8.57.0 <9.0.0",
+          "certifiedRange": "=8.57.1",
           "command": {
             "executable": "eslint",
             "resolution": "node-modules-bin",
@@ -92,7 +92,7 @@
             "runtime": "node",
             "runtimeRange": ">=18.18.0"
           },
-          "certifiedRange": ">=9.0.0 <10.0.0",
+          "certifiedRange": "=9.39.5",
           "command": {
             "executable": "eslint",
             "resolution": "node-modules-bin",
@@ -122,7 +122,7 @@
             "runtime": "node",
             "runtimeRange": ">=20.19.0"
           },
-          "certifiedRange": ">=10.0.0 <11.0.0",
+          "certifiedRange": "=10.8.1",
           "command": {
             "executable": "eslint",
             "resolution": "node-modules-bin",
@@ -163,7 +163,7 @@
             "runtime": "node",
             "runtimeRange": ">=16.0.0"
           },
-          "certifiedRange": ">=5.0.0",
+          "certifiedRange": "=5.9.3",
           "command": {
             "executable": "tsc",
             "resolution": "node-modules-bin",
@@ -196,7 +196,7 @@
             "runtime": "python",
             "runtimeRange": ">=3.9.0"
           },
-          "certifiedRange": ">=1.0.0",
+          "certifiedRange": "=1.173.0",
           "command": {
             "executable": "semgrep",
             "resolution": "path",
@@ -235,7 +235,7 @@
             "runtime": "node",
             "runtimeRange": ">=18.0.0"
           },
-          "certifiedRange": ">=16.0.0",
+          "certifiedRange": "=16.10.4",
           "command": {
             "executable": "depcruise",
             "resolution": "node-modules-bin",
@@ -272,7 +272,7 @@
             "runtime": "node",
             "runtimeRange": ">=16.0.0"
           },
-          "certifiedRange": ">=3.0.0",
+          "certifiedRange": "=3.9.6",
           "command": {
             "executable": "prettier",
             "resolution": "node-modules-bin",

@@ -8,6 +8,7 @@ import { classifyCertification } from '../scripts/render-sensor-support-matrix.m
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 const pins = JSON.parse(read('tests/fixtures/certification-pins.json'));
+const packs = ['generic', 'js-ts', 'python', 'shell'].map((name) => JSON.parse(read(`sensor-packs/${name}/pack.json`)));
 const pythonFixtureConfig = read('tests/fixtures/python-certification/pyproject.toml');
 const ruffExcludedFixture = read('tests/fixtures/python-certification/ruff_only_excluded.py');
 
@@ -142,4 +143,20 @@ test('RED mutation: removing the release job dependency is rejected', () => {
 test('a future compatible tool is never presented as certified', () => {
   const future = { requirements: { tool: 'eslint', toolRange: '>=11.0.0 <12.0.0' }, certifiedRange: '>=11.0.0 <12.0.0' };
   assert.equal(classifyCertification(future, pins.pins), 'compatible-unverified');
+});
+
+test('every certified production variant is limited to its frozen tool evidence', () => {
+  for (const pack of packs) for (const sensor of Object.values(pack.sensors)) for (const variant of sensor.variants) {
+    if (classifyCertification(variant, pins.pins) !== 'certified') continue;
+    const tool = variant.requirements?.tool ?? 'semgrep';
+    const matchingPins = Object.values(pins.pins).filter((pin) => pin.package === tool);
+    const matchingPin = matchingPins.find((pin) => variant.certifiedRange === `=${pin.version}`);
+    assert.ok(matchingPin, `${pack.name}/${variant.id} must certify only an exact frozen ${tool} version`);
+
+    const future = structuredClone(variant);
+    if (!future.requirements) future.requirements = { tool, toolRange: variant.certifiedRange };
+    future.certifiedRange = '=999.0.0';
+    future.requirements.toolRange = '>=0.0.0';
+    assert.equal(classifyCertification(future, pins.pins), 'compatible-unverified', `${pack.name}/${variant.id} must not certify a future ${tool} version`);
+  }
 });
