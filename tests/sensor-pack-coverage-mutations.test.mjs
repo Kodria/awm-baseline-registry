@@ -74,8 +74,20 @@ function assertV2CoverageSchemaMutation() {
   assert.throws(() => validatePackV2(pack, fixtureDirectory), /coverage\.schemaVersion/, 'v2 validator must reject a future nested coverage schema');
 }
 
+function assertJsTsV2EvidenceMutations() {
+  const packDirectory = path.join(root, 'sensor-packs', 'js-ts');
+  const pack = JSON.parse(fs.readFileSync(path.join(packDirectory, 'pack.json'), 'utf8'));
+  const missingTypecheckArg = structuredClone(pack);
+  missingTypecheckArg.sensors.typecheck.variants[0].command.args = [];
+  assert.throws(() => validatePackV2(missingTypecheckArg, packDirectory), /args/, 'v2 typecheck must retain its local argv');
+  const missingLintAsset = structuredClone(pack);
+  missingLintAsset.sensors.lint.variants[0].assets = [];
+  assert.throws(() => validatePackV2(missingLintAsset, packDirectory), /command asset/, 'v2 lint command config must remain a declared asset');
+}
+
 try {
   assertV2CoverageSchemaMutation();
+  assertJsTsV2EvidenceMutations();
   const historicalMarkerFixture = path.join(tempRoot, 'historical-missing-marker');
   copyRegistry(historicalMarkerFixture);
   mutations[5][1](historicalMarkerFixture);

@@ -16,17 +16,18 @@ function run(bin, args, cwd, environment = {}) {
   return spawnSync(bin, args, { cwd, encoding: 'utf8', timeout: 120_000, maxBuffer: 4 * 1024 * 1024, env: { ...process.env, ...environment } });
 }
 
-function fixture(pin, config, broken = false) {
+function fixture(pinName, config, broken = false) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'awm-eslint-certification-'));
   workspaces.push(dir);
-  fs.writeFileSync(path.join(dir, 'package.json'), config === 'eslintrc' ? '{}\n' : '{"type":"module"}\n');
+  fs.cpSync(path.join(root, 'tests/fixtures/eslint-certification', pinName), dir, { recursive: true });
+  if (config === 'eslintrc') fs.writeFileSync(path.join(dir, 'package.json'), '{"private":true,"devDependencies":{"eslint":"8.57.1"}}\n');
   fs.writeFileSync(path.join(dir, 'sample.js'), 'function run() { return 1; }\nrun();\n');
   fs.writeFileSync(path.join(dir, 'eslint.config.awm.mjs'), mjs);
   fs.writeFileSync(path.join(dir, 'eslint.config.awm.cjs'), cjs);
   if (config === 'eslintrc') fs.writeFileSync(path.join(dir, '.eslintrc.js'), broken ? 'module.exports = {' : 'module.exports = { env: { node: true } };');
   if (broken) fs.writeFileSync(path.join(dir, 'eslint.config.js'), 'throw new Error("broken native config");');
-  const install = run('npm', ['install', '--prefix', dir, '--no-save', '--no-package-lock', `eslint@${pin.version}`], dir);
-  assert.equal(install.status, 0, `install ${pin.version}: ${install.stderr}`);
+  const install = run('npm', ['ci', '--ignore-scripts'], dir);
+  assert.equal(install.status, 0, `npm ci ${pinName}: ${install.stderr}`);
   return dir;
 }
 
@@ -38,13 +39,13 @@ for (const [id, pinName, config, environment] of [
 ]) {
   const variant = pack.sensors.lint.variants.find((candidate) => candidate.id === id);
   assert.ok(variant, `${id} missing from manifest`);
-  const dir = fixture(pins[pinName], config);
+  const dir = fixture(pinName, config);
   const result = run(path.join(dir, 'node_modules/.bin/eslint'), ['sample.js', ...variant.command.args.slice(1), '--no-ignore'], dir, environment);
   assert.equal(result.status, 0, `${id} failed: ${result.stderr || result.stdout}`);
 }
 
 {
-  const dir = fixture(pins['eslint-9'], 'flat', true);
+  const dir = fixture('eslint-9', 'flat', true);
   const result = run(path.join(dir, 'node_modules/.bin/eslint'), ['sample.js', '--config', 'eslint.config.awm.mjs', '--no-ignore'], dir);
   assert.notEqual(result.status, 0, 'a broken native flat config must fail');
 }

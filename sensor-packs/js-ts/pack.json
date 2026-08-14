@@ -449,7 +449,13 @@
         "description": "Static type errors",
         "detectors": [
           {
-            "sensor": "typecheck"
+            "sensor": "typecheck",
+            "evidence": {
+              "commandIncludes": [
+                "tsc",
+                "--noEmit"
+              ]
+            }
           }
         ],
         "remedy": {
@@ -461,7 +467,22 @@
         "description": "Lint rule violations",
         "detectors": [
           {
-            "sensor": "lint"
+            "sensor": "lint",
+            "evidence": {
+              "commandIncludes": [
+                "eslint",
+                "--config",
+                "eslint.config.awm.mjs"
+              ],
+              "files": [
+                {
+                  "path": "eslint.config.awm.mjs",
+                  "containsAll": [
+                    "no-unreachable"
+                  ]
+                }
+              ]
+            }
           }
         ],
         "remedy": {
@@ -473,7 +494,13 @@
         "description": "Formatting consistency",
         "detectors": [
           {
-            "sensor": "format"
+            "sensor": "format",
+            "evidence": {
+              "commandIncludes": [
+                "prettier",
+                "--check"
+              ]
+            }
           }
         ],
         "remedy": {
@@ -485,7 +512,22 @@
         "description": "Dependency boundary violations",
         "detectors": [
           {
-            "sensor": "depcheck"
+            "sensor": "depcheck",
+            "evidence": {
+              "commandIncludes": [
+                "depcruise",
+                "--config",
+                ".dep-cruiser.awm.js"
+              ],
+              "files": [
+                {
+                  "path": ".dep-cruiser.awm.js",
+                  "containsAll": [
+                    "forbidden"
+                  ]
+                }
+              ]
+            }
           }
         ],
         "remedy": {
@@ -497,7 +539,13 @@
         "description": "Regression test failures",
         "detectors": [
           {
-            "sensor": "test"
+            "sensor": "test",
+            "evidence": {
+              "commandIncludes": [
+                "npm",
+                "test"
+              ]
+            }
           }
         ],
         "remedy": {
