@@ -12,6 +12,14 @@ const mjs = fs.readFileSync(path.join(root, 'sensor-packs/js-ts/eslint.config.aw
 const cjs = fs.readFileSync(path.join(root, 'sensor-packs/js-ts/eslint.config.awm.cjs'), 'utf8');
 const workspaces = [];
 
+assert.equal(commandForPlatform('npm', 'linux'), 'npm', 'POSIX must invoke npm without a command extension');
+assert.equal(commandForPlatform('npm', 'win32'), 'npm.cmd', 'Windows must invoke npm through its command shim');
+assert.equal(commandForPlatform('eslint', 'win32'), 'eslint.cmd', 'Windows must invoke local ESLint through its command shim');
+
+function commandForPlatform(command, platform = process.platform) {
+  return platform === 'win32' ? `${command}.cmd` : command;
+}
+
 function run(bin, args, cwd, environment = {}) {
   return spawnSync(bin, args, { cwd, encoding: 'utf8', timeout: 120_000, maxBuffer: 4 * 1024 * 1024, env: { ...process.env, ...environment } });
 }
@@ -26,7 +34,7 @@ function fixture(pinName, config, broken = false) {
   fs.writeFileSync(path.join(dir, 'eslint.config.awm.cjs'), cjs);
   if (config === 'eslintrc') fs.writeFileSync(path.join(dir, '.eslintrc.js'), broken ? 'module.exports = {' : 'module.exports = { env: { node: true } };');
   if (broken) fs.writeFileSync(path.join(dir, 'eslint.config.js'), 'throw new Error("broken native config");');
-  const install = run('npm', ['ci', '--ignore-scripts'], dir);
+  const install = run(commandForPlatform('npm'), ['ci', '--ignore-scripts'], dir);
   assert.equal(install.status, 0, `npm ci ${pinName}: ${install.stderr}`);
   return dir;
 }
@@ -40,13 +48,13 @@ for (const [id, pinName, config, environment] of [
   const variant = pack.sensors.lint.variants.find((candidate) => candidate.id === id);
   assert.ok(variant, `${id} missing from manifest`);
   const dir = fixture(pinName, config);
-  const result = run(path.join(dir, 'node_modules/.bin/eslint'), ['sample.js', ...variant.command.args.slice(1), '--no-ignore'], dir, environment);
+  const result = run(path.join(dir, 'node_modules/.bin', commandForPlatform('eslint')), ['sample.js', ...variant.command.args.slice(1), '--no-ignore'], dir, environment);
   assert.equal(result.status, 0, `${id} failed: ${result.stderr || result.stdout}`);
 }
 
 {
   const dir = fixture('eslint-9', 'flat', true);
-  const result = run(path.join(dir, 'node_modules/.bin/eslint'), ['sample.js', '--config', 'eslint.config.awm.mjs', '--no-ignore'], dir);
+  const result = run(path.join(dir, 'node_modules/.bin', commandForPlatform('eslint')), ['sample.js', '--config', 'eslint.config.awm.mjs', '--no-ignore'], dir);
   assert.notEqual(result.status, 0, 'a broken native flat config must fail');
 }
 
