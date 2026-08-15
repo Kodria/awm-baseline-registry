@@ -25,6 +25,7 @@ jobs:
       - run: python -m pip install "semgrep==1.173.0"
       - run: node scripts/validate-portability.mjs
       - run: node tests/validate-portability.test.mjs
+      - run: node tests/r3-release-metadata.test.mjs
       - run: node tests/r3-retro-contract.test.mjs
       - run: node tests/codex-session-start.test.mjs
       - run: node tests/session-start.test.mjs
