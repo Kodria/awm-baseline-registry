@@ -27,7 +27,13 @@
             "tool": "eslint",
             "toolRange": ">=8.0.0 <9.0.0",
             "runtime": "node",
-            "runtimeRange": ">=16.0.0"
+            "runtimeRange": ">=16.0.0",
+            "configFiles": [
+              ".eslintrc",
+              ".eslintrc.json",
+              ".eslintrc.js",
+              ".eslintrc.cjs"
+            ]
           },
           "certifiedRange": "=8.57.1",
           "command": {
@@ -57,7 +63,15 @@
             "tool": "eslint",
             "toolRange": ">=8.0.0 <9.0.0",
             "runtime": "node",
-            "runtimeRange": ">=16.0.0"
+            "runtimeRange": ">=16.0.0",
+            "configFiles": [
+              "eslint.config.js",
+              "eslint.config.mjs",
+              "eslint.config.cjs",
+              "eslint.config.ts",
+              "eslint.config.mts",
+              "eslint.config.cts"
+            ]
           },
           "certifiedRange": "=8.57.1",
           "command": {

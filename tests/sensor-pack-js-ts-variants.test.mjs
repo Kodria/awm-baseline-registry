@@ -10,6 +10,16 @@ const pack = JSON.parse(fs.readFileSync(path.join(root, 'sensor-packs/js-ts/pack
 
 assert.equal(pack.schemaVersion, 2, 'js-ts is the first v2 pack');
 assert.deepEqual(pack.sensors.lint.variants.map((variant) => variant.id).sort(), ['eslint-8-eslintrc', 'eslint-8-flat', 'eslint-9-flat', 'eslint-10-flat'].sort());
+assert.deepEqual(
+  pack.sensors.lint.variants.find((variant) => variant.id === 'eslint-8-eslintrc').requirements.configFiles,
+  ['.eslintrc', '.eslintrc.json', '.eslintrc.js', '.eslintrc.cjs'],
+  'ESLint 8 eslintrc must declare its native config evidence',
+);
+assert.deepEqual(
+  pack.sensors.lint.variants.find((variant) => variant.id === 'eslint-8-flat').requirements.configFiles,
+  ['eslint.config.js', 'eslint.config.mjs', 'eslint.config.cjs', 'eslint.config.ts', 'eslint.config.mts', 'eslint.config.cts'],
+  'ESLint 8 flat must declare its native config evidence',
+);
 
 const typecheck = pack.sensors.typecheck;
 assert.deepEqual(typecheck.applicability.anyFiles, ['tsconfig.json', 'tsconfig.*.json']);
