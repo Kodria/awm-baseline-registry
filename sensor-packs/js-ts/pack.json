@@ -51,7 +51,10 @@
               "--cache",
               "--format",
               "json"
-            ]
+            ],
+            "environment": {
+              "ESLINT_USE_FLAT_CONFIG": "false"
+            }
           },
           "assets": [
             "eslint.config.awm.cjs"

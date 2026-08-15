@@ -60,6 +60,7 @@ for (const [id, pinName, config, environment] of [
 ]) {
   const variant = pack.sensors.lint.variants.find((candidate) => candidate.id === id);
   assert.ok(variant, `${id} missing from manifest`);
+  assert.deepEqual(variant.command.environment ?? {}, environment, `${id} must declare the ESLint mode used by its command`);
   const dir = fixture(pinName, config);
   const result = run(path.join(dir, 'node_modules/.bin', commandForPlatform('eslint')), ['sample.js', ...variant.command.args.slice(1), '--no-ignore'], dir, environment);
   assert.equal(result.status, 0, `${id} failed: ${result.stderr || result.stdout}`);
