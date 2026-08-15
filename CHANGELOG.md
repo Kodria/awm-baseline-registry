@@ -9,6 +9,9 @@ Newest entry on top; append new releases directly below this line.
 - Existing projects with legacy packs or manifests remain explicitly degraded/unverified until `awm sensors init` performs the supported migration; unknown schema versions fail loudly instead of being reinterpreted.
 - `harness-retro` runs the read-only empirical coverage analysis once after QA and before ledger archival. Compatibility outcomes remain distinct from certification so unsupported or future tool versions cannot become false greens.
 
+### Fixed
+- ESLint 8 variants now declare the native project configuration that selects them: eslintrc and flat-config projects are distinguishable by the version-aware CLI instead of resolving only by priority.
+
 ### Nota de versión
 Bundle `dev` 2.10.0 → 3.0.0 (major): the public R3 sensor-pack contract is breaking. The release PR must use a conventional breaking title so auto-tag advances registry `v1.16.1` to `v2.0.0`.
 

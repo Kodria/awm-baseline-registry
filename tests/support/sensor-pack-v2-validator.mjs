@@ -169,7 +169,7 @@ export function validatePackV2(pack, packRoot) {
       const requirements = policy
         ? { tool: policy.tool, toolRange: policy.toolRange, runtime: policy.runtime, runtimeRange: policy.runtimeRange }
         : object(variant.requirements, `${sensorId}: requirements required`);
-      exactFields(requirements, ['tool', 'toolRange', 'runtime', 'runtimeRange', 'configFiles'], `${sensorId}: requirements has unknown fields`);
+      exactFields(requirements, ['tool', 'toolRange', 'runtime', 'runtimeRange', 'configFiles', 'packageJsonFields'], `${sensorId}: requirements has unknown fields`);
       text(requirements.tool, `${sensorId}: tool required`); text(requirements.runtime, `${sensorId}: runtime required`);
       const toolRange = parseRange(requirements.toolRange, `${sensorId}: toolRange invalid`);
       const runtimeRange = parseRange(requirements.runtimeRange, `${sensorId}: runtimeRange invalid`);
@@ -179,6 +179,7 @@ export function validatePackV2(pack, packRoot) {
       assert.equal(new Set(assets).size, assets.length, `${sensorId}: duplicate assets`);
       assets.forEach((asset) => assertAsset(packRoot, asset, `${sensorId}: asset`));
       if ('configFiles' in requirements) nonemptyStrings(requirements.configFiles, `${sensorId}: configFiles required`).forEach((configFile) => assetPath(configFile, `${sensorId}: configFile invalid`));
+      if ('packageJsonFields' in requirements) nonemptyStrings(requirements.packageJsonFields, `${sensorId}: packageJsonFields required`).forEach((field) => assert.match(field, /^[A-Za-z][A-Za-z0-9]*$/, `${sensorId}: package.json field invalid`));
       validateCommand(variant.command, `${sensorId}: variant`, assets);
       text(variant.formatter, `${sensorId}: formatter required`);
       const probe = policy ? { kind: policy.probe } : object(variant.probe, `${sensorId}: probe required`);
