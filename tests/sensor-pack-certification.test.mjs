@@ -6,7 +6,11 @@ import { fileURLToPath } from 'node:url';
 import { classifyCertification } from '../scripts/render-sensor-support-matrix.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
+// GitHub's Windows checkout can materialize YAML as CRLF. Structural checks
+// and their mutations operate on a canonical representation so replacements
+// cannot silently become no-ops on that runner.
+const normalizeLf = text => text.replace(/\r\n/g, '\n');
+const read = relative => normalizeLf(fs.readFileSync(path.join(root, relative), 'utf8'));
 const pins = JSON.parse(read('tests/fixtures/certification-pins.json'));
 const packs = ['generic', 'js-ts', 'python', 'shell'].map((name) => JSON.parse(read(`sensor-packs/${name}/pack.json`)));
 const pythonFixtureConfig = read('tests/fixtures/python-certification/pyproject.toml');
@@ -144,6 +148,15 @@ test('RED mutation: security tooling cannot run under the Python 3.9 pack certif
   const step = namedStep(workflow, 'Exercise Ubuntu security and shell tooling');
   assert.throws(
     () => assertShellCheckCertification(workflow.replace(step, step.replace(" && matrix.python-profile == 'current'", ''))),
+    /supported current Python interpreter/,
+  );
+});
+
+test('CRLF checkout keeps certification mutations non-vacuous', () => {
+  const windowsWorkflow = normalizeLf(workflow.replace(/\n/g, '\r\n'));
+  const step = namedStep(windowsWorkflow, 'Exercise Ubuntu security and shell tooling');
+  assert.throws(
+    () => assertShellCheckCertification(windowsWorkflow.replace(step, step.replace(" && matrix.python-profile == 'current'", ''))),
     /supported current Python interpreter/,
   );
 });

@@ -14,7 +14,7 @@ assert.match(support, /<!-- BEGIN GENERATED: sensor-pack-support -->/);
 assert.match(support, /<!-- END GENERATED: sensor-pack-support -->/);
 assert.ok(!renderSensorSupport(packs, pins).includes('\r'), 'renderer output must be deterministic LF');
 assert.doesNotThrow(() => assertSensorSupportFresh(support, packs, pins), 'SUPPORT.md must match renderer output after EOL normalization');
-assert.doesNotThrow(() => assertSensorSupportFresh(support.replace(/\n/g, '\r\n'), packs, pins),
+assert.doesNotThrow(() => assertSensorSupportFresh(support.replace(/\r?\n/g, '\r\n'), packs, pins),
   'freshness must accept a checkout that has converted generated LF output to CRLF');
 assert.match(support, /\| Pack \| Sensor \| Variant \| Tool \| Certified range \| Supported OS \| OS certification evidence \| Status \| Evidence \|/);
 assert.match(support, /\| `generic` \| `security` \| `semgrep-generic` \| `semgrep` \| `=1\.173\.0` \| Ubuntu, macOS, Windows \| Ubuntu: real tool; macOS\/Windows: contract \| certified \|/,
