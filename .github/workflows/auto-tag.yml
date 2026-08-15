@@ -20,7 +20,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  sensor-certification:
+    uses: ./.github/workflows/sensor-pack-certification.yml
+
   tag:
+    needs: sensor-certification
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (full history + tags)
@@ -33,20 +37,32 @@ jobs:
         with:
           node-version: "20"
 
+      # Semgrep 1.173 requires Python >=3.10; make the release gate's
+      # interpreter explicit instead of depending on runner defaults.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       # The tag is what `awm update` delivers, so it must never be cut over a
       # red gate. validate.yml runs on the same push, but as a separate
       # workflow it cannot block this job — re-running the checks here is what
       # actually makes the release conditional on them.
       - name: Verify registry before tagging
         run: |
+          python -m pip install "semgrep==1.173.0"
           node scripts/validate-portability.mjs
           node tests/validate-portability.test.mjs
+          node tests/r3-release-metadata.test.mjs
+          node tests/r3-retro-contract.test.mjs
           node tests/codex-session-start.test.mjs
           node tests/session-start.test.mjs
           node tests/sensor-pack-eslint.test.mjs
           node tests/sensor-pack-shape.test.mjs
+          node tests/sensor-pack-python-shell-generic.test.mjs
+          node tests/sensor-pack-variants.test.mjs
           node tests/sensor-pack-coverage.test.mjs
           node tests/sensor-pack-coverage-mutations.test.mjs
+          node --test tests/sensor-pack-rules-fire.test.mjs
 
       - name: Compute and push next tag
         run: |

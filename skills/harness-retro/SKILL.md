@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "2.3.0"
+version: "2.4.0"
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
 
@@ -39,26 +39,28 @@ El modo desatendido quita pausas, no controles: los gates (sensor, ledger, recon
 
 ### Modo desatendido
 
-WHEN el modo es `desatendido`, el paso 2 del checklist no presenta ítem por ítem: triagea con criterio propio.
+WHEN el modo es `desatendido`, el paso 3 del checklist no presenta ítem por ítem. Unattended mode uses only existing triage rules; it records any recommendation that needs new authority instead of applying it.
 
-- **Cura** (estructuraliza en su target según la clase) los hallazgos que cumplan al menos uno: recurrentes (`awm ledger recurring --min 2`), severidad `blocker`, o sistémicos (mismo patrón en ≥2 archivos/tareas).
-- **Descarta** el resto SIN preguntar, documentando cada descarte con su razón en `docs/harness-retros.md` (sección "Descartes").
-- Los pasos 3-10 corren idénticos: clasificar, draftear la regla, curar (merge-and-prune), aplicar, **verificar que la regla dispara**, commit, log, `awm ledger archive` y marker `awm-retro-complete`.
+- **Triage existing remedies only** for findings that are recurrent (`awm ledger recurring --min 2`), `blocker` severity, or systemic (the same pattern in ≥2 files/tasks).
+- **Record** every proposed new remedy or unauthorized change in `docs/harness-retros.md` as a recommendation; do not apply it without authority.
+- **Discard** the remainder without asking, documenting each dismissal and its reason in `docs/harness-retros.md` (section "Descartes").
+- The remaining steps run identically: classify, draft only an authorized rule, cure (merge-and-prune), apply, **verify the rule fires**, commit, log, archive, and add the marker.
 
 ## Checklist
 
 You MUST create a task for each item and complete them in order:
 
 1. **Read the session ledger** — run `awm ledger list` and `awm ledger recurring --min 2`; summarize findings + wins for the user
-2. **Present each item interactively** — for each finding and win, let the user decide: structuralize, record as AGENTS.md lesson, or dismiss
-3. **Classify each approved item** — structural / logic / process / security
-4. **Draft the rule** — actual lint/test/constitution/semgrep/AGENTS.md text
-5. **Cure, don't append raw** — when writing to CONSTITUTION.md or AGENTS.md: merge the new lesson into the relevant existing section and drop entries that no longer apply (merge-and-prune, never append raw)
-6. **Apply the rule** — edit the target file
-7. **Verify the rule fires** (for sensor rules) — manufacture the failure, run the sensor, confirm it catches it
-8. **Commit** the rules
-9. **Log the retro** — append to `docs/harness-retros.md`
-10. **Close the retro** — run `awm ledger archive` and add the `awm-retro-complete` marker
+2. **Read empirical coverage** — run `awm sensors coverage --json` after the ledger. Coverage is read-only: it reports outcomes and does not apply remedies or mutate the project.
+3. **Present each item interactively** — present ledger findings, wins, and coverage outcomes; for each remedy, the human decides: structuralize, record as AGENTS.md lesson, or dismiss
+4. **Classify each approved item** — structural / logic / process / security
+5. **Draft the rule** — actual lint/test/constitution/semgrep/AGENTS.md text
+6. **Cure, don't append raw** — when writing to CONSTITUTION.md or AGENTS.md: merge the new lesson into the relevant existing section and drop entries that no longer apply (merge-and-prune, never append raw)
+7. **Apply the authorized rule** — edit the target file
+8. **Verify the rule fires** (for sensor rules) — manufacture the failure, run the sensor, confirm it catches it
+9. **Commit** the rules
+10. **Log the retro** — append to `docs/harness-retros.md`
+11. **Close the retro** — run `awm ledger archive` and add the `awm-retro-complete` marker
 
 ## The remediation tree
 
@@ -110,7 +112,11 @@ awm ledger recurring --min 2
 
 Summarize for the user: total findings, total wins, recurring clusters (if any).
 
-### 2. Present each item interactively
+### 2. Read empirical coverage
+
+Run the coverage command exactly once, after reading the active ledger and before triage or archive. Treat its static and empirical outcomes as evidence for the retrospective; it is read-only and never grants authority to apply a remedy.
+
+### 3. Present each item interactively
 
 Present every ledger item — findings AND wins — grouped by signature with its recurrence count. For each, wait for an explicit user decision:
 
@@ -118,17 +124,17 @@ Present every ledger item — findings AND wins — grouped by signature with it
 - **Record as AGENTS.md lesson/win** → reinforcing working patterns
 - **Dismiss** → note the reason and move on
 
-**Modo interactivo:** do not apply anything without explicit user approval per item. Do not batch-apply.
+**Modo interactivo:** the human decides each remedy after seeing the coverage outcomes. Do not apply anything without explicit user approval per item. Do not batch-apply.
 
 **Modo desatendido:** aplica el triage con criterio propio definido en la sección "Modo desatendido" — sin aprobación por ítem, con descartes documentados.
 
-### 3. Classify
+### 4. Classify
 
 Apply the heuristics from the table above. State the classification out loud:
 
 > "Classifying as `logic` because the bug only surfaced when the function ran against an empty input — a static check wouldn't have caught it."
 
-### 4. Draft the rule
+### 5. Draft the rule
 
 Write the actual rule, not a description. Examples by class:
 
@@ -177,7 +183,7 @@ test('parseConfig returns explicit error on empty input', () => {
 - Staging files individually (not `git add -A`) prevents accidental secret inclusion — confirmed pattern across multiple sessions.
 ```
 
-### 5. Cure, don't append raw
+### 6. Cure, don't append raw
 
 When writing to `CONSTITUTION.md` or `AGENTS.md`, **merge and prune**: fold the new lesson into the relevant existing section and drop entries that no longer apply. These docs are delivered every session — keep them a curated index, not an append-only log, so context never saturates.
 
@@ -203,11 +209,11 @@ which entries you dropped. That is what makes the growth visible at the next pla
 act on it. A retro that added 3KB and pruned nothing is not a failure — it is a line in the log that the
 next `writing-plans` will surface while the user is present.
 
-### 6. Apply
+### 7. Apply
 
 Use the native file-editing mechanism to add the rule to the target file. If the file doesn't exist (e.g. `tests/structural/` is new), create it and any required scaffolding.
 
-### 7. Verify the rule fires
+### 8. Verify the rule fires
 
 For sensor-catchable rules (structural, logic, security), manufacture the original failure and confirm the sensor catches it:
 
@@ -218,14 +224,14 @@ npm test -- tests/structural   # for structural tests
 
 Expected: the sensor fails on the manufactured case. Then revert and re-run — sensors should pass cleanly.
 
-### 8. Commit
+### 9. Commit
 
 ```bash
 git add <changed-files>
 git commit -m "harness-retro: <class> rule for <issue summary>"
 ```
 
-### 9. Log the retro
+### 10. Log the retro
 
 Append (or create) `docs/harness-retros.md`:
 
@@ -239,7 +245,7 @@ Append (or create) `docs/harness-retros.md`:
 - **Descartes (modo desatendido):** <signature — razón> | ninguno
 ```
 
-### 10. Close the retro
+### 11. Close the retro
 
 Run `awm ledger archive` to rotate this branch's ledger out of the active flow (it stays on disk under `.awm/ledger/archive/` for audit; the next plan starts fresh):
 

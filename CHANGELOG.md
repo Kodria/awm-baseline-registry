@@ -2,6 +2,16 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.0.0 — 2026-08-15
+
+### Changed
+- Published the breaking R3 compatible sensor-pack contract: first-party `pack.json` files use v2 variant and compatibility metadata while the nested coverage catalog remains schema v1. The registry now requires the released `agentic-workflow-manager` `8.1.0`, the first published CLI able to consume, probe, and report that contract.
+- Existing projects with legacy packs or manifests remain explicitly degraded/unverified until `awm sensors init` performs the supported migration; unknown schema versions fail loudly instead of being reinterpreted.
+- `harness-retro` runs the read-only empirical coverage analysis once after QA and before ledger archival. Compatibility outcomes remain distinct from certification so unsupported or future tool versions cannot become false greens.
+
+### Nota de versión
+Bundle `dev` 2.10.0 → 3.0.0 (major): the public R3 sensor-pack contract is breaking. The release PR must use a conventional breaking title so auto-tag advances registry `v1.16.1` to `v2.0.0`.
+
 ## dev 2.10.0 — 2026-08-11
 
 ### Added

@@ -1,6 +1,6 @@
 ---
 name: systematic-debugging
-version: "1.0.1"
+version: "1.1.0"
 description: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes
 ---
 
@@ -163,6 +163,8 @@ You MUST complete each phase before proceeding to the next.
    - DON'T add more fixes on top
 
    On confirmed root cause, record it to the ledger so a second occurrence is detectable:
+
+   Append `--defect-class <exact-catalog-id>` only when the root cause maps to an exact class in the active sensor-pack coverage catalog. Omit the flag when the class is not known; do not infer it from the symptom, signature, or root-cause narrative.
 
    ```
    awm ledger add --phase debugging --source-skill systematic-debugging --polarity finding --class <structural|logica|seguridad> --signature <root-cause-slug> --severity <blocker|important> --desc "<root cause, one line>" --ref <file:line>

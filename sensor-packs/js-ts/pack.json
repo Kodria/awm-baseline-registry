@@ -1,108 +1,735 @@
 {
+  "schemaVersion": 2,
   "name": "js-ts",
-  "description": "JavaScript / TypeScript sensor pack",
-  "detects": ["package.json"],
+  "description": "Version-aware JavaScript and TypeScript sensor pack",
+  "detects": [
+    "package.json"
+  ],
+  "sensors": {
+    "lint": {
+      "fast": true,
+      "applicability": {
+        "anyFiles": [
+          "eslint.config.js",
+          "eslint.config.mjs",
+          "eslint.config.cjs",
+          "eslint.config.ts",
+          "eslint.config.mts",
+          "eslint.config.cts",
+          "package.json"
+        ]
+      },
+      "variants": [
+        {
+          "id": "eslint-8-eslintrc",
+          "priority": 40,
+          "requirements": {
+            "tool": "eslint",
+            "toolRange": ">=8.0.0 <9.0.0",
+            "runtime": "node",
+            "runtimeRange": ">=16.0.0"
+          },
+          "certifiedRange": "=8.57.1",
+          "command": {
+            "executable": "eslint",
+            "resolution": "node-modules-bin",
+            "args": [
+              ".",
+              "--config",
+              "eslint.config.awm.cjs",
+              "--cache",
+              "--format",
+              "json"
+            ]
+          },
+          "assets": [
+            "eslint.config.awm.cjs"
+          ],
+          "formatter": "eslint-llm",
+          "probe": {
+            "kind": "eslint-print-config"
+          }
+        },
+        {
+          "id": "eslint-8-flat",
+          "priority": 30,
+          "requirements": {
+            "tool": "eslint",
+            "toolRange": ">=8.0.0 <9.0.0",
+            "runtime": "node",
+            "runtimeRange": ">=16.0.0"
+          },
+          "certifiedRange": "=8.57.1",
+          "command": {
+            "executable": "eslint",
+            "resolution": "node-modules-bin",
+            "args": [
+              ".",
+              "--config",
+              "eslint.config.awm.mjs",
+              "--cache",
+              "--format",
+              "json"
+            ],
+            "environment": {
+              "ESLINT_USE_FLAT_CONFIG": "true"
+            }
+          },
+          "assets": [
+            "eslint.config.awm.mjs"
+          ],
+          "formatter": "eslint-llm",
+          "probe": {
+            "kind": "eslint-print-config"
+          }
+        },
+        {
+          "id": "eslint-9-flat",
+          "priority": 20,
+          "requirements": {
+            "tool": "eslint",
+            "toolRange": ">=9.0.0 <10.0.0",
+            "runtime": "node",
+            "runtimeRange": ">=18.18.0"
+          },
+          "certifiedRange": "=9.39.5",
+          "command": {
+            "executable": "eslint",
+            "resolution": "node-modules-bin",
+            "args": [
+              ".",
+              "--config",
+              "eslint.config.awm.mjs",
+              "--cache",
+              "--format",
+              "json"
+            ]
+          },
+          "assets": [
+            "eslint.config.awm.mjs"
+          ],
+          "formatter": "eslint-llm",
+          "probe": {
+            "kind": "eslint-print-config"
+          }
+        },
+        {
+          "id": "eslint-10-flat",
+          "priority": 10,
+          "requirements": {
+            "tool": "eslint",
+            "toolRange": ">=10.0.0 <11.0.0",
+            "runtime": "node",
+            "runtimeRange": ">=20.19.0"
+          },
+          "certifiedRange": "=10.8.1",
+          "command": {
+            "executable": "eslint",
+            "resolution": "node-modules-bin",
+            "args": [
+              ".",
+              "--config",
+              "eslint.config.awm.mjs",
+              "--cache",
+              "--format",
+              "json"
+            ]
+          },
+          "assets": [
+            "eslint.config.awm.mjs"
+          ],
+          "formatter": "eslint-llm",
+          "probe": {
+            "kind": "eslint-print-config"
+          }
+        }
+      ]
+    },
+    "typecheck": {
+      "fast": true,
+      "applicability": {
+        "anyFiles": [
+          "tsconfig.json",
+          "tsconfig.*.json"
+        ]
+      },
+      "variants": [
+        {
+          "id": "typescript-native",
+          "priority": 10,
+          "requirements": {
+            "tool": "typescript",
+            "toolRange": ">=5.0.0",
+            "runtime": "node",
+            "runtimeRange": ">=16.0.0"
+          },
+          "certifiedRange": "=5.9.3",
+          "command": {
+            "executable": "tsc",
+            "resolution": "node-modules-bin",
+            "args": [
+              "--noEmit"
+            ]
+          },
+          "assets": [],
+          "formatter": "tsc",
+          "probe": {
+            "kind": "version"
+          }
+        }
+      ]
+    },
+    "security": {
+      "fast": false,
+      "applicability": {
+        "allFiles": [
+          "package.json"
+        ]
+      },
+      "variants": [
+        {
+          "id": "semgrep-js-ts",
+          "priority": 10,
+          "requirements": {
+            "tool": "semgrep",
+            "toolRange": ">=1.0.0",
+            "runtime": "python",
+            "runtimeRange": ">=3.9.0"
+          },
+          "certifiedRange": "=1.173.0",
+          "command": {
+            "executable": "semgrep",
+            "resolution": "path",
+            "args": [
+              "--config",
+              ".semgrep.awm.yml",
+              "--json",
+              "."
+            ]
+          },
+          "assets": [
+            ".semgrep.awm.yml"
+          ],
+          "formatter": "semgrep",
+          "probe": {
+            "kind": "semgrep-validate"
+          }
+        }
+      ]
+    },
+    "depcheck": {
+      "fast": false,
+      "applicability": {
+        "anyFiles": [
+          "src",
+          "package.json"
+        ]
+      },
+      "variants": [
+        {
+          "id": "dependency-cruiser",
+          "priority": 10,
+          "requirements": {
+            "tool": "dependency-cruiser",
+            "toolRange": ">=16.0.0",
+            "runtime": "node",
+            "runtimeRange": ">=18.0.0"
+          },
+          "certifiedRange": "=16.10.4",
+          "command": {
+            "executable": "depcruise",
+            "resolution": "node-modules-bin",
+            "args": [
+              "--config",
+              ".dep-cruiser.awm.js",
+              "src"
+            ]
+          },
+          "assets": [
+            ".dep-cruiser.awm.js"
+          ],
+          "formatter": "generic",
+          "probe": {
+            "kind": "version"
+          }
+        }
+      ]
+    },
+    "format": {
+      "fast": true,
+      "applicability": {
+        "allFiles": [
+          "package.json"
+        ]
+      },
+      "variants": [
+        {
+          "id": "prettier",
+          "priority": 10,
+          "requirements": {
+            "tool": "prettier",
+            "toolRange": ">=3.0.0",
+            "runtime": "node",
+            "runtimeRange": ">=16.0.0"
+          },
+          "certifiedRange": "=3.9.6",
+          "command": {
+            "executable": "prettier",
+            "resolution": "node-modules-bin",
+            "args": [
+              "--check",
+              "."
+            ]
+          },
+          "assets": [],
+          "formatter": "generic",
+          "probe": {
+            "kind": "version"
+          }
+        }
+      ]
+    },
+    "test": {
+      "fast": false,
+      "applicability": {
+        "allFiles": [
+          "package.json"
+        ]
+      },
+      "variants": [
+        {
+          "id": "npm-script",
+          "priority": 40,
+          "requirements": {
+            "tool": "npm",
+            "toolRange": ">=8.0.0",
+            "runtime": "node",
+            "runtimeRange": ">=16.0.0"
+          },
+          "certifiedRange": ">=8.0.0",
+          "command": {
+            "executable": "npm",
+            "resolution": "path",
+            "args": [
+              "test",
+              "--",
+              "--silent"
+            ],
+            "packageManager": "npm"
+          },
+          "assets": [],
+          "formatter": "test",
+          "probe": {
+            "kind": "package-script-present"
+          }
+        },
+        {
+          "id": "pnpm-script",
+          "priority": 30,
+          "requirements": {
+            "tool": "pnpm",
+            "toolRange": ">=8.0.0",
+            "runtime": "node",
+            "runtimeRange": ">=16.0.0"
+          },
+          "certifiedRange": ">=8.0.0",
+          "command": {
+            "executable": "pnpm",
+            "resolution": "path",
+            "args": [
+              "test",
+              "--",
+              "--silent"
+            ],
+            "packageManager": "pnpm"
+          },
+          "assets": [],
+          "formatter": "test",
+          "probe": {
+            "kind": "package-script-present"
+          }
+        },
+        {
+          "id": "yarn-script",
+          "priority": 20,
+          "requirements": {
+            "tool": "yarn",
+            "toolRange": ">=1.22.0",
+            "runtime": "node",
+            "runtimeRange": ">=16.0.0"
+          },
+          "certifiedRange": ">=1.22.0",
+          "command": {
+            "executable": "yarn",
+            "resolution": "path",
+            "args": [
+              "test",
+              "--silent"
+            ],
+            "packageManager": "yarn"
+          },
+          "assets": [],
+          "formatter": "test",
+          "probe": {
+            "kind": "package-script-present"
+          }
+        },
+        {
+          "id": "bun-script",
+          "priority": 10,
+          "requirements": {
+            "tool": "bun",
+            "toolRange": ">=1.0.0",
+            "runtime": "bun",
+            "runtimeRange": ">=1.0.0"
+          },
+          "certifiedRange": ">=1.0.0",
+          "command": {
+            "executable": "bun",
+            "resolution": "path",
+            "args": [
+              "test",
+              "--silent"
+            ],
+            "packageManager": "bun"
+          },
+          "assets": [],
+          "formatter": "test",
+          "probe": {
+            "kind": "package-script-present"
+          }
+        }
+      ]
+    },
+    "mutation": {
+      "fast": false,
+      "applicability": {
+        "allFiles": [
+          "package.json"
+        ]
+      },
+      "variants": [
+        {
+          "id": "stryker",
+          "priority": 10,
+          "requirements": {
+            "tool": "stryker",
+            "toolRange": ">=8.0.0",
+            "runtime": "node",
+            "runtimeRange": ">=18.0.0"
+          },
+          "certifiedRange": ">=8.0.0",
+          "command": {
+            "executable": "stryker",
+            "resolution": "node-modules-bin",
+            "args": [
+              "run"
+            ]
+          },
+          "assets": [],
+          "formatter": "generic",
+          "probe": {
+            "kind": "version"
+          }
+        }
+      ]
+    }
+  },
+  "hardening": {
+    "typescript-strict": {
+      "assets": [
+        "tsconfig.awm.json"
+      ]
+    }
+  },
   "coverage": {
     "schemaVersion": 1,
     "classes": {
       "static-type-errors": {
         "description": "Static type errors",
-        "detectors": [{ "sensor": "typecheck", "evidence": { "commandIncludes": ["tsc", "--noEmit"] } }],
-        "remedy": { "summary": "Enable TypeScript type checking", "command": "npm install --save-dev typescript" }
+        "detectors": [
+          {
+            "sensor": "typecheck",
+            "evidence": {
+              "commandIncludes": [
+                "tsc",
+                "--noEmit"
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable TypeScript type checking",
+          "command": "npm install --save-dev typescript"
+        }
       },
       "lint-errors": {
         "description": "Lint rule violations",
-        "detectors": [{ "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config", "eslint.config.awm.mjs"], "files": [{ "path": "eslint.config.awm.mjs", "containsAll": ["no-unreachable"] }] } }],
-        "remedy": { "summary": "Enable JavaScript and TypeScript linting", "command": "awm sensors init --pack js-ts" }
+        "detectors": [
+          {
+            "sensor": "lint",
+            "evidence": {
+              "commandIncludes": [
+                "eslint",
+                "--config",
+                "eslint.config.awm.mjs"
+              ],
+              "files": [
+                {
+                  "path": "eslint.config.awm.mjs",
+                  "containsAll": [
+                    "no-unreachable"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable linting",
+          "command": "awm sensors init --pack js-ts"
+        }
+      },
+      "formatting": {
+        "description": "Formatting consistency",
+        "detectors": [
+          {
+            "sensor": "format",
+            "evidence": {
+              "commandIncludes": [
+                "prettier",
+                "--check"
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable formatting checks",
+          "command": "npm install --save-dev prettier"
+        }
+      },
+      "dependency-boundaries": {
+        "description": "Dependency boundary violations",
+        "detectors": [
+          {
+            "sensor": "depcheck",
+            "evidence": {
+              "commandIncludes": [
+                "depcruise",
+                "--config",
+                ".dep-cruiser.awm.js"
+              ],
+              "files": [
+                {
+                  "path": ".dep-cruiser.awm.js",
+                  "containsAll": [
+                    "forbidden"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable dependency boundary checks",
+          "command": "npm install --save-dev dependency-cruiser"
+        }
+      },
+      "regression-tests": {
+        "description": "Regression test failures",
+        "detectors": [
+          {
+            "sensor": "test",
+            "evidence": {
+              "commandIncludes": [
+                "npm",
+                "test"
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Add a deterministic test script",
+          "command": "npm test"
+        }
       },
       "project-style-conventions": {
         "description": "Project style conventions",
         "detectors": [
-          { "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config"], "files": [{ "path": "eslint.config.js", "containsAll": [] }] } },
-          { "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config"], "files": [{ "path": "eslint.config.mjs", "containsAll": [] }] } },
-          { "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config"], "files": [{ "path": "eslint.config.cjs", "containsAll": [] }] } },
-          { "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config"], "files": [{ "path": "eslint.config.ts", "containsAll": [] }] } },
-          { "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config"], "files": [{ "path": "eslint.config.mts", "containsAll": [] }] } },
-          { "sensor": "lint", "evidence": { "commandIncludes": ["eslint", "--config"], "files": [{ "path": "eslint.config.cts", "containsAll": [] }] } }
+          {
+            "sensor": "lint",
+            "evidence": {
+              "commandIncludes": [
+                "eslint",
+                "--config"
+              ],
+              "files": [
+                {
+                  "path": "eslint.config.js",
+                  "containsAll": []
+                }
+              ]
+            }
+          },
+          {
+            "sensor": "lint",
+            "evidence": {
+              "commandIncludes": [
+                "eslint",
+                "--config"
+              ],
+              "files": [
+                {
+                  "path": "eslint.config.mjs",
+                  "containsAll": []
+                }
+              ]
+            }
+          },
+          {
+            "sensor": "lint",
+            "evidence": {
+              "commandIncludes": [
+                "eslint",
+                "--config"
+              ],
+              "files": [
+                {
+                  "path": "eslint.config.cjs",
+                  "containsAll": []
+                }
+              ]
+            }
+          },
+          {
+            "sensor": "lint",
+            "evidence": {
+              "commandIncludes": [
+                "eslint",
+                "--config"
+              ],
+              "files": [
+                {
+                  "path": "eslint.config.ts",
+                  "containsAll": []
+                }
+              ]
+            }
+          },
+          {
+            "sensor": "lint",
+            "evidence": {
+              "commandIncludes": [
+                "eslint",
+                "--config"
+              ],
+              "files": [
+                {
+                  "path": "eslint.config.mts",
+                  "containsAll": []
+                }
+              ]
+            }
+          },
+          {
+            "sensor": "lint",
+            "evidence": {
+              "commandIncludes": [
+                "eslint",
+                "--config"
+              ],
+              "files": [
+                {
+                  "path": "eslint.config.cts",
+                  "containsAll": []
+                }
+              ]
+            }
+          }
         ],
-        "remedy": { "summary": "Create an ESLint project config and re-run awm sensors init --pack js-ts", "command": "awm sensors init --pack js-ts" }
-      },
-      "formatting": {
-        "description": "Formatting consistency",
-        "detectors": [{ "sensor": "format", "evidence": { "commandIncludes": ["prettier"] } }],
-        "remedy": { "summary": "Enable formatting checks", "command": "npm install --save-dev prettier" }
-      },
-      "dependency-boundaries": {
-        "description": "Dependency boundary violations",
-        "detectors": [{ "sensor": "depcheck", "evidence": { "commandIncludes": ["depcruise", "--config", ".dep-cruiser.awm.js"], "files": [{ "path": ".dep-cruiser.awm.js", "containsAll": ["forbidden"] }] } }],
-        "remedy": { "summary": "Enable dependency boundary checks", "command": "npm install --save-dev dependency-cruiser" }
-      },
-      "regression-tests": {
-        "description": "Regression test failures",
-        "detectors": [{ "sensor": "test", "evidence": { "commandIncludes": ["npm test"] } }],
-        "remedy": { "summary": "Add a deterministic npm test script", "command": "npm test" }
+        "remedy": {
+          "summary": "Create an ESLint project config and re-run awm sensors init --pack js-ts",
+          "command": "awm sensors init --pack js-ts"
+        }
       },
       "dynamic-code-execution": {
         "description": "Dynamic code execution risks",
-        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-no-eval"] }] } }],
-        "remedy": { "summary": "Enable JavaScript and TypeScript security scanning", "command": "awm sensors init --pack js-ts" }
+        "detectors": [
+          {
+            "sensor": "security",
+            "evidence": {
+              "commandIncludes": [
+                "semgrep",
+                ".semgrep.awm.yml"
+              ],
+              "files": [
+                {
+                  "path": ".semgrep.awm.yml",
+                  "containsAll": [
+                    "awm-no-eval"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable JavaScript and TypeScript security scanning",
+          "command": "awm sensors init --pack js-ts"
+        }
       },
       "hardcoded-secrets": {
         "description": "Hardcoded credentials and secret values",
-        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-no-hardcoded-secrets"] }] } }],
-        "remedy": { "summary": "Enable JavaScript and TypeScript secret scanning", "command": "awm sensors init --pack js-ts" }
+        "detectors": [
+          {
+            "sensor": "security",
+            "evidence": {
+              "commandIncludes": [
+                "semgrep",
+                ".semgrep.awm.yml"
+              ],
+              "files": [
+                {
+                  "path": ".semgrep.awm.yml",
+                  "containsAll": [
+                    "awm-no-hardcoded-secrets"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable JavaScript and TypeScript secret scanning",
+          "command": "awm sensors init --pack js-ts"
+        }
       },
       "sql-string-construction": {
         "description": "Unsafe SQL string construction",
-        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-no-sql-concat"] }] } }],
-        "remedy": { "summary": "Enable JavaScript and TypeScript SQL security scanning", "command": "awm sensors init --pack js-ts" }
+        "detectors": [
+          {
+            "sensor": "security",
+            "evidence": {
+              "commandIncludes": [
+                "semgrep",
+                ".semgrep.awm.yml"
+              ],
+              "files": [
+                {
+                  "path": ".semgrep.awm.yml",
+                  "containsAll": [
+                    "awm-no-sql-concat"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable JavaScript and TypeScript SQL security scanning",
+          "command": "awm sensors init --pack js-ts"
+        }
       }
-    }
-  },
-  "sensors": {
-    "typecheck": {
-      "fast": true,
-      "defaultCmd": "npx tsc --noEmit",
-      "formatter": "tsc"
-    },
-    "lint": {
-      "fast": true,
-      "defaultCmd": "npx eslint . --config eslint.config.awm.mjs --cache --format json",
-      "changedCmd": "npx eslint --config eslint.config.awm.mjs --cache --format json {files}",
-      "changedExtensions": [".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts"],
-      "configFile": "eslint.config.awm.mjs",
-      "configFileFallback": "eslint.config.awm.cjs",
-      "formatter": "eslint-llm"
-    },
-    "security": {
-      "fast": false,
-      "defaultCmd": "semgrep --config .semgrep.awm.yml --json .",
-      "changedCmd": "semgrep --config .semgrep.awm.yml --json {files}",
-      "configFile": ".semgrep.awm.yml",
-      "formatter": "semgrep"
-    },
-    "depcheck": {
-      "fast": false,
-      "defaultCmd": "npx depcruise --config .dep-cruiser.awm.js {{SOURCE_DIRS}}",
-      "configFile": ".dep-cruiser.awm.js",
-      "formatter": "generic"
-    },
-    "test": {
-      "fast": false,
-      "enabled": true,
-      "defaultCmd": "npm test --silent",
-      "formatter": "test"
-    },
-    "format": {
-      "fast": true,
-      "defaultCmd": "npx prettier --check .",
-      "formatter": "generic"
-    },
-    "mutation": {
-      "fast": false,
-      "enabled": false,
-      "defaultCmd": "npx stryker run",
-      "formatter": "generic"
     }
   }
 }

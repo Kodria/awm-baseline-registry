@@ -1,0 +1,75 @@
+name: Sensor pack certification
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  certify:
+    name: ${{ matrix.os }} sensor-pack contract
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.9"
+            python-profile: minimum
+          - os: ubuntu-latest
+            python: "3.12"
+            python-profile: current
+          - os: macos-latest
+            python: "3.12"
+            python-profile: current
+          - os: windows-latest
+            python: "3.12"
+            python-profile: current
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Validate frozen pack contracts and generated support
+        run: |
+          node tests/sensor-pack-variants.test.mjs
+          node tests/sensor-pack-python-shell-generic.test.mjs
+          node tests/sensor-pack-certification.test.mjs
+          node scripts/render-sensor-support-matrix.mjs --check
+          node tests/sensor-pack-support-matrix.test.mjs
+      - name: Exercise pinned ESLint minimum and current variants
+        run: node tests/sensor-pack-eslint.test.mjs
+      - name: Exercise pinned Python minimum toolchain
+        if: matrix.python-profile == 'minimum'
+        run: |
+          python -m pip install "mypy==1.18.2" "ruff==0.16.3" "pytest==8.4.2"
+          python -m mypy tests/fixtures/python-certification
+          python -m ruff check tests/fixtures/python-certification --output-format json
+          python -m pytest tests/fixtures/python-certification
+      - name: Smoke-test pinned Python current toolchain
+        if: matrix.python-profile == 'current'
+        run: |
+          python -m pip install "mypy==1.18.2" "ruff==0.16.3" "pytest==8.4.2"
+          python -m mypy tests/fixtures/python-certification
+          python -m ruff check tests/fixtures/python-certification --output-format json
+          python -m pytest tests/fixtures/python-certification
+      - name: Exercise Ubuntu security and shell tooling
+        # Semgrep 1.173 requires Python >=3.10. Keep the 3.9 pack
+        # certification intact, but run the security tooling on the current
+        # Ubuntu interpreter where both real tools are supported.
+        if: matrix.os == 'ubuntu-latest' && matrix.python-profile == 'current'
+        run: |
+          python -m pip install "semgrep==1.173.0"
+          SHELLCHECK_VERSION=0.11.0
+          SHELLCHECK_ARCHIVE="shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz"
+          curl -fsSLo "/tmp/${SHELLCHECK_ARCHIVE}" "https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/${SHELLCHECK_ARCHIVE}"
+          tar -xJf "/tmp/${SHELLCHECK_ARCHIVE}" -C /tmp
+          sudo install -m 0755 "/tmp/shellcheck-v${SHELLCHECK_VERSION}/shellcheck" /usr/local/bin/shellcheck
+          shellcheck --version | grep -F "version: ${SHELLCHECK_VERSION}"
+          printf '%s\n' '#!/usr/bin/env bash' 'printf "%s\n" "$1"' > /tmp/awm-shellcheck-certification.sh
+          shellcheck /tmp/awm-shellcheck-certification.sh
+          node --test tests/sensor-pack-rules-fire.test.mjs

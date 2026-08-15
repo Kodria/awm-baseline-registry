@@ -1,0 +1,7 @@
+{
+  "tool": "semgrep",
+  "toolRange": ">=1.0.0",
+  "runtime": "python",
+  "runtimeRange": ">=3.9.0",
+  "probe": "semgrep-validate"
+}

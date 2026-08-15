@@ -1,6 +1,6 @@
 ---
 name: setup-sensors
-version: "1.0.1"
+version: "1.1.0"
 description: Use when a repository needs sensor configuration adapted to its actual installed tool versions (e.g. ESLint v9 flat config vs v8 extends, mypy vs ruff, monorepo tsconfig refs). Complements the `awm sensors init` CLI wizard by consulting Context7 for current docs and generating version-correct config files. Invoke when the wizard's templated configs don't fit the project.
 ---
 
@@ -19,6 +19,7 @@ description: Use when a repository needs sensor configuration adapted to its act
 - Project is a monorepo and the templated configs target a single package
 - Existing custom configs need to coexist with the AWM ones rather than be replaced
 - `awm sensors init --configure` failed or produced configs that error out when sensors run
+- A custom sensor pack, a `compatible-unverified` variant, or an explicit hardening opt-in needs configuration beyond the certified default — this skill is the escape hatch for those cases
 
 ## When NOT to use
 

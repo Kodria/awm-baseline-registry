@@ -1,52 +1,212 @@
 {
   "name": "shell",
   "description": "Shell script sensor pack (bash/sh)",
-  "detects": [],
+  "detects": [
+    "*.sh",
+    "*.bash"
+  ],
   "coverage": {
     "schemaVersion": 1,
     "classes": {
       "shell-lint-errors": {
         "description": "Shell lint rule violations",
-        "detectors": [{ "sensor": "lint", "evidence": { "commandIncludes": ["shellcheck", "--format json"] } }],
-        "remedy": { "summary": "Install ShellCheck and re-run awm sensors init --pack shell", "command": "awm sensors init --pack shell" }
+        "detectors": [
+          {
+            "sensor": "lint",
+            "evidence": {
+              "commandIncludes": [
+                "shellcheck",
+                "--format json"
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Install ShellCheck and re-run awm sensors init --pack shell",
+          "command": "awm sensors init --pack shell"
+        }
       },
       "dynamic-code-execution": {
         "description": "Dynamic shell code execution risks",
-        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-sh-no-eval"] }] } }],
-        "remedy": { "summary": "Enable shell security scanning", "command": "awm sensors init --pack shell" }
+        "detectors": [
+          {
+            "sensor": "security",
+            "evidence": {
+              "commandIncludes": [
+                "semgrep",
+                ".semgrep.awm.yml"
+              ],
+              "files": [
+                {
+                  "path": ".semgrep.awm.yml",
+                  "containsAll": [
+                    "awm-sh-no-eval"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable shell security scanning",
+          "command": "awm sensors init --pack shell"
+        }
       },
       "remote-code-pipe-to-shell": {
         "description": "Remote code piped to a shell",
-        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-sh-curl-pipe-shell"] }] } }],
-        "remedy": { "summary": "Enable shell remote-code security scanning", "command": "awm sensors init --pack shell" }
+        "detectors": [
+          {
+            "sensor": "security",
+            "evidence": {
+              "commandIncludes": [
+                "semgrep",
+                ".semgrep.awm.yml"
+              ],
+              "files": [
+                {
+                  "path": ".semgrep.awm.yml",
+                  "containsAll": [
+                    "awm-sh-curl-pipe-shell"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable shell remote-code security scanning",
+          "command": "awm sensors init --pack shell"
+        }
       },
       "unquoted-command-substitution": {
         "description": "Unquoted command substitution",
-        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-sh-unquoted-command-substitution"] }] } }],
-        "remedy": { "summary": "Enable shell command substitution security scanning", "command": "awm sensors init --pack shell" }
+        "detectors": [
+          {
+            "sensor": "security",
+            "evidence": {
+              "commandIncludes": [
+                "semgrep",
+                ".semgrep.awm.yml"
+              ],
+              "files": [
+                {
+                  "path": ".semgrep.awm.yml",
+                  "containsAll": [
+                    "awm-sh-unquoted-command-substitution"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable shell command substitution security scanning",
+          "command": "awm sensors init --pack shell"
+        }
       },
       "hardcoded-secrets": {
         "description": "Hardcoded credentials and secret values",
-        "detectors": [{ "sensor": "security", "evidence": { "commandIncludes": ["semgrep", ".semgrep.awm.yml"], "files": [{ "path": ".semgrep.awm.yml", "containsAll": ["awm-sh-no-hardcoded-secrets"] }] } }],
-        "remedy": { "summary": "Enable shell secret scanning", "command": "awm sensors init --pack shell" }
+        "detectors": [
+          {
+            "sensor": "security",
+            "evidence": {
+              "commandIncludes": [
+                "semgrep",
+                ".semgrep.awm.yml"
+              ],
+              "files": [
+                {
+                  "path": ".semgrep.awm.yml",
+                  "containsAll": [
+                    "awm-sh-no-hardcoded-secrets"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "remedy": {
+          "summary": "Enable shell secret scanning",
+          "command": "awm sensors init --pack shell"
+        }
       }
     }
   },
   "sensors": {
     "lint": {
       "fast": true,
-      "defaultCmd": "find . -type f \\( -name \"*.sh\" -o -name \"*.bash\" \\) -not -path \"*/node_modules/*\" -not -path \"*/.git/*\" -exec shellcheck --format json {} +",
-      "changedCmd": "shellcheck --format json {files}",
-      "changedExtensions": [".sh", ".bash"],
-      "formatter": "shellcheck"
+      "applicability": {
+        "anyFiles": [
+          "*.sh",
+          "*.bash"
+        ]
+      },
+      "variants": [
+        {
+          "id": "shellcheck-files",
+          "priority": 10,
+          "requirements": {
+            "tool": "shellcheck",
+            "toolRange": ">=0.9.0",
+            "runtime": "shellcheck",
+            "runtimeRange": ">=0.9.0"
+          },
+          "certifiedRange": "=0.11.0",
+          "command": {
+            "executable": "shellcheck",
+            "args": [
+              "--format",
+              "json",
+              "{files}"
+            ],
+            "resolution": "path",
+            "fileInput": {
+              "placeholder": "{files}",
+              "extensions": [
+                ".sh",
+                ".bash"
+              ]
+            }
+          },
+          "assets": [],
+          "formatter": "shellcheck",
+          "probe": {
+            "kind": "version"
+          }
+        }
+      ]
     },
     "security": {
       "fast": false,
-      "defaultCmd": "semgrep --config .semgrep.awm.yml --json .",
-      "changedCmd": "semgrep --config .semgrep.awm.yml --json {files}",
-      "changedExtensions": [".sh", ".bash"],
-      "configFile": ".semgrep.awm.yml",
-      "formatter": "semgrep"
+      "applicability": {
+        "anyFiles": [
+          "*.sh",
+          "*.bash"
+        ]
+      },
+      "variants": [
+        {
+          "id": "semgrep-shell",
+          "priority": 10,
+          "certifiedRange": "=1.173.0",
+          "policyRef": "shared/semgrep-policy.json",
+          "command": {
+            "executable": "semgrep",
+            "args": [
+              "--config",
+              ".semgrep.awm.yml",
+              "--json",
+              "."
+            ],
+            "resolution": "path"
+          },
+          "assets": [
+            ".semgrep.awm.yml"
+          ],
+          "formatter": "semgrep"
+        }
+      ]
     }
-  }
+  },
+  "schemaVersion": 2
 }

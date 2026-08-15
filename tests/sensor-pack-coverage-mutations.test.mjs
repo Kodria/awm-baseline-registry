@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { validateRegistryCoverage } from './support/sensor-pack-coverage-validator.mjs';
+import { validatePackV2 } from './support/sensor-pack-v2-validator.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'awm-sensor-pack-coverage-'));
@@ -66,7 +67,62 @@ const mutations = [
   ['missing marker', (destination) => mutatePack(destination, 'generic', (pack) => { pack.coverage.classes['hardcoded-secrets'].detectors[0].evidence.files[0].containsAll = ['marker-that-does-not-exist']; })],
 ];
 
+function assertV2CoverageSchemaMutation() {
+  const fixtureDirectory = path.join(root, 'tests', 'fixtures', 'sensor-packs', 'valid', 'js-ts');
+  const pack = JSON.parse(fs.readFileSync(path.join(fixtureDirectory, 'pack.json'), 'utf8'));
+  pack.coverage.schemaVersion = 2;
+  assert.throws(() => validatePackV2(pack, fixtureDirectory), /coverage\.schemaVersion/, 'v2 validator must reject a future nested coverage schema');
+}
+
+function assertJsTsV2EvidenceMutations() {
+  const packDirectory = path.join(root, 'sensor-packs', 'js-ts');
+  const pack = JSON.parse(fs.readFileSync(path.join(packDirectory, 'pack.json'), 'utf8'));
+  const missingTypecheckArg = structuredClone(pack);
+  missingTypecheckArg.sensors.typecheck.variants[0].command.args = [];
+  assert.throws(() => validatePackV2(missingTypecheckArg, packDirectory), /args/, 'v2 typecheck must retain its local argv');
+  const missingLintAsset = structuredClone(pack);
+  missingLintAsset.sensors.lint.variants[0].assets = [];
+  assert.throws(() => validatePackV2(missingLintAsset, packDirectory), /command asset/, 'v2 lint command config must remain a declared asset');
+}
+
+function assertJsTsV2CoverageEvidenceMutations() {
+  const missingNoEmit = path.join(tempRoot, 'js-ts-missing-no-emit');
+  copyRegistry(missingNoEmit);
+  mutatePack(missingNoEmit, 'js-ts', (pack) => {
+    pack.sensors.typecheck.variants[0].command.args = ['--pretty'];
+  });
+  assert.throws(
+    () => validateRegistryCoverage(missingNoEmit),
+    /static-type-errors: commandIncludes '--noEmit' no está en typecheck/,
+    'coverage must reject a valid-shaped v2 typecheck command that loses --noEmit',
+  );
+
+  const changedLintConfig = path.join(tempRoot, 'js-ts-changed-lint-config');
+  copyRegistry(changedLintConfig);
+  mutatePack(changedLintConfig, 'js-ts', (pack) => {
+    for (const variant of pack.sensors.lint.variants) {
+      if (variant.command.args.includes('eslint.config.awm.mjs')) {
+        variant.command.args = variant.command.args.map((arg) => arg === 'eslint.config.awm.mjs' ? 'eslint.config.awm.cjs' : arg);
+        variant.assets = ['eslint.config.awm.cjs'];
+      }
+    }
+  });
+  const v2Pack = JSON.parse(fs.readFileSync(packFile(changedLintConfig, 'js-ts'), 'utf8'));
+  assert.doesNotThrow(
+    () => validatePackV2(v2Pack, path.join(changedLintConfig, 'sensor-packs', 'js-ts')),
+    'the alternate lint config mutation must remain a valid v2 pack',
+  );
+  assert.throws(
+    () => validateRegistryCoverage(changedLintConfig),
+    /lint-errors: commandIncludes 'eslint\.config\.awm\.mjs' no está en lint/,
+    'coverage must reject a valid-shaped v2 lint command that stops using the evidenced config',
+  );
+}
+
 try {
+  assertV2CoverageSchemaMutation();
+  assertJsTsV2EvidenceMutations();
+  assertJsTsV2CoverageEvidenceMutations();
   const historicalMarkerFixture = path.join(tempRoot, 'historical-missing-marker');
   copyRegistry(historicalMarkerFixture);
   mutations[5][1](historicalMarkerFixture);
@@ -100,7 +156,7 @@ try {
     mutate(fixture);
     assert.throws(() => validateRegistryCoverage(fixture), undefined, `mutación '${name}' sobrevivió`);
   }
-  console.log('sensor-pack-coverage-mutations: 7 mutations rejected');
+  console.log('sensor-pack-coverage-mutations: 8 mutations rejected');
 } finally {
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }

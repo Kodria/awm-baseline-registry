@@ -6,12 +6,8 @@
 // comillas. El patrón base matcheaba 4/4 casos y la regla completa 0/4. Se shippeó así a
 // todo proyecto que adoptara el pack, y `awm sensors run` reportaba `pass` con ella dentro.
 //
-// LÍMITE HONESTO DE ESTE TEST: la CI de este repo (`validate.yml`/`auto-tag.yml`) es
-// solo-Node **por diseño** — no instala semgrep, igual que `sensor-pack-shape.test.mjs`
-// documenta para su propio alcance. Así que acá esto es un guard LOCAL: corre para
-// cualquiera que tenga semgrep instalado y se salta explícitamente si no está. Convertirlo
-// en gate de CI real exige agregar semgrep a `validate.yml`, que es una decisión del dueño
-// (costo de instalación en cada corrida) y no una que este archivo deba tomar por su cuenta.
+// Es un gate de certificación: validate.yml y auto-tag.yml instalan el pin congelado de
+// Semgrep antes de ejecutarlo. La ausencia del binario es un fallo, nunca un skip.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -19,10 +15,8 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const semgrepAvailable = (() => {
-  try { execFileSync('semgrep', ['--version'], { stdio: 'ignore' }); return true; }
-  catch { return false; }
-})();
+try { execFileSync('semgrep', ['--version'], { stdio: 'ignore' }); }
+catch (error) { throw new Error(`Semgrep certification pin is required for rules-fire: ${error.message}`); }
 
 /** Corpus de violaciones por pack: cada regla declarada debe encontrar al menos una acá.
  *  Si se agrega una regla nueva al pack sin agregarle su caso, el test falla — que es
@@ -65,7 +59,7 @@ const declaredRules = (pack) => [
 ].map((m) => m[1]);
 
 for (const [pack, files] of Object.entries(CORPUS)) {
-  test(`sensor-pack ${pack}: cada regla declarada dispara al menos una vez`, { skip: semgrepAvailable ? false : 'semgrep no instalado (CI de este repo es solo-Node por diseño)' }, () => {
+  test(`sensor-pack ${pack}: cada regla declarada dispara al menos una vez`, () => {
     const dir = mkdtempSync(join(tmpdir(), `awm-rules-${pack}-`));
     try {
       for (const [name, body] of Object.entries(files)) writeFileSync(join(dir, name), `${body}\n`);
