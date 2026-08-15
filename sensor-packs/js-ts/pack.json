@@ -32,7 +32,12 @@
               ".eslintrc",
               ".eslintrc.json",
               ".eslintrc.js",
-              ".eslintrc.cjs"
+              ".eslintrc.cjs",
+              ".eslintrc.yml",
+              ".eslintrc.yaml"
+            ],
+            "packageJsonFields": [
+              "eslintConfig"
             ]
           },
           "certifiedRange": "=8.57.1",

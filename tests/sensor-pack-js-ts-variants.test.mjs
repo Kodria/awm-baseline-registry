@@ -12,8 +12,13 @@ assert.equal(pack.schemaVersion, 2, 'js-ts is the first v2 pack');
 assert.deepEqual(pack.sensors.lint.variants.map((variant) => variant.id).sort(), ['eslint-8-eslintrc', 'eslint-8-flat', 'eslint-9-flat', 'eslint-10-flat'].sort());
 assert.deepEqual(
   pack.sensors.lint.variants.find((variant) => variant.id === 'eslint-8-eslintrc').requirements.configFiles,
-  ['.eslintrc', '.eslintrc.json', '.eslintrc.js', '.eslintrc.cjs'],
+  ['.eslintrc', '.eslintrc.json', '.eslintrc.js', '.eslintrc.cjs', '.eslintrc.yml', '.eslintrc.yaml'],
   'ESLint 8 eslintrc must declare its native config evidence',
+);
+assert.deepEqual(
+  pack.sensors.lint.variants.find((variant) => variant.id === 'eslint-8-eslintrc').requirements.packageJsonFields,
+  ['eslintConfig'],
+  'ESLint 8 eslintrc must declare package.json eslintConfig evidence',
 );
 assert.deepEqual(
   pack.sensors.lint.variants.find((variant) => variant.id === 'eslint-8-flat').requirements.configFiles,
