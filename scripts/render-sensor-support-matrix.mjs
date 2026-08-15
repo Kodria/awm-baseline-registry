@@ -116,6 +116,15 @@ export function renderSensorSupport(packs, pinsDocument) {
   ].join('\n');
 }
 
+export function assertSensorSupportFresh(support, packs, pinsDocument) {
+  assert.equal(typeof support, 'string', 'support matrix must be text');
+  // Git can check out this generated document with CRLF on Windows. The
+  // renderer's contract is LF, so compare normalized text rather than making
+  // checkout EOL policy a false freshness failure.
+  assert.equal(support.replace(/\r\n/g, '\n'), renderSensorSupport(packs, pinsDocument),
+    'sensor-packs/SUPPORT.md is stale; run node scripts/render-sensor-support-matrix.mjs --write');
+}
+
 function loadProductionInputs() {
   const names = ['generic', 'js-ts', 'python', 'shell'];
   const packs = names.map((name) => JSON.parse(fs.readFileSync(path.join(root, 'sensor-packs', name, 'pack.json'), 'utf8')));
@@ -132,7 +141,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     fs.writeFileSync(supportPath, rendered);
     console.log(`sensor support matrix written: ${path.relative(root, supportPath)}`);
   } else {
-    assert.equal(fs.readFileSync(supportPath, 'utf8'), rendered, 'sensor-packs/SUPPORT.md is stale; run node scripts/render-sensor-support-matrix.mjs --write');
+    assertSensorSupportFresh(fs.readFileSync(supportPath, 'utf8'), packs, pins);
     console.log('sensor support matrix is current');
   }
 }

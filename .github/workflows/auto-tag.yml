@@ -37,6 +37,12 @@ jobs:
         with:
           node-version: "20"
 
+      # Semgrep 1.173 requires Python >=3.10; make the release gate's
+      # interpreter explicit instead of depending on runner defaults.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       # The tag is what `awm update` delivers, so it must never be cut over a
       # red gate. validate.yml runs on the same push, but as a separate
       # workflow it cannot block this job — re-running the checks here is what

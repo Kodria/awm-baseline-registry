@@ -91,6 +91,8 @@ function assertPythonToolchainCertification(workflow) {
 
 function assertShellCheckCertification(workflow) {
   const step = namedStep(workflow, 'Exercise Ubuntu security and shell tooling');
+  assert.match(step, /^        if: matrix\.os == 'ubuntu-latest' && matrix\.python-profile == 'current'$/m,
+    'security tooling must run only on the supported current Python interpreter');
   const version = pins.pins.shellcheck.version;
   assert.match(step, new RegExp(`SHELLCHECK_VERSION=${version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`), 'Ubuntu certification must declare the frozen ShellCheck version');
   assert.match(step, /SHELLCHECK_ARCHIVE="shellcheck-v\$\{SHELLCHECK_VERSION\}\.linux\.x86_64\.tar\.xz"/, 'Ubuntu certification must derive the frozen ShellCheck archive');
@@ -98,6 +100,11 @@ function assertShellCheckCertification(workflow) {
   assert.match(step, /shellcheck --version \| grep -F/, 'Ubuntu certification must verify the installed ShellCheck version');
   assert.match(step, /version: \$\{SHELLCHECK_VERSION\}/, 'Ubuntu certification must verify ShellCheck against its frozen version variable');
   assert.match(step, /shellcheck \/tmp\/awm-shellcheck-certification\.sh/, 'Ubuntu certification must execute ShellCheck against a controlled shell fixture');
+}
+
+function assertAutoTagSecurityInterpreter(workflow) {
+  assert.match(workflow, /actions\/setup-python@v5/, 'auto-tag must explicitly install the Semgrep interpreter');
+  assert.match(workflow, /python-version: "3\.12"/, 'auto-tag must pin Semgrep to a supported Python 3.12 interpreter');
 }
 
 function assertReusableCall(workflow, workflowName) {
@@ -133,6 +140,14 @@ test('certification installs, verifies, and executes the frozen ShellCheck relea
   assertShellCheckCertification(workflow);
 });
 
+test('RED mutation: security tooling cannot run under the Python 3.9 pack certification', () => {
+  const step = namedStep(workflow, 'Exercise Ubuntu security and shell tooling');
+  assert.throws(
+    () => assertShellCheckCertification(workflow.replace(step, step.replace(" && matrix.python-profile == 'current'", ''))),
+    /supported current Python interpreter/,
+  );
+});
+
 test('RED mutation: removing ShellCheck execution invalidates shell certification', () => {
   const step = namedStep(workflow, 'Exercise Ubuntu security and shell tooling');
   assert.throws(
@@ -156,6 +171,7 @@ test('validate and auto-tag invoke certification as reusable jobs', () => {
 
 test('auto-tag waits for certification before tag publication', () => {
   assertAutoTagNeedsCertification(autoTag);
+  assertAutoTagSecurityInterpreter(autoTag);
 });
 
 test('RED mutation: removing the release job dependency is rejected', () => {

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { renderSensorSupport } from '../scripts/render-sensor-support-matrix.mjs';
+import { assertSensorSupportFresh, renderSensorSupport } from '../scripts/render-sensor-support-matrix.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packNames = ['generic', 'js-ts', 'python', 'shell'];
@@ -12,7 +12,10 @@ const support = fs.readFileSync(path.join(root, 'sensor-packs/SUPPORT.md'), 'utf
 
 assert.match(support, /<!-- BEGIN GENERATED: sensor-pack-support -->/);
 assert.match(support, /<!-- END GENERATED: sensor-pack-support -->/);
-assert.equal(support, renderSensorSupport(packs, pins), 'SUPPORT.md must be byte-for-byte renderer output');
+assert.ok(!renderSensorSupport(packs, pins).includes('\r'), 'renderer output must be deterministic LF');
+assert.doesNotThrow(() => assertSensorSupportFresh(support, packs, pins), 'SUPPORT.md must match renderer output after EOL normalization');
+assert.doesNotThrow(() => assertSensorSupportFresh(support.replace(/\n/g, '\r\n'), packs, pins),
+  'freshness must accept a checkout that has converted generated LF output to CRLF');
 assert.match(support, /\| Pack \| Sensor \| Variant \| Tool \| Certified range \| Supported OS \| OS certification evidence \| Status \| Evidence \|/);
 assert.match(support, /\| `generic` \| `security` \| `semgrep-generic` \| `semgrep` \| `=1\.173\.0` \| Ubuntu, macOS, Windows \| Ubuntu: real tool; macOS\/Windows: contract \| certified \|/,
   'SUPPORT.md must not imply Semgrep ran as a real tool outside Ubuntu');

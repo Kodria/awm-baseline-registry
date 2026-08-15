@@ -58,7 +58,10 @@ jobs:
           python -m ruff check tests/fixtures/python-certification --output-format json
           python -m pytest tests/fixtures/python-certification
       - name: Exercise Ubuntu security and shell tooling
-        if: matrix.os == 'ubuntu-latest'
+        # Semgrep 1.173 requires Python >=3.10. Keep the 3.9 pack
+        # certification intact, but run the security tooling on the current
+        # Ubuntu interpreter where both real tools are supported.
+        if: matrix.os == 'ubuntu-latest' && matrix.python-profile == 'current'
         run: |
           python -m pip install "semgrep==1.173.0"
           SHELLCHECK_VERSION=0.11.0
