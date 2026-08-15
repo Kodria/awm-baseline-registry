@@ -15,13 +15,26 @@ const workspaces = [];
 assert.equal(commandForPlatform('npm', 'linux'), 'npm', 'POSIX must invoke npm without a command extension');
 assert.equal(commandForPlatform('npm', 'win32'), 'npm.cmd', 'Windows must invoke npm through its command shim');
 assert.equal(commandForPlatform('eslint', 'win32'), 'eslint.cmd', 'Windows must invoke local ESLint through its command shim');
+assert.deepEqual(spawnOptionsForPlatform('linux'), { shell: false }, 'POSIX must spawn executables directly');
+assert.deepEqual(spawnOptionsForPlatform('win32'), { shell: true }, 'Windows command shims must run through cmd.exe');
 
 function commandForPlatform(command, platform = process.platform) {
   return platform === 'win32' ? `${command}.cmd` : command;
 }
 
-function run(bin, args, cwd, environment = {}) {
-  return spawnSync(bin, args, { cwd, encoding: 'utf8', timeout: 120_000, maxBuffer: 4 * 1024 * 1024, env: { ...process.env, ...environment } });
+function spawnOptionsForPlatform(platform = process.platform) {
+  return { shell: platform === 'win32' };
+}
+
+function run(bin, args, cwd, environment = {}, platform = process.platform) {
+  return spawnSync(bin, args, {
+    cwd,
+    encoding: 'utf8',
+    timeout: 120_000,
+    maxBuffer: 4 * 1024 * 1024,
+    env: { ...process.env, ...environment },
+    ...spawnOptionsForPlatform(platform),
+  });
 }
 
 function fixture(pinName, config, broken = false) {
