@@ -2,6 +2,17 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.0.1 / product 1.3.1 / frontend 2.1.1 / authoring 1.1.1 — 2026-08-18
+
+### Added
+- `LICENSE` (Apache-2.0) y `NOTICE` en la raíz. Hasta ahora el registry se distribuía **sin licencia alguna** — ni archivo ni mención en ningún documento — lo que equivale a "todos los derechos reservados" sobre el artefacto que `awm update` entrega a cada máquina consumidora.
+- `license: Apache-2.0` en el frontmatter de las 37 skills. El campo pertenece a la especificación Agent Skills y hace que la procedencia viaje con la skill, también cuando `awm export` la lleva fuera del registry.
+- `SECURITY.md`: canal de reporte privado y modelo de amenaza propio de un registry de contenido — inyección de prompt en el cuerpo de una skill, hooks y scripts que corren en la máquina del desarrollador, packs que invocan toolchains reales.
+- `CONTRIBUTING.md`: licenciamiento entrante = saliente, firma DCO (`git commit -s`), y las dos reglas de proceso que más se olvidan (bump de versión en la misma tanda, título de PR como conventional commit).
+
+### Nota de versión
+Bump patch en los cuatro bundles: el cambio es metadata de licencia, sin alteración de comportamiento de ninguna skill. Las 37 skills suben patch porque su frontmatter cambió y `skill-version-check` lo exige. Decisión de licencia y titularidad: [agentic-workflow#84](https://github.com/Kodria/agentic-workflow/issues/84) y [#31](https://github.com/Kodria/awm-baseline-registry/issues/31).
+
 ## dev 3.0.0 — 2026-08-15
 
 ### Changed

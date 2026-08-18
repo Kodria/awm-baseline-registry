@@ -1,6 +1,7 @@
 ---
 name: readiness-gate
-version: "1.0.0"
+version: "1.0.1"
+license: Apache-2.0
 description: "Use when a product brief must be certified ready for development, or re-verified at the crossing point into development-process. Evaluates the G1–G9 Definition-of-Ready checklist against the brief's actual content — never against its stored seal."
 ---
 

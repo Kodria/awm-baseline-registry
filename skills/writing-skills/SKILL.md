@@ -1,6 +1,7 @@
 ---
 name: writing-skills
-version: "1.0.2"
+version: "1.0.3"
+license: Apache-2.0
 description: Use when creating new skills, editing existing skills, or verifying skills work before deployment
 ---
 

@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Frontend craft and implementation layer: artifact-first Stitch design, design intelligence, and visual fidelity gate.",
   "scope": "project",
   "dependsOn": ["dev"],

@@ -1,6 +1,7 @@
 ---
 name: using-awm
-version: "1.2.2"
+version: "1.2.3"
+license: Apache-2.0
 description: Use when starting any development conversation - establishes tiered skill invocation policy (spine skills always, specialized skills on clear signal)
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: product-process
-version: "1.0.1"
+version: "1.0.2"
+license: Apache-2.0
 description: "Use when a session starts with an idea or need WITHOUT a formed requirement, a request to evaluate or extract an architecture, or an existing product brief to resume. The business-layer orchestrator: routes to discovery, brief, assessment, extraction, or re-ingestion — and hands off to development-process via a certified brief. Not for concrete code requirements (that is development-process)."
 ---
 

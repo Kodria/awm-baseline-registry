@@ -11,8 +11,8 @@ test('publishes the R3-compatible pack contract behind the released CLI floor', 
   const dev = readJson('bundles/dev/bundle.json');
 
   assert.equal(registry.minCliVersion, '8.1.0');
-  assert.equal(dev.version, '3.0.0');
-  assert.equal(catalog.bundles.find(({ name }) => name === 'dev')?.version, '3.0.0');
+  assert.equal(dev.version, '3.0.1');
+  assert.equal(catalog.bundles.find(({ name }) => name === 'dev')?.version, '3.0.1');
 });
 
 test('records the R3 breaking release, migration, retro, and compatibility boundary', () => {

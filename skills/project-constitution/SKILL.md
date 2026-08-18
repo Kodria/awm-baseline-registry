@@ -1,6 +1,7 @@
 ---
 name: project-constitution
-version: "1.1.1"
+version: "1.1.2"
+license: Apache-2.0
 description: Use when a repository needs to formalize its non-negotiable rules so every agent session receives them as feedforward context. Generates CONSTITUTION.md at the repo root from project context (CLAUDE.md, AGENTS.md, README, sensors manifest). AWM delivers this file automatically to every agent session — via the SessionStart hook (Claude Code), project-local config instructions (OpenCode), or the AWM-managed block in AGENTS.md (Codex).
 ---
 

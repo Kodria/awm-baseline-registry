@@ -1,6 +1,7 @@
 ---
 name: brainstorming
-version: "1.3.1"
+version: "1.3.2"
+license: Apache-2.0
 description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation. Explores SOLUTION space and is invoked via development-process; a raw business idea with no brief and no decision to build goes to product-process first."
 ---
 
