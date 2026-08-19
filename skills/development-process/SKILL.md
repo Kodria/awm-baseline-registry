@@ -1,6 +1,7 @@
 ---
 name: development-process
-version: "1.5.0"
+version: "1.5.1"
+license: Apache-2.0
 description: Use when starting a new development task, resuming work, or when unsure which skill to invoke next - orchestrates the full development lifecycle from idea to merge
 ---
 

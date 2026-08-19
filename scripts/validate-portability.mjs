@@ -7,6 +7,11 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const skillsRoot = path.join(repoRoot, 'skills');
 const allowlistPath = path.join(repoRoot, 'tests', 'portability-allowlist.json');
+// The registry ships under a single licence; every SKILL.md declares it so the
+// terms travel with the file. Changing this constant is a licensing decision
+// (see CONSTITUTION.md and Kodria/agentic-workflow docs/decisions.md D-021),
+// not a refactor.
+const REQUIRED_SKILL_LICENSE = 'Apache-2.0';
 const expectedAllowlistEntries = [
   {
     path: 'skills/systematic-debugging/CREATION-LOG.md',
@@ -289,6 +294,21 @@ async function validateSkillDirectory(directory) {
   const description = values.get('description');
   if (!description || description.replace(/^['"]|['"]$/g, '').trim() === '') {
     errors.push(`${relativeSkillPath}: description must be non-empty`);
+  }
+
+  // Provenance travels with the skill. A SKILL.md leaves this registry through
+  // `awm export` and through anyone copying the directory, and at that point
+  // the repository LICENSE is no longer next to it — the frontmatter field is
+  // the only place the terms survive. It is also the field an auditor greps
+  // for, in an ecosystem where most published skills declare nothing at all.
+  // Enforced here rather than trusted to review: the same reason
+  // skill-version-check exists.
+  const license = values.get('license');
+  if (license !== REQUIRED_SKILL_LICENSE) {
+    const declared = license ? JSON.stringify(license) : 'missing';
+    errors.push(
+      `${relativeSkillPath}: license must be ${JSON.stringify(REQUIRED_SKILL_LICENSE)} (declared: ${declared})`,
+    );
   }
 
   return errors;

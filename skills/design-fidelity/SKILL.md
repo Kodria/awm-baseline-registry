@@ -1,6 +1,7 @@
 ---
 name: design-fidelity
-version: "1.0.1"
+version: "1.0.2"
+license: Apache-2.0
 description: Use after implementing a UI screen that has committed design artifacts (.stitch/designs/), or when the user asks to verify an implementation against its design. Compares the running implementation against the design PNG/HTML element by element, drives a fix loop until convergence. Registered as a conditional Track B lens in post-implementation-qa, dispatched for UI diffs with committed design artifacts.
 ---
 

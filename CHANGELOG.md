@@ -2,6 +2,22 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.0.1 / product 1.3.1 / frontend 2.1.1 / authoring 1.1.1 — 2026-08-18
+
+### Added
+- `LICENSE` (Apache-2.0) y `NOTICE` en la raíz. Hasta ahora el registry se distribuía **sin licencia alguna** — ni archivo ni mención en ningún documento — lo que equivale a "todos los derechos reservados" sobre el artefacto que `awm update` entrega a cada máquina consumidora.
+- `license: Apache-2.0` en el frontmatter de las 37 skills. El campo pertenece a la especificación Agent Skills y hace que la procedencia viaje con la skill, también cuando `awm export` la lleva fuera del registry.
+- `SECURITY.md`: canal de reporte privado y modelo de amenaza propio de un registry de contenido — inyección de prompt en el cuerpo de una skill, hooks y scripts que corren en la máquina del desarrollador, packs que invocan toolchains reales.
+- `CONTRIBUTING.md`: la §5 de Apache-2.0 ya hace inbound = outbound, así que no se exige firma DCO por commit — en un flujo delegado a agentes el autor del commit es una herramienta y una firma suya no certifica nada; el PR es la certificación. Incluye la regla con disparador sobre relicenciamiento y las dos reglas de proceso que más se olvidan.
+- `README.md`: el registry no tenía ninguno. Explica cómo se consume (por tag, nunca por clone), el layout, los cuatro bundles y las dos invariantes que gobiernan cualquier edición.
+- **Gate ejecutable de licencia:** `scripts/validate-portability.mjs` ahora exige `license: Apache-2.0` en el frontmatter de cada `SKILL.md`, con dos mutaciones nuevas en `tests/validate-portability.test.mjs` (campo ausente y licencia divergente). El validador pasó de 15 a 17 mutaciones cazadas. Sin este gate, la declaración de licencia dependía de acordarse en cada skill nueva.
+
+### Changed
+- `tests/r3-release-metadata.test.mjs` fijaba `bundles/dev` en la versión literal `3.0.0`, de modo que **cualquier release lo rompía** — y la coherencia `catalog.json` ↔ `bundle.json` que decía cuidar ya la verifica `validateBundleVersions` para los cuatro bundles. Se retiran esas dos aserciones y se conserva lo único que protegía algo real, ahora expresado como piso: `minCliVersion` nunca puede quedar por debajo del contrato R3. Verificado por mutación (bajar el piso falla; subirlo pasa). La aserción exacta sobre el CHANGELOG se mantiene: guarda un registro histórico, que sí debe ser inmutable.
+
+### Nota de versión
+Bump patch en los cuatro bundles: el cambio es metadata de licencia, sin alteración de comportamiento de ninguna skill. Las 37 skills suben patch porque su frontmatter cambió y `skill-version-check` lo exige. Decisión de licencia: [agentic-workflow#84](https://github.com/Kodria/agentic-workflow/issues/84) y [#31](https://github.com/Kodria/awm-baseline-registry/issues/31).
+
 ## dev 3.0.0 — 2026-08-15
 
 ### Changed

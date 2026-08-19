@@ -1,6 +1,7 @@
 ---
 name: requesting-code-review
-version: "1.1.1"
+version: "1.1.2"
+license: Apache-2.0
 description: Use when completing tasks, implementing major features, or before merging to verify work meets requirements
 ---
 

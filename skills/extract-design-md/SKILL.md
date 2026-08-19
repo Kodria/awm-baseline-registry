@@ -1,6 +1,7 @@
 ---
 name: extract-design-md
-version: "1.0.1"
+version: "1.0.2"
+license: Apache-2.0
 description: >-
   Extract a comprehensive design system (DESIGN.md) directly from frontend source
   code — React, Vue, Svelte, Angular, plain HTML/CSS, or any web framework. Analyzes

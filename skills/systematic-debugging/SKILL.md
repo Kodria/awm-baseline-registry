@@ -1,6 +1,7 @@
 ---
 name: systematic-debugging
-version: "1.1.0"
+version: "1.1.1"
+license: Apache-2.0
 description: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes
 ---
 

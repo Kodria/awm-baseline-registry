@@ -1,6 +1,7 @@
 ---
 name: react-components
-version: "1.0.1"
+version: "1.0.2"
+license: Apache-2.0
 description: Converts Stitch designs into modular Vite and React components using system-level networking and AST-based validation.
 allowed-tools:
   - "stitch*:*"

@@ -1,6 +1,7 @@
 ---
 name: receiving-code-review
-version: "1.1.0"
+version: "1.1.1"
+license: Apache-2.0
 description: Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performative agreement or blind implementation
 ---
 

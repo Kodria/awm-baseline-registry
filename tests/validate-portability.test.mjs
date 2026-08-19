@@ -198,6 +198,28 @@ const mutations = [
             return () => fs.writeFileSync(file, before, { mode: 0o755 });
         },
     ),
+    // Provenance is the field that survives `awm export`, where the repository
+    // LICENSE does not travel. A skill added without it ships terms-less.
+    mutation(
+        'a skill shipped without its license field',
+        /skills\/using-awm\/SKILL\.md: license must be "Apache-2\.0" \(declared: missing\)/,
+        () => {
+            const file = path.join(copy, 'skills/using-awm/SKILL.md');
+            const before = fs.readFileSync(file, 'utf8');
+            fs.writeFileSync(file, before.replace(/^license: .*\n/m, ''));
+            return () => fs.writeFileSync(file, before);
+        },
+    ),
+    mutation(
+        'a skill relicensed away from the registry license',
+        /skills\/writing-plans\/SKILL\.md: license must be "Apache-2\.0" \(declared: "MIT"\)/,
+        () => {
+            const file = path.join(copy, 'skills/writing-plans/SKILL.md');
+            const before = fs.readFileSync(file, 'utf8');
+            fs.writeFileSync(file, before.replace(/^license: .*$/m, 'license: MIT'));
+            return () => fs.writeFileSync(file, before);
+        },
+    ),
 ];
 
 try {
