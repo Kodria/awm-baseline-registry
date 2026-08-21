@@ -26,6 +26,7 @@ Dispatch a general-purpose subagent:
     | Requirement tags | When the spec has a `## Requirements` section, each task carries a `_Requirements: R…_` tag naming the IDs it satisfies, and tests name the ID they verify |
     | Traceability | The Self-Review matrix covers every spec requirement ID — forward gaps (a requirement ID with no task/test) are flagged |
     | Orphans | No task or test lacks a requirement ID (backward gap = scope creep / orphan code) |
+    | Unattended empirical gate | If the plan offers `desatendido` execution, it requires `awm preflight --verify-sensors` immediately before handoff and says that a non-zero/non-pass result blocks or stops that handoff while the human is present |
 
     (If the spec intentionally has no `## Requirements` section — a trivial one-file diff per the tier guardrail — the three rows above do not apply; do not flag their absence.)
 
@@ -42,7 +43,8 @@ Dispatch a general-purpose subagent:
     actionable — drop it.
 
     Approve unless there are serious gaps — missing requirements from the spec,
-    contradictory steps, placeholder content, untraceable requirements, or tasks
+    contradictory steps, placeholder content, untraceable requirements, a missing unattended
+    empirical gate, or tasks
     so vague they can't be acted on.
 
     ## Output Format

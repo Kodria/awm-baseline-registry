@@ -27,6 +27,7 @@ jobs:
       - run: node tests/validate-portability.test.mjs
       - run: node tests/r3-release-metadata.test.mjs
       - run: node tests/r3-retro-contract.test.mjs
+      - run: node tests/r8-sensor-gate-contract.test.mjs
       - run: node tests/codex-session-start.test.mjs
       - run: node tests/session-start.test.mjs
       - run: node tests/sensor-pack-eslint.test.mjs

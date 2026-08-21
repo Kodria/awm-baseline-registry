@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-version: "1.0.3"
+version: "1.1.0"
 license: Apache-2.0
 description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
 ---
@@ -30,7 +30,7 @@ For each task:
 1. Mark as in_progress
 2. Follow each step exactly (plan has bite-sized steps)
 3. Run verifications as specified
-4. **Run sensors before marking complete.** If the repo has `.awm/sensors.json`, run `awm sensors run` (no flag — all sensors; `--slow` skips lint/typecheck) and fix every NEW finding (`newCount`; the baseline is already suppressed). A task isn't done while it adds sensor findings. <!-- AWM-INTEGRATION: executing-plans-sensor-gate -->
+4. **Run sensors before marking complete.** If the repo has `.awm/sensors.json`, run `awm sensors run` (no flag — all sensors; `--slow` skips lint/typecheck). Continue only when `overall: pass`; `fail`, `not_certified`, and `skipped` are all non-pass verdicts. On any non-pass, invoke `systematic-debugging`, stop task progression, and do not mark the checkbox or commit as complete or advance toward review, QA, retro, or PR. <!-- AWM-INTEGRATION: executing-plans-sensor-gate -->
 5. Mark as completed
 
 ### Step 3: Report
@@ -59,6 +59,11 @@ After all tasks complete and verified:
 - Plan has critical gaps preventing starting
 - You don't understand an instruction
 - Verification fails repeatedly
+
+**A timeout is not permission to weaken the gate.** Diagnose whether the process is hung or a
+healthy progressing process. Only the latter may receive a documented, justified finite timeout
+override; after recording it, run the complete sensor gate again and continue only after the
+conclusive rerun reports `overall: pass`.
 
 **Ask for clarification rather than guessing.**
 
