@@ -103,6 +103,7 @@ function assertJsTsV2CoverageEvidenceMutations() {
     for (const variant of pack.sensors.lint.variants) {
       if (variant.command.args.includes('eslint.config.awm.mjs')) {
         variant.command.args = variant.command.args.map((arg) => arg === 'eslint.config.awm.mjs' ? 'eslint.config.awm.cjs' : arg);
+        variant.changedCommand.args = variant.changedCommand.args.map((arg) => arg === 'eslint.config.awm.mjs' ? 'eslint.config.awm.cjs' : arg);
         variant.assets = ['eslint.config.awm.cjs'];
       }
     }
