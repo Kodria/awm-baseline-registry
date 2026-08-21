@@ -55,6 +55,7 @@ jobs:
           node tests/r3-release-metadata.test.mjs
           node tests/r3-retro-contract.test.mjs
           node tests/r8-sensor-gate-contract.test.mjs
+          node tests/release-skill-version-gate.test.mjs
           node tests/codex-session-start.test.mjs
           node tests/session-start.test.mjs
           node tests/sensor-pack-eslint.test.mjs
@@ -64,6 +65,7 @@ jobs:
           node tests/sensor-pack-coverage.test.mjs
           node tests/sensor-pack-coverage-mutations.test.mjs
           node --test tests/sensor-pack-rules-fire.test.mjs
+          ./scripts/check-skill-version-bumps.sh "${{ github.event.before }}" HEAD
 
       - name: Compute and push next tag
         run: |
