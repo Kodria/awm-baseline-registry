@@ -110,15 +110,16 @@ function eslint8OverlayReport(cjsSource = cjs) {
 }
 
 {
-  const globalTypescriptRules = cjs.replace(
-    "rules: {\n    'no-unreachable': 'error',",
-    "rules: {\n    'no-unused-vars': ['error', { vars: 'all', args: 'after-used' }],\n    'no-undef': 'error',\n    'no-unreachable': 'error',",
+  const typescriptInJavascriptOverride = cjs.replace(
+    "files: ['**/*.js', '**/*.cjs', '**/*.mjs'],",
+    "files: ['**/*.{js,ts}', '**/*.cjs', '**/*.mjs'],",
   );
-  const report = eslint8OverlayReport(globalTypescriptRules);
+  assert.notEqual(typescriptInJavascriptOverride, cjs, 'mutation must alter the AWM JavaScript-only override');
+  const report = eslint8OverlayReport(typescriptInJavascriptOverride);
   assert.equal(
     report.some((entry) => hasPathSuffix(entry.filePath, 'src/clean.ts') && entry.messages.some((message) => ['no-undef', 'no-unused-vars'].includes(message.ruleId))),
     true,
-    'mutation: globally re-enabling base rules must make the TypeScript certification fail',
+    'mutation: widening the AWM JavaScript override to TypeScript must make the TypeScript certification fail',
   );
 }
 
