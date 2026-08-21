@@ -2,6 +2,28 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.2.0 — 2026-08-21
+
+### Changed
+- Published the conclusive execution gates for sensor packs. The registry now
+  requires `agentic-workflow-manager` `8.1.5`, the released CLI that enforces
+  finite timeout evidence, literal changed-file argv, non-success exits for
+  every non-pass verdict, static readiness, and empirical unattended preflight.
+- `js-ts` ships bounded timeout and changed-command recommendations plus the
+  ESLint 8 TypeScript/JavaScript overlay certified against real source,
+  JavaScript findings, and ignored generated output. The development workflow
+  skills now stop unattended progression for every inconclusive outcome and
+  require a justified finite timeout override followed by a conclusive rerun.
+- Registry release certification executes the sensor-pack and workflow-contract
+  gates before creating the delivery tag. This is a coordinated breaking
+  release boundary: registries carrying these packs must not be consumed by a
+  CLI older than `8.1.5`.
+
+### Nota de versión
+Bundle `dev` 3.1.0 → 3.2.0 (minor): additive pack and workflow capabilities.
+The registry PR uses a conventional breaking title so `auto-tag.yml` advances
+the independently delivered registry tag at the compatibility boundary.
+
 ## dev 3.0.1 / product 1.3.1 / frontend 2.1.1 / authoring 1.1.1 — 2026-08-18
 
 ### Added

@@ -42,6 +42,51 @@ test('the registry never declares a CLI floor below the R3 contract', () => {
     );
 });
 
+function assertConclusiveExecutionMetadata(registry, changelog) {
+    assert.equal(registry.minCliVersion, '8.1.5');
+    assert.match(changelog, /^## dev 3\.2\.0 — 2026-08-21$/m);
+    assert.match(changelog, /`agentic-workflow-manager` `8\.1\.5`/);
+    assert.match(changelog, /conclusive execution gates/i);
+}
+
+function assertConclusiveExecutionReleaseGate(workflow) {
+    const verificationStart = workflow.indexOf('- name: Verify registry before tagging');
+    const tagStart = workflow.indexOf('- name: Compute and push next tag');
+    assert.ok(verificationStart >= 0 && tagStart > verificationStart,
+        'auto-tag must verify the registry before creating its delivery tag');
+    const verification = workflow.slice(verificationStart, tagStart);
+    assert.match(verification, /^\s*node tests\/r3-release-metadata\.test\.mjs\s*$/m,
+        'the release-producing verification step must enforce the CLI compatibility boundary');
+}
+
+// The conclusive execution contract was released by the CLI as 8.1.5. Unlike
+// the historical R3 floor above, this is an exact coordinated-release boundary:
+// older 8.1.x CLIs cannot interpret every published timeout/scope/verdict
+// guarantee, so the registry must not silently advertise this content to them.
+test('records the published CLI boundary for conclusive execution gates', () => {
+    assertConclusiveExecutionMetadata(readJson('awm-registry.json'), read('CHANGELOG.md'));
+});
+
+test('RED mutation: downgrading the conclusive CLI boundary is rejected', () => {
+    const downgraded = { ...readJson('awm-registry.json'), minCliVersion: '8.1.4' };
+    assert.throws(
+        () => assertConclusiveExecutionMetadata(downgraded, read('CHANGELOG.md')),
+        /8\.1\.5/,
+    );
+});
+
+test('auto-tag enforces the conclusive CLI boundary before publishing a registry tag', () => {
+    assertConclusiveExecutionReleaseGate(read('.github/workflows/auto-tag.yml'));
+});
+
+test('RED mutation: removing the conclusive CLI gate blocks registry publication', () => {
+    const workflow = read('.github/workflows/auto-tag.yml');
+    assert.throws(
+        () => assertConclusiveExecutionReleaseGate(workflow.replace(/^\s*node tests\/r3-release-metadata\.test\.mjs\s*\n/m, '')),
+        /CLI compatibility boundary/,
+    );
+});
+
 // This one IS an exact assertion on purpose: it guards a historical record.
 // The R3 entry describes a release that already happened, so it must never
 // change — unlike a version number, which must.
