@@ -27,12 +27,21 @@ function spawnOptionsForPlatform(platform = process.platform) {
 }
 
 const normalizeReportPath = (filePath) => filePath.replaceAll('\\', '/');
-const hasPathSuffix = (filePath, suffix) => normalizeReportPath(filePath).endsWith(normalizeReportPath(suffix));
+const hasPathSuffix = (filePath, suffix) => {
+  const normalizedFilePath = normalizeReportPath(filePath);
+  const normalizedSuffix = normalizeReportPath(suffix);
+  return normalizedFilePath === normalizedSuffix || normalizedFilePath.endsWith(`/${normalizedSuffix}`);
+};
 
 assert.equal(
   hasPathSuffix('C:\\work\\fixture\\src\\clean.ts', 'src/clean.ts'),
   true,
   'report paths must compare independently of the host path separator',
+);
+assert.equal(
+  hasPathSuffix('/work/fixture/not-src/clean.ts', 'src/clean.ts'),
+  false,
+  'report paths must match a directory segment rather than a textual suffix',
 );
 
 function run(bin, args, cwd, environment = {}, platform = process.platform) {
