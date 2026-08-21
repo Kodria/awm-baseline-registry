@@ -72,13 +72,13 @@ function fixture(pinName, config, broken = false, cjsSource = cjs) {
   return dir;
 }
 
-function eslint8OverlayReport(cjsSource = cjs) {
+function eslint8OverlayReport(cjsSource = cjs, files = ['.']) {
   const dir = fixture('eslint-8', 'eslintrc', false, cjsSource);
   const eslintBin = path.join(dir, 'node_modules/.bin', commandForPlatform('eslint'));
   const tscBin = path.join(dir, 'node_modules/.bin', commandForPlatform('tsc'));
   const typecheck = run(tscBin, ['--noEmit'], dir);
   assert.equal(typecheck.status, 0, `the TypeScript fixture must be valid: ${typecheck.stderr || typecheck.stdout}`);
-  const result = run(eslintBin, ['.', '--config', 'eslint.config.awm.cjs', '--format', 'json'], dir, {
+  const result = run(eslintBin, [...files, '--config', 'eslint.config.awm.cjs', '--format', 'json'], dir, {
     ESLINT_USE_FLAT_CONFIG: 'false',
   });
   assert.ok(result.status === 0 || result.status === 1, `unexpected eslint exit ${result.status}: ${result.stderr}`);
@@ -125,11 +125,12 @@ function eslint8OverlayReport(cjsSource = cjs) {
 
 {
   const withoutOutputIgnores = cjs.replace("  ignorePatterns: ['dist/', 'build/', 'coverage/'],\n", '');
-  const report = eslint8OverlayReport(withoutOutputIgnores);
+  assert.notEqual(withoutOutputIgnores, cjs, 'mutation must remove the generated-output ignores');
+  const report = eslint8OverlayReport(withoutOutputIgnores, ['dist/generated.js']);
   assert.equal(
-    report.some((entry) => /[\\/]dist[\\/]/.test(entry.filePath)),
+    report.some((entry) => hasPathSuffix(entry.filePath, 'dist/generated.js') && entry.messages.some((message) => /Parsing error/.test(message.message))),
     true,
-    'mutation: removing generated-output ignores must make the certification fail',
+    'mutation: removing generated-output ignores must parse the generated output',
   );
 }
 
