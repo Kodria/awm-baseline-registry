@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-version: "1.1.0"
+version: "1.2.0"
 license: Apache-2.0
 description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
 ---
@@ -61,8 +61,8 @@ After all tasks complete and verified:
 - Verification fails repeatedly
 
 **A timeout is not permission to weaken the gate.** Diagnose whether the process is hung or a
-healthy progressing process. Only the latter may receive a documented, justified finite timeout
-override; after recording it, run the complete sensor gate again and continue only after the
+healthy progressing process. Only the latter may receive a documented finite timeout override
+with a recorded justification; after recording it, run the complete sensor gate again and continue only after the
 conclusive rerun reports `overall: pass`.
 
 **Ask for clarification rather than guessing.**

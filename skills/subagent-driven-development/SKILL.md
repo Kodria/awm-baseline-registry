@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.8.0"
+version: "1.9.0"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
@@ -214,8 +214,8 @@ If the repo has `.awm/sensors.json`, a task is **not complete** until `overall: 
 **Recurring sensor failure** (same `name` + `rule` as a prior session) → invoke `harness-retro` instead of just fixing it.
 
 **Timeout remediation is narrow.** `systematic-debugging` must distinguish a hung process from a
-healthy progressing process. Only demonstrated healthy progress permits a justified finite
-timeout override, recorded in the plan or commit; run the full gate again and require the
+healthy progressing process. Only demonstrated healthy progress permits a finite timeout
+override with a recorded justification in the plan or commit; run the full gate again and require the
 conclusive rerun to report `overall: pass` before any progression.
 
 ## Ledger Gate (AWM)

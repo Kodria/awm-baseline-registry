@@ -11,6 +11,12 @@ const EXECUTION_SKILLS = [
   'skills/verification-before-completion/SKILL.md',
 ];
 
+const TIMEOUT_REMEDIATION_SKILLS = [
+  'skills/executing-plans/SKILL.md',
+  'skills/subagent-driven-development/SKILL.md',
+  'skills/verification-before-completion/SKILL.md',
+];
+
 function assertEmpiricalUnattendedHandoff(text) {
   const staticPreflight = text.indexOf('awm preflight');
   const empiricalPreflight = text.indexOf('awm preflight --verify-sensors');
@@ -54,9 +60,11 @@ for (const file of EXECUTION_SKILLS) {
   });
 }
 
-test('timeout remediation stays finite, justified, and conclusive (R8.1)', () => {
-  assertTimeoutRemediation(read('skills/verification-before-completion/SKILL.md'));
-});
+for (const file of TIMEOUT_REMEDIATION_SKILLS) {
+  test(`${file} keeps timeout remediation finite, justified, and conclusive (R8.1)`, () => {
+    assertTimeoutRemediation(read(file));
+  });
+}
 
 test('plan reviewer rejects an unattended plan without empirical preflight (R7.3)', () => {
   const text = read('skills/writing-plans/plan-document-reviewer-prompt.md');
@@ -76,8 +84,8 @@ test('RED mutation: removing not_certified makes an execution gate contract fail
   assert.throws(() => assertStopsNonPassBeforeProgression(weakened, EXECUTION_SKILLS[0]), /not_certified/);
 });
 
-test('RED mutation: an unbounded timeout is not accepted as remediation', () => {
-  const original = read('skills/verification-before-completion/SKILL.md');
-  const weakened = original.replace('finite', 'unbounded');
-  assert.throws(() => assertTimeoutRemediation(weakened), /finite/i);
+test('RED mutation: removing timeout remediation from an execution skill is rejected', () => {
+  const original = read('skills/subagent-driven-development/SKILL.md');
+  const weakened = original.replace(/\n\*\*Timeout remediation is narrow\.\*[\s\S]*?(?=\n## )/, '\n');
+  assert.throws(() => assertTimeoutRemediation(weakened), /healthy progressing process/i);
 });
