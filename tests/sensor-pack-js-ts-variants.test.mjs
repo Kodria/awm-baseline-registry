@@ -9,6 +9,11 @@ assert.match(shapeGate, /import '\.\/sensor-pack-js-ts-variants\.test\.mjs';/, '
 const pack = JSON.parse(fs.readFileSync(path.join(root, 'sensor-packs/js-ts/pack.json'), 'utf8'));
 
 assert.equal(pack.schemaVersion, 2, 'js-ts is the first v2 pack');
+assert.deepEqual(
+  Object.fromEntries(Object.entries(pack.sensors).map(([name, sensor]) => [name, sensor.timeout])),
+  { lint: 30_000, typecheck: 120_000, security: 120_000, depcheck: 120_000, format: 30_000, test: 600_000, mutation: 600_000 },
+  'every js-ts sensor must declare a finite cost-appropriate timeout',
+);
 assert.deepEqual(pack.sensors.lint.variants.map((variant) => variant.id).sort(), ['eslint-8-eslintrc', 'eslint-8-flat', 'eslint-9-flat', 'eslint-10-flat'].sort());
 assert.deepEqual(
   pack.sensors.lint.variants.find((variant) => variant.id === 'eslint-8-eslintrc').requirements.configFiles,
@@ -35,6 +40,16 @@ for (const sensor of Object.values(pack.sensors)) for (const variant of sensor.v
   assert.equal(typeof variant.command.executable, 'string');
   assert.ok(!['npx', 'pnpx'].includes(variant.command.executable.toLowerCase()));
   assert.ok(Array.isArray(variant.command.args));
+}
+for (const sensorName of ['lint', 'security']) {
+  for (const variant of pack.sensors[sensorName].variants) {
+    assert.ok(variant.changedCommand, `${sensorName}.${variant.id} must opt into safe changed-file execution`);
+    assert.equal(variant.changedCommand.args.filter((arg) => arg === '{files}').length, 1);
+    assert.deepEqual(variant.changedCommand.fileInput.extensions, ['.js', '.jsx', '.ts', '.tsx']);
+  }
+}
+for (const sensorName of ['typecheck', 'depcheck', 'format', 'test', 'mutation']) {
+  assert.ok(pack.sensors[sensorName].variants.every((variant) => !variant.changedCommand), `${sensorName} must remain whole-project in changed scope`);
 }
 assert.deepEqual(pack.sensors.test.variants.map((variant) => variant.id).sort(), ['bun-script', 'npm-script', 'pnpm-script', 'yarn-script']);
 

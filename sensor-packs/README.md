@@ -79,7 +79,17 @@ Commands are structured argv: `executable` is a logical tool name,
 `resolution` is `node-modules-bin`, `python-environment`, or `path`, and `args`
 are literal. Shell executables and embedded shell expressions are forbidden.
 For changed files, use exactly one `{files}` argument with `fileInput`; never
-embed the placeholder in another argument.
+embed the placeholder in another argument. `changedCommand` is optional at the
+variant level and is valid only with `fileInput`; omit it for whole-program
+checks such as typechecking, tests, dependency analysis, formatting, and
+mutation testing. A declared changed command is literal argv, never a shell
+fragment or a file-discovery command.
+
+Each sensor declares a finite positive-safe-integer `timeout` in milliseconds.
+The CLI resolves a project override first, then this pack timeout, then its
+finite fallback. Choose the pack value from measured tool cost: short for
+file-local linting, longer for whole-program and test execution. `0`, negative,
+fractional, and unsafe values are invalid rather than meaning “unbounded”.
 
 ## Probes, assets, and coverage
 

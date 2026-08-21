@@ -24,6 +24,8 @@ function valid(value, definition) {
   if (definition.pattern && (typeof value !== 'string' || !(new RegExp(definition.pattern).test(value)))) return false;
   if (definition.minLength && value.length < definition.minLength) return false;
   if (definition.minItems && value.length < definition.minItems) return false;
+  if (definition.minimum !== undefined && value < definition.minimum) return false;
+  if (definition.maximum !== undefined && value > definition.maximum) return false;
   if (definition.uniqueItems && new Set(value.map((item) => JSON.stringify(item))).size !== value.length) return false;
   if (definition.minProperties && Object.keys(value).length < definition.minProperties) return false;
   if (definition.required && !definition.required.every((key) => Object.hasOwn(value, key))) return false;
@@ -34,6 +36,10 @@ function valid(value, definition) {
     for (const key of Object.keys(value)) if (!Object.hasOwn(definition.properties ?? {}, key) && !valid(value[key], definition.additionalProperties)) return false;
   }
   if (definition.items && !value.every((item) => valid(item, definition.items))) return false;
+  if (definition.contains) {
+    const count = value.filter((item) => valid(item, definition.contains)).length;
+    if (count < (definition.minContains ?? 1) || (definition.maxContains !== undefined && count > definition.maxContains)) return false;
+  }
   if (definition.allOf && !definition.allOf.every((child) => valid(value, child))) return false;
   if (definition.anyOf && !definition.anyOf.some((child) => valid(value, child))) return false;
   if (definition.not && valid(value, definition.not)) return false;
@@ -81,6 +87,30 @@ const shell = clone();
 shell.sensors.lint.variants[0].command.executable = 'Bash.EXE';
 const embeddedFiles = clone();
 embeddedFiles.sensors.lint.variants[0].command.args = ['--files={files}'];
+const boundedChanged = clone();
+boundedChanged.sensors.lint.timeout = 30_000;
+boundedChanged.sensors.lint.variants[0].changedCommand = {
+  executable: 'eslint', resolution: 'node-modules-bin', args: ['--format', 'json', '{files}'],
+  fileInput: { placeholder: '{files}', extensions: ['.js', '.jsx', '.ts', '.tsx'] },
+};
+const zeroTimeout = structuredClone(boundedChanged);
+zeroTimeout.sensors.lint.timeout = 0;
+const fractionalTimeout = structuredClone(boundedChanged);
+fractionalTimeout.sensors.lint.timeout = 1.5;
+const unsafeTimeout = structuredClone(boundedChanged);
+unsafeTimeout.sensors.lint.timeout = Number.MAX_SAFE_INTEGER + 1;
+const shellChanged = structuredClone(boundedChanged);
+shellChanged.sensors.lint.variants[0].changedCommand.executable = 'bash';
+const duplicateChangedFiles = structuredClone(boundedChanged);
+duplicateChangedFiles.sensors.lint.variants[0].changedCommand.args = ['{files}', '--also', '{files}'];
+const noChangedFiles = structuredClone(boundedChanged);
+noChangedFiles.sensors.lint.variants[0].changedCommand.args = ['--format', 'json'];
+const embeddedChangedFiles = structuredClone(boundedChanged);
+embeddedChangedFiles.sensors.lint.variants[0].changedCommand.args = ['--files={files}'];
+const emptyChangedExtensions = structuredClone(boundedChanged);
+emptyChangedExtensions.sensors.lint.variants[0].changedCommand.fileInput.extensions = [];
+const missingChangedFileInput = structuredClone(boundedChanged);
+delete missingChangedFileInput.sensors.lint.variants[0].changedCommand.fileInput;
 
 for (const [name, pack, expected] of [
   ['native', native, true], ['baseline', base, true], ['hardening', hardening, true],
@@ -93,6 +123,12 @@ for (const [name, pack, expected] of [
   ['dot asset', dotAsset, false], ['dot-dot asset', dotDotAsset, false],
   ['absolute asset', absoluteAsset, false], ['backslash asset', windowsAsset, false],
   ['case-insensitive shell', shell, false], ['embedded files placeholder', embeddedFiles, false],
+  ['bounded timeout and changed command', boundedChanged, true],
+  ['zero timeout', zeroTimeout, false], ['fractional timeout', fractionalTimeout, false], ['unsafe timeout', unsafeTimeout, false],
+  ['changed command shell', shellChanged, false], ['duplicate changed files placeholder', duplicateChangedFiles, false],
+  ['missing changed files placeholder', noChangedFiles, false], ['embedded changed files placeholder', embeddedChangedFiles, false],
+  ['empty changed extensions', emptyChangedExtensions, false],
+  ['missing changed file input', missingChangedFileInput, false],
 ]) {
   assert.equal(valid(pack, schema), expected, `formal schema verdict for ${name}`);
   let failure;

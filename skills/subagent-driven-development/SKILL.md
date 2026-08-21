@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.7.1"
+version: "1.9.0"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
@@ -204,14 +204,19 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 
 <!-- AWM-INTEGRATION: subagent-sensor-gate -->
 
-If the repo has `.awm/sensors.json`, a task is **not complete** until sensors pass — `typecheck`/`test`/`build` alone are not sufficient. Subagents run in isolated context and only do what their prompt says, so the gate must be enforced at two points:
+If the repo has `.awm/sensors.json`, a task is **not complete** until `overall: pass` — `typecheck`/`test`/`build` alone are not sufficient. `fail`, `not_certified`, and `skipped` are all non-pass verdicts. Subagents run in isolated context and only do what their prompt says, so the gate must be enforced at two points:
 
-1. **In the implementer prompt:** the implementer runs `awm sensors run` (no flag — all sensors) before reporting DONE and fixes any **new** findings (`newCount`). The implementer prompt template already includes this step.
-2. **At the controller, before marking the task complete:** after the code quality review approves, confirm sensor evidence exists. If the implementer's report doesn't show a clean `awm sensors run`, do not mark complete — send it back. Trust-but-verify: `awm sensors run` is cheap and authoritative.
+1. **In the implementer prompt:** the implementer runs `awm sensors run` (no flag — all sensors) before reporting DONE. Continue only when `overall: pass`. On any non-pass, it invokes `systematic-debugging`, stops, and does not report DONE. The implementer prompt template already includes this step.
+2. **At the controller, before marking the task complete:** after the code quality review approves, confirm evidence of `overall: pass`. On `fail`, `not_certified`, or `skipped`, do not mark complete and do not advance toward another task, review, QA, retro, or PR; return the task to diagnosis. Trust-but-verify: `awm sensors run` is cheap and authoritative.
 
 **Pitfall — do not use `awm sensors run --slow` as the gate.** `--slow` runs only `semgrep`/`mutation` and skips `lint`/`typecheck`, where most new findings surface. The completion gate is the full run (no flag).
 
 **Recurring sensor failure** (same `name` + `rule` as a prior session) → invoke `harness-retro` instead of just fixing it.
+
+**Timeout remediation is narrow.** `systematic-debugging` must distinguish a hung process from a
+healthy progressing process. Only demonstrated healthy progress permits a finite timeout
+override with a recorded justification in the plan or commit; run the full gate again and require the
+conclusive rerun to report `overall: pass` before any progression.
 
 ## Ledger Gate (AWM)
 

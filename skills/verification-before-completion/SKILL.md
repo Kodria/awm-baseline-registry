@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-version: "1.2.1"
+version: "1.3.0"
 license: Apache-2.0
 description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
 ---
@@ -179,6 +179,18 @@ Run with **no flag** — that runs *all* sensors (fast: `tsc`, `lint`; slow: `se
 
 - Exit 0 with `overall: pass` → sensors clean; proceed.
 - Exit 1 with sensor failures → autocorrect using the LLM-formatted errors, re-run sensors, then claim done. The ratchet reports only **new** findings (`newCount`); fix those, not the pre-existing baseline.
+
+### Non-pass is a stop, not an advisory
+
+`fail`, `not_certified`, and `skipped` are all non-pass verdicts. Continue only when
+`overall: pass`. For any non-pass, invoke `systematic-debugging`; do not mark the task or
+commit complete and do not advance toward review, QA, retro, or PR. Preserve the distinct JSON
+verdict in the report instead of collapsing it into a generic failure.
+
+For a timeout, first diagnose whether the process is hung or a **healthy progressing process**.
+Only evidence of healthy progress may justify a **finite timeout override**. Record that
+justification in the plan or commit, apply no unbounded override, and require a **conclusive
+rerun with `overall: pass`** before continuing.
 
 **Recurrence trigger:**
 

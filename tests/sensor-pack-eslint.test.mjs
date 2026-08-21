@@ -26,6 +26,24 @@ function spawnOptionsForPlatform(platform = process.platform) {
   return { shell: platform === 'win32' };
 }
 
+const normalizeReportPath = (filePath) => filePath.replaceAll('\\', '/');
+const hasPathSuffix = (filePath, suffix) => {
+  const normalizedFilePath = normalizeReportPath(filePath);
+  const normalizedSuffix = normalizeReportPath(suffix);
+  return normalizedFilePath === normalizedSuffix || normalizedFilePath.endsWith(`/${normalizedSuffix}`);
+};
+
+assert.equal(
+  hasPathSuffix('C:\\work\\fixture\\src\\clean.ts', 'src/clean.ts'),
+  true,
+  'report paths must compare independently of the host path separator',
+);
+assert.equal(
+  hasPathSuffix('/work/fixture/not-src/clean.ts', 'src/clean.ts'),
+  false,
+  'report paths must match a directory segment rather than a textual suffix',
+);
+
 function run(bin, args, cwd, environment = {}, platform = process.platform) {
   return spawnSync(bin, args, {
     cwd,
@@ -37,19 +55,87 @@ function run(bin, args, cwd, environment = {}, platform = process.platform) {
   });
 }
 
-function fixture(pinName, config, broken = false) {
+function fixture(pinName, config, broken = false, cjsSource = cjs) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'awm-eslint-certification-'));
   workspaces.push(dir);
   fs.cpSync(path.join(root, 'tests/fixtures/eslint-certification', pinName), dir, { recursive: true });
-  if (config === 'eslintrc') fs.writeFileSync(path.join(dir, 'package.json'), '{"private":true,"devDependencies":{"eslint":"8.57.1"}}\n');
+  if (config === 'eslintrc' && !fs.existsSync(path.join(dir, '.eslintrc.js'))) {
+    fs.writeFileSync(path.join(dir, '.eslintrc.js'), 'module.exports = { env: { node: true } };');
+  }
   fs.writeFileSync(path.join(dir, 'sample.js'), 'function run() { return 1; }\nrun();\n');
   fs.writeFileSync(path.join(dir, 'eslint.config.awm.mjs'), mjs);
-  fs.writeFileSync(path.join(dir, 'eslint.config.awm.cjs'), cjs);
-  if (config === 'eslintrc') fs.writeFileSync(path.join(dir, '.eslintrc.js'), broken ? 'module.exports = {' : 'module.exports = { env: { node: true } };');
+  fs.writeFileSync(path.join(dir, 'eslint.config.awm.cjs'), cjsSource);
+  if (config === 'eslintrc' && broken) fs.writeFileSync(path.join(dir, '.eslintrc.js'), 'module.exports = {');
   if (broken) fs.writeFileSync(path.join(dir, 'eslint.config.js'), 'throw new Error("broken native config");');
   const install = run(commandForPlatform('npm'), ['ci', '--ignore-scripts'], dir);
   assert.equal(install.status, 0, `npm ci ${pinName}: ${install.stderr}`);
   return dir;
+}
+
+function eslint8OverlayReport(cjsSource = cjs, files = ['.']) {
+  const dir = fixture('eslint-8', 'eslintrc', false, cjsSource);
+  const eslintBin = path.join(dir, 'node_modules/.bin', commandForPlatform('eslint'));
+  const tscBin = path.join(dir, 'node_modules/.bin', commandForPlatform('tsc'));
+  const typecheck = run(tscBin, ['--noEmit'], dir);
+  assert.equal(typecheck.status, 0, `the TypeScript fixture must be valid: ${typecheck.stderr || typecheck.stdout}`);
+  const result = run(eslintBin, [...files, '--config', 'eslint.config.awm.cjs', '--format', 'json'], dir, {
+    ESLINT_USE_FLAT_CONFIG: 'false',
+  });
+  assert.ok(result.status === 0 || result.status === 1, `unexpected eslint exit ${result.status}: ${result.stderr}`);
+  return JSON.parse(result.stdout);
+}
+
+{
+  const report = eslint8OverlayReport();
+  assert.equal(
+    report.some((entry) => hasPathSuffix(entry.filePath, 'src/clean.ts') && entry.messages.some((message) => ['no-undef', 'no-unused-vars'].includes(message.ruleId))),
+    false,
+    'the overlay must preserve the project TypeScript rule configuration',
+  );
+  assert.equal(
+    report.some((entry) => /[\\/]dist[\\/]/.test(entry.filePath)),
+    false,
+    'the overlay must ignore generated output',
+  );
+  assert.equal(
+    report.some((entry) => hasPathSuffix(entry.filePath, 'scripts/unused.js') && entry.messages.some((message) => message.ruleId === 'no-unused-vars')),
+    true,
+    'the overlay must retain base unused-variable detection for JavaScript',
+  );
+  assert.equal(
+    report.some((entry) => hasPathSuffix(entry.filePath, 'scripts/undefined.js') && entry.messages.some((message) => message.ruleId === 'no-undef')),
+    true,
+    'the overlay must retain base undefined-identifier detection for JavaScript',
+  );
+}
+
+{
+  const typescriptInJavascriptOverride = cjs.replace(
+    "files: ['**/*.js', '**/*.cjs', '**/*.mjs'],",
+    "files: ['**/*.{js,ts}', '**/*.cjs', '**/*.mjs'],",
+  );
+  assert.notEqual(typescriptInJavascriptOverride, cjs, 'mutation must alter the AWM JavaScript-only override');
+  const report = eslint8OverlayReport(typescriptInJavascriptOverride);
+  assert.equal(
+    report.some((entry) => hasPathSuffix(entry.filePath, 'src/clean.ts') && entry.messages.some((message) => ['no-undef', 'no-unused-vars'].includes(message.ruleId))),
+    true,
+    'mutation: widening the AWM JavaScript override to TypeScript must make the TypeScript certification fail',
+  );
+}
+
+for (const [ignoredPattern, generatedFile, sourceFragment] of [
+  ['dist/', 'dist/generated.js', "'dist/', "],
+  ['build/', 'build/generated.js', "'build/', "],
+  ['coverage/', 'coverage/generated.js', ", 'coverage/'"],
+]) {
+  const withoutOneOutputIgnore = cjs.replace(sourceFragment, '');
+  assert.notEqual(withoutOneOutputIgnore, cjs, `mutation must remove the ${ignoredPattern} generated-output ignore`);
+  const report = eslint8OverlayReport(withoutOneOutputIgnore, [generatedFile]);
+  assert.equal(
+    report.some((entry) => hasPathSuffix(entry.filePath, generatedFile) && entry.messages.some((message) => /Parsing error/.test(message.message))),
+    true,
+    `mutation: removing ${ignoredPattern} must parse its generated output`,
+  );
 }
 
 for (const [id, pinName, config, environment] of [

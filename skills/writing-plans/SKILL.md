@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "1.7.1"
+version: "1.8.0"
 license: Apache-2.0
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
@@ -261,6 +261,26 @@ silence. Never proceed by treating "not configured" as "no findings".
 
 *(If `awm preflight` reports an unknown command, the project is on an older AWM CLI — say
 so once and continue; do not improvise a substitute check.)*
+
+### Unattended empirical handoff — BLOCKING
+
+Keep the static preflight above for every plan: it validates configuration without spending
+the project execution budget. When the plan's **Modo de ejecución:** is `desatendido`, run
+this additional empirical gate immediately before offering its execution handoff, while the
+user is still present:
+
+```bash
+awm preflight --verify-sensors
+```
+
+- **`overall: pass`** — the unattended handoff may be offered.
+- **Any non-zero result or any non-pass verdict** — **stop. Do not offer the execution
+  choice.** Present the sensor, effective timeout, elapsed duration, and actionable reason;
+  resolve it with the user and re-run the empirical preflight. A static `ready` result is not
+  evidence that the project commands can complete.
+
+This gate is read-only. It must not be deferred to the implementer: unattended work cannot
+recover a silently failing harness when no person is watching.
 
 ## Context Budget Gate (pre-handoff)
 

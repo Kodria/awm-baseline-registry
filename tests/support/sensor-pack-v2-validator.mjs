@@ -147,18 +147,19 @@ export function validatePackV2(pack, packRoot) {
   for (const [sensorId, sensor] of Object.entries(sensors)) {
     stableId(sensorId, 'sensor id must be stable');
     object(sensor, `${sensorId}: sensor must be object`);
-    exactFields(sensor, ['applicability', 'variants', 'fast'], `${sensorId}: sensor has unknown fields`);
+    exactFields(sensor, ['applicability', 'variants', 'fast', 'timeout'], `${sensorId}: sensor has unknown fields`);
     const applicability = object(sensor.applicability, `${sensorId}: applicability required`);
     exactFields(applicability, ['allFiles', 'anyFiles', 'kind'], `${sensorId}: applicability has unknown fields`);
     assert.ok(Object.keys(applicability).length > 0, `${sensorId}: applicability requires a condition`);
     for (const key of ['allFiles', 'anyFiles']) if (key in applicability) nonemptyStrings(applicability[key], `${sensorId}: ${key} required`).forEach((file) => assetPath(file, `${sensorId}: applicability path invalid`));
     if ('kind' in applicability) text(applicability.kind, `${sensorId}: applicability kind invalid`);
     if ('fast' in sensor) assert.equal(typeof sensor.fast, 'boolean', `${sensorId}: fast must be boolean`);
+    if ('timeout' in sensor) assert.ok(Number.isSafeInteger(sensor.timeout) && sensor.timeout > 0, `${sensorId}: timeout must be a positive safe integer`);
     assert.ok(Array.isArray(sensor.variants) && sensor.variants.length > 0, `${sensorId}: variants must be nonempty`);
     const seen = [];
     for (const variant of sensor.variants) {
       object(variant, `${sensorId}: variant must be object`);
-      exactFields(variant, ['id', 'priority', 'requirements', 'certifiedRange', 'command', 'assets', 'formatter', 'probe', 'policyRef'], `${sensorId}: variant has unknown fields`);
+      exactFields(variant, ['id', 'priority', 'requirements', 'certifiedRange', 'command', 'changedCommand', 'assets', 'formatter', 'probe', 'policyRef'], `${sensorId}: variant has unknown fields`);
       const variantId = stableId(variant.id, `${sensorId}: variant id must be stable`);
       assert.ok(!allVariantIds.has(variantId), `${sensorId}: variant id '${variantId}' must be globally unique`);
       allVariantIds.add(variantId);
@@ -181,6 +182,10 @@ export function validatePackV2(pack, packRoot) {
       if ('configFiles' in requirements) nonemptyStrings(requirements.configFiles, `${sensorId}: configFiles required`).forEach((configFile) => assetPath(configFile, `${sensorId}: configFile invalid`));
       if ('packageJsonFields' in requirements) nonemptyStrings(requirements.packageJsonFields, `${sensorId}: packageJsonFields required`).forEach((field) => assert.match(field, /^[A-Za-z][A-Za-z0-9]*$/, `${sensorId}: package.json field invalid`));
       validateCommand(variant.command, `${sensorId}: variant`, assets);
+      if (Object.hasOwn(variant, 'changedCommand')) {
+        validateCommand(variant.changedCommand, `${sensorId}: changedCommand`, assets);
+        assert.ok(variant.changedCommand.fileInput, `${sensorId}: changedCommand requires fileInput`);
+      }
       text(variant.formatter, `${sensorId}: formatter required`);
       const probe = policy ? { kind: policy.probe } : object(variant.probe, `${sensorId}: probe required`);
       exactFields(probe, ['kind'], `${sensorId}: probe has unknown fields`);
