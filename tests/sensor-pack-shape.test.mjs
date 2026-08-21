@@ -30,8 +30,14 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const packsDir = path.join(repoRoot, 'sensor-packs');
 const schemaPath = path.join(packsDir, 'pack.schema.json');
 assert.ok(fs.existsSync(schemaPath), 'sensor-packs/pack.schema.json is required for pack v2 authors');
-assert.doesNotThrow(() => JSON.parse(fs.readFileSync(schemaPath, 'utf8')), 'pack.schema.json must be valid JSON');
+const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
+assert.equal(schema.$defs.sensor.properties.timeout.minimum, 1, 'v2 timeout must be bounded to positive integers');
+assert.equal(schema.$defs.sensor.properties.timeout.maximum, Number.MAX_SAFE_INTEGER, 'v2 timeout must reject unsafe integers');
+assert.equal(schema.$defs.variant.properties.changedCommand.$ref, '#/$defs/structuredCommand', 'changedCommand must reuse the shell-free structured command contract');
+assert.ok(schema.$defs.structuredCommand.allOf.some((rule) => rule.then?.properties?.args?.maxContains === 1), 'fileInput must constrain {files} to exactly once');
 const readme = fs.readFileSync(path.join(packsDir, 'README.md'), 'utf8');
+assert.match(readme, /finite positive-safe-integer `timeout`/);
+assert.match(readme, /`changedCommand` is optional/);
 const readmeExample = readme.match(/```json\n(\{[\s\S]*?\n\})\n```/);
 assert.ok(readmeExample, 'sensor-packs README must contain a JSON v2 example');
 const documentedPack = JSON.parse(readmeExample[1]);
