@@ -123,14 +123,18 @@ function eslint8OverlayReport(cjsSource = cjs, files = ['.']) {
   );
 }
 
-{
-  const withoutOutputIgnores = cjs.replace("  ignorePatterns: ['dist/', 'build/', 'coverage/'],\n", '');
-  assert.notEqual(withoutOutputIgnores, cjs, 'mutation must remove the generated-output ignores');
-  const report = eslint8OverlayReport(withoutOutputIgnores, ['dist/generated.js']);
+for (const [ignoredPattern, generatedFile, sourceFragment] of [
+  ['dist/', 'dist/generated.js', "'dist/', "],
+  ['build/', 'build/generated.js', "'build/', "],
+  ['coverage/', 'coverage/generated.js', ", 'coverage/'"],
+]) {
+  const withoutOneOutputIgnore = cjs.replace(sourceFragment, '');
+  assert.notEqual(withoutOneOutputIgnore, cjs, `mutation must remove the ${ignoredPattern} generated-output ignore`);
+  const report = eslint8OverlayReport(withoutOneOutputIgnore, [generatedFile]);
   assert.equal(
-    report.some((entry) => hasPathSuffix(entry.filePath, 'dist/generated.js') && entry.messages.some((message) => /Parsing error/.test(message.message))),
+    report.some((entry) => hasPathSuffix(entry.filePath, generatedFile) && entry.messages.some((message) => /Parsing error/.test(message.message))),
     true,
-    'mutation: removing generated-output ignores must parse the generated output',
+    `mutation: removing ${ignoredPattern} must parse its generated output`,
   );
 }
 
