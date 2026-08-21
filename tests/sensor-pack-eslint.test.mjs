@@ -26,6 +26,15 @@ function spawnOptionsForPlatform(platform = process.platform) {
   return { shell: platform === 'win32' };
 }
 
+const normalizeReportPath = (filePath) => filePath.replaceAll('\\', '/');
+const hasPathSuffix = (filePath, suffix) => normalizeReportPath(filePath).endsWith(normalizeReportPath(suffix));
+
+assert.equal(
+  hasPathSuffix('C:\\work\\fixture\\src\\clean.ts', 'src/clean.ts'),
+  true,
+  'report paths must compare independently of the host path separator',
+);
+
 function run(bin, args, cwd, environment = {}, platform = process.platform) {
   return spawnSync(bin, args, {
     cwd,
@@ -70,7 +79,7 @@ function eslint8OverlayReport(cjsSource = cjs) {
 {
   const report = eslint8OverlayReport();
   assert.equal(
-    report.some((entry) => entry.filePath.endsWith('clean.ts') && entry.messages.some((message) => ['no-undef', 'no-unused-vars'].includes(message.ruleId))),
+    report.some((entry) => hasPathSuffix(entry.filePath, 'src/clean.ts') && entry.messages.some((message) => ['no-undef', 'no-unused-vars'].includes(message.ruleId))),
     false,
     'the overlay must preserve the project TypeScript rule configuration',
   );
@@ -80,12 +89,12 @@ function eslint8OverlayReport(cjsSource = cjs) {
     'the overlay must ignore generated output',
   );
   assert.equal(
-    report.some((entry) => entry.filePath.endsWith(path.join('scripts', 'unused.js')) && entry.messages.some((message) => message.ruleId === 'no-unused-vars')),
+    report.some((entry) => hasPathSuffix(entry.filePath, 'scripts/unused.js') && entry.messages.some((message) => message.ruleId === 'no-unused-vars')),
     true,
     'the overlay must retain base unused-variable detection for JavaScript',
   );
   assert.equal(
-    report.some((entry) => entry.filePath.endsWith(path.join('scripts', 'undefined.js')) && entry.messages.some((message) => message.ruleId === 'no-undef')),
+    report.some((entry) => hasPathSuffix(entry.filePath, 'scripts/undefined.js') && entry.messages.some((message) => message.ruleId === 'no-undef')),
     true,
     'the overlay must retain base undefined-identifier detection for JavaScript',
   );
@@ -98,7 +107,7 @@ function eslint8OverlayReport(cjsSource = cjs) {
   );
   const report = eslint8OverlayReport(globalTypescriptRules);
   assert.equal(
-    report.some((entry) => entry.filePath.endsWith('clean.ts') && entry.messages.some((message) => ['no-undef', 'no-unused-vars'].includes(message.ruleId))),
+    report.some((entry) => hasPathSuffix(entry.filePath, 'src/clean.ts') && entry.messages.some((message) => ['no-undef', 'no-unused-vars'].includes(message.ruleId))),
     true,
     'mutation: globally re-enabling base rules must make the TypeScript certification fail',
   );
