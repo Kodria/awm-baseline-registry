@@ -84,6 +84,11 @@ function eslint8OverlayReport(cjsSource = cjs) {
     true,
     'the overlay must retain base unused-variable detection for JavaScript',
   );
+  assert.equal(
+    report.some((entry) => entry.filePath.endsWith(path.join('scripts', 'undefined.js')) && entry.messages.some((message) => message.ruleId === 'no-undef')),
+    true,
+    'the overlay must retain base undefined-identifier detection for JavaScript',
+  );
 }
 
 {
