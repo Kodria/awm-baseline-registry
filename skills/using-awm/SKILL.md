@@ -1,6 +1,6 @@
 ---
 name: using-awm
-version: "1.2.3"
+version: "1.3.0"
 license: Apache-2.0
 description: Use when starting any development conversation - establishes tiered skill invocation policy (spine skills always, specialized skills on clear signal)
 ---
@@ -82,7 +82,27 @@ signal avoids noise and unnecessary overhead.
 
 ## Orchestration
 
-AWM has two sibling orchestrators with an explicit boundary. Route by what the session starts with:
+AWM routes a session to exactly one orchestrator. Two ship with the baseline; any installed registry may contribute more.
+
+### Declared orchestrators (considered first)
+
+An installed registry may contribute a **declared orchestrator**: a skill that presents itself as a session entry point, states in its own description when it applies, and names where it hands control afterwards. Consider these before the built-in pair below.
+
+The declaration carries only four things — identity, when it applies, what it does, and its termination target. It never carries domain vocabulary of a particular process, and it must **never contain credentials or secrets** of any kind.
+
+Rules:
+
+- **Precedence.** A declared orchestrator that applies is considered before `development-process` and `product-process`.
+- **Ordering among declared orchestrators comes from the termination contract, not from any framework field.** There is no precedence, priority or order attribute. A declared orchestrator names its successor when it finishes, exactly as `product-process` hands off to `development-process`.
+- **One orchestrator active at a time.** A declared orchestrator runs to its terminal state and only then names its successor: another declared orchestrator, `development-process`, `product-process`, or none.
+- **Tie.** If two or more declared orchestrators apply and none of them names the other, apply none of them and continue with the routing table below.
+- **Uninstalled successor.** If a declared orchestrator names a termination target that is not installed, say so and continue with the routing table below — never abort the session.
+- **Fail-safe.** If a declared orchestrator cannot run for any reason, including an external system it depends on being unavailable, say so and continue. It must never block the user from working.
+- **Silence when absent.** If no declared orchestrator applies, route exactly as below and do not mention that declared orchestrators exist.
+
+### The built-in pair
+
+Route by what the session starts with:
 
 | The session starts with… | Orchestrator |
 |---|---|
