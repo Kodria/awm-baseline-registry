@@ -11,7 +11,7 @@ const USING_AWM = 'skills/using-awm/SKILL.md';
 function orchestrationSection(text) {
   const start = text.indexOf('## Orchestration');
   assert.ok(start >= 0, 'using-awm must keep an ## Orchestration section');
-  const rest = text.slice(start + 1);
+  const rest = text.slice(start);
   const nextHeading = rest.indexOf('\n## ');
   return nextHeading >= 0 ? rest.slice(0, nextHeading) : rest;
 }
