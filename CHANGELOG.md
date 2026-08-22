@@ -2,7 +2,7 @@
 
 Newest entry on top; append new releases directly below this line.
 
-## dev 3.3.0 — 2026-08-22
+## dev 3.4.0 — 2026-08-22
 
 ### Changed
 - `harness-retro` now captures cycle evidence for the canonical active plan
@@ -16,7 +16,7 @@ Newest entry on top; append new releases directly below this line.
   upgrade instructions.
 
 ### Nota de versión
-Bundle `dev` 3.2.0 → 3.3.0 (minor): additive retrospective evidence capture
+Bundle `dev` 3.3.0 → 3.4.0 (minor): additive retrospective evidence capture
 with an explicit CLI compatibility boundary.
 
 ## dev 3.2.0 — 2026-08-21

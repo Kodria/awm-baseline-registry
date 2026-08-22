@@ -44,8 +44,8 @@ test('the registry never declares a CLI floor below the R3 contract', () => {
 
 function assertCurrentCliCompatibilityMetadata(registry, changelog) {
     assert.equal(registry.minCliVersion, '8.5.0');
-    assert.match(changelog, /^## dev 3\.3\.0 — 2026-08-22$/m);
-    const currentEntry = changelog.split(/^## dev 3\.3\.0 — 2026-08-22$/m)[1]
+    assert.match(changelog, /^## dev 3\.4\.0 — 2026-08-22$/m);
+    const currentEntry = changelog.split(/^## dev 3\.4\.0 — 2026-08-22$/m)[1]
         .split(/^## /m)[0];
     assert.match(currentEntry, /`agentic-workflow-manager` `8\.5\.0`/);
     assert.match(currentEntry, /evidence capture/i);
