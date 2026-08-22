@@ -42,14 +42,16 @@ test('the registry never declares a CLI floor below the R3 contract', () => {
     );
 });
 
-function assertConclusiveExecutionMetadata(registry, changelog) {
-    assert.equal(registry.minCliVersion, '8.1.5');
-    assert.match(changelog, /^## dev 3\.2\.0 — 2026-08-21$/m);
-    assert.match(changelog, /`agentic-workflow-manager` `8\.1\.5`/);
-    assert.match(changelog, /conclusive execution gates/i);
+function assertCurrentCliCompatibilityMetadata(registry, changelog) {
+    assert.equal(registry.minCliVersion, '8.5.0');
+    assert.match(changelog, /^## dev 3\.4\.0 — 2026-08-22$/m);
+    const currentEntry = changelog.split(/^## dev 3\.4\.0 — 2026-08-22$/m)[1]
+        .split(/^## /m)[0];
+    assert.match(currentEntry, /`agentic-workflow-manager` `8\.5\.0`/);
+    assert.match(currentEntry, /evidence capture/i);
 }
 
-function assertConclusiveExecutionReleaseGate(workflow) {
+function assertCliCompatibilityReleaseGate(workflow) {
     const verificationStart = workflow.indexOf('- name: Verify registry before tagging');
     const tagStart = workflow.indexOf('- name: Compute and push next tag');
     assert.ok(verificationStart >= 0 && tagStart > verificationStart,
@@ -59,30 +61,30 @@ function assertConclusiveExecutionReleaseGate(workflow) {
         'the release-producing verification step must enforce the CLI compatibility boundary');
 }
 
-// The conclusive execution contract was released by the CLI as 8.1.5. Unlike
-// the historical R3 floor above, this is an exact coordinated-release boundary:
-// older 8.1.x CLIs cannot interpret every published timeout/scope/verdict
-// guarantee, so the registry must not silently advertise this content to them.
-test('records the published CLI boundary for conclusive execution gates', () => {
-    assertConclusiveExecutionMetadata(readJson('awm-registry.json'), read('CHANGELOG.md'));
+// Cycle evidence capture first ships in CLI 8.5.0. This exact current boundary
+// remains coordinated with the historical conclusive-execution record above:
+// an older CLI cannot interpret every published registry guarantee, so the
+// registry must not silently advertise this content to it.
+test('records the published CLI boundary for conclusive execution and cycle evidence capture', () => {
+    assertCurrentCliCompatibilityMetadata(readJson('awm-registry.json'), read('CHANGELOG.md'));
 });
 
-test('RED mutation: downgrading the conclusive CLI boundary is rejected', () => {
+test('RED mutation: downgrading the current CLI boundary is rejected', () => {
     const downgraded = { ...readJson('awm-registry.json'), minCliVersion: '8.1.4' };
     assert.throws(
-        () => assertConclusiveExecutionMetadata(downgraded, read('CHANGELOG.md')),
-        /8\.1\.5/,
+        () => assertCurrentCliCompatibilityMetadata(downgraded, read('CHANGELOG.md')),
+        /8\.5\.0/,
     );
 });
 
 test('auto-tag enforces the conclusive CLI boundary before publishing a registry tag', () => {
-    assertConclusiveExecutionReleaseGate(read('.github/workflows/auto-tag.yml'));
+    assertCliCompatibilityReleaseGate(read('.github/workflows/auto-tag.yml'));
 });
 
 test('RED mutation: removing the conclusive CLI gate blocks registry publication', () => {
     const workflow = read('.github/workflows/auto-tag.yml');
     assert.throws(
-        () => assertConclusiveExecutionReleaseGate(workflow.replace(/^\s*node tests\/r3-release-metadata\.test\.mjs\s*\n/m, '')),
+        () => assertCliCompatibilityReleaseGate(workflow.replace(/^\s*node tests\/r3-release-metadata\.test\.mjs\s*\n/m, '')),
         /CLI compatibility boundary/,
     );
 });
