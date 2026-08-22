@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "2.4.1"
+version: "2.4.2"
 license: Apache-2.0
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
@@ -61,7 +61,7 @@ You MUST create a task for each item and complete them in order:
 8. **Verify the rule fires** (for sensor rules) — manufacture the failure, run the sensor, confirm it catches it
 9. **Commit** the rules
 10. **Log the retro** — append to `docs/harness-retros.md`
-11. **Close the retro** — run `awm ledger archive` and add the `awm-retro-complete` marker
+11. **Capture and close the retro** — capture cycle evidence, run `awm ledger archive`, and add the `awm-retro-complete` marker
 
 ## The remediation tree
 
@@ -246,13 +246,78 @@ Append (or create) `docs/harness-retros.md`:
 - **Descartes (modo desatendido):** <signature — razón> | ninguno
 ```
 
-### 11. Close the retro
+### 11. Capture and close the retro
 
-Run `awm ledger archive` to rotate this branch's ledger out of the active flow (it stays on disk under `.awm/ledger/archive/` for audit; the next plan starts fresh):
+Before archiving, read `minCliVersion` from `awm-registry.json` and require that `awm --version` meets it using a semver-aware comparison. If the installed CLI is too old, fail loudly and do not archive; for this release's declared floor, give this exact upgrade command:
+
+```bash
+npm i -g "agentic-workflow-manager@>=8.5.0"
+```
+
+Use this executable compatibility gate. It validates both versions, performs a numeric semver comparison, and quotes the package spec in the upgrade instruction so it is shell-safe:
+
+```bash
+min_cli_version="$(node -e 'const fs = require("node:fs"); const version = JSON.parse(fs.readFileSync("awm-registry.json", "utf8")).minCliVersion; if (!/^\d+\.\d+\.\d+$/.test(version)) process.exit(1); process.stdout.write(version)' 2>/dev/null)" || {
+  echo 'Cannot read a valid minCliVersion from awm-registry.json.' >&2
+  exit 1
+}
+installed_cli_version="$(awm --version)" || {
+  echo 'Cannot determine the installed agentic-workflow-manager version.' >&2
+  exit 1
+}
+if ! node - "$installed_cli_version" "$min_cli_version" <<'NODE'
+const parse = (value) => {
+  const normalized = value.replace(/^v/, '');
+  if (!/^\d+\.\d+\.\d+$/.test(normalized)) process.exit(1);
+  return normalized.split('.').map(Number);
+};
+const [installed, minimum] = process.argv.slice(2).map(parse);
+let comparison = 0;
+for (let index = 0; index < installed.length; index += 1) {
+  if (installed[index] !== minimum[index]) {
+    comparison = installed[index] > minimum[index] ? 1 : -1;
+    break;
+  }
+}
+const meets = comparison >= 0;
+process.exit(meets ? 0 : 1);
+NODE
+then
+  echo "Installed CLI ${installed_cli_version} does not meet required ${min_cli_version}." >&2
+  printf 'npm i -g %q\n' "agentic-workflow-manager@>=${min_cli_version}" >&2
+  exit 1
+fi
+```
+
+Resolve the tracked active plan into `active_plan` with the canonical session-start resolver. Then run the capture command and require exit 0; a failed capture stops the retro and does not archive the ledger:
+
+```bash
+PLANS_DIR="$PWD/docs/plans"
+active_plan=""
+if [ -d "$PLANS_DIR" ]; then
+    while IFS= read -r plan_file; do
+        [ -z "$plan_file" ] && continue
+        case "$(basename "$plan_file")" in *-design.md) continue;; esac
+        grep -q '^- \[ \]' "$plan_file" 2>/dev/null || continue
+        if grep -qE '<!--[[:space:]]*awm-(plan|qa)-complete' "$plan_file" 2>/dev/null; then continue; fi
+        active_plan="$plan_file"
+        break
+    done < <(ls -t "$PLANS_DIR"/*.md 2>/dev/null || true)
+fi
+test -n "$active_plan" || { echo 'No tracked active plan for cycle evidence capture.' >&2; exit 1; }
+awm evidence capture --plan "$active_plan" || {
+  echo 'Cycle evidence capture failed; the ledger will not be archived.' >&2
+  exit 1
+}
+```
+
+Only after successful evidence capture, run `awm ledger archive` to rotate this branch's ledger out of the active flow (it stays on disk under `.awm/ledger/archive/` for audit; the next plan starts fresh):
 
 ```bash
 awm ledger archive
 ```
+
+This capture-and-archive sequence is mandatory in modo desatendido too; it requires no human decision.
 
 Then add the `awm-retro-complete` marker to the active plan (first line after the `#` header), so `development-process` routes to `finishing-a-development-branch`:
 

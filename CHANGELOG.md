@@ -2,6 +2,23 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.3.0 — 2026-08-22
+
+### Changed
+- `harness-retro` now captures cycle evidence for the canonical active plan
+  before it archives the ledger. Capture failure stops the close flow, including
+  in unattended mode, so archival cannot discard the evidence needed for audit.
+- The registry requires `agentic-workflow-manager` `8.5.0`, the first published
+  CLI with `awm evidence capture`. Older CLIs fail loudly with a shell-safe
+  upgrade command instead of silently skipping this compatibility boundary.
+- Validation and release gates execute the cycle-evidence contract, including
+  mutations for stale plans, capture ordering, failure propagation, and safe
+  upgrade instructions.
+
+### Nota de versión
+Bundle `dev` 3.2.0 → 3.3.0 (minor): additive retrospective evidence capture
+with an explicit CLI compatibility boundary.
+
 ## dev 3.2.0 — 2026-08-21
 
 ### Changed

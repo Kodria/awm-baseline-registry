@@ -26,6 +26,7 @@ jobs:
       - run: node scripts/validate-portability.mjs
       - run: node tests/validate-portability.test.mjs
       - run: node tests/r3-release-metadata.test.mjs
+      - run: node tests/cycle-evidence-capture-contract.test.mjs
       - run: node tests/r3-retro-contract.test.mjs
       - run: node tests/r8-sensor-gate-contract.test.mjs
       - run: node tests/r9-declared-orchestrators-contract.test.mjs
