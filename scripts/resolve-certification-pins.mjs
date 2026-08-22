@@ -7,7 +7,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'tests/fixtures/certification-pins.json');
 const families = [
   ['eslint-8', 'eslint', 8], ['eslint-9', 'eslint', 9], ['eslint-10', 'eslint', 10],
-  ['typescript', 'typescript', 5], ['prettier', 'prettier', 3], ['dependency-cruiser', 'dependency-cruiser', 16], ['stryker', '@stryker-mutator/core', 8],
+  ['typescript', 'typescript', 5], ['prettier', 'prettier', 3], ['dependency-cruiser', 'dependency-cruiser', 16], ['dependency-cruiser-17', 'dependency-cruiser', 17], ['stryker', '@stryker-mutator/core', 8],
 ];
 const pythonFamilies = [['python-3-9', 'python', '3.9.0'], ['python-current', 'python', '3.12.0'], ['mypy', 'mypy'], ['ruff', 'ruff'], ['pytest', 'pytest'], ['semgrep', 'semgrep'], ['shellcheck', 'shellcheck']];
 

@@ -289,11 +289,38 @@
           "priority": 10,
           "requirements": {
             "tool": "dependency-cruiser",
-            "toolRange": ">=16.0.0",
+            "toolRange": ">=16.0.0 <17.0.0",
             "runtime": "node",
             "runtimeRange": ">=18.0.0"
           },
           "certifiedRange": "=16.10.4",
+          "command": {
+            "executable": "depcruise",
+            "resolution": "node-modules-bin",
+            "args": [
+              "--config",
+              ".dep-cruiser.awm.js",
+              "src"
+            ]
+          },
+          "assets": [
+            ".dep-cruiser.awm.js"
+          ],
+          "formatter": "generic",
+          "probe": {
+            "kind": "version"
+          }
+        },
+        {
+          "id": "dependency-cruiser-17",
+          "priority": 10,
+          "requirements": {
+            "tool": "dependency-cruiser",
+            "toolRange": ">=17.0.0 <18.0.0",
+            "runtime": "node",
+            "runtimeRange": ">=20.12.0"
+          },
+          "certifiedRange": "=17.4.3",
           "command": {
             "executable": "depcruise",
             "resolution": "node-modules-bin",
