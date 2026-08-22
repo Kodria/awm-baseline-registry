@@ -9,6 +9,7 @@ Status: `certified` has a matching frozen tool pin; `compatible-unverified` has 
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `generic` | `security` | `semgrep-generic` | `semgrep` | `=1.173.0` | Ubuntu, macOS, Windows | Ubuntu: real tool; macOS/Windows: contract | certified | pin: `semgrep@1.173.0` |
 | `js-ts` | `depcheck` | `dependency-cruiser` | `dependency-cruiser` | `=16.10.4` | Ubuntu, macOS, Windows | Ubuntu/macOS/Windows: contract | certified | pin: `dependency-cruiser@16.10.4` |
+| `js-ts` | `depcheck` | `dependency-cruiser-17` | `dependency-cruiser` | `=17.4.3` | Ubuntu, macOS, Windows | Ubuntu/macOS/Windows: contract | certified | pin: `dependency-cruiser@17.4.3` |
 | `js-ts` | `format` | `prettier` | `prettier` | `=3.9.6` | Ubuntu, macOS, Windows | Ubuntu/macOS/Windows: contract | certified | pin: `prettier@3.9.6` |
 | `js-ts` | `lint` | `eslint-10-flat` | `eslint` | `=10.8.1` | Ubuntu, macOS, Windows | Ubuntu/macOS/Windows: contract | certified | pin: `eslint@10.8.1` |
 | `js-ts` | `lint` | `eslint-8-eslintrc` | `eslint` | `=8.57.1` | Ubuntu, macOS, Windows | Ubuntu/macOS/Windows: contract | certified | pin: `eslint@8.57.1` |
@@ -31,7 +32,7 @@ Status: `certified` has a matching frozen tool pin; `compatible-unverified` has 
 
 | Certification status | Derived variant count | Meaning |
 | --- | --- | --- |
-| certified | 15 | Matching frozen tool pin |
+| certified | 16 | Matching frozen tool pin |
 | compatible-unverified | 6 | No matching frozen tool pin |
 | not-applicable | 0 | Variant has no tool contract |
 <!-- END GENERATED: sensor-pack-support -->

@@ -31,6 +31,11 @@
       "version": "16.10.4",
       "source": "https://registry.npmjs.org/dependency-cruiser"
     },
+    "dependency-cruiser-17": {
+      "package": "dependency-cruiser",
+      "version": "17.4.3",
+      "source": "https://registry.npmjs.org/dependency-cruiser"
+    },
     "stryker": {
       "package": "@stryker-mutator/core",
       "version": "8.7.1",

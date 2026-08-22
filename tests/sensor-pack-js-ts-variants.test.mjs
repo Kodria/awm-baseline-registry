@@ -53,6 +53,16 @@ for (const sensorName of ['typecheck', 'depcheck', 'format', 'test', 'mutation']
 }
 assert.deepEqual(pack.sensors.test.variants.map((variant) => variant.id).sort(), ['bun-script', 'npm-script', 'pnpm-script', 'yarn-script']);
 
+// dependency-cruiser 17 dropped nothing this pack's command relies on (verified against
+// the real 17.4.3 CLI: same --config/args argv, same exit-code and violation-detection
+// behavior), so both majors share one command shape — only the version boundary differs.
+assert.deepEqual(pack.sensors.depcheck.variants.map((variant) => variant.id).sort(), ['dependency-cruiser', 'dependency-cruiser-17']);
+for (const [id, toolRange] of [['dependency-cruiser', '>=16.0.0 <17.0.0'], ['dependency-cruiser-17', '>=17.0.0 <18.0.0']]) {
+  const variant = pack.sensors.depcheck.variants.find((candidate) => candidate.id === id);
+  assert.equal(variant.requirements.toolRange, toolRange, `${id} must stay bounded to its own major`);
+  assert.deepEqual(variant.command.args, ['--config', '.dep-cruiser.awm.js', 'src'], `${id} must keep the shared command argv`);
+}
+
 for (const [id, executable] of [['npm-script', 'npm'], ['pnpm-script', 'pnpm'], ['yarn-script', 'yarn'], ['bun-script', 'bun']]) {
   const variant = pack.sensors.test.variants.find((candidate) => candidate.id === id);
   assert.equal(variant.command.executable, executable);
