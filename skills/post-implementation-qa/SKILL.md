@@ -231,7 +231,7 @@ Add at the beginning of the plan (first line after the `#` header):
 <!-- awm-qa-complete: YYYY-MM-DD -->
 ```
 
-Report: "QA complete. N findings found and closed. Ready for `finishing-a-development-branch`."
+Report: "QA complete. N findings found and closed. Ready for `post-implementation-docs`."
 
 ## Iron Law
 
@@ -268,4 +268,4 @@ NO "QA COMPLETE" CLAIM WITHOUT:
 | `subagent-driven-development` | Executes the fixes |
 | `verification-before-completion` | Gate for each fix |
 | `harness-retro` | If a finding is recurring (≥2) |
-| `finishing-a-development-branch` | Next phase when QA is clean |
+| `post-implementation-docs` | Next phase when QA is clean |

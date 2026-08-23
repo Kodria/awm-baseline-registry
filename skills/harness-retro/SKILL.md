@@ -19,7 +19,7 @@ description: Use as the terminal learning phase of development-process — reads
 
 ## When to use
 
-- Automatically: `development-process` routes here after `post-implementation-qa` completes and `awm-qa-complete` is present but `awm-retro-complete` is absent.
+- Automatically: `development-process` routes here after `post-implementation-docs` completes and `awm-docs-complete` is present but `awm-retro-complete` is absent.
 - Manually: the user invokes it directly ("do a retro on this session", "we keep seeing X, do a retro").
 
 ## When NOT to use
@@ -346,4 +346,5 @@ Then add the `awm-retro-complete` marker to the active plan (first line after th
 | `post-implementation-qa` deep-review | Emits `awm ledger add` per Track A (`class: proceso`) / Track B (`class: seguridad\|logica\|tests`) finding / win |
 | `verification-before-completion` | Emits `awm ledger add` on recurring sensor failure |
 | `systematic-debugging` | Emits `awm ledger add` on confirmed root cause |
-| `development-process` | Routes to harness-retro after QA; requires `awm-retro-complete` to proceed to finishing |
+| `development-process` | Routes to harness-retro after the documentation phase; requires `awm-retro-complete` to proceed to finishing |
+| `post-implementation-docs` | Previous phase; a documentation gap it found is ledger material this retro cures |

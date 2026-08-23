@@ -80,3 +80,19 @@ test('R6.2: retro ya no se dispara con solo qa-complete', () => {
   assert.match(retroRow, /awm-docs-complete/,
     'retro must now be gated on docs-complete, not on qa-complete alone');
 });
+
+test('R6.1: QA le cede el control a la fase de documentacion, no a finishing', () => {
+  const text = read('skills/post-implementation-qa/SKILL.md');   // verifies R6.1
+  assert.match(text, /Ready for `post-implementation-docs`/,
+    'the QA completion report must hand off to the documentation phase');
+  assert.doesNotMatch(text, /Ready for `finishing-a-development-branch`/,
+    'QA must no longer name finishing as its successor');
+});
+
+test('R6.1: retro se declara disparado por el marker de documentacion', () => {
+  const text = read('skills/harness-retro/SKILL.md');            // verifies R6.1
+  assert.match(text, /awm-docs-complete/,
+    'harness-retro must state it is routed after the documentation phase');
+  assert.match(text, /post-implementation-docs/,
+    'harness-retro must name the documentation phase as its predecessor');
+});
