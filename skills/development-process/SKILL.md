@@ -200,7 +200,7 @@ Once approved (interactive) or auto-routed (unattended), invoke the skill. The i
 2. If absent → invoke `post-implementation-docs`
 3. Do NOT jump to `harness-retro` or `finishing-a-development-branch` without the docs marker
 
-### When QA is complete but the retro marker is absent
+### When docs are complete but the retro marker is absent
 1. Check the plan for `<!-- awm-docs-complete` (prerequisite) and `<!-- awm-retro-complete`
 2. If absent → invoke `harness-retro` (it always runs; if the ledger is empty it exits fast and adds the marker)
 3. Do NOT jump to `finishing-a-development-branch` without the retro marker
