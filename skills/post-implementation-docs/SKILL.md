@@ -71,7 +71,7 @@ Un cambio sin documentación afectada es un resultado válido y frecuente (un re
 
 Para cada afirmación que vayas a escribir:
 
-- **Un comando, sus flags, sus keywords** → leé `cli/src/commands/<cmd>.ts` y corré el comando.
+- **Un comando, sus flags, sus keywords** → leé la fuente del comando en el repo del CLI que documentás (en `agentic-workflow`, típicamente `cli/src/commands/<cmd>.ts`) y corré el comando.
 - **Output de ejemplo** → pegá el output real, nunca uno plausible.
 - **Una secuencia de pasos** → ejecutala literalmente, en orden, en un entorno limpio. Es el patrón `runbook-as-script`: el doc se escribe como hipótesis y se corre como test; las divergencias se corrigen en el doc.
 
