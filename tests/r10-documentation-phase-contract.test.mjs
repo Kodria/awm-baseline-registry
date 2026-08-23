@@ -48,3 +48,35 @@ test('R6.2: el marker de cierre es awm-docs-complete', () => {
   assert.match(text, /<!--\s*awm-docs-complete:\s*YYYY-MM-DD\s*-->/,
     'the skill must show the literal closing marker it writes');
 });
+
+const DEV_PROCESS = 'skills/development-process/SKILL.md';
+
+test('R6.1: development-process rutea la fase entre QA y retro', () => {
+  const text = read(DEV_PROCESS);                           // verifies R6.1
+  const qa = text.indexOf('"post-implementation-qa" -> "post-implementation-docs"');
+  const retro = text.indexOf('"post-implementation-docs" -> "harness-retro"');
+  assert.ok(qa >= 0, 'the lifecycle graph must route QA into the documentation phase');
+  assert.ok(retro >= 0, 'the lifecycle graph must route the documentation phase into retro');
+  assert.doesNotMatch(text, /"post-implementation-qa" -> "harness-retro"/,
+    'the old direct QA -> retro edge must be gone, not merely supplemented');
+});
+
+test('R6.2: el estado Docs pending se gatea por el marker', () => {
+  const text = read(DEV_PROCESS);                           // verifies R6.2
+  assert.match(text, /awm-docs-complete/,
+    'the state table must gate on the new marker');
+  const docsRow = text.split('\n').find(line =>
+    line.includes('awm-qa-complete') && line.includes('awm-docs-complete') && line.startsWith('|'));
+  assert.ok(docsRow, 'a state row must require qa-complete present and docs-complete absent');
+  assert.match(docsRow, /post-implementation-docs/,
+    'that row must route to the documentation phase');
+});
+
+test('R6.2: retro ya no se dispara con solo qa-complete', () => {
+  const text = read(DEV_PROCESS);                           // verifies R6.2
+  const retroRow = text.split('\n').find(line =>
+    line.startsWith('|') && line.includes('Invoke `harness-retro`'));
+  assert.ok(retroRow, 'the retro routing row must still exist');
+  assert.match(retroRow, /awm-docs-complete/,
+    'retro must now be gated on docs-complete, not on qa-complete alone');
+});
