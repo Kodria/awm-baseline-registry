@@ -1,13 +1,13 @@
 {
   "name": "dev",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "description": "Agentic software development core: SDD spine, quality gates, sensors, and advisory.",
   "scope": "baseline",
   "dependsOn": [],
   "skills": [
     "using-awm", "development-process", "brainstorming", "writing-plans", "executing-plans",
     "subagent-driven-development", "test-driven-development", "requesting-code-review",
-    "receiving-code-review", "post-implementation-qa", "finishing-a-development-branch",
+    "receiving-code-review", "post-implementation-qa", "post-implementation-docs", "finishing-a-development-branch",
     "verification-before-completion", "systematic-debugging",
     { "name": "dispatching-parallel-agents", "onSignal": true },
     { "name": "using-git-worktrees", "onSignal": true },
