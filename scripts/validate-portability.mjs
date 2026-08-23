@@ -525,8 +525,8 @@ async function main() {
   await validateAllowlistedFiles(allowlist, errors);
   const directories = await immediateSkillDirectories();
 
-  if (directories.length !== 37) {
-    errors.push(`skills: expected exactly 37 immediate skill directories, found ${directories.length}`);
+  if (directories.length !== 38) {
+    errors.push(`skills: expected exactly 38 immediate skill directories, found ${directories.length}`);
   }
 
   for (const directory of directories) {

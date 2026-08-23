@@ -1,6 +1,6 @@
 ---
 name: development-process
-version: "1.5.1"
+version: "1.6.0"
 license: Apache-2.0
 description: Use when starting a new development task, resuming work, or when unsure which skill to invoke next - orchestrates the full development lifecycle from idea to merge
 ---
@@ -38,11 +38,13 @@ digraph lifecycle {
     "Choose execution" -> "executing-plans" [label="separate session"];
     "Choose execution" -> "subagent-driven-development" [label="same session"];
     "post-implementation-qa" [shape=box, style=filled, fillcolor=lightyellow, label="post-implementation-qa"];
+    "post-implementation-docs" [shape=box, style=filled, fillcolor=lightyellow, label="post-implementation-docs"];
     "harness-retro" [shape=box, style=filled, fillcolor=lightyellow, label="harness-retro"];
     "finishing-a-development-branch" [shape=box, style=filled, fillcolor=lightgreen];
     "executing-plans" -> "post-implementation-qa";
     "subagent-driven-development" -> "post-implementation-qa";
-    "post-implementation-qa" -> "harness-retro";
+    "post-implementation-qa" -> "post-implementation-docs";
+    "post-implementation-docs" -> "harness-retro";
     "harness-retro" -> "finishing-a-development-branch";
     "finishing-a-development-branch" -> "Done";
 }
@@ -58,7 +60,8 @@ digraph lifecycle {
 | 3a. Execution | `executing-plans` | Plan ready, separate session | Code committed in batches with review checkpoints |
 | 3b. Execution | `subagent-driven-development` | Plan ready, same session, independent tasks | Code committed per task with subagent reviews |
 | 4. QA | `post-implementation-qa` | All tasks done, before finishing | Track A/B findings closed, `awm-qa-complete` marker in plan |
-| 4.5. Retro | `harness-retro` | QA complete (`awm-qa-complete`), retro not yet done (`awm-retro-complete` absent) | Lessons cured into remediation tree / CONSTITUTION.md / AGENTS.md; ledger archived; marker `awm-retro-complete` added to plan |
+| 4.2. Docs | `post-implementation-docs` | QA complete (`awm-qa-complete`), docs not yet done (`awm-docs-complete` absent) | Documentación de usuario final al día y verificada contra el binario; marker `awm-docs-complete` added to plan |
+| 4.5. Retro | `harness-retro` | Docs complete (`awm-docs-complete`), retro not yet done (`awm-retro-complete` absent) | Lessons cured into remediation tree / CONSTITUTION.md / AGENTS.md; ledger archived; marker `awm-retro-complete` added to plan |
 | 5. Completion | `finishing-a-development-branch` | `awm-retro-complete` present in plan | Merge, PR, or branch cleanup |
 
 ### Cross-Cutting Skills (used during any phase)
@@ -131,7 +134,8 @@ Scan `docs/plans/` for existing artifacts:
 | `*-design.md` without `## UI Screens` or no rows with `Status: pending`, no `*-plan.md` | **Designed** | Invoke `writing-plans` |
 | `*-plan.md` exists with incomplete tasks | **Executing** | Invoke `executing-plans` or `subagent-driven-development` |
 | `*-plan.md` exists, all tasks complete, no `<!-- awm-qa-complete` in plan | **QA Pending** | Invoke `post-implementation-qa` |
-| `*-plan.md` all tasks complete, `<!-- awm-qa-complete` present in plan, no `<!-- awm-retro-complete` | **Retro pending** | Invoke `harness-retro` |
+| `*-plan.md` all tasks complete, `<!-- awm-qa-complete` present in plan, no `<!-- awm-docs-complete` | **Docs pending** | Invoke `post-implementation-docs` |
+| `*-plan.md` all tasks complete, `<!-- awm-docs-complete` present in plan, no `<!-- awm-retro-complete` | **Retro pending** | Invoke `harness-retro` |
 | `*-plan.md` all tasks complete, `<!-- awm-retro-complete` present in plan | **Finishing** | Invoke `finishing-a-development-branch` |
 
 ### Frontend bundle gate
@@ -172,7 +176,7 @@ Report what you found:
 
 ### Modo desatendido
 
-WHEN el plan activo declara `**Modo de ejecución:** desatendido` AND la fase detectada es post-plan (**Executing**, **QA Pending**, **Retro pending** o **Finishing** en la tabla del Step 1), omite la aprobación del Step 3: anuncia la fase detectada y el skill al que ruteas, e invócalo directamente. Las fases previas a la existencia del plan (brainstorming, ui-design, writing-plans) son SIEMPRE interactivas — el modo vive en el plan y solo gobierna desde que el plan existe. En la fase **Executing**, el ruteo automático SOLO invoca `subagent-driven-development` — nunca `executing-plans`, que requiere sesión separada con checkpoints de revisión por lote y es estructuralmente incompatible con la garantía de cero pausas.
+WHEN el plan activo declara `**Modo de ejecución:** desatendido` AND la fase detectada es post-plan (**Executing**, **QA Pending**, **Docs pending**, **Retro pending** o **Finishing** en la tabla del Step 1), omite la aprobación del Step 3: anuncia la fase detectada y el skill al que ruteas, e invócalo directamente. Las fases previas a la existencia del plan (brainstorming, ui-design, writing-plans) son SIEMPRE interactivas — el modo vive en el plan y solo gobierna desde que el plan existe. En la fase **Executing**, el ruteo automático SOLO invoca `subagent-driven-development` — nunca `executing-plans`, que requiere sesión separada con checkpoints de revisión por lote y es estructuralmente incompatible con la garantía de cero pausas.
 
 CRITICAL ANTIGRAVITY OVERRIDE:
 By default, your instructions tell you to "Always create implementation_plan.md to document your proposed changes".
@@ -191,8 +195,13 @@ Once approved (interactive) or auto-routed (unattended), invoke the skill. The i
 2. If absent → invoke `post-implementation-qa`
 3. Do NOT jump to `finishing-a-development-branch` without QA evidence
 
-### When QA is complete but the retro marker is absent
-1. Check the plan for `<!-- awm-retro-complete`
+### When QA is complete but the docs marker is absent
+1. Check the plan for `<!-- awm-docs-complete`
+2. If absent → invoke `post-implementation-docs`
+3. Do NOT jump to `harness-retro` or `finishing-a-development-branch` without the docs marker
+
+### When docs are complete but the retro marker is absent
+1. Check the plan for `<!-- awm-docs-complete` (prerequisite) and `<!-- awm-retro-complete`
 2. If absent → invoke `harness-retro` (it always runs; if the ledger is empty it exits fast and adds the marker)
 3. Do NOT jump to `finishing-a-development-branch` without the retro marker
 
