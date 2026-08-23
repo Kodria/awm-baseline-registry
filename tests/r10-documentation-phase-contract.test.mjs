@@ -95,4 +95,6 @@ test('R6.1: retro se declara disparado por el marker de documentacion', () => {
     'harness-retro must state it is routed after the documentation phase');
   assert.match(text, /post-implementation-docs/,
     'harness-retro must name the documentation phase as its predecessor');
+  assert.doesNotMatch(text, /routes here after `post-implementation-qa` completes and `awm-qa-complete`/,
+    'harness-retro must no longer say it is triggered by qa-complete alone');
 });
