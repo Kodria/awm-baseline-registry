@@ -9,7 +9,7 @@ description: Use as the terminal learning phase of development-process — reads
 
 ## Overview
 
-`harness-retro` is the terminal learning phase of `development-process`. It reads the branch ledger accumulated during the session (populated by SDD reviewers, post-qa, sensors, and debugging phases), presents every item to the user interactively, and cures the approved ones into the remediation tree or existing delivered docs.
+`harness-retro` is the terminal learning phase of `development-process`. It reads the branch ledger accumulated during the session (populated by SDD reviewers, post-qa, post-implementation-docs, sensors, and debugging phases), presents every item to the user interactively, and cures the approved ones into the remediation tree or existing delivered docs.
 
 **Announce at start:** "I'm using the harness-retro skill to review this session's findings and cure them into the harness."
 
@@ -26,7 +26,7 @@ description: Use as the terminal learning phase of development-process — reads
 
 - The ledger is empty, there are no manual observations, **and the session genuinely produced zero findings** — exit fast and add the `awm-retro-complete` marker.
 
-**Empty-ledger consistency check (mandatory before fast-exit):** an empty ledger is only legitimate if nothing was found during the cycle. Cross-check against the session evidence: did the spec/quality reviewers report issues? Did `post-implementation-qa` present findings (Track A/B in the plan or QA report)? If findings were reported anywhere but the ledger is empty, the learning pipeline is broken — **that IS the retro finding**. Do not fast-exit: trace where the `awm ledger add` instruction was dropped (inline prompt instead of template? missing gate?), cure the gap in the responsible skill, and log it. An empty ledger after a cycle with findings is contradictory evidence, never a clean bill.
+**Empty-ledger consistency check (mandatory before fast-exit):** an empty ledger is only legitimate if nothing was found during the cycle. Cross-check against the session evidence: did the spec/quality reviewers report issues? Did `post-implementation-qa` present findings (Track A/B in the plan or QA report)? Did `post-implementation-docs` log an unverifiable claim as a gap? If findings were reported anywhere but the ledger is empty, the learning pipeline is broken — **that IS the retro finding**. Do not fast-exit: trace where the `awm ledger add` instruction was dropped (inline prompt instead of template? missing gate?), cure the gap in the responsible skill, and log it. An empty ledger after a cycle with findings is contradictory evidence, never a clean bill.
 
 ## Modo de ejecución (lectura del campo)
 
@@ -347,4 +347,4 @@ Then add the `awm-retro-complete` marker to the active plan (first line after th
 | `verification-before-completion` | Emits `awm ledger add` on recurring sensor failure |
 | `systematic-debugging` | Emits `awm ledger add` on confirmed root cause |
 | `development-process` | Routes to harness-retro after the documentation phase; requires `awm-retro-complete` to proceed to finishing |
-| `post-implementation-docs` | Previous phase; a documentation gap it found is ledger material this retro cures |
+| `post-implementation-docs` | Previous phase; emits `awm ledger add` for unverifiable documentation claims |
