@@ -43,8 +43,11 @@ test('R2.6: un draft existente se retoma leyendolo', () => {
   const text = read(SKILL);                                    // verifies R2.6
   assert.match(text, /status:\s*draft|`draft`/,
     'the skill must name the draft status it resumes from');
-  assert.match(text, /\bno\b[^.]*volver a relatar|retoma|reanuda/i,
-    'resuming must read the model, never ask the user to re-tell the process');
+  const sentences = text.split(/(?<=\.)\s+/);
+  const affirmsResumeByReading = sentences.some(sentence =>
+    /\bretoma\b|\breanuda\b/i.test(sentence) && !/\bnunca\b/i.test(sentence));
+  assert.ok(affirmsResumeByReading,
+    'resuming must be stated as an affirmative claim — a sentence containing retoma/reanuda that does not also carry a nunca negation in the same sentence — never ask the user to re-tell the process; an ungrouped alternation would let a bare "retoma" inside a negated sentence satisfy this wrongly');
 });
 
 test('R2.7: delega el craft de escritura a writing-skills', () => {
@@ -68,11 +71,16 @@ test('R2.8: aporta el overlay de obligaciones de fase', () => {
 
 test('R3.1: genera en loop dirigido con aprobacion por fase', () => {
   const text = read(SKILL);                                    // verifies R3.1
-  assert.match(text, /aprobación por fase|aprobacion por fase/i,
+  const lines = text.split('\n');
+  const startIdx = lines.findIndex(line => /^## Paso 3 — Generación/.test(line));
+  assert.ok(startIdx >= 0, 'the skill must have a "## Paso 3 — Generación" section');
+  const endIdx = lines.findIndex((line, i) => i > startIdx && /^## /.test(line));
+  const section = lines.slice(startIdx, endIdx >= 0 ? endIdx : lines.length).join('\n');
+  assert.match(section, /aprobación por fase|aprobacion por fase/i,
     'generation must be a directed loop with per-phase approval — not a single-shot constellation');
   for (const artifact of ['orquestador', 'bundle']) {
-    assert.match(text, new RegExp(artifact, 'i'),
-      `the generation step must name the ${artifact} it produces`);
+    assert.match(section, new RegExp(artifact, 'i'),
+      `the generation step must name the ${artifact} it produces, scoped to the Paso 3 section — an unrelated frontmatter/overview mention elsewhere in the document does not prove the generation loop actually produces it`);
   }
 });
 
@@ -89,8 +97,14 @@ test('R3.2 y R3.3: la declaracion se deriva del modelo, no se edita aparte', () 
 
 test('R3.4: verifica colision de nombres antes de escribir', () => {
   const text = read(SKILL);                                    // verifies R3.4
-  assert.match(text, /colisi[óo]n|collision/i,
-    'the skill must check the name against installed content before writing');
+  const lines = text.split('\n');
+  const windowSize = 3;
+  const hasPreWriteCollisionCheck = lines.some((_, i) => {
+    const window = lines.slice(i, i + windowSize).join('\n');
+    return /colisi[óo]n|collision/i.test(window) && /antes de escribir|before writing/i.test(window);
+  });
+  assert.ok(hasPreWriteCollisionCheck,
+    'the skill must check the name against installed content specifically before writing — colisión/collision must co-occur with antes de escribir/before writing within a small window, not just appear anywhere in the document (e.g. the unattended-mode BLOCKED-escalation mention of colisión does not by itself prove a pre-write check exists)');
 });
 
 test('R3.5 y R3.6: el ciclo de verificacion llega a composicion real y recien ahi promueve', () => {
