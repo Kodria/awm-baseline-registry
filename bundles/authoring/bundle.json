@@ -1,7 +1,7 @@
 {
   "name": "authoring",
   "version": "1.2.0",
-  "description": "Harness authoring and skill creation.",
+  "description": "Harness authoring: writing and verifying skills",
   "scope": "baseline",
   "dependsOn": ["dev"],
   "skills": ["writing-skills"],

@@ -2,6 +2,33 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## process 1.0.0 / authoring 1.2.0 — 2026-08-24
+
+### Added
+- `bundles/process/bundle.json`: new bundle `process` at `1.0.0`, `baseline`
+  scope, `dependsOn: ["authoring"]`. Ships the `process-lifecycle` skill,
+  which elicits, generates, and verifies AWM process models and their
+  orchestrators.
+
+### Changed
+- `bundles/authoring/bundle.json` promoted from `project` to `baseline` scope
+  (`1.1.1` → `1.2.0`). `process`'s `REQUIRED SUB-SKILL: writing-skills`
+  dependency needs `authoring` installed for every baseline user, not just
+  contributors working on AWM itself. Its description also drops the stale
+  "(enable only in the agentic-workflow repo)" framing — registry authoring
+  became an end-user activity once R1+R2 of declared orchestrators shipped.
+- `catalog.json` synced to the `process` and `authoring` versions/scopes above.
+- `scripts/validate-portability.mjs`'s skill-count gate bumped `38` → `39` to
+  account for the new `skills/process-lifecycle/` directory.
+- `README.md`'s bundle table gains a `process` row and reflects `authoring`'s
+  new `baseline` scope.
+
+### Nota de versión
+`process` bundle new at `1.0.0`. `authoring` bumps `1.1.1` → `1.2.0` (minor):
+promoting to `baseline` scope is additive — existing `project`-scope
+consumers keep working, the change only widens who gets it. Part of the
+process-lifecycle R1b delivery.
+
 ## dev 3.4.0 — 2026-08-22
 
 ### Changed
