@@ -13,7 +13,7 @@ Este skill compone procesos AWM — no enseña a escribir un skill. Un proceso e
 
 El artefacto durable de un proceso es su propio `SKILL.md` de orquestador — sin sidecar. Este skill lee y escribe ese modelo; nunca inventa un formato paralelo.
 
-**Announce at start:** "Estoy usando el skill process-lifecycle para elicitar, generar o verificar un proceso AWM."
+**Announce at start:** "I'm using the process-lifecycle skill to elicit, generate, or verify an AWM process."
 
 ## Modo de ejecución (lectura del campo)
 
