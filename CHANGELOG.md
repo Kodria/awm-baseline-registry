@@ -7,8 +7,8 @@ Newest entry on top; append new releases directly below this line.
 ### Added
 - `bundles/process/bundle.json`: new bundle `process` at `1.0.0`, `baseline`
   scope, `dependsOn: ["authoring"]`. Ships the `process-lifecycle` skill,
-  which elicits, generates, and verifies AWM process models and their
-  orchestrators.
+  which elicits, generates, verifies, and modifies AWM process models and
+  their orchestrators.
 
 ### Changed
 - `bundles/authoring/bundle.json` promoted from `project` to `baseline` scope
