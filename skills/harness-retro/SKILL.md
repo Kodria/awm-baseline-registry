@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "2.6.0"
+version: "2.6.1"
 license: Apache-2.0
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
@@ -289,7 +289,7 @@ then
 fi
 ```
 
-Resolve the tracked active plan into `active_plan` with the canonical session-start resolver. Then run the capture command and require exit 0; a failed capture stops the retro and does not archive the ledger:
+Resolve the plan this retro is closing into `active_plan`. **Do not reuse `development-process`'s SessionStart re-anchor resolver here** — that one looks for a plan with OPEN checkboxes and NO `awm-qa-complete` marker, i.e. the next plan someone should pick UP. By the time `harness-retro` runs, the plan being retro'd is the opposite: every task checkbox is `[x]` and `awm-qa-complete` is already present (this skill's own "When to use" requires it) — reusing the SessionStart resolver here silently resolves to a DIFFERENT, unrelated, still-open plan when more than one exists in `docs/plans/`, and `awm evidence capture` then runs against the wrong plan without erroring (confirmed 2026-08-24: it resolved to an unrelated older plan instead of the one this retro was closing). Resolve on the criterion this skill actually needs — qa-complete present, retro-complete absent — instead:
 
 ```bash
 PLANS_DIR="$PWD/docs/plans"
@@ -298,13 +298,13 @@ if [ -d "$PLANS_DIR" ]; then
     while IFS= read -r plan_file; do
         [ -z "$plan_file" ] && continue
         case "$(basename "$plan_file")" in *-design.md) continue;; esac
-        grep -q '^- \[ \]' "$plan_file" 2>/dev/null || continue
-        if grep -qE '<!--[[:space:]]*awm-(plan|qa)-complete' "$plan_file" 2>/dev/null; then continue; fi
+        grep -qE '<!--[[:space:]]*awm-qa-complete' "$plan_file" 2>/dev/null || continue
+        grep -qE '<!--[[:space:]]*awm-retro-complete' "$plan_file" 2>/dev/null && continue
         active_plan="$plan_file"
         break
     done < <(ls -t "$PLANS_DIR"/*.md 2>/dev/null || true)
 fi
-test -n "$active_plan" || { echo 'No tracked active plan for cycle evidence capture.' >&2; exit 1; }
+test -n "$active_plan" || { echo 'No plan with awm-qa-complete (and no awm-retro-complete) found for cycle evidence capture.' >&2; exit 1; }
 awm evidence capture --plan "$active_plan" || {
   echo 'Cycle evidence capture failed; the ledger will not be archived.' >&2
   exit 1

@@ -2,6 +2,22 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.5.2 — 2026-08-24
+
+### Changed
+- `harness-retro`: fixed the plan resolver used by its own cycle-evidence-capture
+  step (Step 11). It reused `development-process`'s SessionStart re-anchor
+  resolver, which looks for a plan with OPEN checkboxes and no `awm-qa-complete`
+  marker — the opposite of the plan a retro is actually closing (checkboxes
+  done, `awm-qa-complete` present). With more than one plan in `docs/plans/`,
+  this silently captured evidence against the wrong plan. Now resolves on
+  `awm-qa-complete` present / `awm-retro-complete` absent instead.
+
+### Nota de versión
+Bundle `dev` 3.5.1 → 3.5.2 (patch): segundo fix de proceso en `harness-retro`
+dentro del mismo ciclo, encontrado al ejecutar el propio Step 11 contra el
+plan real de R1b.
+
 ## dev 3.5.1 — 2026-08-24
 
 ### Changed
