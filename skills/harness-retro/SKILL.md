@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "2.5.0"
+version: "2.6.3"
 license: Apache-2.0
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
@@ -289,7 +289,7 @@ then
 fi
 ```
 
-Resolve the tracked active plan into `active_plan` with the canonical session-start resolver. Then run the capture command and require exit 0; a failed capture stops the retro and does not archive the ledger:
+Resolve the plan this retro is closing into `active_plan`. **Do not reuse `development-process`'s SessionStart re-anchor resolver here** — that one looks for a plan with OPEN checkboxes and NO `awm-qa-complete` marker, i.e. the next plan someone should pick UP. By the time `harness-retro` runs, the plan being retro'd is the opposite: every task checkbox is `[x]` and `awm-qa-complete` is already present (this skill's own "When to use" requires it) — reusing the SessionStart resolver here silently resolves to a DIFFERENT, unrelated, still-open plan when more than one exists in `docs/plans/`, and `awm evidence capture` then runs against the wrong plan without erroring (confirmed 2026-08-24: it resolved to an unrelated older plan instead of the one this retro was closing). Resolve on the criterion this skill actually needs — qa-complete present, retro-complete absent — instead. Then run the capture command and require exit 0; a failed capture stops the retro and does not archive the ledger:
 
 ```bash
 PLANS_DIR="$PWD/docs/plans"
@@ -298,17 +298,27 @@ if [ -d "$PLANS_DIR" ]; then
     while IFS= read -r plan_file; do
         [ -z "$plan_file" ] && continue
         case "$(basename "$plan_file")" in *-design.md) continue;; esac
-        grep -q '^- \[ \]' "$plan_file" 2>/dev/null || continue
-        if grep -qE '<!--[[:space:]]*awm-(plan|qa)-complete' "$plan_file" 2>/dev/null; then continue; fi
+        grep -qE '<!--[[:space:]]*awm-qa-complete' "$plan_file" 2>/dev/null || continue
+        grep -qE '<!--[[:space:]]*awm-retro-complete' "$plan_file" 2>/dev/null && continue
         active_plan="$plan_file"
         break
     done < <(ls -t "$PLANS_DIR"/*.md 2>/dev/null || true)
 fi
-test -n "$active_plan" || { echo 'No tracked active plan for cycle evidence capture.' >&2; exit 1; }
-awm evidence capture --plan "$active_plan" || {
-  echo 'Cycle evidence capture failed; the ledger will not be archived.' >&2
-  exit 1
-}
+test -n "$active_plan" || { echo 'No plan with awm-qa-complete (and no awm-retro-complete) found for cycle evidence capture.' >&2; exit 1; }
+```
+
+**Capture is journal-first-only — check before requiring it.** `awm evidence capture` (`cli/src/commands/evidence/index.ts:runEvidenceCapture`) reads `.awm/journal/<branch>/state.json` via `readJournal()` and treats a MISSING file identically to a CORRUPT one (`readFileSync` failure → `{state: null, corrupt: true}`, same as a parse failure) — it has no non-journal fallback. Journal-first mode is explicitly opt-in (`subagent-driven-development`'s own SKILL.md: "IF el journal NO está inicializado, THEN este modo entero NO aplica"), so on any branch that never ran `awm watch --init`, `evidence capture` cannot succeed, ever — treating it as unconditionally mandatory here would make Step 11 permanently unsatisfiable for the (default) non-journal case. Confirmed 2026-08-24: this is almost certainly why a prior cycle's archive silently didn't take effect (see the verification note below) — capture failed, and either the retro proceeded past the "stops the retro" rule anyway, or the whole step was skipped. Check first:
+
+```bash
+JOURNAL_DIR="$PWD/.awm/journal"
+if [ -d "$JOURNAL_DIR" ]; then
+  awm evidence capture --plan "$active_plan" || {
+    echo 'Cycle evidence capture failed; the ledger will not be archived.' >&2
+    exit 1
+  }
+else
+  echo "No .awm/journal/ on this project (journal-first mode not initialized) — skipping cycle evidence capture, proceeding to archive." >&2
+fi
 ```
 
 Only after successful evidence capture, run `awm ledger archive` to rotate this branch's ledger out of the active flow (it stays on disk under `.awm/ledger/archive/` for audit; the next plan starts fresh):
@@ -316,6 +326,14 @@ Only after successful evidence capture, run `awm ledger archive` to rotate this 
 ```bash
 awm ledger archive
 ```
+
+**Verify the archive actually took effect — do not trust exit 0 alone.** A branch-name mismatch, a stale/wrong `awm` binary, or a cwd pointing at a different repo checkout can make this command exit cleanly without clearing the active ledger, and that failure stays invisible until the NEXT cycle's harness-retro finds a ledger full of already-cured findings from a session that supposedly closed clean (confirmed 2026-08-24: an R1a→R1b handoff carried ~180 unarchived, already-resolved entries into R1b's retro because this step's success was never independently confirmed). Immediately after archiving, run:
+
+```bash
+awm ledger list
+```
+
+Require this to report an empty list (`[]`). If it is not empty, the archive did not take effect — stop, diagnose (wrong `awm` binary on PATH vs. the project's dev build if one exists, branch name mismatch, wrong working directory), and re-run `awm ledger archive` from the corrected state before proceeding. Do not add the `awm-retro-complete` marker while the active ledger still holds entries.
 
 This capture-and-archive sequence is mandatory in modo desatendido too; it requires no human decision.
 

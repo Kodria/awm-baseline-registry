@@ -2,6 +2,100 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.5.4 — 2026-08-24
+
+### Changed
+- `tests/cycle-evidence-capture-contract.test.mjs`: updated its `assertCanonicalActivePlanResolver`
+  to match the corrected resolver from the `dev 3.5.2` fix — this contract test
+  had locked in the OLD (buggy) resolver's shape as "canonical", so fixing
+  `harness-retro/SKILL.md` alone left 4 of its assertions red. Also widened
+  the capture-failure-exit-before-archive check to tolerate the block's new
+  indentation (now legitimately nested inside a journal-existence check), and
+  added a RED mutation test for the new `awm-retro-complete` exclusion guard.
+
+### Nota de versión
+Bundle `dev` 3.5.3 → 3.5.4 (patch): el contrato ejecutable de `harness-retro`
+quedó desalineado con su propio fix anterior en este mismo ciclo; se corrige
+para que ambos describan el mismo comportamiento correcto.
+
+## dev 3.5.3 — 2026-08-24
+
+### Changed
+- `harness-retro`: `awm evidence capture` (Step 11) is now gated on `.awm/journal/`
+  actually existing on the project before requiring it. The command's own
+  implementation (`cli/src/commands/evidence/index.ts`) treats a missing
+  journal file identically to a corrupt one and cannot succeed without
+  journal-first mode — which is explicitly opt-in elsewhere in this same
+  skill ecosystem. Treating capture as unconditionally mandatory made Step 11
+  permanently unsatisfiable on any non-journal project; this is very likely
+  the root cause of the prior cycle's silently-skipped archive (see the
+  3.5.1 entry below).
+
+### Nota de versión
+Bundle `dev` 3.5.2 → 3.5.3 (patch): tercer fix de proceso en `harness-retro`
+dentro del mismo ciclo — la causa raíz probable de los dos anteriores.
+
+## dev 3.5.2 — 2026-08-24
+
+### Changed
+- `harness-retro`: fixed the plan resolver used by its own cycle-evidence-capture
+  step (Step 11). It reused `development-process`'s SessionStart re-anchor
+  resolver, which looks for a plan with OPEN checkboxes and no `awm-qa-complete`
+  marker — the opposite of the plan a retro is actually closing (checkboxes
+  done, `awm-qa-complete` present). With more than one plan in `docs/plans/`,
+  this silently captured evidence against the wrong plan. Now resolves on
+  `awm-qa-complete` present / `awm-retro-complete` absent instead.
+
+### Nota de versión
+Bundle `dev` 3.5.1 → 3.5.2 (patch): segundo fix de proceso en `harness-retro`
+dentro del mismo ciclo, encontrado al ejecutar el propio Step 11 contra el
+plan real de R1b.
+
+## dev 3.5.1 — 2026-08-24
+
+### Changed
+- `harness-retro`: added a post-archive verification step (`awm ledger list`
+  must return empty after `awm ledger archive`, or the retro stops instead of
+  adding `awm-retro-complete`). An R1a→R1b handoff carried ~180 unarchived,
+  already-resolved ledger entries into R1b's retro because a prior archive
+  step's success was never independently confirmed.
+- `AGENTS.md`: extended the `reusar-guarda-de-symlink-en-lectores-de-contenido-de-registry`
+  lesson to cover sanitization/normalization guards generally (not just
+  symlink checks), with a second confirmed occurrence from this cycle
+  (control-char stripping and `--verify` comparison normalization mismatch).
+
+### Nota de versión
+Bundle `dev` 3.5.0 → 3.5.1 (patch): fix de proceso dentro de `harness-retro`
+(contenido de skill existente, sin cambio de contrato del bundle) más una
+lección curada en `AGENTS.md`.
+
+## process 1.0.0 / authoring 1.2.0 — 2026-08-24
+
+### Added
+- `bundles/process/bundle.json`: new bundle `process` at `1.0.0`, `baseline`
+  scope, `dependsOn: ["authoring"]`. Ships the `process-lifecycle` skill,
+  which elicits, generates, verifies, and modifies AWM process models and
+  their orchestrators.
+
+### Changed
+- `bundles/authoring/bundle.json` promoted from `project` to `baseline` scope
+  (`1.1.1` → `1.2.0`). `process`'s `REQUIRED SUB-SKILL: writing-skills`
+  dependency needs `authoring` installed for every baseline user, not just
+  contributors working on AWM itself. Its description also drops the stale
+  "(enable only in the agentic-workflow repo)" framing — registry authoring
+  became an end-user activity once R1+R2 of declared orchestrators shipped.
+- `catalog.json` synced to the `process` and `authoring` versions/scopes above.
+- `scripts/validate-portability.mjs`'s skill-count gate bumped `38` → `39` to
+  account for the new `skills/process-lifecycle/` directory.
+- `README.md`'s bundle table gains a `process` row and reflects `authoring`'s
+  new `baseline` scope.
+
+### Nota de versión
+`process` bundle new at `1.0.0`. `authoring` bumps `1.1.1` → `1.2.0` (minor):
+promoting to `baseline` scope is additive — existing `project`-scope
+consumers keep working, the change only widens who gets it. Part of the
+process-lifecycle R1b delivery.
+
 ## dev 3.4.0 — 2026-08-22
 
 ### Changed

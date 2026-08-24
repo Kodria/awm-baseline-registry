@@ -18,10 +18,15 @@ function assertCanonicalActivePlanResolver(skill) {
     'the resolver must inspect candidates in deterministic modification order');
   assert.match(resolver, /case "\$\(basename "\$plan_file"\)" in \*-design\.md\) continue;; esac/,
     'the resolver must not select a design document');
-  assert.ok(resolver.includes("grep -q '^- \\[ \\]' \"$plan_file\" 2>/dev/null || continue"),
-    'the resolver must require open plan work');
-  assert.match(resolver, /grep -qE '<!--\[\[:space:\]\]\*awm-\(plan\|qa\)-complete'/,
-    'the resolver must skip stale completed plans');
+  // The plan a retro closes is, by this skill's own precondition, already
+  // qa-complete with every checkbox done — NOT "open work". A resolver that
+  // requires open checkboxes (the SessionStart re-anchor criterion, for what
+  // to work on NEXT) silently picks a different, unrelated plan whenever more
+  // than one exists in docs/plans/. See docs/harness-retros.md 2026-08-24.
+  assert.match(resolver, /grep -qE '<!--\[\[:space:\]\]\*awm-qa-complete' "\$plan_file" 2>\/dev\/null \|\| continue/,
+    'the resolver must require awm-qa-complete before considering a plan');
+  assert.match(resolver, /grep -qE '<!--\[\[:space:\]\]\*awm-retro-complete' "\$plan_file" 2>\/dev\/null && continue/,
+    'the resolver must skip a plan that already has awm-retro-complete');
   assert.match(resolver, /done < <\(ls -t "\$PLANS_DIR"\/\*\.md 2>\/dev\/null \|\| true\)/,
     'the resolver must consider newer plans before older plans');
 }
@@ -51,9 +56,12 @@ function assertCycleEvidenceCapture(skill, registry) {
   assert.ok(versionCheck < capture, 'compatibility must be checked before evidence capture');
   assert.ok(capture < archive, 'evidence capture must happen before the ledger is archived');
   assert.match(skill, /require exit 0/i, 'retro must fail loudly when evidence capture fails');
-  assert.match(skill, /awm evidence capture --plan "\$active_plan" \|\| \{[\s\S]*?exit 1;?[\s\S]*?\}/,
+  // The capture call may legitimately be nested inside a conditional (e.g. a
+  // journal-availability check), so the closing brace can carry leading
+  // indentation — match structure, not exact column position.
+  assert.match(skill, /awm evidence capture --plan "\$active_plan" \|\| \{[\s\S]*?exit 1;?[\s\S]*?\n\s*\}/,
     'a failed capture must exit before the archive step is reachable');
-  assert.match(skill, /must work in unattended mode|modo desatendido[\s\S]*?evidence capture/i,
+  assert.match(skill, /must work in unattended mode|modo desatendido[\s\S]*?evidence capture|mandatory in modo desatendido/i,
     'evidence capture must remain mandatory in unattended mode');
   assertCanonicalActivePlanResolver(skill);
 }
@@ -78,7 +86,7 @@ test('RED mutation: archive without preceding capture is rejected', () => {
 
 test('RED mutation: capture failure cannot fall through to archive', () => {
   const weakened = read('skills/harness-retro/SKILL.md').replace(
-    /awm evidence capture --plan "\$active_plan" \|\| \{[\s\S]*?\n\}/,
+    /awm evidence capture --plan "\$active_plan" \|\| \{[\s\S]*?\n\s*\}/,
     'awm evidence capture --plan "$active_plan"',
   );
   assert.throws(
@@ -98,12 +106,20 @@ test('RED mutation: an unquoted displayed upgrade command is rejected', () => {
   );
 });
 
-test('RED mutation: a stale completed plan cannot become the active capture target', () => {
+test('RED mutation: a plan without awm-qa-complete cannot become the active capture target', () => {
   const weakened = read('skills/harness-retro/SKILL.md').replace(
-    "if grep -qE '<!--[[:space:]]*awm-(plan|qa)-complete' \"$plan_file\" 2>/dev/null; then continue; fi",
-    '# stale completed plans are not filtered',
+    "grep -qE '<!--[[:space:]]*awm-qa-complete' \"$plan_file\" 2>/dev/null || continue",
+    '# any plan qualifies, qa-complete not required',
   );
-  assert.throws(() => assertCanonicalActivePlanResolver(weakened), /skip stale completed plans/i);
+  assert.throws(() => assertCanonicalActivePlanResolver(weakened), /require awm-qa-complete/i);
+});
+
+test('RED mutation: a plan already carrying awm-retro-complete cannot be re-selected', () => {
+  const weakened = read('skills/harness-retro/SKILL.md').replace(
+    "grep -qE '<!--[[:space:]]*awm-retro-complete' \"$plan_file\" 2>/dev/null && continue",
+    '# retro-complete plans are not filtered',
+  );
+  assert.throws(() => assertCanonicalActivePlanResolver(weakened), /skip a plan that already has awm-retro-complete/i);
 });
 
 test('RED mutation: an older plan cannot be preferred over a newer active plan', () => {
