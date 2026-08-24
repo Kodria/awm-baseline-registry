@@ -2,6 +2,22 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.5.4 — 2026-08-24
+
+### Changed
+- `tests/cycle-evidence-capture-contract.test.mjs`: updated its `assertCanonicalActivePlanResolver`
+  to match the corrected resolver from the `dev 3.5.2` fix — this contract test
+  had locked in the OLD (buggy) resolver's shape as "canonical", so fixing
+  `harness-retro/SKILL.md` alone left 4 of its assertions red. Also widened
+  the capture-failure-exit-before-archive check to tolerate the block's new
+  indentation (now legitimately nested inside a journal-existence check), and
+  added a RED mutation test for the new `awm-retro-complete` exclusion guard.
+
+### Nota de versión
+Bundle `dev` 3.5.3 → 3.5.4 (patch): el contrato ejecutable de `harness-retro`
+quedó desalineado con su propio fix anterior en este mismo ciclo; se corrige
+para que ambos describan el mismo comportamiento correcto.
+
 ## dev 3.5.3 — 2026-08-24
 
 ### Changed

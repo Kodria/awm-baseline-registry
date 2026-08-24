@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "2.6.2"
+version: "2.6.3"
 license: Apache-2.0
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
@@ -289,7 +289,7 @@ then
 fi
 ```
 
-Resolve the plan this retro is closing into `active_plan`. **Do not reuse `development-process`'s SessionStart re-anchor resolver here** — that one looks for a plan with OPEN checkboxes and NO `awm-qa-complete` marker, i.e. the next plan someone should pick UP. By the time `harness-retro` runs, the plan being retro'd is the opposite: every task checkbox is `[x]` and `awm-qa-complete` is already present (this skill's own "When to use" requires it) — reusing the SessionStart resolver here silently resolves to a DIFFERENT, unrelated, still-open plan when more than one exists in `docs/plans/`, and `awm evidence capture` then runs against the wrong plan without erroring (confirmed 2026-08-24: it resolved to an unrelated older plan instead of the one this retro was closing). Resolve on the criterion this skill actually needs — qa-complete present, retro-complete absent — instead:
+Resolve the plan this retro is closing into `active_plan`. **Do not reuse `development-process`'s SessionStart re-anchor resolver here** — that one looks for a plan with OPEN checkboxes and NO `awm-qa-complete` marker, i.e. the next plan someone should pick UP. By the time `harness-retro` runs, the plan being retro'd is the opposite: every task checkbox is `[x]` and `awm-qa-complete` is already present (this skill's own "When to use" requires it) — reusing the SessionStart resolver here silently resolves to a DIFFERENT, unrelated, still-open plan when more than one exists in `docs/plans/`, and `awm evidence capture` then runs against the wrong plan without erroring (confirmed 2026-08-24: it resolved to an unrelated older plan instead of the one this retro was closing). Resolve on the criterion this skill actually needs — qa-complete present, retro-complete absent — instead. Then run the capture command and require exit 0; a failed capture stops the retro and does not archive the ledger:
 
 ```bash
 PLANS_DIR="$PWD/docs/plans"
