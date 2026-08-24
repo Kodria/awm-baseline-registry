@@ -123,6 +123,8 @@ sobre ese mismo modelo — el único punto de parseo del contrato, nunca un pars
 
 Si `awm context orchestrators --verify` no existe en el CLI instalado, este skill lo informa —qué versión de CLI hace falta— y sigue con el resto del ciclo de vida en lo que sí puede hacer sin ese comando (elicitación, generación de artefactos), pero nunca promueve el modelo a `status: active` sin haber verificado. Un modelo sin verificación se queda en `draft`, honestamente, y no es un fallo del skill: es el resultado correcto ante un CLI viejo.
 
+Otras fallas de entorno (una instalación de `~/.awm` corrupta, un `registries.json` malformado) no son degradación de este comando específico: el CLI las reporta con un mensaje de error propio y código de salida distinto de cero, sin promover nunca el modelo. Ese mensaje es la señal para arreglar la instalación (`awm update`), no un motivo para que este skill lo reinterprete o lo esconda.
+
 En ningún escenario este skill bloquea al usuario: si algo de su ciclo no puede ejecutarse por cualquier causa, lo informa y sigue sin bloquear — nunca corta la sesión ni exige que la ausencia de una pieza opcional se resuelva antes de continuar. Esa es la degradación que este documento promete: honesta sobre lo que no pudo hacer, nunca silenciosa, nunca bloqueante.
 
 ## Red Flags
