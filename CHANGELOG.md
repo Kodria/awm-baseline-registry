@@ -2,6 +2,23 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.5.3 — 2026-08-24
+
+### Changed
+- `harness-retro`: `awm evidence capture` (Step 11) is now gated on `.awm/journal/`
+  actually existing on the project before requiring it. The command's own
+  implementation (`cli/src/commands/evidence/index.ts`) treats a missing
+  journal file identically to a corrupt one and cannot succeed without
+  journal-first mode — which is explicitly opt-in elsewhere in this same
+  skill ecosystem. Treating capture as unconditionally mandatory made Step 11
+  permanently unsatisfiable on any non-journal project; this is very likely
+  the root cause of the prior cycle's silently-skipped archive (see the
+  3.5.1 entry below).
+
+### Nota de versión
+Bundle `dev` 3.5.2 → 3.5.3 (patch): tercer fix de proceso en `harness-retro`
+dentro del mismo ciclo — la causa raíz probable de los dos anteriores.
+
 ## dev 3.5.2 — 2026-08-24
 
 ### Changed

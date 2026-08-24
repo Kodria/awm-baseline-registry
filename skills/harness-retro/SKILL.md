@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "2.6.1"
+version: "2.6.2"
 license: Apache-2.0
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
@@ -305,10 +305,20 @@ if [ -d "$PLANS_DIR" ]; then
     done < <(ls -t "$PLANS_DIR"/*.md 2>/dev/null || true)
 fi
 test -n "$active_plan" || { echo 'No plan with awm-qa-complete (and no awm-retro-complete) found for cycle evidence capture.' >&2; exit 1; }
-awm evidence capture --plan "$active_plan" || {
-  echo 'Cycle evidence capture failed; the ledger will not be archived.' >&2
-  exit 1
-}
+```
+
+**Capture is journal-first-only — check before requiring it.** `awm evidence capture` (`cli/src/commands/evidence/index.ts:runEvidenceCapture`) reads `.awm/journal/<branch>/state.json` via `readJournal()` and treats a MISSING file identically to a CORRUPT one (`readFileSync` failure → `{state: null, corrupt: true}`, same as a parse failure) — it has no non-journal fallback. Journal-first mode is explicitly opt-in (`subagent-driven-development`'s own SKILL.md: "IF el journal NO está inicializado, THEN este modo entero NO aplica"), so on any branch that never ran `awm watch --init`, `evidence capture` cannot succeed, ever — treating it as unconditionally mandatory here would make Step 11 permanently unsatisfiable for the (default) non-journal case. Confirmed 2026-08-24: this is almost certainly why a prior cycle's archive silently didn't take effect (see the verification note below) — capture failed, and either the retro proceeded past the "stops the retro" rule anyway, or the whole step was skipped. Check first:
+
+```bash
+JOURNAL_DIR="$PWD/.awm/journal"
+if [ -d "$JOURNAL_DIR" ]; then
+  awm evidence capture --plan "$active_plan" || {
+    echo 'Cycle evidence capture failed; the ledger will not be archived.' >&2
+    exit 1
+  }
+else
+  echo "No .awm/journal/ on this project (journal-first mode not initialized) — skipping cycle evidence capture, proceeding to archive." >&2
+fi
 ```
 
 Only after successful evidence capture, run `awm ledger archive` to rotate this branch's ledger out of the active flow (it stays on disk under `.awm/ledger/archive/` for audit; the next plan starts fresh):
