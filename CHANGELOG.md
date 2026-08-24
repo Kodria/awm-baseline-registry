@@ -2,6 +2,24 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.5.1 — 2026-08-24
+
+### Changed
+- `harness-retro`: added a post-archive verification step (`awm ledger list`
+  must return empty after `awm ledger archive`, or the retro stops instead of
+  adding `awm-retro-complete`). An R1a→R1b handoff carried ~180 unarchived,
+  already-resolved ledger entries into R1b's retro because a prior archive
+  step's success was never independently confirmed.
+- `AGENTS.md`: extended the `reusar-guarda-de-symlink-en-lectores-de-contenido-de-registry`
+  lesson to cover sanitization/normalization guards generally (not just
+  symlink checks), with a second confirmed occurrence from this cycle
+  (control-char stripping and `--verify` comparison normalization mismatch).
+
+### Nota de versión
+Bundle `dev` 3.5.0 → 3.5.1 (patch): fix de proceso dentro de `harness-retro`
+(contenido de skill existente, sin cambio de contrato del bundle) más una
+lección curada en `AGENTS.md`.
+
 ## process 1.0.0 / authoring 1.2.0 — 2026-08-24
 
 ### Added
