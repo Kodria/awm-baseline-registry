@@ -44,8 +44,9 @@ awm pin <registry> <version>   # freeze a project on a known tag
 |---|---|---|
 | `dev` | baseline | The engineering spine: spec-driven development, quality gates, sensors, advisory skills |
 | `product` | baseline | The business layer: discovery, briefs, architecture assessment and extraction, readiness gate |
+| `process` | baseline | The process lifecycle: elicit, generate, verify and modify a process and its orchestrator |
+| `authoring` | baseline | Harness authoring: writing and verifying skills |
 | `frontend` | project | Frontend craft: design intake, component implementation, visual fidelity gate |
-| `authoring` | project | Harness authoring — enable only when working on AWM itself |
 
 ## Two invariants worth knowing before you edit
 

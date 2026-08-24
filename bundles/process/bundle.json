@@ -1,0 +1,10 @@
+{
+  "name": "process",
+  "version": "1.0.0",
+  "description": "Process lifecycle: elicit, generate, verify and modify an AWM process and its orchestrator.",
+  "scope": "baseline",
+  "dependsOn": ["authoring"],
+  "skills": ["process-lifecycle"],
+  "workflows": [],
+  "agents": []
+}
