@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "2.5.0"
+version: "2.6.0"
 license: Apache-2.0
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
@@ -316,6 +316,14 @@ Only after successful evidence capture, run `awm ledger archive` to rotate this 
 ```bash
 awm ledger archive
 ```
+
+**Verify the archive actually took effect — do not trust exit 0 alone.** A branch-name mismatch, a stale/wrong `awm` binary, or a cwd pointing at a different repo checkout can make this command exit cleanly without clearing the active ledger, and that failure stays invisible until the NEXT cycle's harness-retro finds a ledger full of already-cured findings from a session that supposedly closed clean (confirmed 2026-08-24: an R1a→R1b handoff carried ~180 unarchived, already-resolved entries into R1b's retro because this step's success was never independently confirmed). Immediately after archiving, run:
+
+```bash
+awm ledger list
+```
+
+Require this to report an empty list (`[]`). If it is not empty, the archive did not take effect — stop, diagnose (wrong `awm` binary on PATH vs. the project's dev build if one exists, branch name mismatch, wrong working directory), and re-run `awm ledger archive` from the corrected state before proceeding. Do not add the `awm-retro-complete` marker while the active ledger still holds entries.
 
 This capture-and-archive sequence is mandatory in modo desatendido too; it requires no human decision.
 
