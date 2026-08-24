@@ -34,7 +34,7 @@ test('R2.4 y R2.5: elicitacion HTA con criterio de parada', () => {
   const relationship = /SG-\d+/i;
   const nestedOp = lines.slice(sgIndex + 1).find(line => line.includes('OP-') && relationship.test(line));
   assert.ok(nestedOp,
-    'the skill must show OP- operations nested under an SG- subgoal (e.g. an OP- line naming the SG-# it belongs to, or "bajo"/"dentro de"/"descompone en") — mentioning SG- and OP- independently anywhere in the document does not prove the hierarchical decomposition R2.4 requires');
+    'the skill must show OP- operations nested under an SG- subgoal (an OP- line naming the SG-# it belongs to) — mentioning SG- and OP- independently anywhere in the document does not prove the hierarchical decomposition R2.4 requires');
   assert.match(text, /skill invocable/i,
     'the skill must state the stop criterion: decomposition ends when an operation could be an invocable skill');
 });
