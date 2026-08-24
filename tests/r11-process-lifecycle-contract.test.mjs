@@ -31,7 +31,7 @@ test('R2.4 y R2.5: elicitacion HTA con criterio de parada', () => {
   const lines = text.split('\n');
   const sgIndex = lines.findIndex(line => line.includes('SG-'));
   assert.ok(sgIndex >= 0, 'the skill must use the SG- id scheme from the model contract');
-  const relationship = /SG-\d+|bajo|dentro de|descompone en/i;
+  const relationship = /SG-\d+/i;
   const nestedOp = lines.slice(sgIndex + 1).find(line => line.includes('OP-') && relationship.test(line));
   assert.ok(nestedOp,
     'the skill must show OP- operations nested under an SG- subgoal (e.g. an OP- line naming the SG-# it belongs to, or "bajo"/"dentro de"/"descompone en") — mentioning SG- and OP- independently anywhere in the document does not prove the hierarchical decomposition R2.4 requires');
