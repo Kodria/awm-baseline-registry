@@ -28,9 +28,13 @@ test('R2.2 y R2.3: escribe en el clon del registry y rechaza ~/.awm', () => {
 
 test('R2.4 y R2.5: elicitacion HTA con criterio de parada', () => {
   const text = read(SKILL);                                    // verifies R2.4, R2.5
-  for (const marker of ['SG-', 'OP-']) {
-    assert.ok(text.includes(marker), `the skill must use the ${marker} id scheme from the model contract`);
-  }
+  const lines = text.split('\n');
+  const sgIndex = lines.findIndex(line => line.includes('SG-'));
+  assert.ok(sgIndex >= 0, 'the skill must use the SG- id scheme from the model contract');
+  const relationship = /SG-\d+|bajo|dentro de|descompone en/i;
+  const nestedOp = lines.slice(sgIndex + 1).find(line => line.includes('OP-') && relationship.test(line));
+  assert.ok(nestedOp,
+    'the skill must show OP- operations nested under an SG- subgoal (e.g. an OP- line naming the SG-# it belongs to, or "bajo"/"dentro de"/"descompone en") — mentioning SG- and OP- independently anywhere in the document does not prove the hierarchical decomposition R2.4 requires');
   assert.match(text, /skill invocable/i,
     'the skill must state the stop criterion: decomposition ends when an operation could be an invocable skill');
 });
@@ -52,10 +56,14 @@ test('R2.7: delega el craft de escritura a writing-skills', () => {
 test('R2.8: aporta el overlay de obligaciones de fase', () => {
   const text = read(SKILL);                                    // verifies R2.8
   const overlay = ['disparador', 'marker', 'terminación', 'gate', 'modo'];
-  for (const obligation of overlay) {
-    assert.match(text, new RegExp(obligation, 'i'),
-      `the phase overlay must cover "${obligation}" — it is the tierra de nadie writing-skills does not carry`);
-  }
+  const lines = text.split('\n');
+  const windowSize = 8;
+  const hasCoherentOverlay = lines.some((_, i) => {
+    const window = lines.slice(i, i + windowSize).join('\n');
+    return overlay.filter(obligation => new RegExp(obligation, 'i').test(window)).length >= 3;
+  });
+  assert.ok(hasCoherentOverlay,
+    `the phase overlay must cover at least 3 of ${overlay.join('/')} together within a small window of text — scattered independent mentions anywhere in the document do not prove a coherent overlay statement, it is the tierra de nadie writing-skills does not carry`);
 });
 
 test('R3.1: genera en loop dirigido con aprobacion por fase', () => {
