@@ -106,9 +106,11 @@ const assembleRole = (template, role, fixture, provider = 'codex') => {
   return `${prefix}${CAPSULE_MARKER}\nrole: ${role}\nscope: ${fixture.scope}\nrequirements: ${fixture.requirements}\nsurfaces: ${fixture.surfaces}\nsources: ${fixture.sources}\nevidence: ${fixture.evidence}\nretrieval history: ${fixture.retrievalHistory ?? 'none'}\nfallback: ${fallback}\n`;
 };
 
-const validateContract = ({ sources, reference, plan, fixture, aggregateOverride, provider = 'codex', runtimeOverride }) => {
+const validateContract = ({ sources, reference, plan, fixture, aggregateOverride, provider = 'codex', runtimeOverride, providerOutputs }) => {
   const errors = [];
   if (!reference.includes('sole normative capsule definition')) errors.push('missing canonical shared reference');
+  for (const role of Object.keys(ROLE_SOURCES)) if (!sources[role]) errors.push(`removed role ${role}`);
+  if (providerOutputs && providerOutputs.codex !== providerOutputs['claude-code']) errors.push('provider divergence');
   for (const trigger of FULL_CONTEXT_TRIGGERS) if (!reference.includes(trigger)) errors.push(`missing fallback trigger ${trigger}`);
   for (const [role, entries] of Object.entries(ALLOWLISTS)) {
     const tableRole = role === 'trackA' ? 'Track A fidelity' : role === 'designFidelity' ? 'Design fidelity lens' : role === 'codeQuality' ? 'Code-quality reviewer' : role === 'specification' ? 'Specification reviewer' : role === 'implementer' ? 'Implementer' : 'Track B lens';
@@ -195,6 +197,10 @@ test('R2 mutation proofs reject broken contracts with actionable messages', () =
   const sources = Object.fromEntries(Object.entries(ROLE_SOURCES).map(([role, source]) => [role, read(source)]));
   const fixture = { scope: 'R2', requirements: 'R2', surfaces: 'file', sources: 'git show', evidence: 'pass' };
   assert.ok(validateContract({ sources: { ...sources, implementer: `${CAPSULE_MARKER}\n${sources.implementer}` }, reference, plan, fixture }).some(error => error.includes('must follow a stable role contract')));
+  const withoutLogic = { ...sources };
+  delete withoutLogic.logic;
+  assert.ok(validateContract({ sources: withoutLogic, reference, plan, fixture }).includes('removed role logic'));
+  assert.ok(validateContract({ sources, reference, plan, fixture, providerOutputs: { codex: 'same capsule', 'claude-code': 'different capsule' } }).includes('provider divergence'));
   assert.equal(validateCapsule(`${CAPSULE_MARKER}\nrole: x\nscope: x\nsurfaces: x\nrequirements: x\nsources: x\nevidence: x\nretrieval history: none\nfallback: selective`, 'implementer'), 'reordered capsule field surfaces:');
   assert.equal(validateCapsule(`${CAPSULE_MARKER}\n${CAPSULE_FIELDS.map(field => `${field} value`).join('\n')}\nCOMPLETE FROZEN PLAN BODY`, 'robustness', { fullPlan: 'COMPLETE FROZEN PLAN BODY' }), 'Track B initial capsule contains complete plan');
   assert.equal(validateCapsule(`${CAPSULE_MARKER}\n${CAPSULE_FIELDS.map(field => `${field} value`).join('\n')}\nfallback: selective`, 'implementer', { requestCount: 2 }), 'second context request must use full-context fallback');
