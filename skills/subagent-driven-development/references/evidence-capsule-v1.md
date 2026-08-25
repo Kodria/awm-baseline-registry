@@ -15,15 +15,25 @@ role: <declared role or lens>
 scope: <task ID or branch-level QA scope>
 requirements: <exact clauses with stable IDs, or n/a>
 surfaces: <relevant files/components and declared dependencies>
-sources: <authoritative repository paths/commits/commands>
+sources: <initial: CTX-ID | path | anchor references; retrieved: authoritative sources>
 evidence: <role-allowed report, diff/hunks, tests, sensors, or design artifacts>
-retrieval history: <none, or ordered source + reason entries>
+retrieval history: <none, or ordered ID | source | reason | result entries>
 fallback: <selective, or full-context: exact-trigger>
 ```
 
 `requirements`, `surfaces`, `sources`, and `evidence` preserve authoritative plan/diff
 order. Retrieval history preserves request order. A byte cap MUST NOT truncate a required
 clause or finding.
+
+For a migrated project, the initial `sources` field contains compact references only, one per
+line in the exact form `CTX-ID | path | anchor`; it never embeds a complete Context Card body.
+For example: `CTX-PROCESS-001 | CONSTITUTION.md |
+awm-context:CTX-PROCESS-001`. The controller derives these references from the already
+validated Context Kernel index after preflight, applying only entries whose `when`, task
+surface, and requirement evidence demonstrably apply to the role. If that proof is absent,
+the controller selects `full-context: selection-uncertain` before dispatch rather than
+guessing. Missing or invalid indexed sources select
+`full-context: missing-or-invalid-indexed-source`.
 
 ## Role Allowlists
 
@@ -49,8 +59,10 @@ missing-source: <authoritative path, commit, command, or artifact>
 reason: <why the role cannot reach its verdict>
 ```
 
-The controller adds only named authoritative sources, records each source plus reason in
-`retrieval history`, and re-dispatches the same role once. A second request uses
+The controller adds only named authoritative sources. It resolves all IDs in the first
+`NEEDS_CONTEXT` response in one native read batch, records each result as
+`ID | source | reason | result` in `retrieval history`, and re-dispatches the same role once.
+The batch is bounded to that role invocation and retrieval history: a second request uses
 `fallback: full-context: second-context-request`, never an unbounded third selective
 retrieval. Select full context before first dispatch for one of these exact triggers:
 
@@ -68,6 +80,11 @@ malformed-or-missing-evidence
 Missing capsule metadata takes `full-context: legacy-metadata`. Missing, malformed, or
 unsourced required evidence fails loudly and takes `full-context: malformed-or-missing-evidence`.
 The visible trigger is mandatory; no role may silently infer, omit, or invent evidence.
+
+Codex and Claude Code use their respective native read and dispatch mechanisms, but receive
+the same selected IDs, compact references, retrieval-history records, full-context triggers,
+evidence, and verdict contract. Provider mechanics never authorize a different batch limit or
+fallback outcome.
 
 ## Portability, Privacy, and Measurement
 

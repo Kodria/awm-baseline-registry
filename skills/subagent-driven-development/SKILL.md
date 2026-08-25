@@ -34,6 +34,27 @@ silently drop a role. Record prefix/capsule/retrieval/fallback bytes and dispatc
 each plan checkpoint, separately from provider usage. Do not persist assembled capsules or
 unrestricted worker responses.
 
+### Validated index selection before every dispatch
+
+After preflight and before constructing a role capsule, use the active runtime's native read
+mechanism to read the project Context Kernel index. Select a compact `CTX-ID | path | anchor`
+reference only after the published parser has accepted the index and the controller can show
+that the entry's `when`, the current task surface, and the role's applicable requirements
+match. The initial capsule contains those references, never a complete Context Card body.
+
+If the index, a selected entry, or its authoritative source is missing or invalid, dispatch
+with the named safe fallback `full-context: missing-or-invalid-indexed-source`. If matching
+cannot be demonstrated, dispatch with `full-context: selection-uncertain`. These are
+conservative dispatch decisions, not a retrieval command, telemetry facility, or a reason to
+silently omit a role.
+
+For the first valid `NEEDS_CONTEXT`, collect every named ID/source in one controller-native
+read round, append `ID | source | reason | result` entries to the capsule history, and
+re-dispatch the same role. The same invocation/history never opens another selected-read
+round: its second request, or any shared-reference trigger, takes visible full context. Codex
+and Claude Code differ only in their native read/dispatch mechanism; selected IDs, history,
+evidence, verdict, and fallback are identical.
+
 ## Modo de ejecución (lectura del campo)
 
 Al arrancar, localiza el plan activo (`docs/plans/*-plan.md` de la rama actual) y lee su línea `**Modo de ejecución:**`:

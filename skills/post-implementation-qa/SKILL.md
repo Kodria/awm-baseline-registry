@@ -34,6 +34,21 @@ design-fidelity condition, completion marker, docs handoff, and robustness/secur
 Record prefix/capsule/retrieval/fallback/dispatch values separately; do not persist capsules,
 source bodies, secrets, credentials, or unrestricted worker responses.
 
+### Validated index selection before every QA dispatch
+
+After preflight, read the project Context Kernel index through the native runtime and use it
+only when the published parser accepts it. For Track A and each applicable Track B lens,
+include only compact `CTX-ID | path | anchor` references whose `when`, branch surface, and
+role requirements are demonstrably applicable; never put a complete Context Card body in an
+initial capsule. Track B retains its complete-plan exclusion.
+
+An invalid/missing indexed source takes `full-context: missing-or-invalid-indexed-source`; an
+unprovable match takes `full-context: selection-uncertain` before dispatch. On the first exact
+`NEEDS_CONTEXT`, resolve all named IDs/sources in one controller-native read round, append
+`ID | source | reason | result` history, and re-dispatch once. A second request or any shared
+fallback trigger uses visible full context. Codex and Claude Code may use different native
+mechanics only: IDs, history, evidence, quality gates, findings, and verdicts remain identical.
+
 ## Modo de ejecución (lectura del campo)
 
 Al arrancar, localiza el plan activo (`docs/plans/*-plan.md` de la rama actual) y lee su línea `**Modo de ejecución:**`:

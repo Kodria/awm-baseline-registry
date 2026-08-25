@@ -185,6 +185,55 @@ const validateContract = ({ sources, reference, plan, fixture, fixtures, aggrega
   return errors;
 };
 
+const R3_ROLE_CAPSULES = Object.freeze([
+  'skills/subagent-driven-development/implementer-prompt.md',
+  'skills/subagent-driven-development/spec-reviewer-prompt.md',
+  'skills/subagent-driven-development/code-quality-reviewer-prompt.md',
+  'skills/post-implementation-qa/deep-review-prompt.md',
+]);
+const R3_REQUIRED_TRIGGERS = Object.freeze([
+  'second-context-request', 'missing-or-invalid-indexed-source', 'selection-uncertain',
+]);
+
+function validateR3BoundedRetrieval({ reference, sdd, qa, templates, providers }) {
+  const errors = [];
+  if (templates.length !== R3_ROLE_CAPSULES.length) errors.push('removed role template');
+  const normalizedReference = reference.replace(/\s+/g, ' ');
+  for (const trigger of R3_REQUIRED_TRIGGERS) {
+    if (!reference.includes(trigger)) errors.push(`missing R3 fallback ${trigger}`);
+  }
+  for (const phrase of [
+    'CTX-ID | path | anchor', 'complete Context Card body', 'demonstrably apply to the role',
+    'one native read batch', 'ID | source | reason | result',
+  ]) if (!normalizedReference.includes(phrase)) errors.push(`missing canonical retrieval rule ${phrase}`);
+  for (const [name, source] of [['SDD', sdd], ['QA', qa]]) {
+    const normalized = source.replace(/\s+/g, ' ');
+    for (const phrase of [
+      'published parser', 'selection-uncertain', 'missing-or-invalid-indexed-source',
+      'one controller-native read round', 'second request', 'Codex and Claude Code',
+    ]) if (!normalized.includes(phrase)) errors.push(`${name} missing bounded retrieval ${phrase}`);
+  }
+  for (const source of templates) {
+    if (!source.includes('CTX-ID | path | anchor')) errors.push('role template omits compact context references');
+    if (!source.includes('ID | source | reason | result')) errors.push('role template omits retrieval history');
+  }
+  if (providers.codex !== providers['claude-code']) errors.push('provider divergence');
+  return errors;
+}
+
+function validateInitialContextCapsule(capsule) {
+  const sources = capsule.match(/^sources:\s*(.+)$/m)?.[1] ?? '';
+  if (!/^CTX-[A-Z0-9-]+ \| [^|\n]+ \| [^|\n]+$/.test(sources)) return 'initial capsule must contain compact ID | path | anchor references';
+  if (capsule.includes('COMPLETE CONTEXT CARD BODY')) return 'initial capsule contains complete Context Card body';
+  return null;
+}
+
+function validateR3RetrievalHistory(history, requestCount) {
+  if (requestCount > 1) return 'full-context: second-context-request';
+  if (!/^CTX-[A-Z0-9-]+ \| \S+ \| .+ \| (read|unavailable)$/m.test(history)) return 'retrieval history must record ID | source | reason | result';
+  return null;
+}
+
 test('R2.9: frozen R1 corpus and T0 values are exact', () => {
   const frozenPlan = git(['show', `${R1_HEAD}:docs/plans/2026-08-25-r1-context-footprint-plan.md`]);
   const frozenDiff = git(['diff', '--binary', '--no-ext-diff', '--unified=3', R1_BASE, R1_HEAD]);
@@ -295,4 +344,43 @@ test('R2 mutation proofs reject broken contracts with actionable messages', () =
     logic: { ...corpusFixtures.logic, evidence: 'x'.repeat(CANDIDATE_MAX_BYTES) },
   };
   assert.ok(validateContract({ sources, reference, plan, fixture: corpusFixtures.implementer, fixtures: oversizedRoleEvidence }).some(error => error.startsWith('candidate aggregate ')));
+});
+
+test('R3.9-R3.13: role capsules select compact evidence and bound native retrieval', () => {
+  const reference = read('skills/subagent-driven-development/references/evidence-capsule-v1.md');
+  const sdd = read('skills/subagent-driven-development/SKILL.md');
+  const qa = read('skills/post-implementation-qa/SKILL.md');
+  const templates = R3_ROLE_CAPSULES.map(read);
+  const providers = {
+    codex: 'CTX-PROCESS-001|CONSTITUTION.md|awm-context:CTX-PROCESS-001|first-batch|same-verdict',
+    'claude-code': 'CTX-PROCESS-001|CONSTITUTION.md|awm-context:CTX-PROCESS-001|first-batch|same-verdict',
+  };
+  assert.deepEqual(validateR3BoundedRetrieval({ reference, sdd, qa, templates, providers }), []);
+
+  const initial = [
+    CAPSULE_MARKER,
+    'role: implementer',
+    'sources: CTX-PROCESS-001 | CONSTITUTION.md | awm-context:CTX-PROCESS-001',
+  ].join('\n');
+  assert.equal(validateInitialContextCapsule(initial), null);
+  assert.equal(validateR3RetrievalHistory('CTX-PROCESS-001 | CONSTITUTION.md | exact rule absent | read', 1), null);
+  assert.equal(validateR3RetrievalHistory('CTX-PROCESS-001 | CONSTITUTION.md | exact rule absent | read', 2), 'full-context: second-context-request');
+  for (const trigger of R3_REQUIRED_TRIGGERS) assert.equal(`full-context: ${trigger}`, `full-context: ${trigger}`);
+});
+
+test('R3.15 mutation proofs reject roles, second batches, card bodies, provider drift, and quality-gate loss', () => {
+  const reference = read('skills/subagent-driven-development/references/evidence-capsule-v1.md');
+  const sdd = read('skills/subagent-driven-development/SKILL.md');
+  const qa = read('skills/post-implementation-qa/SKILL.md');
+  const templates = R3_ROLE_CAPSULES.map(read);
+  const providers = { codex: 'same', 'claude-code': 'same' };
+  const withoutRole = templates.slice(0, -1);
+  assert.ok(validateR3BoundedRetrieval({ reference, sdd, qa, templates: withoutRole, providers }).some(error => error.includes('role template')));
+  assert.ok(validateR3BoundedRetrieval({ reference: reference.replaceAll('second-context-request', 'removed-second-request'), sdd, qa, templates, providers }).includes('missing R3 fallback second-context-request'));
+  assert.equal(validateInitialContextCapsule(`${CAPSULE_MARKER}\nsources: CTX-PROCESS-001 | CONSTITUTION.md | awm-context:CTX-PROCESS-001\nCOMPLETE CONTEXT CARD BODY`), 'initial capsule contains complete Context Card body');
+  assert.ok(validateR3BoundedRetrieval({ reference, sdd, qa, templates, providers: { codex: 'one-batch', 'claude-code': 'two-batches' } }).includes('provider divergence'));
+  const sources = Object.fromEntries(Object.entries(ROLE_SOURCES).map(([role, source]) => [role, read(source)]));
+  const runtime = `${Object.values(sources).join('\n')}\n${sdd}\n${qa}`;
+  const fixture = { scope: 'R3', requirements: 'R3', surfaces: 'file', sources: 'git show', evidence: 'pass' };
+  assert.ok(validateContract({ sources, reference, plan: read('docs/plans/2026-08-25-r2-role-evidence-capsules-plan.md'), fixture, runtimeOverride: runtime.replace('Design Fidelity Propagation Gate (AWM)', 'Design fidelity removed') }).includes('missing preserved gate design fidelity gate'));
 });

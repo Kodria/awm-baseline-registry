@@ -74,7 +74,7 @@ role: implementer
 scope: <cohesive task ID/slice>
 requirements: <exact applicable clauses and dependencies>
 surfaces: <affected files/components and declared skills/design artifacts>
-sources: <authoritative paths, commits, commands>
+sources: <initial CTX-ID | path | anchor references; retrieved authoritative sources>
 evidence: <verification and design evidence>
-retrieval history: <none or ordered source + reason>
+retrieval history: <none or ordered ID | source | reason | result>
 fallback: <selective or full-context: exact-trigger>
