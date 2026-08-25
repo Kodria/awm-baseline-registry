@@ -92,8 +92,65 @@ function findDuplicateContractTables() {
     .map(file => path.relative(root, file));
 }
 
+function assertNoDuplicateContractOwnership(sources) {
+  const ownershipPatterns = [
+    /(?:sole|canonical|normative)[\s\S]{0,120}context kernel[\s\S]{0,120}(?:definition|contract|owner)/i,
+    /schema[\s\S]{0,80}exactly\s*1[\s\S]{0,320}(?:kernelFiles|maxFixedBytes|entries)/i,
+    /one native file-read batch/i,
+    /No automated maintenance edits or deletes this (?:region|kernel)/i,
+  ];
+  for (const { file, text } of sources) {
+    for (const pattern of ownershipPatterns) {
+      assert.doesNotMatch(text, pattern, `${file} duplicates Context Kernel v1 ownership`);
+    }
+  }
+}
+
 function readCandidateIndex() {
   return JSON.parse(readFileSync(path.join(candidateRoot, '.awm/context/index.json'), 'utf8'));
+}
+
+function candidate(file) {
+  return path.join(candidateRoot, file);
+}
+
+function countOccurrences(text, value) {
+  return text.split(value).length - 1;
+}
+
+function readMigrationTable() {
+  const migration = readFileSync(candidate('docs/awm/context/migration-v1.md'), 'utf8');
+  const rows = migration.split('\n').filter(line => line.startsWith('| LEGACY-'));
+  return rows.map(line => {
+    const [, legacyBlock, source, contextId, destination, rationale] = line.split('|').map(cell => cell.trim());
+    return { legacyBlock, source, contextId, destination, rationale };
+  });
+}
+
+function assertProtectedRegions(index) {
+  for (const file of index.kernelFiles) {
+    const text = readFileSync(candidate(file), 'utf8');
+    const start = '<!-- AWM:CONTEXT-KERNEL:START v1 -->';
+    const end = '<!-- AWM:CONTEXT-KERNEL:END v1 -->';
+    assert.equal(countOccurrences(text, start), 1, `${file} must have one protected start marker`);
+    assert.equal(countOccurrences(text, end), 1, `${file} must have one protected end marker`);
+    assert.ok(text.indexOf(start) < text.indexOf(end), `${file} protected markers must be ordered`);
+  }
+  for (const entry of index.entries) {
+    const text = readFileSync(candidate(entry.path), 'utf8');
+    const anchor = `<!-- ${entry.anchor} -->`;
+    assert.equal(countOccurrences(text, anchor), 1, `${entry.id} anchor must occur exactly once`);
+    if (entry.tier === 'kernel') {
+      const start = text.indexOf('<!-- AWM:CONTEXT-KERNEL:START v1 -->');
+      const end = text.indexOf('<!-- AWM:CONTEXT-KERNEL:END v1 -->');
+      const offset = text.indexOf(anchor);
+      assert.ok(start < offset && offset < end, `${entry.id} must remain protected`);
+    }
+  }
+}
+
+function contextIdsFromTrace() {
+  return new Set(readMigrationTable().map(row => row.contextId));
 }
 
 function assertCandidateLayout(index) {
@@ -146,6 +203,15 @@ test('R3.15: the canonical reference is the sole owner and forbids infrastructur
   }
   assert.doesNotMatch(reference, /embedding|vector database|retrieval service|model-only invocation/i);
   assert.deepEqual(findDuplicateContractTables(), []);
+  const canonical = path.join(root, 'skills/project-context-init/references/context-kernel-v1.md');
+  const nonCanonicalSkills = listMarkdownFiles(path.join(root, 'skills'))
+    .filter(file => file !== canonical)
+    .map(file => ({ file: path.relative(root, file), text: readFileSync(file, 'utf8') }));
+  assertNoDuplicateContractOwnership(nonCanonicalSkills);
+  assert.throws(() => assertNoDuplicateContractOwnership([{
+    file: 'skills/example/SKILL.md',
+    text: '## Alternate wording\nThe canonical context kernel contract says schema exactly 1 and lists kernelFiles, maxFixedBytes, and entries.',
+  }]), /duplicates Context Kernel v1 ownership/);
 });
 
 test('R3.3/R3.14: a candidate must satisfy the published parser layout before it can reduce fixed context', () => {
@@ -157,4 +223,42 @@ test('R3.3/R3.14: a candidate must satisfy the published parser layout before it
   const fixedBytes = legacyFiles.reduce((total, file) => total + readBytes(path.join(candidateRoot, file)).length, 0);
   assert.ok(fixedBytes <= 33740, `candidate fixed bytes ${fixedBytes} exceed 33740`);
   assert.ok(1 - fixedBytes / 67481 >= 0.5);
+});
+
+test('R3.4-R3.6: migration is complete, unique, and protected', () => {
+  const index = readCandidateIndex();
+  assertCandidateLayout(index);
+  assert.equal(new Set(index.entries.map(entry => entry.id)).size, index.entries.length);
+  assert.equal(new Set(index.entries.map(entry => entry.anchor)).size, index.entries.length);
+  assertProtectedRegions(index);
+  const mapping = readMigrationTable();
+  const inventory = readInventory();
+  assert.deepEqual(mapping.map(row => row.legacyBlock).sort(), inventory.map(block => block.id).sort());
+  for (const block of inventory) {
+    assert.equal(mapping.filter(row => row.legacyBlock === block.id).length, 1, `${block.id} needs one migration row`);
+  }
+  for (const row of mapping) {
+    assert.ok(row.source.length > 0 && row.destination.length > 0 && row.rationale.length > 0);
+    assert.ok(index.entries.some(entry => entry.id === row.contextId), `${row.contextId} is not indexed`);
+  }
+  assert.deepEqual([...contextIdsFromTrace()].sort(), index.entries.map(entry => entry.id).sort());
+  assert.throws(() => {
+    const duplicate = { ...index, entries: [...index.entries, { ...index.entries[0] }] };
+    assert.equal(new Set(duplicate.entries.map(entry => entry.id)).size, duplicate.entries.length);
+  }, /Expected values to be strictly equal/);
+  assert.throws(() => {
+    const missingProtection = readFileSync(candidate('AGENTS.md'), 'utf8').replace('<!-- AWM:CONTEXT-KERNEL:END v1 -->', '');
+    assert.equal(countOccurrences(missingProtection, '<!-- AWM:CONTEXT-KERNEL:END v1 -->'), 1);
+  }, /Expected values to be strictly equal/);
+});
+
+test('R3.14: fixed bytes fall by at least half without losing trace', () => {
+  const fixedBytes = legacyFiles.reduce((total, file) => total + readBytes(candidate(file)).length, 0);
+  assert.ok(fixedBytes <= 33740, `candidate fixed bytes ${fixedBytes} exceed 33740`);
+  assert.ok(1 - fixedBytes / 67481 >= 0.5);
+  assert.deepEqual(readBytes(candidate('CLAUDE.md')), readBytes(path.join(legacyRoot, 'CLAUDE.md')));
+  assert.throws(() => {
+    const inflated = fixedBytes + 33741;
+    assert.ok(inflated <= 33740, `candidate fixed bytes ${inflated} exceed 33740`);
+  }, /candidate fixed bytes/);
 });

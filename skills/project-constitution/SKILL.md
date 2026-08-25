@@ -32,6 +32,26 @@ So the agent sees these rules from the first token.
 - The repo has no clear rules to enforce yet — come back after the first code review pass or after `awm sensors init`
 - The user wants a description of the project (purpose, structure, commands) — use `AGENTS.md` / `CLAUDE.md` for that. `CONSTITUTION.md` is for rules, not description.
 
+## Context Kernel v1 maintenance
+
+For a project already using Context Kernel v1, read
+`../project-context-init/references/context-kernel-v1.md` before changing the
+constitution and re-read the project's current index immediately before the
+edit. Keep only unconditional security, robustness, release, and process rules
+inside the protected portion of `CONSTITUTION.md`. Move forensic narrative,
+long examples, and situational rules into selective cards with distinct IDs and
+applicability evidence.
+
+Inventory the current IDs before and after an update and require equality. A
+removal is allowed only when the migration or maintenance history records an
+explicit line in this form:
+
+`owner-approved removal: CTX-RELEASE-001 — superseded by CTX-RELEASE-002`
+
+Never infer approval from a budget, a stale index, or an apparent duplicate.
+If the index is partial or invalid, preserve visible full context and request a
+reviewed repair rather than writing replacement metadata.
+
 ## Checklist
 
 You MUST create a task for each item and complete them in order:

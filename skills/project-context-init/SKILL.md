@@ -42,6 +42,32 @@ Then read the file with `view_file`.
 
 Check whether `existing_agents_md` in the JSON dump is empty or not. This determines your execution mode.
 
+## Context Kernel v1 branch
+
+Before changing a project's feedforward files, read
+`references/context-kernel-v1.md` in full and run `awm preflight`. Treat the
+reported context-kernel state as an input to the state machine, not as a reason
+to invent metadata.
+
+1. When no declaration is active, keep the legacy full-context workflow. Do not
+   create `.awm/context/` metadata as a side effect of a normal AGENTS.md
+   update.
+2. When the preflight result is an advisory legacy project with an active owner
+   decision to migrate, inventory every contiguous non-empty source block before
+   editing any context file. Propose the protected kernel and selective cards,
+   then prepare the migration history, index, anchors, and markers for review.
+3. Compare the pre- and post-migration context-ID sets. Complete a migration
+   only after that equality check and a fresh `awm preflight` report valid/pass.
+4. If metadata is partial or invalid, report the diagnostic, leave visible full
+   context intact, and require a reviewed repair. Never regenerate incomplete
+   metadata silently.
+5. Do not edit `CLAUDE.md` unless its owner explicitly selects it for the
+   migration. Always include its bytes when evaluating the fixed-context budget.
+
+This skill is the only writer and migrator of project context metadata. Other
+skills may consume the reference and select full context when evidence is
+missing; they do not create or repair `.awm/context/` state.
+
 ---
 
 ### State A: First-Run Mode (AGENTS.md does NOT exist)
