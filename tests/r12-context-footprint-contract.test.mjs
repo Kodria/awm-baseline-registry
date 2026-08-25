@@ -104,10 +104,24 @@ test('R1 recovery: compact owners retain their complete behavioral contracts', (
   assert.match(usingAwm, /one-off advisory[\s\S]{0,240}architecture-advisor[\s\S]{0,160}directly/i);
 
   assert.match(development, /Harness Preflight[\s\S]{0,240}advisory[\s\S]{0,240}(continue|non-blocking)/i);
-  assert.match(development, /frontend[\s\S]{0,200}ui-design[\s\S]{0,200}frontend-craft[\s\S]{0,240}awm update && awm init/i);
+  const frontendHandoff = read('skills/development-process/references/frontend-handoff.md');
+  assert.match(frontendHandoff, /ui-design frontend-craft/);
+  assert.match(frontendHandoff, /`frontend` bundle[\s\S]{0,200}awm update && awm init/i);
 
   assert.match(brainstorming, /Every behavior change[\s\S]{0,160}scaled design/i);
   assert.match(brainstorming, /Design for isolation and clarity[\s\S]{0,360}one clear purpose[\s\S]{0,360}well-defined interfaces/i);
   assert.match(brainstorming, /YAGNI ruthlessly[\s\S]{0,160}unnecessary features/i);
   assert.match(brainstorming, /Do not\s+propose unrelated refactoring/i);
+});
+
+test('R1 follow-up: compact ownership preserves review-critical gates', () => {
+  const specialist = read('skills/brainstorming/references/specialist-gate.md');
+  const frontend = read('skills/development-process/references/frontend-handoff.md');
+
+  assert.match(brainstorming, /Write and save the committed design artifact/i);
+  assert.match(development, /Never create an ad-hoc plan while classifying/i);
+  assert.match(specialist, /Every approach message MUST open with all three visible verdicts/i);
+  assert.match(frontend, /\$HOME\/\.agents\/skills\/\$skill[\s\S]{0,180}"\.agents\/skills\/\$skill"[\s\S]{0,180}\$HOME\/\.claude\/skills\/\$skill[\s\S]{0,180}"\.claude\/skills\/\$skill"/);
+  assert.match(frontend, /This work needs the `frontend` bundle[\s\S]{0,200}awm update && awm init/);
+  assert.doesNotMatch(development, /For frontend discovery, verify both `ui-design` and `frontend-craft`/);
 });

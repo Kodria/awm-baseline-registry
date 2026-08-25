@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-version: "1.4.1"
+version: "1.4.2"
 license: Apache-2.0
 description: Use before creative design work to clarify and approve a design
 ---
@@ -30,7 +30,7 @@ message; only after consent read `visual-companion.md`.
 2. Clarify requirements one question at a time; reach zero open ambiguity.
 3. Consider 2–3 approaches, publish specialist verdicts, and obtain direction.
 4. Present the design in sections; get approval after each section.
-5. Write, self-review, and obtain user approval for the design artifact.
+5. Write and save the committed design artifact; self-review and obtain user approval.
 6. If UI detection yields `pending` screens, route to `ui-design`; otherwise route to `writing-plans` only.
 
 At design save, cross-reference the development-process rule: research or documentation with no executable behavior needs proportional structural verification, not full tests, sensors, CI monitoring, or a PR solely because it was written.

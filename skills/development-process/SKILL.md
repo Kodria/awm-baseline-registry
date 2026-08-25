@@ -1,6 +1,6 @@
 ---
 name: development-process
-version: "1.7.1"
+version: "1.7.2"
 license: Apache-2.0
 description: Use when starting, resuming, or routing a development task
 ---
@@ -28,6 +28,8 @@ monitoring, or a PR solely because the artifact was written.
 Changes to skill behavior are executable process changes and retain normal quality gates.
 
 ## Lifecycle State
+
+Never create an ad-hoc plan while classifying.
 
 | Evidence | State | Route |
 |---|---|---|
@@ -57,8 +59,6 @@ Cross-cutting gates: use `test-driven-development` for implementation, `systemat
 
 Report the detected state, next skill, and reason. Never invoke the next skill without user confirmation. The next skill takes control after approval.
 
-For frontend discovery, verify both `ui-design` and `frontend-craft` in supported
-shared or project paths: `"$HOME/.agents/skills/<skill>"`, `".agents/skills/<skill>"`,
-`"$HOME/.claude/skills/<skill>"`, or `".claude/skills/<skill>"`. If either is absent,
-block the handoff and instruct: `awm update && awm init`, then select the `frontend`
-bundle and resume. Do not improvise the phase without both skills.
+For frontend discovery, search `"$HOME/.agents/skills/`, `".agents/skills/`,
+`"$HOME/.claude/skills/`, and `".claude/skills/`; the shared global root is
+required for Codex/OpenCode portability.
