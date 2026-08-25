@@ -42,6 +42,33 @@ function requirePublishedR3a() {
   assert.equal(version, '9.3.0', 'acceptance must execute the published R3a CLI');
 }
 
+function removeSandbox(sandbox, remove = rmSync) {
+  const options = { recursive: true, force: true, maxRetries: 3, retryDelay: 100 };
+  for (let attempt = 0; attempt <= options.maxRetries; attempt += 1) {
+    try {
+      remove(sandbox, options);
+      return;
+    } catch (error) {
+      if (error?.code !== 'ENOTEMPTY' || attempt === options.maxRetries) throw error;
+    }
+  }
+}
+
+test('R3.12: temporary acceptance sandbox retries a transient ENOTEMPTY cleanup', () => {
+  let attempts = 0;
+  removeSandbox('/tmp/awm-r14-test', (target, options) => {
+    assert.equal(target, '/tmp/awm-r14-test');
+    assert.deepEqual(options, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    attempts += 1;
+    if (attempts === 1) {
+      const error = new Error('directory not empty');
+      error.code = 'ENOTEMPTY';
+      throw error;
+    }
+  });
+  assert.equal(attempts, 2);
+});
+
 test('R3.1/R3.2/R3.3/R3.12: published CLI preserves legacy and rejects a partial kernel', () => {
   requirePublishedR3a();
   const sandbox = mkdtempSync(path.join(os.tmpdir(), 'awm-r14-'));
@@ -66,6 +93,6 @@ test('R3.1/R3.2/R3.3/R3.12: published CLI preserves legacy and rejects a partial
     assert.notEqual(partialResult.status, 0, partialResult.stdout + partialResult.stderr);
     assert.match(partialResult.stdout, /context-kernel[\s\S]*(degraded|invalid|partial|missing)/i);
   } finally {
-    rmSync(sandbox, { recursive: true, force: true });
+    removeSandbox(sandbox);
   }
 });
