@@ -136,10 +136,7 @@
     "lint": {
       "fast": true,
       "applicability": {
-        "anyFiles": [
-          "*.sh",
-          "*.bash"
-        ]
+        "kind": "explicit-or-supported-language"
       },
       "variants": [
         {
@@ -179,10 +176,7 @@
     "security": {
       "fast": false,
       "applicability": {
-        "anyFiles": [
-          "*.sh",
-          "*.bash"
-        ]
+        "kind": "explicit-or-supported-language"
       },
       "variants": [
         {

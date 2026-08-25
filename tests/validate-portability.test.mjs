@@ -170,6 +170,16 @@ const mutations = [
         },
     ),
     mutation(
+        'shared global skill root removed from the lazy frontend handoff',
+        /references\/frontend-handoff\.md: does not search the shared global skill root/,
+        () => {
+            const file = path.join(copy, 'skills/development-process/references/frontend-handoff.md');
+            const before = fs.readFileSync(file, 'utf8');
+            fs.writeFileSync(file, before.replaceAll('$HOME/.agents/skills/', '$HOME/.claude/skills/'));
+            return () => fs.writeFileSync(file, before);
+        },
+    ),
+    mutation(
         'a provider dropped from the constitution delivery contract',
         /missing provider delivery contract "OpenCode: /,
         () => {
