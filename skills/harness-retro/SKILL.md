@@ -186,6 +186,26 @@ test('parseConfig returns explicit error on empty input', () => {
 
 ### 6. Cure, don't append raw
 
+#### Context Kernel v1 guard
+
+Read `project-context-init/references/context-kernel-v1.md` and run `awm
+preflight` before changing a context file. Branch from the reported state:
+
+- **legacy:** retain the existing full-context merge-and-prune workflow; no
+  context metadata is created as a side effect of a retro.
+- **valid kernel:** select the applicable card, merge or dedupe only in that
+  card, and update its card and index entry together. Capture the ID inventory
+  before and after the change; the before and after ID inventories must be
+  equal.
+- **partial or invalid:** do not cure or prune context. Keep full context
+  visible, report the diagnostic, and wait for a reviewed repair.
+
+MUST NOT automatically edit a protected kernel region. A genuinely
+unconditional rule is proposed to the owner rather than inserted by retro.
+Deleting an ID or card requires explicit owner approval and reason recorded in
+the migration or maintenance history. A budget observation is evidence, never
+deletion authority.
+
 When writing to `CONSTITUTION.md` or `AGENTS.md`, **merge and prune**: fold the new lesson into the relevant existing section and drop entries that no longer apply. These docs are delivered every session — keep them a curated index, not an append-only log, so context never saturates.
 
 **On its own this instruction does not hold.** Measured on a real repo, `AGENTS.md` went 73KB → 141KB

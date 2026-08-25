@@ -22,6 +22,7 @@ const fullContextTriggers = Object.freeze([
 ]);
 
 const readBytes = source => readFileSync(source);
+const read = source => readFileSync(path.join(root, source), 'utf8');
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const normalizeLf = value => value.replace(/\r\n?/g, '\n');
 const fileToken = file => file.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toUpperCase();
@@ -261,4 +262,20 @@ test('R3.14: fixed bytes fall by at least half without losing trace', () => {
     const inflated = fixedBytes + 33741;
     assert.ok(inflated <= 33740, `candidate fixed bytes ${inflated} exceed 33740`);
   }, /candidate fixed bytes/);
+});
+
+test('R3.6-R3.8: maintenance cannot prune kernel or infer deletion authority', () => {
+  const retro = read('skills/harness-retro/SKILL.md');
+  const plans = read('skills/writing-plans/SKILL.md');
+  assert.match(retro, /MUST NOT automatically edit.*protected kernel/s);
+  assert.match(retro, /card and index entry/s);
+  assert.match(retro, /before.*after.*ID.*equal/s);
+  assert.match(retro, /explicit owner approval.*reason/s);
+  assert.match(plans, /legacy full context.*advisory/s);
+  assert.match(plans, /partial.*invalid.*blocking/s);
+  assert.match(plans, /threshold.*does not authorize.*prun|budget.*never authorizes.*delet/s);
+  assert.throws(() => assert.match(
+    retro.replace('MUST NOT automatically edit', 'MUST automatically edit'),
+    /MUST NOT automatically edit.*protected kernel/s,
+  ), /did not match/);
 });
