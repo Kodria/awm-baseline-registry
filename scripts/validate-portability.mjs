@@ -99,7 +99,7 @@ const requiredCodexHookConcepts = [
 // Every skill that resolves another skill on disk must search the shared global
 // root too — Claude-only roots make the lookup fail under OpenCode and Codex.
 const skillDiscoveryFiles = [
-  'skills/development-process/SKILL.md',
+  'skills/development-process/references/frontend-handoff.md',
   'skills/product-process/SKILL.md',
   'skills/ui-design/SKILL.md',
   'skills/ui-ux-pro-max/SKILL.md',
@@ -114,15 +114,6 @@ const requiredDevelopmentProcessLifecycle = [
   'finishing-a-development-branch',
   'Never invoke the next skill without user confirmation.',
 ];
-// Shared global root first (OpenCode/Codex), then Claude's roots — every
-// skill-discovery loop in the registry searches the same four locations.
-const requiredSkillLocations = [
-  '"$HOME/.agents/skills/',
-  '".agents/skills/',
-  '"$HOME/.claude/skills/',
-  '".claude/skills/',
-];
-
 function parseFrontmatter(source, skillPath) {
   const lines = source.replace(/\r\n/g, '\n').split('\n');
   const errors = [];
@@ -510,11 +501,6 @@ async function validateExecutionSpine(errors) {
   for (const invariant of requiredDevelopmentProcessLifecycle) {
     if (!source.includes(invariant)) {
       errors.push(`${relativePath}: lifecycle invariant lost ${JSON.stringify(invariant)}`);
-    }
-  }
-  for (const location of requiredSkillLocations) {
-    if (!source.includes(location)) {
-      errors.push(`${relativePath}: missing skill location ${JSON.stringify(location)}`);
     }
   }
 }

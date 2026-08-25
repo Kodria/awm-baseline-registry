@@ -117,11 +117,14 @@ test('R1 recovery: compact owners retain their complete behavioral contracts', (
 test('R1 follow-up: compact ownership preserves review-critical gates', () => {
   const specialist = read('skills/brainstorming/references/specialist-gate.md');
   const frontend = read('skills/development-process/references/frontend-handoff.md');
+  const frontendDirective = 'WHEN UI is pending or a plan declares `**Design artifacts:**`, read references/frontend-handoff.md and apply its blocking bundle gate.';
 
   assert.match(brainstorming, /Write and save the committed design artifact/i);
   assert.match(development, /Never create an ad-hoc plan while classifying/i);
   assert.match(specialist, /Every approach message MUST open with all three visible verdicts/i);
+  assert.ok(development.includes(frontendDirective), 'core must retain the exact lazy frontend handoff directive');
   assert.match(frontend, /\$HOME\/\.agents\/skills\/\$skill[\s\S]{0,180}"\.agents\/skills\/\$skill"[\s\S]{0,180}\$HOME\/\.claude\/skills\/\$skill[\s\S]{0,180}"\.claude\/skills\/\$skill"/);
   assert.match(frontend, /This work needs the `frontend` bundle[\s\S]{0,200}awm update && awm init/);
+  assert.doesNotMatch(development, /\$HOME\/\.agents\/skills|\.agents\/skills|\$HOME\/\.claude\/skills|\.claude\/skills/, 'frontend discovery locations belong only in frontend-handoff.md');
   assert.doesNotMatch(development, /For frontend discovery, verify both `ui-design` and `frontend-craft`/);
 });

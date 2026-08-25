@@ -1,6 +1,6 @@
 ---
 name: development-process
-version: "1.7.2"
+version: "1.7.3"
 license: Apache-2.0
 description: Use when starting, resuming, or routing a development task
 ---
@@ -16,8 +16,7 @@ this entry check is advisory, not blocking. If the command is unavailable, say s
 and continue; `writing-plans` owns the blocking preflight gate before execution.
 
 WHEN an active plan exists, read `references/execution-mode.md` before routing.
-WHEN UI is pending or a plan declares `**Design artifacts:**`, read
-`references/frontend-handoff.md` and apply its blocking bundle gate.
+WHEN UI is pending or a plan declares `**Design artifacts:**`, read references/frontend-handoff.md and apply its blocking bundle gate.
 IF a business-level unknown appears during development, read
 `references/business-gap.md`; do not improvise the answer.
 
@@ -58,7 +57,3 @@ Cross-cutting gates: use `test-driven-development` for implementation, `systemat
 ## Interactive Handoff
 
 Report the detected state, next skill, and reason. Never invoke the next skill without user confirmation. The next skill takes control after approval.
-
-For frontend discovery, search `"$HOME/.agents/skills/`, `".agents/skills/`,
-`"$HOME/.claude/skills/`, and `".claude/skills/`; the shared global root is
-required for Codex/OpenCode portability.
