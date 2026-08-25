@@ -256,6 +256,20 @@ test('R2.7: stable prefixes retain the pre-existing quality contracts', () => {
   for (const role of ['Track A — Fidelity', 'Track B — Robustness / Security', 'Track B — Logic correctness', 'Track B — Tests', 'Track B — Design Fidelity']) assert.match(qa, new RegExp(`## ${escapeRegExp(role)}[\\s\\S]*?## Evidence Capsule v1`));
 });
 
+test('R2.10-R2.14: ledger, privacy, legacy fallback, and trace remain explicit', () => {
+  const reference = read('skills/subagent-driven-development/references/evidence-capsule-v1.md');
+  const plan = read('docs/plans/2026-08-25-r2-role-evidence-capsules-plan.md');
+  const fixtures = frozenRoleFixtures(frozenCorpus());
+  const ledgerEntry = { prefix: byteLength('stable'), capsule: byteLength(assembleRole(read(ROLE_SOURCES.logic), 'logic', fixtures.logic)) - byteLength(extractPrefix(read(ROLE_SOURCES.logic), 'logic')), retrieval: 0, fallback: 0, dispatches: 1, providerUsage: 'unobservable' };
+  assert.deepEqual(Object.keys(ledgerEntry).sort(), ['capsule', 'dispatches', 'fallback', 'prefix', 'providerUsage', 'retrieval']);
+  assert.match(reference, /do not create telemetry stores or persist prompt\/source bodies/i);
+  assert.match(reference, /unrestricted worker responses/i);
+  assert.equal(validateCapsule('', 'implementer', { metadata: false }), 'full-context: legacy-metadata');
+  assert.equal(validateCapsule('', 'implementer'), 'full-context: malformed-or-missing-evidence');
+  for (const checkpoint of ['T0', 'T1', 'T2', 'T3', 'T4']) assert.match(plan, new RegExp(`\\| ${checkpoint} \\|`));
+  assert.match(plan, /https:\/\/github\.com\/Kodria\/agentic-workflow\/issues\/126/);
+});
+
 test('R2 mutation proofs reject broken contracts with actionable messages', () => {
   const reference = read('skills/subagent-driven-development/references/evidence-capsule-v1.md');
   const plan = read('docs/plans/2026-08-25-r2-role-evidence-capsules-plan.md');
