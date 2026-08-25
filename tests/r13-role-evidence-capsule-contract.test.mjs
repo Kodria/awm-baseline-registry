@@ -101,6 +101,8 @@ const validateCapsule = (capsule, role, { fullPlan = '', requestCount = 0, provi
     if (index < previous) return `reordered capsule field ${field}`;
     previous = index;
   }
+  const roleField = capsuleBody.match(/^role:\s*(.+)$/m)?.[1];
+  if (roleField !== role) return `capsule role ${roleField ?? '<missing>'} does not match dispatch role ${role}`;
   if (!ALLOWLISTS[role]) return `removed role ${role}`;
   if (/^trackB-|^(robustness|logic|tests)$/.test(role) && fullPlan && capsule.includes(fullPlan)) return 'Track B initial capsule contains complete plan';
   if (requestCount === 1 && (!capsule.includes(`retrieval history: ${requestedSource} — ${requestedReason}`))) return 'first context request must record exact authoritative source and reason in retrieval history';
@@ -108,16 +110,51 @@ const validateCapsule = (capsule, role, { fullPlan = '', requestCount = 0, provi
   if (!['codex', 'claude-code'].includes(provider)) return `provider divergence: unsupported ${provider}`;
   return null;
 };
+const validateNeedsContext = response => {
+  const lines = response.trimEnd().split('\n');
+  if (lines.length !== 3) return 'NEEDS_CONTEXT must contain exactly three lines';
+  const [status, source, reason] = lines;
+  if (status !== 'status: NEEDS_CONTEXT') return 'NEEDS_CONTEXT status line is invalid';
+  if (!/^missing-source:\s*\S/.test(source)) return 'NEEDS_CONTEXT missing-source is invalid';
+  if (!/^reason:\s*\S/.test(reason)) return 'NEEDS_CONTEXT reason is invalid';
+  return null;
+};
 
 const splitDiffByFile = diff => diff.split(/^diff --git /m).filter(Boolean).map(part => `diff --git ${part}`);
-const capsuleWith = (overrides = {}) => `${CAPSULE_MARKER}\n${CAPSULE_FIELDS.map(field => `${field} ${overrides[field] ?? 'value'}`).join('\n')}`;
+const frozenCorpus = () => {
+  const plan = git(['show', `${R1_HEAD}:docs/plans/2026-08-25-r1-context-footprint-plan.md`]);
+  const taskStart = plan.indexOf('### Task 1:');
+  assert.ok(taskStart >= 0, 'frozen R1 plan must contain Task 1');
+  const task = plan.slice(taskStart);
+  const taskRequirements = task.match(/^_Requirements: (.+)_$/m)?.[1];
+  assert.ok(taskRequirements, 'frozen R1 task must declare exact requirements');
+  const diff = git(['diff', '--binary', '--no-ext-diff', '--unified=3', R1_BASE, R1_HEAD]);
+  const diffFiles = splitDiffByFile(diff);
+  assert.ok(diffFiles.length >= 3, 'frozen R1 diff must provide lens evidence');
+  return Object.freeze({ plan, task, taskRequirements, diff, diffFiles });
+};
+const frozenRoleFixtures = corpus => {
+  const sources = `git show ${R1_HEAD}:docs/plans/2026-08-25-r1-context-footprint-plan.md; git diff ${R1_BASE} ${R1_HEAD}`;
+  const common = { scope: `R1 Task 1 @ ${R1_HEAD}`, surfaces: corpus.diffFiles.map(part => part.match(/^diff --git a\/(.+?) b\//m)?.[1]).filter(Boolean).join(', '), sources, retrievalHistory: 'none', fallback: 'selective' };
+  return Object.freeze({
+    implementer: { ...common, requirements: corpus.taskRequirements, evidence: corpus.task },
+    specification: { ...common, requirements: corpus.taskRequirements, evidence: corpus.task },
+    codeQuality: { ...common, requirements: corpus.taskRequirements, evidence: corpus.diff },
+    trackA: { ...common, requirements: corpus.taskRequirements, evidence: `${corpus.plan}\n${corpus.diff}` },
+    robustness: { ...common, requirements: 'n/a', evidence: corpus.diffFiles[0] },
+    logic: { ...common, requirements: 'n/a', evidence: corpus.diffFiles[1] },
+    tests: { ...common, requirements: 'n/a', evidence: corpus.diffFiles[2] },
+    designFidelity: { ...common, requirements: 'n/a', evidence: corpus.diffFiles[0] },
+  });
+};
+const capsuleWith = (role = 'implementer', overrides = {}) => `${CAPSULE_MARKER}\n${CAPSULE_FIELDS.map(field => `${field} ${overrides[field] ?? (field === 'role:' ? role : 'value')}`).join('\n')}`;
 const assembleRole = (template, role, fixture, provider = 'codex') => {
   const prefix = extractPrefix(template, role);
   const fallback = fixture.fallback ?? 'selective';
   return `${prefix}${CAPSULE_MARKER}\nrole: ${role}\nscope: ${fixture.scope}\nrequirements: ${fixture.requirements}\nsurfaces: ${fixture.surfaces}\nsources: ${fixture.sources}\nevidence: ${fixture.evidence}\nretrieval history: ${fixture.retrievalHistory ?? 'none'}\nfallback: ${fallback}\n`;
 };
 
-const validateContract = ({ sources, reference, plan, fixture, aggregateOverride, provider = 'codex', runtimeOverride, providerOutputs }) => {
+const validateContract = ({ sources, reference, plan, fixture, fixtures, aggregateOverride, provider = 'codex', runtimeOverride, providerOutputs }) => {
   const errors = [];
   if (!reference.includes('sole normative capsule definition')) errors.push('missing canonical shared reference');
   for (const role of Object.keys(ROLE_SOURCES)) if (!sources[role]) errors.push(`removed role ${role}`);
@@ -141,7 +178,7 @@ const validateContract = ({ sources, reference, plan, fixture, aggregateOverride
   for (const [name, anchor] of QUALITY_GATES) if (!runtime.includes(anchor)) errors.push(`missing preserved gate ${name}`);
   if (!plan.includes('issue #126') || !/\| T[0-4] \|/.test(plan)) errors.push('missing T0-T4 or issue trace');
   const candidate = aggregateOverride ?? Object.entries(sources).filter(([role]) => role !== 'designFidelity').reduce((sum, [role, source]) => {
-    try { return sum + byteLength(assembleRole(source, role, fixture, provider)); }
+    try { return sum + byteLength(assembleRole(source, role, fixtures?.[role] ?? fixture, provider)); }
     catch { return sum; }
   }, 0);
   if (candidate > CANDIDATE_MAX_BYTES) errors.push(`candidate aggregate ${candidate} exceeds ${CANDIDATE_MAX_BYTES}`);
@@ -157,33 +194,50 @@ test('R2.9: frozen R1 corpus and T0 values are exact', () => {
   assert.ok(splitDiffByFile(frozenDiff).length > 1);
 });
 
+test('R2.4/R2.9: candidate assembly derives from the frozen corpus', () => {
+  const corpus = frozenCorpus();
+  const fixtures = frozenRoleFixtures(corpus);
+  assert.equal(fixtures.implementer.requirements, corpus.taskRequirements);
+  assert.equal(fixtures.specification.requirements, corpus.taskRequirements);
+  assert.ok(fixtures.trackA.evidence.includes(corpus.diff));
+  for (const role of ['robustness', 'logic', 'tests']) {
+    assert.ok(fixtures[role].evidence.length > 0, `${role} needs a real diff hunk`);
+    assert.ok(!fixtures[role].evidence.includes(corpus.plan), `${role} must not receive the complete plan`);
+    assert.equal(validateCapsule(`${assembleRole(read(ROLE_SOURCES[role]), role, fixtures[role])}\n${corpus.plan}`, role, { fullPlan: corpus.plan }), 'Track B initial capsule contains complete plan');
+  }
+});
+
 test('R2 contract: canonical capsule, role parity, safe retrieval, and byte ledger hold', () => {
   const reference = read('skills/subagent-driven-development/references/evidence-capsule-v1.md');
   const plan = read('docs/plans/2026-08-25-r2-role-evidence-capsules-plan.md');
   const sources = Object.fromEntries(Object.entries(ROLE_SOURCES).map(([role, source]) => [role, read(source)]));
-  const fixture = { scope: 'R2.1', requirements: 'R2.1 exact clause', surfaces: 'skills/example.md', sources: 'git show abc', evidence: 'tests: pass; sensors: overall: pass' };
-  assert.deepEqual(validateContract({ sources, reference, plan, fixture }), []);
+  const fixtures = frozenRoleFixtures(frozenCorpus());
+  assert.deepEqual(validateContract({ sources, reference, plan, fixture: fixtures.implementer }), []);
   for (const [role, source] of Object.entries(sources)) {
+    const fixture = fixtures[role];
     const first = assembleRole(source, role, fixture, 'codex');
-    const second = assembleRole(source, role, { ...fixture, scope: 'R2.2', surfaces: 'skills/other.md', evidence: 'tests: other' }, 'claude-code');
+    const second = assembleRole(source, role, { ...fixture, scope: `${fixture.scope} re-dispatch` }, 'claude-code');
     assert.equal(extractPrefix(first), extractPrefix(second), `stable prefix changed for ${role}`);
     assert.equal((first.match(/## Evidence Capsule v1/g) ?? []).length, 1);
     assert.equal(validateCapsule(first, role, { fullPlan: 'COMPLETE FROZEN PLAN BODY' }), null);
   }
   assert.notEqual(extractPrefix(sources.trackA, 'trackA'), extractPrefix(sources.robustness, 'robustness'), 'Track A and robustness must dispatch distinct stable prefixes');
-  for (const trigger of FULL_CONTEXT_TRIGGERS) assert.equal(validateCapsule(capsuleWith({ 'fallback:': `full-context: ${trigger}` }), 'implementer'), null);
-  const firstRequest = `${CAPSULE_MARKER}\nrole: implementer\nscope: R2.1\nrequirements: exact clause\nsurfaces: skills/example.md\nsources: git show abc\nevidence: tests: pass\nretrieval history: git show abc — exact clause is absent\nfallback: selective\nstatus: NEEDS_CONTEXT\nmissing-source: git show abc\nreason: exact clause is absent\n`;
-  assert.equal(validateCapsule(firstRequest, 'implementer', { requestCount: 1, requestedSource: 'git show abc', requestedReason: 'exact clause is absent' }), null);
-  assert.equal(validateCapsule(firstRequest, 'implementer', { requestCount: 1, requestedSource: 'git show wrong', requestedReason: 'exact clause is absent' }), 'first context request must record exact authoritative source and reason in retrieval history');
-  assert.equal(validateCapsule(firstRequest, 'implementer', { requestCount: 2 }), 'second context request must use full-context fallback');
+  for (const trigger of FULL_CONTEXT_TRIGGERS) assert.equal(validateCapsule(capsuleWith('implementer', { 'fallback:': `full-context: ${trigger}` }), 'implementer'), null);
+  const needsContext = 'status: NEEDS_CONTEXT\nmissing-source: git show abc\nreason: exact clause is absent\n';
+  assert.equal(validateNeedsContext(needsContext), null);
+  assert.equal(validateNeedsContext(`${needsContext}extra: forbidden\n`), 'NEEDS_CONTEXT must contain exactly three lines');
+  const firstRedispatch = `${CAPSULE_MARKER}\nrole: implementer\nscope: R2.1\nrequirements: exact clause\nsurfaces: skills/example.md\nsources: git show abc\nevidence: tests: pass\nretrieval history: git show abc — exact clause is absent\nfallback: selective\n`;
+  assert.equal(validateCapsule(firstRedispatch, 'implementer', { requestCount: 1, requestedSource: 'git show abc', requestedReason: 'exact clause is absent' }), null);
+  assert.equal(validateCapsule(firstRedispatch, 'implementer', { requestCount: 1, requestedSource: 'git show wrong', requestedReason: 'exact clause is absent' }), 'first context request must record exact authoritative source and reason in retrieval history');
+  assert.equal(validateCapsule(firstRedispatch, 'implementer', { requestCount: 2 }), 'second context request must use full-context fallback');
   assert.equal(validateCapsule('', 'implementer'), 'full-context: malformed-or-missing-evidence');
   assert.equal(validateCapsule('', 'implementer', { metadata: false }), 'full-context: legacy-metadata');
-  const codex = assembleRole(sources.implementer, 'implementer', fixture, 'codex');
-  const claude = assembleRole(sources.implementer, 'implementer', fixture, 'claude-code');
+  const codex = assembleRole(sources.implementer, 'implementer', fixtures.implementer, 'codex');
+  const claude = assembleRole(sources.implementer, 'implementer', fixtures.implementer, 'claude-code');
   assert.equal(codex, claude, 'provider labels must not alter the contract');
   const ledger = Object.fromEntries(Object.entries(sources).filter(([role]) => role !== 'designFidelity').map(([role, source]) => {
     const prefix = extractPrefix(source, role);
-    return [role, { prefix: byteLength(prefix), capsule: byteLength(assembleRole(source, role, fixture)) - byteLength(prefix), retrieval: 0, fallback: 0, dispatches: 1, providerUsage: 'unobservable' }];
+    return [role, { prefix: byteLength(prefix), capsule: byteLength(assembleRole(source, role, fixtures[role])) - byteLength(prefix), retrieval: 0, fallback: 0, dispatches: 1, providerUsage: 'unobservable' }];
   }));
   const aggregate = Object.values(ledger).reduce((sum, entry) => sum + entry.prefix + entry.capsule, 0);
   console.log(JSON.stringify({ candidate: ledger, aggregate, reduction: `${((1 - aggregate / CURRENT_AGGREGATE_BYTES) * 100).toFixed(2)}%`, retrieval: 0, fallback: 0, dispatches: 7, providerUsage: 'unobservable' }));
@@ -213,11 +267,18 @@ test('R2 mutation proofs reject broken contracts with actionable messages', () =
   assert.ok(validateContract({ sources: withoutLogic, reference, plan, fixture }).includes('removed role logic'));
   assert.ok(validateContract({ sources, reference, plan, fixture, providerOutputs: { codex: 'same capsule', 'claude-code': 'different capsule' } }).includes('provider divergence'));
   assert.equal(validateCapsule(`${CAPSULE_MARKER}\nrole: x\nscope: x\nsurfaces: x\nrequirements: x\nsources: x\nevidence: x\nretrieval history: none\nfallback: selective`, 'implementer'), 'reordered capsule field surfaces:');
+  assert.equal(validateCapsule(capsuleWith('logic', { 'role:': 'robustness' }), 'logic'), 'capsule role robustness does not match dispatch role logic');
   assert.equal(validateCapsule(`${CAPSULE_MARKER}\nrole: x\nscope: x\nrequirements: x\nrequirements: forged\nsurfaces: x\nsources: x\nevidence: x\nretrieval history: none\nfallback: selective`, 'implementer'), 'duplicate capsule field requirements:');
-  assert.equal(validateCapsule(`${capsuleWith()}\nCOMPLETE FROZEN PLAN BODY`, 'robustness', { fullPlan: 'COMPLETE FROZEN PLAN BODY' }), 'Track B initial capsule contains complete plan');
-  assert.equal(validateCapsule(capsuleWith({ 'fallback:': 'selective' }), 'implementer', { requestCount: 2 }), 'second context request must use full-context fallback');
+  assert.equal(validateCapsule(`${capsuleWith('robustness')}\nCOMPLETE FROZEN PLAN BODY`, 'robustness', { fullPlan: 'COMPLETE FROZEN PLAN BODY' }), 'Track B initial capsule contains complete plan');
+  assert.equal(validateCapsule(capsuleWith('implementer', { 'fallback:': 'selective' }), 'implementer', { requestCount: 2 }), 'second context request must use full-context fallback');
   const runtime = `${Object.values(sources).join('\n')}\n${read('skills/subagent-driven-development/SKILL.md')}\n${read('skills/post-implementation-qa/SKILL.md')}`;
   const withoutSensorGate = runtime.replace('Sensor Gate (AWM)', 'Sensor gate removed');
   assert.ok(validateContract({ sources, reference, plan, fixture, runtimeOverride: withoutSensorGate }).includes('missing preserved gate sensor gate'));
   assert.ok(validateContract({ sources, reference, plan, fixture, aggregateOverride: CANDIDATE_MAX_BYTES + 1 }).includes(`candidate aggregate ${CANDIDATE_MAX_BYTES + 1} exceeds ${CANDIDATE_MAX_BYTES}`));
+  const corpusFixtures = frozenRoleFixtures(frozenCorpus());
+  const oversizedRoleEvidence = {
+    ...corpusFixtures,
+    logic: { ...corpusFixtures.logic, evidence: 'x'.repeat(CANDIDATE_MAX_BYTES) },
+  };
+  assert.ok(validateContract({ sources, reference, plan, fixture: corpusFixtures.implementer, fixtures: oversizedRoleEvidence }).some(error => error.startsWith('candidate aggregate ')));
 });
