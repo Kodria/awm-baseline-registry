@@ -107,6 +107,21 @@ function assertNoDuplicateContractOwnership(sources) {
   }
 }
 
+function assertNoAutomaticContextRemoval(sources) {
+  const prohibitedPhrases = [
+    /\bprune now\b/i,
+    /\bmerge(?:-|\s+)and(?:-|\s+)prune\b/i,
+    /\bdrop entries? that no longer apply\b/i,
+  ];
+  const automaticRemoval = /\b(?:automatically|automatic)\b[\s\S]{0,100}\b(?:prun(?:e|ing)|delet(?:e|ing|ion)|drop(?:ping)?|remov(?:e|es|ing|al))\b/i;
+  for (const { file, text } of sources) {
+    for (const phrase of prohibitedPhrases) {
+      assert.doesNotMatch(text, phrase, `${file} authorizes automatic context removal`);
+    }
+    assert.doesNotMatch(text, automaticRemoval, `${file} authorizes automatic context removal`);
+  }
+}
+
 function readCandidateIndex() {
   return JSON.parse(readFileSync(path.join(candidateRoot, '.awm/context/index.json'), 'utf8'));
 }
@@ -270,12 +285,27 @@ test('R3.6-R3.8: maintenance cannot prune kernel or infer deletion authority', (
   assert.match(retro, /MUST NOT automatically edit.*protected kernel/s);
   assert.match(retro, /card and index entry/s);
   assert.match(retro, /before.*after.*ID.*equal/s);
-  assert.match(retro, /explicit owner approval.*reason/s);
+  assert.match(retro, /owner-approved removal.*explicit.*approval.*reason.*recorded/s);
   assert.match(plans, /legacy full context.*advisory/s);
   assert.match(plans, /partial.*invalid.*blocking/s);
   assert.match(plans, /threshold.*does not authorize.*prun|budget.*never authorizes.*delet/s);
+  assert.match(plans, /controlled card maintenance.*reviewed budget increase.*continuation.*recorded/s);
+  assert.match(retro, /legacy.*retain.*full context.*without removing.*content/s);
+  assert.match(retro, /owner-approved removal.*explicit.*reason.*recorded/s);
+  assertNoAutomaticContextRemoval([
+    { file: 'skills/writing-plans/SKILL.md', text: plans },
+    { file: 'skills/harness-retro/SKILL.md', text: retro },
+  ]);
   assert.throws(() => assert.match(
     retro.replace('MUST NOT automatically edit', 'MUST automatically edit'),
     /MUST NOT automatically edit.*protected kernel/s,
   ), /did not match/);
+  assert.throws(() => assertNoAutomaticContextRemoval([{
+    file: 'skills/example/SKILL.md',
+    text: '1. **Prune now.** Remove lessons from context before unattended execution.',
+  }]), /authorizes automatic context removal/);
+  assert.throws(() => assertNoAutomaticContextRemoval([{
+    file: 'skills/example/SKILL.md',
+    text: 'Retro automatically removes stale context entries.',
+  }]), /authorizes automatic context removal/);
 });

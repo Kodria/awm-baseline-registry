@@ -45,7 +45,9 @@ WHEN el modo es `desatendido`, el paso 3 del checklist no presenta ítem por ít
 - **Triage existing remedies only** for findings that are recurrent (`awm ledger recurring --min 2`), `blocker` severity, or systemic (the same pattern in ≥2 files/tasks).
 - **Record** every proposed new remedy or unauthorized change in `docs/harness-retros.md` as a recommendation; do not apply it without authority.
 - **Discard** the remainder without asking, documenting each dismissal and its reason in `docs/harness-retros.md` (section "Descartes").
-- The remaining steps run identically: classify, draft only an authorized rule, cure (merge-and-prune), apply, **verify the rule fires**, commit, log, archive, and add the marker.
+- The remaining steps run identically: classify, draft only an authorized rule, integrate it
+  without context removal, apply, **verify the rule fires**, commit, log, archive, and add the
+  marker.
 
 ## Checklist
 
@@ -56,7 +58,9 @@ You MUST create a task for each item and complete them in order:
 3. **Present each item interactively** — present ledger findings, wins, and coverage outcomes; for each remedy, the human decides: structuralize, record as AGENTS.md lesson, or dismiss
 4. **Classify each approved item** — structural / logic / process / security
 5. **Draft the rule** — actual lint/test/constitution/semgrep/AGENTS.md text
-6. **Cure, don't append raw** — when writing to CONSTITUTION.md or AGENTS.md: merge the new lesson into the relevant existing section and drop entries that no longer apply (merge-and-prune, never append raw)
+6. **Cure, don't append raw** — when writing to CONSTITUTION.md or AGENTS.md: integrate the
+   new lesson into the relevant existing section while retaining existing context; organize or
+   compact presentation only without removing content
 7. **Apply the authorized rule** — edit the target file
 8. **Verify the rule fires** (for sensor rules) — manufacture the failure, run the sensor, confirm it catches it
 9. **Commit** the rules
@@ -191,33 +195,38 @@ test('parseConfig returns explicit error on empty input', () => {
 Read `project-context-init/references/context-kernel-v1.md` and run `awm
 preflight` before changing a context file. Branch from the reported state:
 
-- **legacy:** retain the existing full-context merge-and-prune workflow; no
-  context metadata is created as a side effect of a retro.
-- **valid kernel:** select the applicable card, merge or dedupe only in that
-  card, and update its card and index entry together. Capture the ID inventory
-  before and after the change; the before and after ID inventories must be
-  equal.
-- **partial or invalid:** do not cure or prune context. Keep full context
-  visible, report the diagnostic, and wait for a reviewed repair.
+- **legacy:** retain full context. It may organize or compact presentation only
+  without removing any content; no context metadata is created as a side effect
+  of a retro.
+- **valid kernel:** select the applicable card and consolidate equivalent
+  wording only when no content or ID is removed; update its card and index entry
+  together. Capture the ID inventory before and after the change; the before
+  and after ID inventories must be equal.
+- **partial or invalid:** do not modify context. Keep full context visible,
+  report the diagnostic, and wait for a reviewed repair.
 
 MUST NOT automatically edit a protected kernel region. A genuinely
-unconditional rule is proposed to the owner rather than inserted by retro.
-Deleting an ID or card requires explicit owner approval and reason recorded in
-the migration or maintenance history. A budget observation is evidence, never
-deletion authority.
+unconditional rule is proposed to the owner rather than inserted by retro. An
+owner-approved removal requires explicit approval and a reason recorded in the
+migration or maintenance history. A budget observation is evidence, never
+removal authority.
 
-When writing to `CONSTITUTION.md` or `AGENTS.md`, **merge and prune**: fold the new lesson into the relevant existing section and drop entries that no longer apply. These docs are delivered every session — keep them a curated index, not an append-only log, so context never saturates.
+When writing to `CONSTITUTION.md` or `AGENTS.md`, fold the new lesson into the
+relevant existing section while retaining the existing context. These docs are
+delivered every session — organize or compact their presentation without
+removing content, and record any owner-approved removal separately rather than
+performing it in retro.
 
-**On its own this instruction does not hold.** Measured on a real repo, `AGENTS.md` went 73KB → 141KB
-across **45 revisions and never shrank once**, while this exact rule was already in force. Curing is an
-append; pruning is a judgement call nobody is forced to make, so the append wins every time. Treat the
-rule as necessary but not sufficient.
+**Growth still needs visibility.** Measured on a real repo, `AGENTS.md` went 73KB → 141KB
+across **45 revisions**. Integrating lessons can grow context, so treat the
+measurement as necessary evidence for the next owner decision.
 
 **Report the growth here. Do not gate on it here.** This skill is the terminal phase of the run, and
 that run is often unattended — the user is asleep and expects a finished PR in the morning. A budget
-check that fails at this point strands exactly that: nobody is present to prune, and the work stops one
-step from done. The enforcement point is the **Context Budget Gate at the end of `writing-plans`**, the
-last moment a human is guaranteed to be there.
+check that fails at this point strands exactly that: nobody is present to make an
+owner decision, and the work stops one step from done. The enforcement point is
+the **Context Budget Gate at the end of `writing-plans`**, the last moment a
+human is guaranteed to be there.
 
 So after applying a lesson, measure and record — never block:
 
@@ -225,10 +234,11 @@ So after applying a lesson, measure and record — never block:
 awm context-budget --json    # read the numbers; do NOT treat exit 1 as a stop here
 ```
 
-Put the delta in the retro log entry (step 9): what these files weighed before, what they weigh now, and
-which entries you dropped. That is what makes the growth visible at the next plan gate, where someone can
-act on it. A retro that added 3KB and pruned nothing is not a failure — it is a line in the log that the
-next `writing-plans` will surface while the user is present.
+Put the delta in the retro log entry (step 9): what these files weighed before,
+what they weigh now, and any organization or owner-approved maintenance proposal.
+That makes growth visible at the next plan gate, where someone can act on it. A
+retro that added 3KB is not a failure — it is a line in the log that the next
+`writing-plans` will surface while the user is present.
 
 ### 7. Apply
 
@@ -370,7 +380,9 @@ Then add the `awm-retro-complete` marker to the active plan (first line after th
 - **Drafting a "philosophical" rule instead of an enforceable one.** "Code should be readable" is a wish, not a rule.
 - **Replacing the regression test with the harness rule.** Both should exist — the test asserts the specific case is fixed, the rule prevents the class of cases from returning.
 - **Letting AI write the logic structural test.** The skill drafts, the human owns approval. (Modo desatendido es la excepción documentada: el agente aplica sin aprobación por ítem — ver sección "Modo desatendido" — pero conserva el paso de verificación que la regla dispara antes de comitear.)
-- **Appending raw entries to CONSTITUTION.md / AGENTS.md** without merging/pruning — these docs are delivered every session and must stay bounded.
+- **Appending raw entries to CONSTITUTION.md / AGENTS.md** without integrating
+  them into an existing section — these docs are delivered every session and
+  must stay understandable; organization or compaction never removes content.
 - **Curating agent-style lessons into CLAUDE.md.** Agent lessons and wins go to `AGENTS.md` (every agent reads it), never `CLAUDE.md` (Claude-specific).
 - **Skipping the `awm ledger archive` step.** The next session should start with a clean ledger; always archive before closing.
 - **Fast-exiting on an empty ledger without the consistency check.** If reviewers or QA reported findings during the cycle, an empty ledger means the emission pipeline broke — trace and cure it; don't declare "nothing to learn".

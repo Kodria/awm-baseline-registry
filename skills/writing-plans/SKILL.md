@@ -319,9 +319,9 @@ It measures the files injected into **every** session — `AGENTS.md`, `CONSTITU
 `CLAUDE.md` — against the budget pinned in `.awm/context-budget.json`. Silence means within
 budget; proceed. If it reports, present the three options and let the user pick:
 
-1. **Prune now.** The cheapest moment there is: that context is already loaded, and the user is
-   deciding what matters for the work about to start. Lessons already internalized, or superseded
-   by a newer rule, are what should go.
+1. **Controlled maintenance.** Keep the complete context intact; the owner may organize or
+   compact presentation without removing content, or record a separately reviewed maintenance
+   proposal for a later owner-approved removal.
 2. **Raise `maxBytes`** in `.awm/context-budget.json` — a committed, reviewed decision to keep
    paying for that context in every future session.
 3. **Proceed and note it** in the plan, if the growth is not worth interrupting for right now.
