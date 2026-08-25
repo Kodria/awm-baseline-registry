@@ -10,7 +10,12 @@
 
 **Tech Stack:** Markdown, JSON, Node.js 20 `node:test`, Git, AWM CLI R3a publicado. No se agregan servicios, modelos, embeddings, base de datos ni dependencias npm.
 
-**Modo de ejecución:** interactivo
+**Modo de ejecución:** desatendido
+
+> Mandato de ejecución desatendida: completar todas las tareas, revisiones,
+> QA, retro y creación del PR sin pausas entre fases. El triage de retro sólo
+> materializa curas recurrentes, blocker o sistémicas; el resto se documenta
+> como descarte. La aceptación post-merge queda como handoff verificable.
 
 ---
 
@@ -19,8 +24,17 @@
 - Diseño aprobado: `Kodria/agentic-workflow@c81aab088d`, `docs/plans/2026-08-25-r3-context-kernel-selective-retrieval-design.md`.
 - Issue/ledger rector: `Kodria/agentic-workflow#126`.
 - Base del registry: `6ef3a797c7b4259c7ece7c3586a8b81ee510d0b9` (release `v3.8.0`).
-- R3b comienza sólo cuando `npm view agentic-workflow-manager gitHead` coincide con el merge de la rama R3a. El valor observado se escribe literalmente en `awm-registry.json`; no se anticipa una versión.
+- R3b comienza sólo cuando el `gitHead` npm publicado es el commit automático
+  de release que contiene directamente el merge R3a. El publicador añade ese
+  commit después del merge, por lo que igualdad literal sería un falso bloqueo.
+  La versión y el SHA observados se escriben literalmente en `awm-registry.json`;
+  no se anticipa ninguna versión.
 - La release no migra proyectos. Tras instalarla, un proyecto legacy muestra advisory y sigue usando full context. La migración de `agentic-workflow` será una operación explícita y revisada antes de R4.
+- El registry declara el opt-out shell versionado en `.awm/sensors.json`; por
+  diseño `awm sensors run` queda `not_certified` y `preflight --verify-sensors`
+  no es gate de este repo. Las pruebas Node y los workflows `validate.yml` y
+  `auto-tag.yml` son los gates nativos de R3b. No se reconfiguran sensores por
+  worktree para ocultar esa distinción.
 
 ## Requirements
 
@@ -139,11 +153,12 @@ R3A_MERGE_SHA="$(gh pr list --repo Kodria/agentic-workflow --head feat/issue-126
 R3A_NPM_SHA="$(npm view agentic-workflow-manager gitHead)"
 R3A_VERSION="$(npm view agentic-workflow-manager version)"
 test -n "$R3A_MERGE_SHA"
-test "$R3A_MERGE_SHA" = "$R3A_NPM_SHA"
+test -n "$R3A_NPM_SHA"
+gh api "repos/Kodria/agentic-workflow/commits/$R3A_NPM_SHA" --jq '.parents[].sha' | grep -qx "$R3A_MERGE_SHA"
 test "$(awm --version)" = "$R3A_VERSION"
 ```
 
-Expected: tres comparaciones exit 0. Si falla una, R3b permanece bloqueado; no se sustituye por una versión local.
+Expected: versión publicada, release commit y su padre merge verifican exit 0. Si falla una, R3b permanece bloqueado; no se sustituye por una versión local.
 
 - [ ] **Step 2: Escribir el manifest con el valor observado y probarlo**
 
@@ -513,7 +528,7 @@ Expected: validate/auto-tag success y tag resolviendo al merge. Comentar issue #
 
 | Req | Task(s) | Verificación específica |
 |---|---|---|
-| R3.1 | T1, T5 | igualdad npm gitHead/merge, manifest schema/minCLI, aceptación published CLI |
+| R3.1 | T1, T5 | ancestry release npm→merge, manifest schema/minCLI, aceptación published CLI |
 | R3.2 | T1, T3 | legacy advisory ready en CLI y planning lo expone |
 | R3.3 | T1, T2, T3, T4 | candidate parcial falla, migration repair, retro bloquea, fallback malformed |
 | R3.4 | T2 | cardinalidad de markers y anchors dentro de región |
