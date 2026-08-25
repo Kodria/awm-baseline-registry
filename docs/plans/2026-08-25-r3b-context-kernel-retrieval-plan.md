@@ -1,5 +1,7 @@
 # R3b Context Kernel and Selective Retrieval Implementation Plan
 
+<!-- awm-qa-complete: 2026-08-25 -->
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `subagent-driven-development`
 > (recommended) or `executing-plans` to implement this plan task-by-task. Steps
 > use checkbox (`- [ ]`) syntax for tracking.
@@ -8,7 +10,7 @@
 
 **Architecture:** `project-context-init` es dueño de una única referencia normativa; las demás skills sólo la consumen. El registry activa el parser ya publicado por R3a mediante `projectContextSchema: 1` y `minCliVersion`; los roles reciben IDs/rutas/anchors dentro de la cápsula R2, pueden hacer un único batch de lectura nativa y pasan visiblemente a full context ante cualquier incertidumbre o riesgo.
 
-**Tech Stack:** Markdown, JSON, Node.js 20 `node:test`, Git, AWM CLI R3a publicado. No se agregan servicios, modelos, embeddings, base de datos ni dependencias npm.
+**Tech Stack:** Markdown, JSON, Node.js 22 `node:test`, Git, AWM CLI R3a publicado. No se agregan servicios, modelos, embeddings, base de datos ni dependencias npm.
 
 **Modo de ejecución:** desatendido
 

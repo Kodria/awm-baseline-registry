@@ -365,7 +365,7 @@ test('R3.9-R3.13: role capsules select compact evidence and bound native retriev
   assert.equal(validateInitialContextCapsule(initial), null);
   assert.equal(validateR3RetrievalHistory('CTX-PROCESS-001 | CONSTITUTION.md | exact rule absent | read', 1), null);
   assert.equal(validateR3RetrievalHistory('CTX-PROCESS-001 | CONSTITUTION.md | exact rule absent | read', 2), 'full-context: second-context-request');
-  for (const trigger of R3_REQUIRED_TRIGGERS) assert.equal(`full-context: ${trigger}`, `full-context: ${trigger}`);
+  for (const trigger of R3_REQUIRED_TRIGGERS) assert.ok(reference.includes(`full-context: ${trigger}`), `reference must select visible fallback for ${trigger}`);
 });
 
 test('R3.15 mutation proofs reject roles, second batches, card bodies, provider drift, and quality-gate loss', () => {
