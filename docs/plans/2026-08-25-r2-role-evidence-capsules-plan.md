@@ -18,7 +18,12 @@ provider adapter, dependency, or new model call is introduced.
 **Tech Stack:** Markdown Agent Skills, Node.js `node:test`, Git-backed deterministic
 fixtures, existing AWM portability/version/release gates.
 
-**Modo de ejecución:** interactivo
+**Modo de ejecución:** desatendido
+
+> Autorización del propietario (2026-08-25): ejecutar con
+> `subagent-driven-development` sin pausas hasta PR. Esta autorización sustituye
+> el modo interactivo original; los gates, la escalación BLOCKED y la evidencia
+> requerida permanecen obligatorios.
 
 **Source design:** [agentic-workflow design at `092bcbb`](https://github.com/Kodria/agentic-workflow/blob/092bcbb/docs/plans/2026-08-25-r2-role-evidence-capsules-design.md)
 
