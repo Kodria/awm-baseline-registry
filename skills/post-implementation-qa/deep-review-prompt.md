@@ -1,11 +1,9 @@
 # Deep Review Prompt Template (two tracks)
 
 Use this template with `../subagent-driven-development/references/evidence-capsule-v1.md`.
-For every dispatch, compose the common anti-bias header with exactly one stable role contract
-below, then append the single Evidence Capsule v1. Never paste a complete plan into a normal
-Track B capsule. One Track A reviewer and each applicable isolated Track B lens remain
-mandatory: Robustness/Security is never skipped; Logic and Tests run by tier; Design Fidelity
-runs only for UI diffs with committed `.stitch/designs/` artifacts.
+For a dispatch, compose the common stable header below with exactly one selected role block.
+Each role block owns one exact capsule boundary; never concatenate two role
+blocks. Track B never receives a complete plan in normal initial input or selective retrieval.
 
 ## Common anti-bias header (prepend to EVERY subagent)
 
@@ -13,41 +11,6 @@ You are performing post-implementation QA. Find real issues — be thorough and 
 not diplomatic. Fresh context attenuates but does NOT neutralize self-preference bias. A
 deterministic sensor or test outranks judgment. Every finding MUST cite a failing test, sensor
 rule ID, or `file:line`; drop style, taste, and unanchored speculation.
-
-## Track A — Fidelity subagent
-
-Measure what was built against the supplied requirement IDs and exact clauses. For each ID,
-verify it is implemented AND tested. An unimplemented requirement is blocker; partial or
-untested implementation is a finding. Find forward gaps (no code/test) and backward gaps
-(diff code with no requirement). If IDs are unavailable, use visible full-context fallback and
-say that prose was used. Report gaps, not style.
-
-## Track B — Robustness / Security lens subagent
-
-Ignore whether the plan mentioned these: the robustness floor is never out of scope. Look for
-silent `Infinity`/`NaN`/`undefined`, boundary or invalid-input crashes, missing trust-boundary
-validation, division by zero, unchecked access, and unguarded coercion. A public function that
-silently fails on edge input is a finding even when the feature is out of scope.
-
-## Track B — Logic correctness lens subagent
-
-Assume valid input and determine whether results are correct. Look for wrong formulas,
-inverted conditions, broken invariants, inconsistent state, off-by-one, boundary, ordering, and
-happy-path defects. Cite `file:line` and a concrete input → wrong-output example when useful.
-
-## Track B — Tests lens subagent
-
-Judge tests, not implementation. Find requirements without tests, untested IF/THEN edge cases,
-empty asserts, tests that cannot fail, and missing failure/error paths. Cite a test `file:line`
-or an uncovered requirement ID.
-
-## Track B — Design Fidelity lens subagent
-
-Dispatch only for a UI diff with committed `.stitch/designs/` artifacts. Invoke the
-`design-fidelity` comparison procedure: load design, inventory elements, capture the
-implementation, and compare element by element. Missing/diverged elements are findings under
-its severity rubric. A `NOT_CERTIFIED` verdict produces one important finding; do not omit it.
-Each finding cites design artifact plus screenshot or no-browser source location.
 
 ## Output Format
 
@@ -86,13 +49,92 @@ awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity 
 
 Use a stable lowercase signature. If `awm` is unavailable, ledger is best-effort.
 
+## Track A — Fidelity subagent
+
+Measure what was built against supplied requirement IDs and exact clauses. For each ID, verify
+it is implemented AND tested. An unimplemented requirement is blocker; partial or untested
+implementation is a finding. Find forward gaps (no code/test) and backward gaps (diff code
+with no requirement). If IDs are unavailable, use visible full-context fallback and say that
+prose was used. Report gaps, not style.
+
 ## Evidence Capsule v1
 
-role: <Track A fidelity | Track B robustness | Track B logic | Track B tests | Track B design-fidelity>
+role: <Track A fidelity>
 scope: <branch QA scope>
-requirements: <Track A exact IDs/clauses; Track B n/a unless visible full-context fallback>
-surfaces: <role-relevant files/components>
+requirements: <all exact requirement IDs/clauses>
+surfaces: <branch-relevant files/components>
 sources: <authoritative paths, commits, commands>
-evidence: <Track A diff/tests/sensors; Track B lens-relevant hunks/tests/sensors/design artifacts>
+evidence: <branch diff, tests, sensors>
+retrieval history: <none or ordered source + reason>
+fallback: <selective or full-context: exact-trigger>
+
+## Track B — Robustness / Security lens subagent
+
+Ignore whether the plan mentioned these: the robustness floor is never out of scope. Look for
+silent `Infinity`/`NaN`/`undefined`, boundary or invalid-input crashes, missing trust-boundary
+validation, division by zero, unchecked access, and unguarded coercion. A public function that
+silently fails on edge input is a finding even when the feature is out of scope.
+
+## Evidence Capsule v1
+
+role: <Track B robustness>
+scope: <branch QA scope>
+requirements: n/a
+surfaces: <robustness/security-relevant files/components>
+sources: <authoritative paths, commits, commands>
+evidence: <relevant diff hunks, tests, sensors>
+retrieval history: <none or ordered source + reason>
+fallback: <selective or full-context: exact-trigger>
+
+## Track B — Logic correctness lens subagent
+
+Assume valid input and determine whether results are correct. Look for wrong formulas,
+inverted conditions, broken invariants, inconsistent state, off-by-one, boundary, ordering, and
+happy-path defects. Cite `file:line` and a concrete input → wrong-output example when useful.
+
+## Evidence Capsule v1
+
+role: <Track B logic>
+scope: <branch QA scope>
+requirements: n/a
+surfaces: <logic-relevant files/components>
+sources: <authoritative paths, commits, commands>
+evidence: <relevant diff hunks, tests, sensors>
+retrieval history: <none or ordered source + reason>
+fallback: <selective or full-context: exact-trigger>
+
+## Track B — Tests lens subagent
+
+Judge tests, not implementation. Find requirements without tests, untested IF/THEN edge cases,
+empty asserts, tests that cannot fail, and missing failure/error paths. Cite a test `file:line`
+or an uncovered requirement ID.
+
+## Evidence Capsule v1
+
+role: <Track B tests>
+scope: <branch QA scope>
+requirements: n/a
+surfaces: <test-relevant files/components>
+sources: <authoritative paths, commits, commands>
+evidence: <relevant test/diff hunks and sensors>
+retrieval history: <none or ordered source + reason>
+fallback: <selective or full-context: exact-trigger>
+
+## Track B — Design Fidelity lens subagent
+
+Dispatch only for a UI diff with committed `.stitch/designs/` artifacts. Invoke the
+`design-fidelity` comparison procedure: load design, inventory elements, capture the
+implementation, and compare element by element. Missing/diverged elements are findings under
+its severity rubric. A `NOT_CERTIFIED` verdict produces one important finding; do not omit it.
+Each finding cites design artifact plus screenshot or no-browser source location.
+
+## Evidence Capsule v1
+
+role: <Track B design-fidelity>
+scope: <branch QA scope>
+requirements: n/a
+surfaces: <affected screen/components>
+sources: <design artifact paths, commits, commands>
+evidence: <design comparison, relevant diff, tests/sensors>
 retrieval history: <none or ordered source + reason>
 fallback: <selective or full-context: exact-trigger>

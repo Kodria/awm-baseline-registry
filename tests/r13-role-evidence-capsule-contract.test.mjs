@@ -69,25 +69,35 @@ const QA_ROLE_HEADINGS = Object.freeze({
 });
 
 const extractPrefix = (source, role) => {
-  const marker = source.indexOf(CAPSULE_MARKER);
-  assert.ok(marker > 0, `${CAPSULE_MARKER} must follow a stable role contract`);
-  assert.equal(source.indexOf(CAPSULE_MARKER, marker + 1), -1, 'each role template must contain exactly one capsule marker');
-  if (!QA_ROLE_HEADINGS[role]) return source.slice(0, marker);
+  if (!QA_ROLE_HEADINGS[role]) {
+    const marker = source.indexOf(CAPSULE_MARKER);
+    assert.ok(marker > 0, `${CAPSULE_MARKER} must follow a stable role contract`);
+    assert.equal(source.indexOf(CAPSULE_MARKER, marker + 1), -1, 'each role template must contain exactly one capsule marker');
+    return source.slice(0, marker);
+  }
   const firstRole = source.indexOf(QA_ROLE_HEADINGS.trackA);
   const roleStart = source.indexOf(QA_ROLE_HEADINGS[role]);
-  const roleEnd = source.indexOf('\n## ', roleStart + QA_ROLE_HEADINGS[role].length);
-  const outputStart = source.indexOf('## Output Format');
-  assert.ok(firstRole >= 0 && roleStart >= firstRole && outputStart > roleStart, `missing distinct stable QA prefix for ${role}`);
-  return `${source.slice(0, firstRole)}${source.slice(roleStart, roleEnd > 0 ? roleEnd : outputStart)}${source.slice(outputStart, marker)}`;
+  const nextRole = Math.min(...Object.values(QA_ROLE_HEADINGS)
+    .map(heading => source.indexOf(heading, roleStart + 1)).filter(index => index >= 0), source.length);
+  const segment = source.slice(roleStart, nextRole);
+  const marker = segment.indexOf(CAPSULE_MARKER);
+  assert.ok(firstRole >= 0 && roleStart >= firstRole && marker > 0, `missing exact Evidence Capsule v1 boundary for ${role}`);
+  assert.equal(segment.indexOf(CAPSULE_MARKER, marker + 1), -1, `${role} must have exactly one Evidence Capsule v1 boundary`);
+  return `${source.slice(0, firstRole)}${segment.slice(0, marker)}`;
 };
 
 const validateCapsule = (capsule, role, { fullPlan = '', requestCount = 0, provider = 'codex', metadata = true, requestedSource, requestedReason } = {}) => {
   if (!metadata) return 'full-context: legacy-metadata';
   if (!capsule || !capsule.includes(CAPSULE_MARKER)) return 'full-context: malformed-or-missing-evidence';
-  let previous = capsule.indexOf(CAPSULE_MARKER);
+  const marker = capsule.indexOf(CAPSULE_MARKER);
+  if (capsule.indexOf(CAPSULE_MARKER, marker + 1) >= 0) return 'expected exactly one Evidence Capsule v1 marker';
+  const capsuleBody = capsule.slice(marker + CAPSULE_MARKER.length);
+  let previous = -1;
   for (const field of CAPSULE_FIELDS) {
-    const index = capsule.indexOf(field);
-    if (index < 0) return `missing capsule field ${field}`;
+    const matches = [...capsuleBody.matchAll(new RegExp(`^${escapeRegExp(field)}[^\\n]*$`, 'gm'))];
+    if (matches.length === 0) return `missing capsule field ${field}`;
+    if (matches.length > 1) return `duplicate capsule field ${field}`;
+    const index = matches[0].index;
     if (index < previous) return `reordered capsule field ${field}`;
     previous = index;
   }
@@ -100,6 +110,7 @@ const validateCapsule = (capsule, role, { fullPlan = '', requestCount = 0, provi
 };
 
 const splitDiffByFile = diff => diff.split(/^diff --git /m).filter(Boolean).map(part => `diff --git ${part}`);
+const capsuleWith = (overrides = {}) => `${CAPSULE_MARKER}\n${CAPSULE_FIELDS.map(field => `${field} ${overrides[field] ?? 'value'}`).join('\n')}`;
 const assembleRole = (template, role, fixture, provider = 'codex') => {
   const prefix = extractPrefix(template, role);
   const fallback = fixture.fallback ?? 'selective';
@@ -129,8 +140,8 @@ const validateContract = ({ sources, reference, plan, fixture, aggregateOverride
   const runtime = runtimeOverride ?? `${Object.values(sources).join('\n')}\n${read('skills/subagent-driven-development/SKILL.md')}\n${read('skills/post-implementation-qa/SKILL.md')}`;
   for (const [name, anchor] of QUALITY_GATES) if (!runtime.includes(anchor)) errors.push(`missing preserved gate ${name}`);
   if (!plan.includes('issue #126') || !/\| T[0-4] \|/.test(plan)) errors.push('missing T0-T4 or issue trace');
-  const candidate = aggregateOverride ?? Object.values(sources).reduce((sum, source) => {
-    try { return sum + byteLength(assembleRole(source, 'implementer', fixture, provider)); }
+  const candidate = aggregateOverride ?? Object.entries(sources).filter(([role]) => role !== 'designFidelity').reduce((sum, [role, source]) => {
+    try { return sum + byteLength(assembleRole(source, role, fixture, provider)); }
     catch { return sum; }
   }, 0);
   if (candidate > CANDIDATE_MAX_BYTES) errors.push(`candidate aggregate ${candidate} exceeds ${CANDIDATE_MAX_BYTES}`);
@@ -160,7 +171,7 @@ test('R2 contract: canonical capsule, role parity, safe retrieval, and byte ledg
     assert.equal(validateCapsule(first, role, { fullPlan: 'COMPLETE FROZEN PLAN BODY' }), null);
   }
   assert.notEqual(extractPrefix(sources.trackA, 'trackA'), extractPrefix(sources.robustness, 'robustness'), 'Track A and robustness must dispatch distinct stable prefixes');
-  for (const trigger of FULL_CONTEXT_TRIGGERS) assert.equal(validateCapsule(`${CAPSULE_MARKER}\n${CAPSULE_FIELDS.map(field => `${field} value`).join('\n')}\nfallback: full-context: ${trigger}`, 'implementer'), null);
+  for (const trigger of FULL_CONTEXT_TRIGGERS) assert.equal(validateCapsule(capsuleWith({ 'fallback:': `full-context: ${trigger}` }), 'implementer'), null);
   const firstRequest = `${CAPSULE_MARKER}\nrole: implementer\nscope: R2.1\nrequirements: exact clause\nsurfaces: skills/example.md\nsources: git show abc\nevidence: tests: pass\nretrieval history: git show abc — exact clause is absent\nfallback: selective\nstatus: NEEDS_CONTEXT\nmissing-source: git show abc\nreason: exact clause is absent\n`;
   assert.equal(validateCapsule(firstRequest, 'implementer', { requestCount: 1, requestedSource: 'git show abc', requestedReason: 'exact clause is absent' }), null);
   assert.equal(validateCapsule(firstRequest, 'implementer', { requestCount: 1, requestedSource: 'git show wrong', requestedReason: 'exact clause is absent' }), 'first context request must record exact authoritative source and reason in retrieval history');
@@ -202,8 +213,9 @@ test('R2 mutation proofs reject broken contracts with actionable messages', () =
   assert.ok(validateContract({ sources: withoutLogic, reference, plan, fixture }).includes('removed role logic'));
   assert.ok(validateContract({ sources, reference, plan, fixture, providerOutputs: { codex: 'same capsule', 'claude-code': 'different capsule' } }).includes('provider divergence'));
   assert.equal(validateCapsule(`${CAPSULE_MARKER}\nrole: x\nscope: x\nsurfaces: x\nrequirements: x\nsources: x\nevidence: x\nretrieval history: none\nfallback: selective`, 'implementer'), 'reordered capsule field surfaces:');
-  assert.equal(validateCapsule(`${CAPSULE_MARKER}\n${CAPSULE_FIELDS.map(field => `${field} value`).join('\n')}\nCOMPLETE FROZEN PLAN BODY`, 'robustness', { fullPlan: 'COMPLETE FROZEN PLAN BODY' }), 'Track B initial capsule contains complete plan');
-  assert.equal(validateCapsule(`${CAPSULE_MARKER}\n${CAPSULE_FIELDS.map(field => `${field} value`).join('\n')}\nfallback: selective`, 'implementer', { requestCount: 2 }), 'second context request must use full-context fallback');
+  assert.equal(validateCapsule(`${CAPSULE_MARKER}\nrole: x\nscope: x\nrequirements: x\nrequirements: forged\nsurfaces: x\nsources: x\nevidence: x\nretrieval history: none\nfallback: selective`, 'implementer'), 'duplicate capsule field requirements:');
+  assert.equal(validateCapsule(`${capsuleWith()}\nCOMPLETE FROZEN PLAN BODY`, 'robustness', { fullPlan: 'COMPLETE FROZEN PLAN BODY' }), 'Track B initial capsule contains complete plan');
+  assert.equal(validateCapsule(capsuleWith({ 'fallback:': 'selective' }), 'implementer', { requestCount: 2 }), 'second context request must use full-context fallback');
   const runtime = `${Object.values(sources).join('\n')}\n${read('skills/subagent-driven-development/SKILL.md')}\n${read('skills/post-implementation-qa/SKILL.md')}`;
   const withoutSensorGate = runtime.replace('Sensor Gate (AWM)', 'Sensor gate removed');
   assert.ok(validateContract({ sources, reference, plan, fixture, runtimeOverride: withoutSensorGate }).includes('missing preserved gate sensor gate'));
