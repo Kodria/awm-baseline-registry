@@ -1,6 +1,6 @@
 ---
 name: development-process
-version: "1.7.4"
+version: "1.7.5"
 license: Apache-2.0
 description: Use when starting, resuming, or routing a development task
 ---
@@ -19,6 +19,9 @@ WHEN an active plan exists, read `references/execution-mode.md` before routing.
 WHEN UI is pending or a plan declares `**Design artifacts:**`, read `references/frontend-handoff.md` and apply its blocking bundle gate.
 IF a business-level unknown appears during development, read
 `references/business-gap.md`; do not improvise the answer.
+
+Each conditional reference above is required when triggered. If unavailable, report
+the limitation and stop; never bypass its contract or route as though it was read.
 
 WHEN research or documentation changes no executable behavior, require only
 proportional structural verification. Do not require full tests, sensors, CI

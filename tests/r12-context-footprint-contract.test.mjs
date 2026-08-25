@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -18,6 +20,14 @@ const observedClosure = [
   'skills/brainstorming/references/spec-contract.md',
   'skills/brainstorming/references/specialist-gate.md',
 ];
+const observedClosureBytes = (overrides = new Map()) => observedClosure.reduce(
+  (sum, source) => sum + statSync(overrides.get(source) ?? new URL(`../${source}`, import.meta.url)).size,
+  0,
+);
+const assertObservedClosureFits = (overrides) => assert.ok(
+  observedClosureBytes(overrides) <= MAX_OBSERVED_BYTES,
+  `observed closure ${observedClosureBytes(overrides)} bytes exceeds ${MAX_OBSERVED_BYTES}`,
+);
 
 test('R1.1-R1.4, R1.9, R1.13: the embedded zero-model ledger is durable and honest', () => {
   assert.match(plan, /^## Embedded R0 Measurement Ledger$/m);
@@ -63,26 +73,26 @@ test('R1.8: non-executable research/docs use proportional verification', () => {
 });
 
 test('R1.10: the observed mandatory closure is at least 40 percent smaller', () => {
-  const actual = observedClosure.reduce((sum, path) => sum + bytes(path), 0);
+  const actual = observedClosureBytes();
   assert.ok(actual <= MAX_OBSERVED_BYTES, `observed closure ${actual} bytes exceeds ${MAX_OBSERVED_BYTES}`);
 
   const target = 'skills/development-process/SKILL.md';
   const targetUrl = new URL(`../${target}`, import.meta.url);
-  const original = readFileSync(targetUrl, 'utf8');
+  const fixture = mkdtempSync(path.join(tmpdir(), 'r12-context-footprint-'));
+  const fixtureTarget = path.join(fixture, target);
   const excess = MAX_OBSERVED_BYTES + 1 - actual;
 
   try {
-    writeFileSync(targetUrl, `${original}${'x'.repeat(excess)}`);
+    mkdirSync(path.dirname(fixtureTarget), { recursive: true });
+    copyFileSync(targetUrl, fixtureTarget);
+    writeFileSync(fixtureTarget, `${readFileSync(fixtureTarget, 'utf8')}${'x'.repeat(excess)}`);
     assert.throws(
-      () => assert.ok(
-        observedClosure.reduce((sum, path) => sum + bytes(path), 0) <= MAX_OBSERVED_BYTES,
-        'observed closure must reject an oversized included source file',
-      ),
-      /observed closure must reject an oversized included source file/,
+      () => assertObservedClosureFits(new Map([[target, fixtureTarget]])),
+      /observed closure \d+ bytes exceeds \d+/,
       'the closure check must reject an oversized included source file',
     );
   } finally {
-    writeFileSync(targetUrl, original);
+    rmSync(fixture, { recursive: true, force: true });
   }
 });
 
@@ -145,4 +155,16 @@ test('R1 follow-up: compact ownership preserves review-critical gates', () => {
   assert.match(frontend, /This work needs the `frontend` bundle[\s\S]{0,200}awm update && awm init/);
   assert.doesNotMatch(development, /\$HOME\/\.agents\/skills|\.agents\/skills|\$HOME\/\.claude\/skills|\.claude\/skills/, 'frontend discovery locations belong only in frontend-handoff.md');
   assert.doesNotMatch(development, /For frontend discovery, verify both `ui-design` and `frontend-craft`/);
+});
+
+test('R1 follow-up: unavailable triggered lazy references block routing honestly', () => {
+  for (const reference of [
+    'references/execution-mode.md',
+    'references/frontend-handoff.md',
+    'references/business-gap.md',
+  ]) assert.match(
+    development,
+    new RegExp(`${reference.replace('.', '\\.')}(?=[\\s\\S]{0,360}unavailable[\\s\\S]{0,160}(report|state)[\\s\\S]{0,160}(stop|block)[\\s\\S]{0,160}(never|do not)[\\s\\S]{0,160}(bypass|route))`, 'i'),
+    `${reference} must report its limitation and block instead of bypassing a required contract`,
+  );
 });
