@@ -1,5 +1,14 @@
 # Harness Retros
 
+## 2026-08-25 — R2 Evidence Capsule: hallazgos de revisión sin ledger
+
+- **Class:** proceso.
+- **Occurrences (ledger count):** 1 important (`reviewer-report-without-ledger`); sin recurrencia mecánica.
+- **Evidencia:** los revisores devolvieron hallazgos que se corrigieron, pero `awm ledger list` estaba vacío durante el QA. El controlador registró y archivó el hallazgo al detectarlo; el archive fue verificado con una segunda lectura vacía.
+- **Remedio existente:** `subagent-driven-development` ya exige construir prompts desde templates con `awm ledger add` y que el controlador compruebe crecimiento del ledger antes de completar una tarea. No se añade otra regla ni infraestructura sin autoridad nueva.
+- **Descartes (modo desatendido):** `reviewer-report-without-ledger` — no se modifica el contrato: el incumplimiento fue operacional, no una ausencia de requisito. La recomendación para la siguiente ejecución es aplicar el gate existente antes de aceptar cada reporte.
+- **Sensores:** `awm sensors run` quedó `not_certified` por falta de `.awm/sensors.json`; excepción previamente aprobada y trazada en [agentic-workflow#129](https://github.com/Kodria/agentic-workflow/issues/129). Los gates nativos del registry sí ejecutaron 94/94 pruebas.
+
 ## 2026-08-24 — R1b (process-lifecycle, elicitación/generación/verificación): patrón de aserciones laxas y archive de ledger no verificado
 
 - **Class:** agent (×1, recurrente) / process (×1).

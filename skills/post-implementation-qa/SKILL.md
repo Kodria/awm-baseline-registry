@@ -1,6 +1,6 @@
 ---
 name: post-implementation-qa
-version: "1.6.0"
+version: "1.7.0"
 license: Apache-2.0
 description: Use after implementation is complete and before finishing the branch — runs two-track QA (Track A fidelity vs. the plan, Track B plan-agnostic quality lenses), drives a fix loop until clean. Also works standalone when a bug is found independently.
 ---
@@ -14,6 +14,25 @@ description: Use after implementation is complete and before finishing the branc
 The harness prevents future bugs (preventive). This skill closes bugs found now (corrective). Runs between execution and finishing, replacing the informal "full review before closing" prompt.
 
 **Core principle:** No branch is closed without evidence that what was built matches what was planned AND that the code is correct.
+
+## Evidence Capsule v1 Dispatch Contract
+
+Before dispatching Track A or any applicable Track B lens, read the exact shared reference
+`../subagent-driven-development/references/evidence-capsule-v1.md`. Build prompts from
+`./deep-review-prompt.md`, retain one Track A and each applicable isolated Track B lens, and
+append exactly one capsule after its stable role contract. Track A gets all exact requirement
+IDs/clauses, branch surfaces, authoritative diff/hunks, tests, and sensors. Each Track B lens
+gets only lens-relevant surfaces, source/hunks, tests/sensors, and applicable design artifacts:
+normal Track B input never contains the complete plan or unrelated requirement prose.
+
+For the first exact `NEEDS_CONTEXT`, append only named authoritative evidence plus reason to
+retrieval history and re-dispatch once. A second request, ambiguity, security-or-robustness,
+root configuration, public contract, uncertain cross-cutting impact, legacy metadata, or
+malformed/missing evidence takes the named visible full-context fallback from the shared
+reference. Preserve sensor precedence, deterministic dedup, ledger gate, fix loop,
+design-fidelity condition, completion marker, docs handoff, and robustness/security floor.
+Record prefix/capsule/retrieval/fallback/dispatch values separately; do not persist capsules,
+source bodies, secrets, credentials, or unrestricted worker responses.
 
 ## Modo de ejecución (lectura del campo)
 
@@ -158,10 +177,10 @@ Also read the spec's `## Requirements` section to collect the requirement IDs �
 
 ### Step 3: Dispatch the review (both tracks)
 
-**Build every prompt FROM the `./deep-review-prompt.md` template** — read the file and inject the context into its structure. An inline prompt written from memory loses the ledger instruction and the anti-bias header. Inject into each:
-- Full plan text + the requirement IDs (for Track A)
-- Full git diff of the branch
-- Full output of `awm sensors run`
+**Build every prompt FROM the `./deep-review-prompt.md` template** — read it and the shared
+capsule reference before injecting evidence. An inline prompt loses the ledger instruction and
+anti-bias header. Inject exact Track A clauses or only lens-relevant Track B evidence; do not
+inject a complete plan into a normal Track B capsule.
 
 **Track A — one fidelity subagent** using the template's Track A section (IDs as completeness checklist).
 
