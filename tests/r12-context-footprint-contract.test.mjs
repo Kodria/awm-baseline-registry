@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import test from 'node:test';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -65,7 +65,25 @@ test('R1.8: non-executable research/docs use proportional verification', () => {
 test('R1.10: the observed mandatory closure is at least 40 percent smaller', () => {
   const actual = observedClosure.reduce((sum, path) => sum + bytes(path), 0);
   assert.ok(actual <= MAX_OBSERVED_BYTES, `observed closure ${actual} bytes exceeds ${MAX_OBSERVED_BYTES}`);
-  assert.throws(() => assert.ok(MAX_OBSERVED_BYTES + 1 <= MAX_OBSERVED_BYTES), /false == true|The expression evaluated to a falsy value/);
+
+  const target = 'skills/development-process/SKILL.md';
+  const targetUrl = new URL(`../${target}`, import.meta.url);
+  const original = readFileSync(targetUrl, 'utf8');
+  const excess = MAX_OBSERVED_BYTES + 1 - actual;
+
+  try {
+    writeFileSync(targetUrl, `${original}${'x'.repeat(excess)}`);
+    assert.throws(
+      () => assert.ok(
+        observedClosure.reduce((sum, path) => sum + bytes(path), 0) <= MAX_OBSERVED_BYTES,
+        'observed closure must reject an oversized included source file',
+      ),
+      /observed closure must reject an oversized included source file/,
+      'the closure check must reject an oversized included source file',
+    );
+  } finally {
+    writeFileSync(targetUrl, original);
+  }
 });
 
 test('R1.11-R1.12: net savings wait for a real T4 cycle', () => {
@@ -117,7 +135,7 @@ test('R1 recovery: compact owners retain their complete behavioral contracts', (
 test('R1 follow-up: compact ownership preserves review-critical gates', () => {
   const specialist = read('skills/brainstorming/references/specialist-gate.md');
   const frontend = read('skills/development-process/references/frontend-handoff.md');
-  const frontendDirective = 'WHEN UI is pending or a plan declares `**Design artifacts:**`, read references/frontend-handoff.md and apply its blocking bundle gate.';
+  const frontendDirective = 'WHEN UI is pending or a plan declares `**Design artifacts:**`, read `references/frontend-handoff.md` and apply its blocking bundle gate.';
 
   assert.match(brainstorming, /Write and save the committed design artifact/i);
   assert.match(development, /Never create an ad-hoc plan while classifying/i);

@@ -1,6 +1,6 @@
 ---
 name: development-process
-version: "1.7.3"
+version: "1.7.4"
 license: Apache-2.0
 description: Use when starting, resuming, or routing a development task
 ---
@@ -16,7 +16,7 @@ this entry check is advisory, not blocking. If the command is unavailable, say s
 and continue; `writing-plans` owns the blocking preflight gate before execution.
 
 WHEN an active plan exists, read `references/execution-mode.md` before routing.
-WHEN UI is pending or a plan declares `**Design artifacts:**`, read references/frontend-handoff.md and apply its blocking bundle gate.
+WHEN UI is pending or a plan declares `**Design artifacts:**`, read `references/frontend-handoff.md` and apply its blocking bundle gate.
 IF a business-level unknown appears during development, read
 `references/business-gap.md`; do not improvise the answer.
 
