@@ -1,3 +1,4 @@
 {
-  "minCliVersion": "8.5.0"
+  "minCliVersion": "9.3.0",
+  "projectContextSchema": 1
 }
