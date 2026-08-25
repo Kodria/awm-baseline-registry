@@ -83,3 +83,31 @@ test('R1.14: Codex and Claude Code remain one provider-neutral contract', () => 
   assert.match(runtime, /unavailable[\s\S]{0,160}(state|report|say)[\s\S]{0,120}(limitation|degradation)/i);
   assert.doesNotMatch(runtime, /SKILL\.codex\.md|SKILL\.claude\.md/);
 });
+
+test('R1 recovery: compact owners retain their complete behavioral contracts', () => {
+  const brief = read('skills/brainstorming/references/brief-preload.md');
+  const spec = read('skills/brainstorming/references/spec-contract.md');
+  const ui = read('skills/brainstorming/references/ui-screen-detection.md');
+  const mode = read('skills/development-process/references/execution-mode.md');
+
+  assert.match(brief, /mode:\s*brief[\s\S]{0,240}readiness-gate[\s\S]{0,400}N#[\s\S]{0,240}RF-x\.y[\s\S]{0,240}RNF-x\.y[\s\S]{0,240}Out of scope[\s\S]{0,240}DA-#/i);
+  assert.match(brief, /Before asking any clarifying question[\s\S]{0,240}do NOT ask/i);
+  assert.match(brief, /never exempts[\s\S]{0,240}technical validation[\s\S]{0,240}design approval[\s\S]{0,240}spec self-review/i);
+
+  assert.match(spec, /Prioritize[\s\S]{0,100}IF\s*<trigger>,\s*THEN[\s\S]{0,240}(edge cases|invalid inputs|error paths)/i);
+  for (const check of ['Placeholder scan', 'Internal consistency', 'Scope check', 'Ambiguity check', 'EARS/ID check']) assert.match(spec, new RegExp(check));
+
+  assert.match(ui, /\| Screen \| Description \| Device \| Status \|[\s\S]{0,160}\| \[name\] \| \[description\] \| \[MOBILE\/DESKTOP\/TABLET\] \| pending \|/);
+  assert.match(ui, /at least one row where `?Status`? is exactly `?pending`?/i);
+
+  assert.match(mode, /BLOCKED[\s\S]{0,300}(escalat|user|controller)[\s\S]{0,300}(never|must not)[\s\S]{0,120}(skip|ignore)/i);
+  assert.match(usingAwm, /one-off advisory[\s\S]{0,240}architecture-advisor[\s\S]{0,160}directly/i);
+
+  assert.match(development, /Harness Preflight[\s\S]{0,240}advisory[\s\S]{0,240}(continue|non-blocking)/i);
+  assert.match(development, /frontend[\s\S]{0,200}ui-design[\s\S]{0,200}frontend-craft[\s\S]{0,240}awm update && awm init/i);
+
+  assert.match(brainstorming, /Every behavior change[\s\S]{0,160}scaled design/i);
+  assert.match(brainstorming, /Design for isolation and clarity[\s\S]{0,360}one clear purpose[\s\S]{0,360}well-defined interfaces/i);
+  assert.match(brainstorming, /YAGNI ruthlessly[\s\S]{0,160}unnecessary features/i);
+  assert.match(brainstorming, /Do not\s+propose unrelated refactoring/i);
+});

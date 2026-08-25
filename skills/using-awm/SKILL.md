@@ -1,6 +1,6 @@
 ---
 name: using-awm
-version: "1.4.0"
+version: "1.4.1"
 license: Apache-2.0
 description: Use when starting any development conversation - establishes tiered skill invocation policy
 ---
@@ -46,6 +46,11 @@ never invent the missing contract.
 | Ambiguous | ASK: “mature the idea (product layer) or build now (development)?” — never guess |
 
 `brainstorming` explores solution space through `development-process`; `product-discovery` explores problem space. Documentation uses `docs-system-orchestrator`. Returning from development to product goes through `product-process`, never an improvised business answer.
+
+Architecture disambiguation: a full, standalone evaluation that produces a portable
+report goes to `product-process` → `architecture-assessment`. A one-off advisory
+opinion mid-conversation, with no report artifact, stays with `architecture-advisor`
+directly as a specialized skill.
 
 ## Announcing Skill Use
 

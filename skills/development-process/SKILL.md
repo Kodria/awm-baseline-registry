@@ -1,6 +1,6 @@
 ---
 name: development-process
-version: "1.7.0"
+version: "1.7.1"
 license: Apache-2.0
 description: Use when starting, resuming, or routing a development task
 ---
@@ -8,6 +8,12 @@ description: Use when starting, resuming, or routing a development task
 # Development Process
 
 Invoke the `development-process` skill. You do NOT write code directly: read state, decide the phase, and invoke the next skill.
+
+## Harness Preflight (advisory at entry)
+
+Before reading state, run `awm preflight`. Report its result in one line and continue:
+this entry check is advisory, not blocking. If the command is unavailable, say so once
+and continue; `writing-plans` owns the blocking preflight gate before execution.
 
 WHEN an active plan exists, read `references/execution-mode.md` before routing.
 WHEN UI is pending or a plan declares `**Design artifacts:**`, read
@@ -51,4 +57,8 @@ Cross-cutting gates: use `test-driven-development` for implementation, `systemat
 
 Report the detected state, next skill, and reason. Never invoke the next skill without user confirmation. The next skill takes control after approval.
 
-For frontend discovery, search `"$HOME/.agents/skills/`, `".agents/skills/`, `"$HOME/.claude/skills/`, and `".claude/skills/`; the shared global root is required for Codex/OpenCode portability.
+For frontend discovery, verify both `ui-design` and `frontend-craft` in supported
+shared or project paths: `"$HOME/.agents/skills/<skill>"`, `".agents/skills/<skill>"`,
+`"$HOME/.claude/skills/<skill>"`, or `".claude/skills/<skill>"`. If either is absent,
+block the handoff and instruct: `awm update && awm init`, then select the `frontend`
+bundle and resume. Do not improvise the phase without both skills.
