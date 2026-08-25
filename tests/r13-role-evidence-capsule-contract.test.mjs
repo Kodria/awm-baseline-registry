@@ -194,30 +194,87 @@ const R3_ROLE_CAPSULES = Object.freeze([
 const R3_REQUIRED_TRIGGERS = Object.freeze([
   'second-context-request', 'missing-or-invalid-indexed-source', 'selection-uncertain',
 ]);
+const CONTEXT_KERNEL_REFERENCE = 'skills/project-context-init/references/context-kernel-v1.md';
+const CONTEXT_KERNEL_REFERENCE_FROM_SDD = '../project-context-init/references/context-kernel-v1.md';
+const CONTEXT_KERNEL_REFERENCE_FROM_QA = '../project-context-init/references/context-kernel-v1.md';
+const R3_CONSUMER_RULES = Object.freeze([
+  'CTX-ID | path | anchor',
+  'complete Context Card body',
+  'selection-uncertain',
+  'missing-or-invalid-indexed-source',
+  'one controller-native read round',
+  'one native read batch',
+  'second request',
+  'second batch',
+]);
+
+function extractProviderDispatchContracts(source) {
+  const blocks = [...source.matchAll(/<!-- awm-context-kernel-dispatch-v1\n([\s\S]*?)-->/g)];
+  const contracts = new Map();
+  for (const [, body] of blocks) {
+    const fields = Object.fromEntries(body.trim().split('\n').map(line => {
+      const match = line.match(/^([a-z-]+):\s*(.+)$/);
+      assert.ok(match, `invalid context-kernel dispatch field: ${line}`);
+      return [match[1], match[2]];
+    }));
+    assert.deepEqual(Object.keys(fields).sort(), ['canonical', 'mechanism', 'provider']);
+    assert.ok(!contracts.has(fields.provider), `duplicate provider dispatch contract: ${fields.provider}`);
+    contracts.set(fields.provider, fields);
+  }
+  return contracts;
+}
+
+function canonicalRetrievalContract(reference) {
+  return {
+    compactInitialEvidence: /initial `sources` field contains compact references only/i.test(reference),
+    oneBatch: /one native read batch/i.test(reference),
+    secondBatchFallback: /a second request uses\s+`fallback: full-context: second-context-request`/i.test(reference),
+    evidenceRequired: /`when`, task\s+surface, and requirement evidence demonstrably apply/i.test(reference),
+    parity: /same selected IDs, compact references, retrieval-history records, full-context triggers,\s+evidence, and verdict contract/i.test(reference),
+  };
+}
 
 function validateR3BoundedRetrieval({ reference, sdd, qa, templates, providers }) {
   const errors = [];
   if (templates.length !== R3_ROLE_CAPSULES.length) errors.push('removed role template');
-  const normalizedReference = reference.replace(/\s+/g, ' ');
   for (const trigger of R3_REQUIRED_TRIGGERS) {
     if (!reference.includes(trigger)) errors.push(`missing R3 fallback ${trigger}`);
   }
-  for (const phrase of [
-    'CTX-ID | path | anchor', 'complete Context Card body', 'demonstrably apply to the role',
-    'one native read batch', 'ID | source | reason | result',
-  ]) if (!normalizedReference.includes(phrase)) errors.push(`missing canonical retrieval rule ${phrase}`);
-  for (const [name, source] of [['SDD', sdd], ['QA', qa]]) {
-    const normalized = source.replace(/\s+/g, ' ');
-    for (const phrase of [
-      'published parser', 'selection-uncertain', 'missing-or-invalid-indexed-source',
-      'one controller-native read round', 'second request', 'Codex and Claude Code',
-    ]) if (!normalized.includes(phrase)) errors.push(`${name} missing bounded retrieval ${phrase}`);
+  for (const [name, present] of Object.entries(canonicalRetrievalContract(reference))) {
+    if (!present) errors.push(`missing canonical retrieval rule ${name}`);
+  }
+  const consumers = [
+    ['SDD', sdd, CONTEXT_KERNEL_REFERENCE_FROM_SDD],
+    ['QA', qa, CONTEXT_KERNEL_REFERENCE_FROM_QA],
+  ];
+  for (const [name, source, referencePath] of consumers) {
+    if (!source.includes(referencePath) || !/sole normative contract/i.test(source)) {
+      errors.push(`${name} does not delegate Context Kernel rules to the canonical reference`);
+    }
+    for (const rule of R3_CONSUMER_RULES) {
+      if (source.includes(rule)) errors.push(`${name} duplicates canonical retrieval rule ${rule}`);
+    }
+  }
+  const dispatches = extractProviderDispatchContracts(sdd);
+  if (dispatches.size !== 2 || !dispatches.has('codex') || !dispatches.has('claude-code')) {
+    errors.push('missing Codex/Claude dispatch contracts');
+  } else {
+    const normalize = ({ provider, ...contract }) => contract;
+    if (JSON.stringify(normalize(dispatches.get('codex'))) !== JSON.stringify(normalize(dispatches.get('claude-code')))) {
+      errors.push('provider dispatch divergence');
+    }
+    for (const provider of ['codex', 'claude-code']) {
+      const contract = dispatches.get(provider);
+      if (contract.canonical !== CONTEXT_KERNEL_REFERENCE_FROM_SDD || contract.mechanism !== 'native-read-dispatch') {
+        errors.push(`invalid ${provider} dispatch contract`);
+      }
+    }
   }
   for (const source of templates) {
     if (!source.includes('CTX-ID | path | anchor')) errors.push('role template omits compact context references');
     if (!source.includes('ID | source | reason | result')) errors.push('role template omits retrieval history');
   }
-  if (providers.codex !== providers['claude-code']) errors.push('provider divergence');
+  if (providers && providers.codex !== providers['claude-code']) errors.push('provider divergence');
   return errors;
 }
 
@@ -373,12 +430,14 @@ test('R3.15 mutation proofs reject roles, second batches, card bodies, provider 
   const sdd = read('skills/subagent-driven-development/SKILL.md');
   const qa = read('skills/post-implementation-qa/SKILL.md');
   const templates = R3_ROLE_CAPSULES.map(read);
-  const providers = { codex: 'same', 'claude-code': 'same' };
   const withoutRole = templates.slice(0, -1);
-  assert.ok(validateR3BoundedRetrieval({ reference, sdd, qa, templates: withoutRole, providers }).some(error => error.includes('role template')));
-  assert.ok(validateR3BoundedRetrieval({ reference: reference.replaceAll('second-context-request', 'removed-second-request'), sdd, qa, templates, providers }).includes('missing R3 fallback second-context-request'));
+  assert.ok(validateR3BoundedRetrieval({ reference, sdd, qa, templates: withoutRole }).some(error => error.includes('role template')));
+  assert.ok(validateR3BoundedRetrieval({ reference: reference.replaceAll('second-context-request', 'removed-second-request'), sdd, qa, templates }).includes('missing R3 fallback second-context-request'));
+  assert.ok(validateR3BoundedRetrieval({ reference: reference.replace('one native read batch', 'many native read batches'), sdd, qa, templates }).includes('missing canonical retrieval rule oneBatch'));
   assert.equal(validateInitialContextCapsule(`${CAPSULE_MARKER}\nsources: CTX-PROCESS-001 | CONSTITUTION.md | awm-context:CTX-PROCESS-001\nCOMPLETE CONTEXT CARD BODY`), 'initial capsule contains complete Context Card body');
-  assert.ok(validateR3BoundedRetrieval({ reference, sdd, qa, templates, providers: { codex: 'one-batch', 'claude-code': 'two-batches' } }).includes('provider divergence'));
+  const claudeOnlyMutation = sdd.replace('provider: claude-code\nmechanism: native-read-dispatch', 'provider: claude-code\nmechanism: invented-read-dispatch');
+  assert.ok(validateR3BoundedRetrieval({ reference, sdd: claudeOnlyMutation, qa, templates }).some(error => error === 'provider dispatch divergence' || error === 'invalid claude-code dispatch contract'));
+  assert.ok(validateR3BoundedRetrieval({ reference, sdd, qa: qa.replace('sole normative contract', 'delegated contract'), templates }).includes('QA does not delegate Context Kernel rules to the canonical reference'));
   const sources = Object.fromEntries(Object.entries(ROLE_SOURCES).map(([role, source]) => [role, read(source)]));
   const runtime = `${Object.values(sources).join('\n')}\n${sdd}\n${qa}`;
   const fixture = { scope: 'R3', requirements: 'R3', surfaces: 'file', sources: 'git show', evidence: 'pass' };

@@ -186,18 +186,10 @@ function assertCandidateLayout(index) {
 
 function assertBoundedRoleConsumer(source, name) {
   const normalized = source.replace(/\s+/g, ' ');
-  for (const clause of [
-    'read the project Context Kernel index',
-    'published parser',
-    'CTX-ID | path | anchor',
-    'complete Context Card body',
-    'selection-uncertain',
-    'missing-or-invalid-indexed-source',
-    'one controller-native read round',
-    'ID | source | reason | result',
-    'second request',
-    'Codex and Claude Code',
-  ]) assert.match(normalized, new RegExp(clause.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${name} must retain ${clause}`);
+  assert.match(normalized, /\.\.\/project-context-init\/references\/context-kernel-v1\.md/,
+    `${name} must link the canonical Context Kernel reference`);
+  assert.match(normalized, /sole normative contract for retrieval/,
+    `${name} must delegate retrieval rules to the canonical reference`);
 }
 
 test('R3.1: registry manifest declares only the published Context Kernel v1 contract', () => {
@@ -303,10 +295,8 @@ test('R3.3/R3.9-R3.13: validated kernel consumers select conservatively with equ
   const qa = read('skills/post-implementation-qa/SKILL.md');
   assertBoundedRoleConsumer(sdd, 'SDD');
   assertBoundedRoleConsumer(qa, 'QA');
-  assert.throws(() => assertBoundedRoleConsumer(sdd.replace('selection-uncertain', 'selection-removed'), 'SDD'), /selection-uncertain/);
-  assert.throws(() => assertBoundedRoleConsumer(qa.replaceAll('second request', 'third request'), 'QA'), /second request/);
-  assert.throws(() => assertBoundedRoleConsumer(sdd.replace('complete Context Card body', 'card body removed'), 'SDD'), /complete Context Card body/);
-  assert.throws(() => assertBoundedRoleConsumer(qa.replace('Codex and Claude Code', 'Codex only'), 'QA'), /Codex and Claude Code/);
+  assert.throws(() => assertBoundedRoleConsumer(sdd.replaceAll('../project-context-init/references/context-kernel-v1.md', 'missing.md'), 'SDD'), /canonical Context Kernel reference/);
+  assert.throws(() => assertBoundedRoleConsumer(qa.replace('sole normative contract for retrieval', 'optional reference'), 'QA'), /delegate retrieval rules/);
 });
 
 test('R3.6-R3.8: maintenance cannot prune kernel or infer deletion authority', () => {
