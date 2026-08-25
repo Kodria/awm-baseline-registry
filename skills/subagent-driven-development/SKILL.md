@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.9.0"
+version: "1.10.0"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
@@ -14,6 +14,25 @@ Execute plan by dispatching fresh subagent per task, with two-stage review after
 **Core principle:** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
 
 **Continuous execution:** Do not pause to check in with your human partner between tasks. Execute all tasks from the plan without stopping. The only reasons to stop are: BLOCKED status you cannot resolve, ambiguity that genuinely prevents progress, or all tasks complete. "Should I continue?" prompts and progress summaries waste their time — they asked you to execute the plan, so execute it.
+
+## Evidence Capsule v1 Dispatch Contract
+
+Before constructing every implementer, specification-reviewer, or code-quality-reviewer
+dispatch, read `references/evidence-capsule-v1.md`. It is the sole normative contract.
+Keep each reusable role instruction byte-stable before `## Evidence Capsule v1`; append one
+dynamic capsule after it. Build an implementer capsule from one cohesive task/slice, exact
+applicable clauses, declared dependencies, skills/design artifacts, surfaces, sources, and
+verification evidence. The specification reviewer receives those clauses, implementer report,
+and task evidence. The code-quality reviewer receives task diff/source, tests, sensors, and
+public/robustness constraints, never the full plan or implementer chain-of-thought.
+
+On the first exact `NEEDS_CONTEXT` response, append only its named authoritative source and
+reason to retrieval history and re-dispatch once. On its second request, or an immediate
+trigger named in the shared reference, visibly set the named full-context fallback. Missing
+legacy metadata or malformed/unsourced evidence also takes its named safe fallback; never
+silently drop a role. Record prefix/capsule/retrieval/fallback bytes and dispatch counts at
+each plan checkpoint, separately from provider usage. Do not persist assembled capsules or
+unrestricted worker responses.
 
 ## Modo de ejecución (lectura del campo)
 
@@ -139,12 +158,12 @@ digraph process {
         "Mark the matching task-plan item complete" [shape=box];
     }
 
-    "Read plan, extract all tasks with full text, note context, create the task plan" [shape=box];
+    "Read plan, extract cohesive task slices and exact evidence, create the task plan" [shape=box];
     "More tasks remain?" [shape=diamond];
     "Dispatch final code reviewer subagent for entire implementation" [shape=box];
     "STOP: Return control to orchestrator" [shape=doublecircle];
 
-    "Read plan, extract all tasks with full text, note context, create the task plan" -> "Dispatch implementer subagent (./implementer-prompt.md)";
+    "Read plan, extract cohesive task slices and exact evidence, create the task plan" -> "Dispatch implementer subagent (./implementer-prompt.md)";
     "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
     "Answer questions, provide context" -> "Dispatch implementer subagent (./implementer-prompt.md)";
@@ -400,7 +419,7 @@ Your sequence — execute steps 1-2 in order, then branch by mode at step 3:
 - Skip reviews (spec compliance OR code quality)
 - Proceed with unfixed issues
 - Dispatch multiple implementation subagents in parallel (conflicts)
-- Make subagent read plan file (provide full text instead)
+- Make subagent read the full plan by default (provide only the capsule's authoritative evidence)
 - Dispatch an implementer or reviewer with an inline prompt written from memory (build it from the prompt template — inline prompts drop the sensor/ledger instructions)
 - Mark a task complete when the reviewer reported findings/wins but `awm ledger list` shows no matching entries
 - Skip scene-setting context (subagent needs to understand where task fits)

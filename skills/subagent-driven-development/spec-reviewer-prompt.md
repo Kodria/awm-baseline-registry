@@ -1,96 +1,31 @@
-# Spec Compliance Reviewer Prompt Template
+# Specification Reviewer Prompt Template
 
-Use this template when dispatching a spec compliance reviewer subagent.
+Use this template with `references/evidence-capsule-v1.md` after implementation and before
+code-quality review. Independently read the supplied implementation and compare every exact
+clause against it; do not trust the implementer report. Check missing, extra, and misread
+work. Fresh context limits but does not eliminate self-preference bias: tests and sensors
+outrank judgment. Every finding needs a `file:line` or deterministic evidence anchor.
 
-**Purpose:** Verify implementer built what was requested (nothing more, nothing less)
-
-```
-Dispatch a general-purpose subagent:
-  description: "Review spec compliance for Task N"
-  prompt: |
-    You are reviewing whether an implementation matches its specification.
-
-    ## What Was Requested
-
-    [FULL TEXT of task requirements]
-
-    ## What Implementer Claims They Built
-
-    [From implementer's report]
-
-    ## CRITICAL: Do Not Trust the Report
-
-    The implementer finished suspiciously quickly. Their report may be incomplete,
-    inaccurate, or optimistic. You MUST verify everything independently.
-
-    **DO NOT:**
-    - Take their word for what they implemented
-    - Trust their claims about completeness
-    - Accept their interpretation of requirements
-
-    **DO:**
-    - Read the actual code they wrote
-    - Compare actual implementation to requirements line by line
-    - Check for missing pieces they claimed to implement
-    - Look for extra features they didn't mention
-
-    ## Your Job
-
-    Read the implementation code and verify:
-
-    **Missing requirements:**
-    - Did they implement everything that was requested?
-    - Are there requirements they skipped or missed?
-    - Did they claim something works but didn't actually implement it?
-
-    **Extra/unneeded work:**
-    - Did they build things that weren't requested?
-    - Did they over-engineer or add unnecessary features?
-    - Did they add "nice to haves" that weren't in spec?
-
-    **Misunderstandings:**
-    - Did they interpret requirements differently than intended?
-    - Did they solve the wrong problem?
-    - Did they implement the right feature but wrong way?
-
-    **Verify by reading code, not by trusting report.**
-
-    ## Anti-bias guard
-
-    You may be the same model that implemented this. Fresh context attenuates but
-    does NOT neutralize self-preference bias — your verdict never outranks a
-    deterministic sensor or test. On conflict between your judgment and
-    `awm sensors run` or a failing test, the sensor/test wins. Every issue you
-    list MUST cite concrete evidence (failing test / sensor rule ID / `file:line`);
-    drop any finding you cannot anchor.
-
-    ## Report Contract
-
-    Report using EXACTLY this format. No prose paragraphs, no process narration. Code and technical names byte-exact; never invent abbreviations.
-
-        verdict: compliant | issues
-        - <missing|extra|misread> — <R# or plan section> — file:line — <≤12 words>
-        ledger: <N findings, M wins emitted> | skipped (awm not on PATH)
-
-    One `-` line per issue; omit the issue list when verdict is compliant. Every line must carry its evidence anchor (file:line or sensor rule ID).
-
-    **Auto-clarity (exception):** security risks or anything a fragment would make ambiguous get a short normal-prose note AFTER the contract.
-```
-
-## Record to the ledger (AWM)
-
-After forming your verdict, persist each result to the branch ledger so harness-retro can learn from this session. One command per item:
+Return only `verdict: compliant | issues`, anchored issue lines, and
+`ledger: <N findings, M wins emitted> | skipped (awm not on PATH)`. Emit `awm ledger add`
+for findings and wins using only an exact catalog defect class when known. Security risks may
+add a concise clarification after the contract. If evidence is insufficient, use the shared
+three-line `NEEDS_CONTEXT` response rather than inventing a verdict.
 
 Append `--defect-class <exact-catalog-id>` only when the finding maps to an exact class in the active sensor-pack coverage catalog. Omit the flag when the class is not known; do not infer it from the plan, prose, signature, or severity.
 
-For each spec gap (missing / extra / misread):
 ```
 awm ledger add --phase spec-review --source-skill subagent-driven-development --polarity finding --class proceso --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>" --ref <file:line>
-```
-
-For each thing the implementer did **well** (a win worth reinforcing):
-```
 awm ledger add --phase spec-review --source-skill subagent-driven-development --polarity win --class proceso --signature <short-slug> --severity info --desc "<one line>"
 ```
 
-Use a stable, lowercase `--signature` slug (e.g. `missing-progress-reporting`) so recurring issues group across sessions. If `awm` is not on PATH, skip silently — the ledger is best-effort.
+## Evidence Capsule v1
+
+role: specification reviewer
+scope: <cohesive task ID/slice>
+requirements: <exact clauses and stable requirement IDs>
+surfaces: <implemented files and declared dependencies>
+sources: <authoritative paths, commits, commands>
+evidence: <implementer report and task diff/test evidence>
+retrieval history: <none or ordered source + reason>
+fallback: <selective or full-context: exact-trigger>

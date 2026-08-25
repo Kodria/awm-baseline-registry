@@ -1,56 +1,31 @@
 # Code Quality Reviewer Prompt Template
 
-Use this template when dispatching a code quality reviewer subagent.
+Use only after specification review passes and together with
+`references/evidence-capsule-v1.md`. Independently review task diff/source, tests, sensors,
+and public/robustness constraints. Do not receive the full plan or implementer
+chain-of-thought. Deterministic sensors and tests outrank judgment. Check responsibility,
+decomposition, maintainability, changed-file growth, and systemic patterns; a recurring
+pattern requires a `harness-retro` recommendation.
 
-**Purpose:** Verify implementation is well-built (clean, tested, maintainable)
-
-**Only dispatch after spec compliance review passes.**
-
-```
-Dispatch a general-purpose subagent:
-  Use template at requesting-code-review/code-reviewer.md
-
-  DESCRIPTION: [task summary, from implementer's report]
-  PLAN_OR_REQUIREMENTS: Task N from [plan-file]
-  BASE_SHA: [commit before task]
-  HEAD_SHA: [current commit]
-```
-
-**In addition to standard code quality concerns, the reviewer should check:**
-- **Sensor evidence (if `.awm/sensors.json` exists):** run `awm sensors run` (no flag) and confirm `overall: pass`. New findings the implementer missed are review-blocking — report them. Do not accept a task whose new code adds sensor findings. <!-- AWM-INTEGRATION: subagent-sensor-gate -->
-- Does each file have one clear responsibility with a well-defined interface?
-- Are units decomposed so they can be understood and tested independently?
-- Is the implementation following the file structure from the plan?
-- Did this implementation create new files that are already large, or significantly grow existing files? (Don't flag pre-existing file sizes — focus on what this change contributed.)
-- **Systemic patterns:** Does the same flaw appear across ≥2 files in this change? If yes, name the pattern and recommend the orchestrator invoke the `harness-retro` skill after this review. Do NOT list every occurrence as a separate finding — name the pattern once and point to one example. <!-- AWM-INTEGRATION: reviewer-retro -->
-
-**Code reviewer returns (Report Contract — reemplaza el retorno en prosa Strengths/Issues/Assessment):**
-
-    verdict: approved | issues
-    - file:line — <critical|important|minor> — <problem ≤12 words>. <fix ≤8 words>.
-    totals: <N critical / N important / N minor>
-    sensors: overall: pass | fail — <new findings, if any>
-    ledger: <N findings, M wins emitted> | skipped (awm not on PATH)
-
-One `-` line per issue, sorted file → line ascending; omit the list when verdict is approved. No process narration, no prose paragraphs; code and technical names byte-exact; never invent abbreviations. Strengths worth keeping go to the ledger as wins, not to the report.
-
-**Auto-clarity (exception):** security findings that need context get a short normal-prose note AFTER the contract.
-
-## Record to the ledger (AWM)
-
-After forming your verdict, persist each result to the branch ledger so harness-retro can learn from this session:
+When sensors exist run `awm sensors run` and require `overall: pass`; new findings block
+approval. Return only `verdict`, ordered anchored findings, `totals`, `sensors`, and
+`ledger`; emit `awm ledger add` findings/wins. If evidence is insufficient, return the exact
+three-line `NEEDS_CONTEXT` response from the shared reference.
 
 Append `--defect-class <exact-catalog-id>` only when the finding maps to an exact class in the active sensor-pack coverage catalog. Omit the flag when the class is not known; do not infer it from the code, prose, signature, or severity.
 
-For each quality issue found:
 ```
 awm ledger add --phase code-quality-review --source-skill subagent-driven-development --polarity finding --class <structural|logica|seguridad> --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>" --ref <file:line>
-```
-Use `--class structural` for type/shape issues, `--class logica` for behavioral bugs, `--class seguridad` for vulnerabilities.
-
-For each thing the implementation did **well** (a win worth reinforcing):
-```
 awm ledger add --phase code-quality-review --source-skill subagent-driven-development --polarity win --class <appropriate-class> --signature <short-slug> --severity info --desc "<one line>"
 ```
 
-Use a stable, lowercase `--signature` slug so recurring issues group across sessions. If `awm` is not on PATH, skip silently — the ledger is best-effort.
+## Evidence Capsule v1
+
+role: code-quality reviewer
+scope: <cohesive task ID/slice>
+requirements: <public and robustness constraints, or n/a>
+surfaces: <changed files/components>
+sources: <authoritative paths, commits, commands>
+evidence: <task diff/source, tests, sensors>
+retrieval history: <none or ordered source + reason>
+fallback: <selective or full-context: exact-trigger>

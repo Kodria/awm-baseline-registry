@@ -1,184 +1,35 @@
-# Deep Review Prompt Template (two tracks)
+# Final QA Review Prompt Template
 
-Use this template when dispatching the QA review subagents in `post-implementation-qa`. The review runs in two tracks:
+Use this template with `../subagent-driven-development/references/evidence-capsule-v1.md`.
+Dispatch one Track A fidelity reviewer and each applicable isolated Track B lens:
+Robustness/Security (never skipped), Logic, Tests by tier, and Design Fidelity only for a UI
+diff with committed `.stitch/designs/` artifacts. Do not collapse lenses.
 
-- **Track A — Fidelity:** one subagent, plan-anchored, driven by requirement IDs.
-- **Track B — Quality:** **one subagent per lens** (Robustness/Security, Logic correctness, Tests, and — conditionally, for UI diffs with `.stitch/designs/` artifacts — Design Fidelity), each in isolated context, plan-agnostic.
+Every reviewer starts in fresh context. A deterministic sensor or test outranks judgment;
+every finding requires a failing test, sensor rule ID, or `file:line`. Track A audits each
+requirement ID/clauses against the diff. Track B ignores plan intent and audits its own quality
+floor. Preserve the security/robustness floor even when a feature is out of scope.
 
-Build each subagent's prompt by combining the **common anti-bias header** with the relevant **track/lens section** below, then injecting the context (plan + requirement IDs, git diff, sensor output).
-
----
-
-## Common anti-bias header (prepend to EVERY subagent)
-
-```
-You are performing a post-implementation QA review. Find real issues — be thorough and adversarial, not diplomatic. The team needs problems, not reassurance.
-
-Two hard rules on bias and evidence:
-1. Fresh context attenuates but does NOT neutralize self-preference bias. Your judgment does not outrank a deterministic sensor or test. On any conflict between what you conclude and what `awm sensors run` or a test reports, the sensor/test wins — say so and defer.
-2. Every finding MUST cite concrete evidence: a failing test, a sensor rule ID, or a `file:line`. A finding you cannot anchor to concrete evidence is a hallucination — drop it. Do not report style, taste, or speculation.
-
-## The Plan
-[PASTE FULL PLAN TEXT HERE]
-
-## Requirement IDs (from the spec's ## Requirements section)
-[PASTE THE REQUIREMENT IDS — R1, R1.1, … — OR "none: no requirements section"]
-
-## What Was Implemented (git diff from base branch)
-[PASTE FULL GIT DIFF HERE]
-
-## Sensor Results (awm sensors run)
-[PASTE FULL SENSOR OUTPUT HERE]
-```
-
----
-
-## Track A — Fidelity subagent
-
-```
-## Your Job (Track A — Fidelity)
-
-Measure what was BUILT against what the plan PROMISED. Use the requirement IDs as a completeness checklist.
-
-- For each requirement ID: is it implemented AND tested?
-  - Implemented but not tested, or partially implemented → finding.
-  - Not implemented at all → blocker finding.
-- Forward gap: a requirement ID with no code/test.
-- Backward gap: code in the diff that traces to NO requirement ID → scope creep → finding.
-- If there are no requirement IDs, read the plan prose section by section and check each against the diff; note that you fell back to prose.
-
-Report gaps, not style. Each finding cites the requirement ID and/or `file:line`.
-```
-
-## Track B — Robustness / Security lens subagent
-
-```
-## Your Job (Track B — Robustness / Security lens)
-
-Ignore whether the plan mentioned these. The robustness floor is never out of scope — scope excludes features, never safety.
-
-Look for:
-- Silent `Infinity`/`NaN`/`undefined` returns from public functions.
-- Crashes or undefined behavior on boundary / empty / invalid input (0, negative, null, empty collection, huge values).
-- Missing validation at trust boundaries: user input, external API responses, file/network data.
-- Division by zero, unchecked array access, unguarded type coercion.
-
-A public function that silently returns `Infinity`/`NaN`/`undefined`, or crashes on edge/invalid input, is a finding EVEN IF the design declared it out of scope. Each finding cites `file:line`.
-```
-
-## Track B — Logic correctness lens subagent
-
-```
-## Your Job (Track B — Logic correctness lens)
-
-Assume valid input. Is the result correct?
-
-Look for:
-- Wrong result for valid input (incorrect formula, inverted condition).
-- Broken invariants; state that can become inconsistent across calls.
-- Off-by-one, boundary, and ordering bugs.
-- Incorrect handling of the happy path under normal use.
-
-Each finding cites `file:line` and, where useful, a concrete input → wrong-output example.
-```
-
-## Track B — Tests lens subagent
-
-```
-## Your Job (Track B — Tests lens)
-
-Judge the tests, not the implementation.
-
-Look for:
-- Requirements (by ID) with no test.
-- IF/THEN edge cases from the spec that no test exercises.
-- Empty asserts, tests that can pass even when the code is wrong, tests that can't fail.
-- Missing failure-path / error-path coverage.
-
-Each finding cites the test file (`file:line`) or the uncovered requirement ID.
-```
-
-## Track B — Design Fidelity lens subagent
-
-*(Conditional — only dispatch when the diff touches UI and `.stitch/designs/` artifacts exist for the affected screen(s).)*
-
-```
-## Your Job (Track B — Design Fidelity lens)
-
-Only dispatch this lens when the diff touches UI and `.stitch/designs/` artifacts exist for the affected screen(s).
-
-Invoke the `design-fidelity` skill's comparison procedure (Steps 1-4: load design, build element inventory, capture implementation, compare element by element) for each affected screen. Each element with status `missing`/`diverged` is a finding — map severity per design-fidelity's rubric (high/medium/low → blocker/important/minor). Elements marked `present` are not findings.
-
-If `design-fidelity`'s verdict is `NOT_CERTIFIED` (no browser evidence), report ONE finding at `important` severity stating certification could not be completed — do not silently omit this.
-
-Each finding cites the design artifact path + implementation screenshot path (or source-code location in the no-browser fallback) as evidence.
-```
-
----
-
-## Output Format (append to EVERY subagent — return ONLY this JSON, no preamble)
-
-```
-{
-  "findings": [
-    {
-      "id": "A1",
-      "track": "A",
-      "lens": "fidelity",
-      "severity": "blocker|important|minor",
-      "title": "Short description (one line)",
-      "detail": "Specific what and where — include file:line",
-      "evidence": "failing test / sensor rule ID / file:line — REQUIRED",
-      "reference": "requirement ID or plan section this relates to"
-    }
-  ],
-  "summary": "X findings on this track/lens. K blockers."
-}
-```
-
-For Track B subagents set `"track": "B"` and `"lens"` to `robustness` | `logic` | `tests` | `design-fidelity`, and id-prefix accordingly (`B1`, `B2`, …).
-
-If no issues found:
-```
-{ "findings": [], "summary": "No issues found on this track/lens." }
-```
-
-Length limits (compact output — the controller's context pays for every word):
-- `title` ≤ 12 words. `detail` ≤ 25 words. `summary` one line.
-- `detail` must NOT repeat `evidence` — state the what/where once.
-- No filler, no hedging, fragments OK. Code, error strings, and technical names byte-exact.
-
-Severity guide:
-- blocker: prevents correct function or violates a core requirement / the robustness floor
-- important: degraded behavior, missing requirement, could cause real problems
-- minor: cosmetic, inconsistency, or improvement opportunity
-
-A finding with an empty `evidence` field is invalid — do not emit it.
-
-## Record to the ledger (AWM)
-
-After classifying findings, emit one `awm ledger add` command per finding and per win:
+Normal output is the existing compact JSON finding shape with `track`, `lens`, severity,
+evidence, and reference. Emit `awm ledger add` for every finding and win; exact defect classes
+only when present in the active coverage catalog. If evidence is insufficient, return only the
+shared three-line `NEEDS_CONTEXT` response, not findings JSON.
 
 Append `--defect-class <exact-catalog-id>` only when the finding maps to an exact class in the active sensor-pack coverage catalog. Omit the flag when the class is not known; do not infer it from the review lens, prose, signature, or severity.
 
-For each Track A finding (plan-vs-implementation gap):
 ```
 awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity finding --class proceso --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>"
-```
-
-For each Track B finding (robustness / logic / tests):
-```
 awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity finding --class <seguridad|logica|tests> --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>" --ref <file:line>
-```
-
-For each Track B finding from the design-fidelity lens:
-```
-awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity finding --class structural --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>" --ref <design-artifact-path>:<implementation-screenshot-path>
-```
-
-For each invariant the implementation got **right** (a win worth reinforcing):
-```
 awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity win --class <appropriate-class> --signature <short-slug> --severity info --desc "<one line>"
 ```
 
-Use a stable, lowercase `--signature` slug so recurring issues group across sessions. If `awm` is not on PATH, skip silently — the ledger is best-effort.
+## Evidence Capsule v1
+
+role: <Track A fidelity | Track B robustness | Track B logic | Track B tests | Track B design-fidelity>
+scope: <branch QA scope>
+requirements: <Track A exact IDs/clauses; Track B n/a unless full-context fallback>
+surfaces: <role-relevant files/components>
+sources: <authoritative paths, commits, commands>
+evidence: <Track A diff/tests/sensors; Track B lens-relevant hunks/tests/sensors/design artifacts>
+retrieval history: <none or ordered source + reason>
+fallback: <selective or full-context: exact-trigger>
