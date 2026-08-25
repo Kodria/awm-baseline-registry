@@ -1,0 +1,8 @@
+{
+  "pack": "generic",
+  "sensors": {
+    "security": {
+      "enabled": false
+    }
+  }
+}

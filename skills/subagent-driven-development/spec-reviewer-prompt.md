@@ -45,7 +45,7 @@ role: specification reviewer
 scope: <cohesive task ID/slice>
 requirements: <exact clauses and stable requirement IDs>
 surfaces: <implemented files and declared dependencies>
-sources: <authoritative paths, commits, commands>
+sources: <initial CTX-ID | path | anchor references; retrieved authoritative sources>
 evidence: <implementer report and task diff/test evidence>
-retrieval history: <none or ordered source + reason>
+retrieval history: <none or ordered ID | source | reason | result>
 fallback: <selective or full-context: exact-trigger>

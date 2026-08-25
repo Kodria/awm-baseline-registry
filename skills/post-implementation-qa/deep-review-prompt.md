@@ -63,9 +63,9 @@ role: <Track A fidelity>
 scope: <branch QA scope>
 requirements: <all exact requirement IDs/clauses>
 surfaces: <branch-relevant files/components>
-sources: <authoritative paths, commits, commands>
+sources: <initial CTX-ID | path | anchor references; retrieved authoritative sources>
 evidence: <branch diff, tests, sensors>
-retrieval history: <none or ordered source + reason>
+retrieval history: <none or ordered ID | source | reason | result>
 fallback: <selective or full-context: exact-trigger>
 
 ## Track B — Robustness / Security lens subagent
@@ -81,9 +81,9 @@ role: <Track B robustness>
 scope: <branch QA scope>
 requirements: n/a
 surfaces: <robustness/security-relevant files/components>
-sources: <authoritative paths, commits, commands>
+sources: <initial CTX-ID | path | anchor references; retrieved authoritative sources>
 evidence: <relevant diff hunks, tests, sensors>
-retrieval history: <none or ordered source + reason>
+retrieval history: <none or ordered ID | source | reason | result>
 fallback: <selective or full-context: exact-trigger>
 
 ## Track B — Logic correctness lens subagent
@@ -98,9 +98,9 @@ role: <Track B logic>
 scope: <branch QA scope>
 requirements: n/a
 surfaces: <logic-relevant files/components>
-sources: <authoritative paths, commits, commands>
+sources: <initial CTX-ID | path | anchor references; retrieved authoritative sources>
 evidence: <relevant diff hunks, tests, sensors>
-retrieval history: <none or ordered source + reason>
+retrieval history: <none or ordered ID | source | reason | result>
 fallback: <selective or full-context: exact-trigger>
 
 ## Track B — Tests lens subagent
@@ -115,9 +115,9 @@ role: <Track B tests>
 scope: <branch QA scope>
 requirements: n/a
 surfaces: <test-relevant files/components>
-sources: <authoritative paths, commits, commands>
+sources: <initial CTX-ID | path | anchor references; retrieved authoritative sources>
 evidence: <relevant test/diff hunks and sensors>
-retrieval history: <none or ordered source + reason>
+retrieval history: <none or ordered ID | source | reason | result>
 fallback: <selective or full-context: exact-trigger>
 
 ## Track B — Design Fidelity lens subagent
@@ -134,7 +134,7 @@ role: <Track B design-fidelity>
 scope: <branch QA scope>
 requirements: n/a
 surfaces: <affected screen/components>
-sources: <design artifact paths, commits, commands>
+sources: <initial CTX-ID | path | anchor references; retrieved authoritative sources>
 evidence: <design comparison, relevant diff, tests/sensors>
-retrieval history: <none or ordered source + reason>
+retrieval history: <none or ordered ID | source | reason | result>
 fallback: <selective or full-context: exact-trigger>

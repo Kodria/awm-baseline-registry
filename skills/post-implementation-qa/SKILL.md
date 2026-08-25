@@ -1,6 +1,6 @@
 ---
 name: post-implementation-qa
-version: "1.7.0"
+version: "1.8.0"
 license: Apache-2.0
 description: Use after implementation is complete and before finishing the branch — runs two-track QA (Track A fidelity vs. the plan, Track B plan-agnostic quality lenses), drives a fix loop until clean. Also works standalone when a bug is found independently.
 ---
@@ -25,14 +25,14 @@ IDs/clauses, branch surfaces, authoritative diff/hunks, tests, and sensors. Each
 gets only lens-relevant surfaces, source/hunks, tests/sensors, and applicable design artifacts:
 normal Track B input never contains the complete plan or unrelated requirement prose.
 
-For the first exact `NEEDS_CONTEXT`, append only named authoritative evidence plus reason to
-retrieval history and re-dispatch once. A second request, ambiguity, security-or-robustness,
-root configuration, public contract, uncertain cross-cutting impact, legacy metadata, or
-malformed/missing evidence takes the named visible full-context fallback from the shared
-reference. Preserve sensor precedence, deterministic dedup, ledger gate, fix loop,
-design-fidelity condition, completion marker, docs handoff, and robustness/security floor.
-Record prefix/capsule/retrieval/fallback/dispatch values separately; do not persist capsules,
-source bodies, secrets, credentials, or unrestricted worker responses.
+Apply the shared reference exactly, including validated-index selection, bounded native reads,
+visible fallback, provider parity, and ephemeral-record rules. This QA skill MUST NOT restate,
+fork, or weaken those normative retrieval rules. Preserve sensor precedence, deterministic
+dedup, ledger gate, fix loop, design-fidelity condition, completion marker, docs handoff, and
+robustness/security floor; record the reference-required ledger fields separately.
+
+For Context Kernel v1, read `../project-context-init/references/context-kernel-v1.md`; it is
+the sole normative contract for retrieval.
 
 ## Modo de ejecución (lectura del campo)
 

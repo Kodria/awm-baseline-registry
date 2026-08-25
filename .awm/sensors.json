@@ -1,0 +1,13 @@
+{
+  "pack": "shell",
+  "sensors": {
+    "lint": {
+      "cmd": "shellcheck --format json {files}",
+      "enabled": false
+    },
+    "security": {
+      "cmd": "semgrep .",
+      "enabled": false
+    }
+  }
+}

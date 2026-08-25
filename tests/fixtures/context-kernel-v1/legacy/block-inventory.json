@@ -1,0 +1,870 @@
+[
+  {
+    "id": "LEGACY-AGENTS-MD-001",
+    "file": "AGENTS.md",
+    "startLine": 1,
+    "endLine": 1,
+    "sha256": "cb725c153865f442d0db941406f32406f68e1bcc92b614fb3e845fef16fb330b"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-002",
+    "file": "AGENTS.md",
+    "startLine": 3,
+    "endLine": 3,
+    "sha256": "d2c73a3d058346313454535ee365dac50ad424a1a2df4fcb0ca9cff4b2eb07be"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-003",
+    "file": "AGENTS.md",
+    "startLine": 5,
+    "endLine": 5,
+    "sha256": "cb3f91d54eee30e53e35b2b99905f70f169ed549fd78909d3dac2defc9ed8d3b"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-004",
+    "file": "AGENTS.md",
+    "startLine": 7,
+    "endLine": 7,
+    "sha256": "284f222620d9a40839140ec29936ca9b34e7ce65c07e19cc09bc7bafe897d66e"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-005",
+    "file": "AGENTS.md",
+    "startLine": 9,
+    "endLine": 9,
+    "sha256": "5bb67045dc8bd6a083459edf455d6235aa1f876be55282ca40b793cb38f1be77"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-006",
+    "file": "AGENTS.md",
+    "startLine": 11,
+    "endLine": 11,
+    "sha256": "b1980adb0a9bc09de7102fca3f3a1b1ad798242d47d8ccb67da8683befa06738"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-007",
+    "file": "AGENTS.md",
+    "startLine": 13,
+    "endLine": 13,
+    "sha256": "452c105b123e37cd24be8f28d1c9fec42cfaa4420c7a7d01ac841ccd9dd31f3e"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-008",
+    "file": "AGENTS.md",
+    "startLine": 15,
+    "endLine": 15,
+    "sha256": "ed51256aaa0df8f09f8686d69e35b84c28625f8052102cc9dc0521de6b7ad36a"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-009",
+    "file": "AGENTS.md",
+    "startLine": 17,
+    "endLine": 17,
+    "sha256": "2c4deebee0c9cb0ccf0254f8f6ab0967e7469de0a4a01e7e0736e6eeee3ec92a"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-010",
+    "file": "AGENTS.md",
+    "startLine": 19,
+    "endLine": 19,
+    "sha256": "1ceb6fa18d32e8bf71672288513fb5311fbc3f7cca7184c77cb82dc7cfbca464"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-011",
+    "file": "AGENTS.md",
+    "startLine": 21,
+    "endLine": 21,
+    "sha256": "6e4bb01a73c2520ea57100ce0d314903070b57528f5b515ef67c3910dfb664e6"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-012",
+    "file": "AGENTS.md",
+    "startLine": 23,
+    "endLine": 23,
+    "sha256": "4b16a108987ad8a6ae4cf23c253abee84c0292717e5324ed9aec7320b2f38600"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-013",
+    "file": "AGENTS.md",
+    "startLine": 25,
+    "endLine": 25,
+    "sha256": "04efe3e72367f20130cbbf8dd1a3e4f3b9cd0c77bc12ad33dab1c3dc47f3189e"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-014",
+    "file": "AGENTS.md",
+    "startLine": 27,
+    "endLine": 27,
+    "sha256": "495397981ac758a60b92f81915ccbd2c1357ff7e3cada060abd0d1e9aec67408"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-015",
+    "file": "AGENTS.md",
+    "startLine": 29,
+    "endLine": 34,
+    "sha256": "f5b03db2d28ae7d74cdeadaa4121e573d31353a67b6e924d736a0510eb630147"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-016",
+    "file": "AGENTS.md",
+    "startLine": 36,
+    "endLine": 36,
+    "sha256": "1399b80f46c14217dccef1c410dbf3dbaf40d37cc7d6ab2f983f8be0cfe096a6"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-017",
+    "file": "AGENTS.md",
+    "startLine": 38,
+    "endLine": 38,
+    "sha256": "26f163ee383870e5afdb2bf91243524631fe14318d9b58313a0d9977d9733548"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-018",
+    "file": "AGENTS.md",
+    "startLine": 40,
+    "endLine": 40,
+    "sha256": "7a4b983029e30ca3f8040bbc7f294a9cbb1d2c13c2fcebfbbf29dc49e7f60efb"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-019",
+    "file": "AGENTS.md",
+    "startLine": 42,
+    "endLine": 42,
+    "sha256": "6db2dc445576d3bfe3cff449f38ddba0a6f734988e669a141a1969167afebbc0"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-020",
+    "file": "AGENTS.md",
+    "startLine": 44,
+    "endLine": 44,
+    "sha256": "4b6e3f529b9dc6e030aaa1cc9d35da3fd2c5a7832123579757b22a5c0cb6192a"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-021",
+    "file": "AGENTS.md",
+    "startLine": 46,
+    "endLine": 46,
+    "sha256": "74450d986af2198e89597ce65e67131459e7271ea429d0417e5ce9acf824488f"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-022",
+    "file": "AGENTS.md",
+    "startLine": 48,
+    "endLine": 48,
+    "sha256": "3fa95c62fa1e7da49ea10fe51c64465a11e8f4cb42318764415e371e1bd05b21"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-023",
+    "file": "AGENTS.md",
+    "startLine": 50,
+    "endLine": 50,
+    "sha256": "e93e24d1daec4374005ae43d47ab61f4669dc9382036db4445863279da6c43b4"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-024",
+    "file": "AGENTS.md",
+    "startLine": 52,
+    "endLine": 52,
+    "sha256": "97bbe866348596c17139daaf63a4c6bdf3b3d2bda49ea0ed178187e148759539"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-025",
+    "file": "AGENTS.md",
+    "startLine": 54,
+    "endLine": 54,
+    "sha256": "4e6577fbc9627b846b1531e4cdef5f74c0630316f6999f13351bf7812c065af0"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-026",
+    "file": "AGENTS.md",
+    "startLine": 56,
+    "endLine": 56,
+    "sha256": "6b45f96577a1356cb86fadd3eea52f38703bf3cb6f0a0285e22255d990388977"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-027",
+    "file": "AGENTS.md",
+    "startLine": 58,
+    "endLine": 58,
+    "sha256": "95d3311008f8e7a67ae81169d7c847d179c5bd97391a3a6c297b2681eda4d069"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-028",
+    "file": "AGENTS.md",
+    "startLine": 60,
+    "endLine": 60,
+    "sha256": "7e16f3072c9a4eb72d8ec31cd518b3a0cd424e6eabd8374ef5b95755a9d6067f"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-029",
+    "file": "AGENTS.md",
+    "startLine": 62,
+    "endLine": 64,
+    "sha256": "09f0c1df4030f5e8bef676fae4b21462979e68d46c701de6aa0e08f3d1982d93"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-030",
+    "file": "AGENTS.md",
+    "startLine": 66,
+    "endLine": 66,
+    "sha256": "57efd27b3b95e732daa79782a787aa8ce231940182619115652b76f7dcefe2c8"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-031",
+    "file": "AGENTS.md",
+    "startLine": 68,
+    "endLine": 71,
+    "sha256": "d499212caea56cd455300fec78e061b28ac6684f5a01b41f1823fa61776483fe"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-032",
+    "file": "AGENTS.md",
+    "startLine": 73,
+    "endLine": 73,
+    "sha256": "a0503785a13621de69ae64537637215925ba06f6d0ae2088154e92c58a0f1e70"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-033",
+    "file": "AGENTS.md",
+    "startLine": 75,
+    "endLine": 75,
+    "sha256": "d318b8ac28945f2a6317d3884ea5c70046d838628de8fa3e69092169605f5fa1"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-034",
+    "file": "AGENTS.md",
+    "startLine": 77,
+    "endLine": 77,
+    "sha256": "18027c3b457486e45470a53abadfd1779e2bc791cce090a0fe2bb93052768b5c"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-035",
+    "file": "AGENTS.md",
+    "startLine": 79,
+    "endLine": 79,
+    "sha256": "c8c74a68cc717225c70a69b5a423dfbad32e1dcb6cb215232bc47259518feb03"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-036",
+    "file": "AGENTS.md",
+    "startLine": 81,
+    "endLine": 81,
+    "sha256": "7092061fbc7accf8d67fc276f8c570c777ca8341f19cdcfd02517870458fe095"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-037",
+    "file": "AGENTS.md",
+    "startLine": 83,
+    "endLine": 83,
+    "sha256": "0d8a79e0834bef5075166bc51cb30c95fa56c5d3206be068b54b6b310591f8f5"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-038",
+    "file": "AGENTS.md",
+    "startLine": 85,
+    "endLine": 85,
+    "sha256": "e0a36a17ec7ff4a5b1ecc3455d483f543c4a20d56b6c2d104491c746e044429b"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-039",
+    "file": "AGENTS.md",
+    "startLine": 87,
+    "endLine": 87,
+    "sha256": "9e1ae05cf6a0fbf65e9b905c50a40282c89a45f26423584b063cca58849ee958"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-040",
+    "file": "AGENTS.md",
+    "startLine": 89,
+    "endLine": 89,
+    "sha256": "4d2c30811698b9de31daff50c299f28efe9875046bca9b8784418fe61dd33670"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-041",
+    "file": "AGENTS.md",
+    "startLine": 91,
+    "endLine": 91,
+    "sha256": "4a5ac5f772500e535ec224333a5d3ebe0835d46b2fc36a086ff52527285551e2"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-042",
+    "file": "AGENTS.md",
+    "startLine": 93,
+    "endLine": 93,
+    "sha256": "73f52f9feba6598b74fc83fa9a171de1fea6154a3627dd69a7a6ecd2f7137437"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-043",
+    "file": "AGENTS.md",
+    "startLine": 95,
+    "endLine": 95,
+    "sha256": "f93784ae4a5158ede5d2b18d90db9866057de7962fd822c817c06d8c7fe9e0ef"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-044",
+    "file": "AGENTS.md",
+    "startLine": 97,
+    "endLine": 97,
+    "sha256": "989d3817600cb82413fea3c6707fab7b255374a9732be6bcc68bfb6526f36d9f"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-045",
+    "file": "AGENTS.md",
+    "startLine": 99,
+    "endLine": 99,
+    "sha256": "c6564d6b4095270aee017452cd1b79d9dd305c474093c2e270da7ab3a6246499"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-046",
+    "file": "AGENTS.md",
+    "startLine": 101,
+    "endLine": 101,
+    "sha256": "4d325f99c0fc45652b5aaf23f73f7b809a2499fb43d77b23ca502ce86db90930"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-047",
+    "file": "AGENTS.md",
+    "startLine": 103,
+    "endLine": 103,
+    "sha256": "bb3bf04940d5cea934d481109470da20fd419159825bed8ab5a53c16292fd80e"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-048",
+    "file": "AGENTS.md",
+    "startLine": 105,
+    "endLine": 105,
+    "sha256": "e338342913c58653a830735af8dde8d595a63fc6e26551a8d63c4cd150c23ecd"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-049",
+    "file": "AGENTS.md",
+    "startLine": 107,
+    "endLine": 107,
+    "sha256": "471f0d29824591d0a51024fa6531bfe5f8d8de2a7205879badd1b76c490745e0"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-050",
+    "file": "AGENTS.md",
+    "startLine": 109,
+    "endLine": 109,
+    "sha256": "68bc0fdedab1d2c8a6aecc20ff7cbeded04ea763beb63e4c73bca1979ff406bc"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-051",
+    "file": "AGENTS.md",
+    "startLine": 111,
+    "endLine": 111,
+    "sha256": "276cb830a00bff595863197f7958bc81e3332a7d14dd1fc5b895616fa77cb4de"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-052",
+    "file": "AGENTS.md",
+    "startLine": 113,
+    "endLine": 113,
+    "sha256": "6b91962d4e658659263bf7bf4207243f34e5fa1c7ca9a311451b747391be76ff"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-053",
+    "file": "AGENTS.md",
+    "startLine": 115,
+    "endLine": 115,
+    "sha256": "23849630874c02bd2b7d325da7d1d0cd2496df6e42841e4e23e0dd451757cc84"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-054",
+    "file": "AGENTS.md",
+    "startLine": 117,
+    "endLine": 121,
+    "sha256": "4ec918f8055a83a56e136da28fe4f460b53efa91a77d407e54e201e3413751f4"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-055",
+    "file": "AGENTS.md",
+    "startLine": 123,
+    "endLine": 123,
+    "sha256": "a56a0cbe3628cac4066f6c399443f78026a75ffac6aeaa841df15a5a24009db7"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-056",
+    "file": "AGENTS.md",
+    "startLine": 125,
+    "endLine": 125,
+    "sha256": "fc73da092263228079cd495e6c918b1a222890eeafcbe31a87f94bb487286033"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-057",
+    "file": "AGENTS.md",
+    "startLine": 127,
+    "endLine": 127,
+    "sha256": "09e13a6f35c6562642ae3bdd083cdee0346720fc1940b439aa5bd50d1cfe5ad4"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-058",
+    "file": "AGENTS.md",
+    "startLine": 129,
+    "endLine": 129,
+    "sha256": "d07a6d428d08ef6bb779e14328a1a242b9e886793b80effea5ce39911b478119"
+  },
+  {
+    "id": "LEGACY-AGENTS-MD-059",
+    "file": "AGENTS.md",
+    "startLine": 131,
+    "endLine": 134,
+    "sha256": "71f5113f74614c349c26ed3a4d7a363ee840f2bcb6f463c6b85c6f52f4b0c5da"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-001",
+    "file": "CONSTITUTION.md",
+    "startLine": 1,
+    "endLine": 1,
+    "sha256": "dad71f5d3d0c155e1b25ec3f6848c57b056628896b2d9e62a905b0d3a17ef00b"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-002",
+    "file": "CONSTITUTION.md",
+    "startLine": 3,
+    "endLine": 3,
+    "sha256": "5d884ff62a7b13bc41b53ed8acf65167b7f9b02c96f87b2e4e89c33fc5eda50d"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-003",
+    "file": "CONSTITUTION.md",
+    "startLine": 5,
+    "endLine": 5,
+    "sha256": "cb3f91d54eee30e53e35b2b99905f70f169ed549fd78909d3dac2defc9ed8d3b"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-004",
+    "file": "CONSTITUTION.md",
+    "startLine": 7,
+    "endLine": 7,
+    "sha256": "2c6b4f03e319a0019de1e4e68df4eb0da779d8f5dced248930408cac8a8765ac"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-005",
+    "file": "CONSTITUTION.md",
+    "startLine": 9,
+    "endLine": 9,
+    "sha256": "715e2dcc04ae99216b5f483512f22dc88a4d9ed4c3717836d9dd1b1bb885af28"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-006",
+    "file": "CONSTITUTION.md",
+    "startLine": 11,
+    "endLine": 11,
+    "sha256": "5590d43ce5555af2dd5daa697c96d6a0be6ff0c90efec6471bd0bea2a727187a"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-007",
+    "file": "CONSTITUTION.md",
+    "startLine": 13,
+    "endLine": 15,
+    "sha256": "53f0571e64b9c8cc7801f52ac6ea5f4694152fcb50019b858762c615294a0a0d"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-008",
+    "file": "CONSTITUTION.md",
+    "startLine": 17,
+    "endLine": 17,
+    "sha256": "21717f5a13444ec1ec5dbe715ac6e3eb2a767a163771749ad143f1551c237d85"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-009",
+    "file": "CONSTITUTION.md",
+    "startLine": 19,
+    "endLine": 19,
+    "sha256": "c9ce9b9049e582e5172c812b35c6cc7e810364de6330c2e68b5302bf053ccf66"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-010",
+    "file": "CONSTITUTION.md",
+    "startLine": 21,
+    "endLine": 21,
+    "sha256": "7cf9c0cae2107574140ef5d08a0e5373f02263943b29d12cee33b88555798158"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-011",
+    "file": "CONSTITUTION.md",
+    "startLine": 23,
+    "endLine": 23,
+    "sha256": "5ef6d2a2fd3b3d8704fa25c2428fbf336130f8f0bf2b38d22a78c731a3ac5698"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-012",
+    "file": "CONSTITUTION.md",
+    "startLine": 25,
+    "endLine": 25,
+    "sha256": "cacd8ed447557266a54e850aa90d4de325a7a09b2076cad7c8b610ae470edf82"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-013",
+    "file": "CONSTITUTION.md",
+    "startLine": 27,
+    "endLine": 27,
+    "sha256": "514eade438b2ff8a94a2de565e73110e3ec4d25f0e21950c736be3df6a301065"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-014",
+    "file": "CONSTITUTION.md",
+    "startLine": 29,
+    "endLine": 29,
+    "sha256": "4e7375e9f797c65fcda8e97dbe5b475283e6f0d637c2de6557e6e9859665d9b3"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-015",
+    "file": "CONSTITUTION.md",
+    "startLine": 31,
+    "endLine": 31,
+    "sha256": "c64b04949f200119b3a4b16c8745825c7549fa8c1b200dc53bffa8b914190569"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-016",
+    "file": "CONSTITUTION.md",
+    "startLine": 33,
+    "endLine": 33,
+    "sha256": "c78aff588908bb6e4dc1c2da0437f82f5014d187508bfb18bfb9b0737948169a"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-017",
+    "file": "CONSTITUTION.md",
+    "startLine": 35,
+    "endLine": 35,
+    "sha256": "282d7d3f957159d025a425ec28bfd9914a71be7e469288a06d0a27484446c2a9"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-018",
+    "file": "CONSTITUTION.md",
+    "startLine": 37,
+    "endLine": 37,
+    "sha256": "79bcefa1efaaaf821a7fee97a3d8185f81d096b38a45760df4d5d77bf3cf2aa5"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-019",
+    "file": "CONSTITUTION.md",
+    "startLine": 39,
+    "endLine": 39,
+    "sha256": "0febaf2727b4cd8d2cbeb23e8e605251ba68c626a00b96fc233ac7ac4b106795"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-020",
+    "file": "CONSTITUTION.md",
+    "startLine": 41,
+    "endLine": 41,
+    "sha256": "66a964a73d0c58ff2642e52270376c179cc53adb22e75ec682015f78b2d5925c"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-021",
+    "file": "CONSTITUTION.md",
+    "startLine": 43,
+    "endLine": 43,
+    "sha256": "55ef6b8064f16ed88401bbec358126f24398c0e07135e3b415eb419945426774"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-022",
+    "file": "CONSTITUTION.md",
+    "startLine": 45,
+    "endLine": 45,
+    "sha256": "251ee63dfd04d126fe7367fc55b03f1bc04f5ee1d5d6569de91f101a3c12e8e1"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-023",
+    "file": "CONSTITUTION.md",
+    "startLine": 47,
+    "endLine": 47,
+    "sha256": "220a8fc39aa090ab3cbf27765fb9300a19218d750447b3d19e83e80da7681122"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-024",
+    "file": "CONSTITUTION.md",
+    "startLine": 49,
+    "endLine": 49,
+    "sha256": "c8a2bd34a42ed23bc65c3ac1b6bb2d758753927c5d93896b18e823faec53d1fa"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-025",
+    "file": "CONSTITUTION.md",
+    "startLine": 51,
+    "endLine": 51,
+    "sha256": "e4e0b6c17fd59404a6fa926813a24a6db376e996f9dcc16fd23de918f5dfedf0"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-026",
+    "file": "CONSTITUTION.md",
+    "startLine": 53,
+    "endLine": 59,
+    "sha256": "3b11210f77c652f865ba8db50bdee71d6ea0d3a854300ecb378ae25037a71dbf"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-027",
+    "file": "CONSTITUTION.md",
+    "startLine": 61,
+    "endLine": 61,
+    "sha256": "092ffddfd56f7ca51dae1a04499f555e1a1e93a2ebf184c1fb02572a35483da4"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-028",
+    "file": "CONSTITUTION.md",
+    "startLine": 63,
+    "endLine": 63,
+    "sha256": "e837931a5a0eb69e70692a748e577a161c90a0ae4eac2352766cefbc0928244f"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-029",
+    "file": "CONSTITUTION.md",
+    "startLine": 65,
+    "endLine": 72,
+    "sha256": "86140d7fb8953dc380bf7e500b47eb59109a4fc967b6c32a95b4ee9bebe3dec0"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-030",
+    "file": "CONSTITUTION.md",
+    "startLine": 74,
+    "endLine": 74,
+    "sha256": "cba9650e58c48afbebe42138530f679a85510317249ab06b56e3bbbe601a0783"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-031",
+    "file": "CONSTITUTION.md",
+    "startLine": 76,
+    "endLine": 76,
+    "sha256": "033406459dfe1332df41dc6ad336ff04e4adf7585b14541f94cf5f3be36f957b"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-032",
+    "file": "CONSTITUTION.md",
+    "startLine": 78,
+    "endLine": 78,
+    "sha256": "100607092864e785efbe1d34d7a4e92589d95b54ed9b7087742af92d58c3e429"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-033",
+    "file": "CONSTITUTION.md",
+    "startLine": 80,
+    "endLine": 80,
+    "sha256": "4bf2c27b223a8ce740de837d67c00e25b880d3a549485d0356aa3316490f7b22"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-034",
+    "file": "CONSTITUTION.md",
+    "startLine": 82,
+    "endLine": 82,
+    "sha256": "d59939fc182ccd260839f4f37f755728e4a07616ecf037c90ba43076d1bbccfa"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-035",
+    "file": "CONSTITUTION.md",
+    "startLine": 84,
+    "endLine": 84,
+    "sha256": "6c9e2bae8420db83a65ed20aa621ded3cf1dcaa4c68b119b7089f2fe5c4d2638"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-036",
+    "file": "CONSTITUTION.md",
+    "startLine": 86,
+    "endLine": 86,
+    "sha256": "3c212f8ed213ac0d9dab0d84467ac47dff9b161c9050d52a84dcd96858986f96"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-037",
+    "file": "CONSTITUTION.md",
+    "startLine": 88,
+    "endLine": 88,
+    "sha256": "96d60a7a63e9f8ae9121aa3ab742c52def47eefc85986b54b2ffda6b04b80427"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-038",
+    "file": "CONSTITUTION.md",
+    "startLine": 90,
+    "endLine": 90,
+    "sha256": "2c46d2efdc2bb43afded47a154ef681888c8e32430300892905581325f14e873"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-039",
+    "file": "CONSTITUTION.md",
+    "startLine": 92,
+    "endLine": 92,
+    "sha256": "613d748a2c80d7f796c0d416962298cf4a9d7848ef1f4fc1f392b83206d32a36"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-040",
+    "file": "CONSTITUTION.md",
+    "startLine": 94,
+    "endLine": 94,
+    "sha256": "1d416391e49db679dbe1cc63e0e738086f8effbeb96718432babe3ec720295f4"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-041",
+    "file": "CONSTITUTION.md",
+    "startLine": 96,
+    "endLine": 96,
+    "sha256": "1e7ade3bb4dc8e18c577937a3e7143dd64c740d82e600128872e9caa76410177"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-042",
+    "file": "CONSTITUTION.md",
+    "startLine": 98,
+    "endLine": 98,
+    "sha256": "7331361964c02df93c9b7406f601a72fbd40b35dba6837500ee512bcc3fcdbee"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-043",
+    "file": "CONSTITUTION.md",
+    "startLine": 100,
+    "endLine": 100,
+    "sha256": "296163731da81ba12938c6857db99776774bc2fef36d19d15bf0153a38d0ab83"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-044",
+    "file": "CONSTITUTION.md",
+    "startLine": 102,
+    "endLine": 102,
+    "sha256": "85811ed4f103c01fcfcd1e65f1c96f029ccc81d0a08d33df1040f8d276b05f07"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-045",
+    "file": "CONSTITUTION.md",
+    "startLine": 104,
+    "endLine": 104,
+    "sha256": "6711c0c24dddf3db87aa38df78d8fef9174c126d4eb5cee19ba147be5dbd7271"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-046",
+    "file": "CONSTITUTION.md",
+    "startLine": 106,
+    "endLine": 106,
+    "sha256": "d83b121989aeda1f6f1740e53ddc6ea4bc22588f479e916a7ad7da09b7542806"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-047",
+    "file": "CONSTITUTION.md",
+    "startLine": 108,
+    "endLine": 108,
+    "sha256": "ab5a74f22f9c39d8e72559edf4e142fdd201e12d3cb500368ef283a064cb3b5e"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-048",
+    "file": "CONSTITUTION.md",
+    "startLine": 110,
+    "endLine": 110,
+    "sha256": "2a959b8a34af9f72a266a477c1c8de879e8c1b5b93c327fd9e20a5d9de77fc2c"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-049",
+    "file": "CONSTITUTION.md",
+    "startLine": 112,
+    "endLine": 115,
+    "sha256": "99df2b0095e34c2b114666f76975ba625e07917eacb62471ed1b744f363fea03"
+  },
+  {
+    "id": "LEGACY-CONSTITUTION-MD-050",
+    "file": "CONSTITUTION.md",
+    "startLine": 117,
+    "endLine": 117,
+    "sha256": "0b0e87f9786d5029f4dc9a28cbf5716563a846ed923c03274cbb0b9c6168fd40"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-001",
+    "file": "CLAUDE.md",
+    "startLine": 1,
+    "endLine": 1,
+    "sha256": "7f89984b43d6b94538138cc0aef1c74123a8bd0322042ff3fd08badae871ce24"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-002",
+    "file": "CLAUDE.md",
+    "startLine": 3,
+    "endLine": 3,
+    "sha256": "03414f9cf8a6fd9f9138e2b58e82a98b00deba561871237f56f5747441442be6"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-003",
+    "file": "CLAUDE.md",
+    "startLine": 5,
+    "endLine": 5,
+    "sha256": "3bcf4bdc599f69e09cd0bc66b15a801d071f472eb61800e97b7d372aacc5a586"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-004",
+    "file": "CLAUDE.md",
+    "startLine": 7,
+    "endLine": 7,
+    "sha256": "1c8b8b951cb6dbab2980dc3f6968e5afee4996c04ae7187b69ef892c1b908f72"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-005",
+    "file": "CLAUDE.md",
+    "startLine": 9,
+    "endLine": 9,
+    "sha256": "26315c757756c6f0c18e48756f3b93943700614ddd663b2313a539edd8e311c3"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-006",
+    "file": "CLAUDE.md",
+    "startLine": 11,
+    "endLine": 12,
+    "sha256": "ab1fc82eccade8db1657a5346959423eb36b3ab3ff2892f95e1c81769dd309a2"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-007",
+    "file": "CLAUDE.md",
+    "startLine": 14,
+    "endLine": 14,
+    "sha256": "b6af34f681723abf435368251e584e490102cfb528fbfb50e55699d93c5c7578"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-008",
+    "file": "CLAUDE.md",
+    "startLine": 16,
+    "endLine": 16,
+    "sha256": "f3565eff614735b0465041c9b685e2e95c72ff2f03dee80863b366d8bc978448"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-009",
+    "file": "CLAUDE.md",
+    "startLine": 18,
+    "endLine": 18,
+    "sha256": "b2cec69e972f6265ea9df0a6a8f34180a915bcdc485f04ee9e31bf1a57a0fce5"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-010",
+    "file": "CLAUDE.md",
+    "startLine": 20,
+    "endLine": 20,
+    "sha256": "5c0dd14aaee5b2ece7be3b2593c29aa32eb993c10869cd23f8f54bfb0b7d51f5"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-011",
+    "file": "CLAUDE.md",
+    "startLine": 22,
+    "endLine": 22,
+    "sha256": "e524a40a4d179a95b9887fbe15d682ef99ce4bffe00c227ef8397786e1600d6a"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-012",
+    "file": "CLAUDE.md",
+    "startLine": 24,
+    "endLine": 24,
+    "sha256": "cf50d8a3896fdc6036080ffa3260de1237eb3365f269b8137432ad6987f14d02"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-013",
+    "file": "CLAUDE.md",
+    "startLine": 26,
+    "endLine": 26,
+    "sha256": "18af12f9dc68d76b9f8e7a355d5cc8e716ec9ed4fb88fcd8aea91d701e16a022"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-014",
+    "file": "CLAUDE.md",
+    "startLine": 28,
+    "endLine": 31,
+    "sha256": "402c0d5dfb374d83933bdd9286692c1580177aba6d351d14ed49dbdede97cd4a"
+  },
+  {
+    "id": "LEGACY-CLAUDE-MD-015",
+    "file": "CLAUDE.md",
+    "startLine": 33,
+    "endLine": 35,
+    "sha256": "d99dab535bb2d5098149b828f08c0c8d68593ae6392869fcfa7b26dd32cef1e7"
+  }
+]

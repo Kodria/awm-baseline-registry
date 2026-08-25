@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.10.0"
+version: "1.11.0"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
@@ -26,13 +26,25 @@ verification evidence. The specification reviewer receives those clauses, implem
 and task evidence. The code-quality reviewer receives task diff/source, tests, sensors, and
 public/robustness constraints, never the full plan or implementer chain-of-thought.
 
-On the first exact `NEEDS_CONTEXT` response, append only its named authoritative source and
-reason to retrieval history and re-dispatch once. On its second request, or an immediate
-trigger named in the shared reference, visibly set the named full-context fallback. Missing
-legacy metadata or malformed/unsourced evidence also takes its named safe fallback; never
-silently drop a role. Record prefix/capsule/retrieval/fallback bytes and dispatch counts at
-each plan checkpoint, separately from provider usage. Do not persist assembled capsules or
-unrestricted worker responses.
+Apply the shared reference exactly, including validated-index selection, bounded native reads,
+visible fallback, provider parity, and ephemeral-record rules. This skill owns only
+orchestration; it MUST NOT restate, fork, or weaken those normative retrieval rules. Record
+the reference-required ledger fields at each plan checkpoint, separately from provider usage,
+and never silently drop a role.
+
+For Context Kernel v1, read `../project-context-init/references/context-kernel-v1.md`; it is
+the sole normative contract for retrieval.
+
+<!-- awm-context-kernel-dispatch-v1
+provider: codex
+mechanism: native-read-dispatch
+canonical: ../project-context-init/references/context-kernel-v1.md
+-->
+<!-- awm-context-kernel-dispatch-v1
+provider: claude-code
+mechanism: native-read-dispatch
+canonical: ../project-context-init/references/context-kernel-v1.md
+-->
 
 ## Modo de ejecución (lectura del campo)
 

@@ -1,0 +1,878 @@
+{
+  "schema": 1,
+  "kernelFiles": [
+    "AGENTS.md",
+    "CONSTITUTION.md"
+  ],
+  "maxFixedBytes": 5285,
+  "entries": [
+    {
+      "id": "CTX-AGENTS-MD-001",
+      "tier": "kernel",
+      "path": "AGENTS.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-001",
+      "when": "always; protected unconditional entrypoint"
+    },
+    {
+      "id": "CTX-AGENTS-MD-002",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-002",
+      "when": "legacy evidence for AGENTS.md:3-3"
+    },
+    {
+      "id": "CTX-AGENTS-MD-003",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-003",
+      "when": "legacy evidence for AGENTS.md:5-5"
+    },
+    {
+      "id": "CTX-AGENTS-MD-004",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-004",
+      "when": "legacy evidence for AGENTS.md:7-7"
+    },
+    {
+      "id": "CTX-AGENTS-MD-005",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-005",
+      "when": "legacy evidence for AGENTS.md:9-9"
+    },
+    {
+      "id": "CTX-AGENTS-MD-006",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-006",
+      "when": "legacy evidence for AGENTS.md:11-11"
+    },
+    {
+      "id": "CTX-AGENTS-MD-007",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-007",
+      "when": "legacy evidence for AGENTS.md:13-13"
+    },
+    {
+      "id": "CTX-AGENTS-MD-008",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-008",
+      "when": "legacy evidence for AGENTS.md:15-15"
+    },
+    {
+      "id": "CTX-AGENTS-MD-009",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-009",
+      "when": "legacy evidence for AGENTS.md:17-17"
+    },
+    {
+      "id": "CTX-AGENTS-MD-010",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-010",
+      "when": "legacy evidence for AGENTS.md:19-19"
+    },
+    {
+      "id": "CTX-AGENTS-MD-011",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-011",
+      "when": "legacy evidence for AGENTS.md:21-21"
+    },
+    {
+      "id": "CTX-AGENTS-MD-012",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-012",
+      "when": "legacy evidence for AGENTS.md:23-23"
+    },
+    {
+      "id": "CTX-AGENTS-MD-013",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-013",
+      "when": "legacy evidence for AGENTS.md:25-25"
+    },
+    {
+      "id": "CTX-AGENTS-MD-014",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-014",
+      "when": "legacy evidence for AGENTS.md:27-27"
+    },
+    {
+      "id": "CTX-AGENTS-MD-015",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-015",
+      "when": "legacy evidence for AGENTS.md:29-34"
+    },
+    {
+      "id": "CTX-AGENTS-MD-016",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-016",
+      "when": "legacy evidence for AGENTS.md:36-36"
+    },
+    {
+      "id": "CTX-AGENTS-MD-017",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-017",
+      "when": "legacy evidence for AGENTS.md:38-38"
+    },
+    {
+      "id": "CTX-AGENTS-MD-018",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-018",
+      "when": "legacy evidence for AGENTS.md:40-40"
+    },
+    {
+      "id": "CTX-AGENTS-MD-019",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-019",
+      "when": "legacy evidence for AGENTS.md:42-42"
+    },
+    {
+      "id": "CTX-AGENTS-MD-020",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-020",
+      "when": "legacy evidence for AGENTS.md:44-44"
+    },
+    {
+      "id": "CTX-AGENTS-MD-021",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-021",
+      "when": "legacy evidence for AGENTS.md:46-46"
+    },
+    {
+      "id": "CTX-AGENTS-MD-022",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-022",
+      "when": "legacy evidence for AGENTS.md:48-48"
+    },
+    {
+      "id": "CTX-AGENTS-MD-023",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-023",
+      "when": "legacy evidence for AGENTS.md:50-50"
+    },
+    {
+      "id": "CTX-AGENTS-MD-024",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-024",
+      "when": "legacy evidence for AGENTS.md:52-52"
+    },
+    {
+      "id": "CTX-AGENTS-MD-025",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-025",
+      "when": "legacy evidence for AGENTS.md:54-54"
+    },
+    {
+      "id": "CTX-AGENTS-MD-026",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-026",
+      "when": "legacy evidence for AGENTS.md:56-56"
+    },
+    {
+      "id": "CTX-AGENTS-MD-027",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-027",
+      "when": "legacy evidence for AGENTS.md:58-58"
+    },
+    {
+      "id": "CTX-AGENTS-MD-028",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-028",
+      "when": "legacy evidence for AGENTS.md:60-60"
+    },
+    {
+      "id": "CTX-AGENTS-MD-029",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-029",
+      "when": "legacy evidence for AGENTS.md:62-64"
+    },
+    {
+      "id": "CTX-AGENTS-MD-030",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-030",
+      "when": "legacy evidence for AGENTS.md:66-66"
+    },
+    {
+      "id": "CTX-AGENTS-MD-031",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-031",
+      "when": "legacy evidence for AGENTS.md:68-71"
+    },
+    {
+      "id": "CTX-AGENTS-MD-032",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-032",
+      "when": "legacy evidence for AGENTS.md:73-73"
+    },
+    {
+      "id": "CTX-AGENTS-MD-033",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-033",
+      "when": "legacy evidence for AGENTS.md:75-75"
+    },
+    {
+      "id": "CTX-AGENTS-MD-034",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-034",
+      "when": "legacy evidence for AGENTS.md:77-77"
+    },
+    {
+      "id": "CTX-AGENTS-MD-035",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-035",
+      "when": "legacy evidence for AGENTS.md:79-79"
+    },
+    {
+      "id": "CTX-AGENTS-MD-036",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-036",
+      "when": "legacy evidence for AGENTS.md:81-81"
+    },
+    {
+      "id": "CTX-AGENTS-MD-037",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-037",
+      "when": "legacy evidence for AGENTS.md:83-83"
+    },
+    {
+      "id": "CTX-AGENTS-MD-038",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-038",
+      "when": "legacy evidence for AGENTS.md:85-85"
+    },
+    {
+      "id": "CTX-AGENTS-MD-039",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-039",
+      "when": "legacy evidence for AGENTS.md:87-87"
+    },
+    {
+      "id": "CTX-AGENTS-MD-040",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-040",
+      "when": "legacy evidence for AGENTS.md:89-89"
+    },
+    {
+      "id": "CTX-AGENTS-MD-041",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-041",
+      "when": "legacy evidence for AGENTS.md:91-91"
+    },
+    {
+      "id": "CTX-AGENTS-MD-042",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-042",
+      "when": "legacy evidence for AGENTS.md:93-93"
+    },
+    {
+      "id": "CTX-AGENTS-MD-043",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-043",
+      "when": "legacy evidence for AGENTS.md:95-95"
+    },
+    {
+      "id": "CTX-AGENTS-MD-044",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-044",
+      "when": "legacy evidence for AGENTS.md:97-97"
+    },
+    {
+      "id": "CTX-AGENTS-MD-045",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-045",
+      "when": "legacy evidence for AGENTS.md:99-99"
+    },
+    {
+      "id": "CTX-AGENTS-MD-046",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-046",
+      "when": "legacy evidence for AGENTS.md:101-101"
+    },
+    {
+      "id": "CTX-AGENTS-MD-047",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-047",
+      "when": "legacy evidence for AGENTS.md:103-103"
+    },
+    {
+      "id": "CTX-AGENTS-MD-048",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-048",
+      "when": "legacy evidence for AGENTS.md:105-105"
+    },
+    {
+      "id": "CTX-AGENTS-MD-049",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-049",
+      "when": "legacy evidence for AGENTS.md:107-107"
+    },
+    {
+      "id": "CTX-AGENTS-MD-050",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-050",
+      "when": "legacy evidence for AGENTS.md:109-109"
+    },
+    {
+      "id": "CTX-AGENTS-MD-051",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-051",
+      "when": "legacy evidence for AGENTS.md:111-111"
+    },
+    {
+      "id": "CTX-AGENTS-MD-052",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-052",
+      "when": "legacy evidence for AGENTS.md:113-113"
+    },
+    {
+      "id": "CTX-AGENTS-MD-053",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-053",
+      "when": "legacy evidence for AGENTS.md:115-115"
+    },
+    {
+      "id": "CTX-AGENTS-MD-054",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-054",
+      "when": "legacy evidence for AGENTS.md:117-121"
+    },
+    {
+      "id": "CTX-AGENTS-MD-055",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-055",
+      "when": "legacy evidence for AGENTS.md:123-123"
+    },
+    {
+      "id": "CTX-AGENTS-MD-056",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-056",
+      "when": "legacy evidence for AGENTS.md:125-125"
+    },
+    {
+      "id": "CTX-AGENTS-MD-057",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-057",
+      "when": "legacy evidence for AGENTS.md:127-127"
+    },
+    {
+      "id": "CTX-AGENTS-MD-058",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-058",
+      "when": "legacy evidence for AGENTS.md:129-129"
+    },
+    {
+      "id": "CTX-AGENTS-MD-059",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-AGENTS-MD-059",
+      "when": "legacy evidence for AGENTS.md:131-134"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-001",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-001",
+      "when": "always; protected unconditional entrypoint"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-002",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-002",
+      "when": "legacy evidence for CONSTITUTION.md:3-3"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-003",
+      "tier": "selective",
+      "path": "docs/awm/context/release.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-003",
+      "when": "legacy evidence for CONSTITUTION.md:5-5"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-004",
+      "tier": "selective",
+      "path": "docs/awm/context/sensors.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-004",
+      "when": "legacy evidence for CONSTITUTION.md:7-7"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-005",
+      "tier": "selective",
+      "path": "docs/awm/context/review.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-005",
+      "when": "legacy evidence for CONSTITUTION.md:9-9"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-006",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-006",
+      "when": "legacy evidence for CONSTITUTION.md:11-11"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-007",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-007",
+      "when": "legacy evidence for CONSTITUTION.md:13-15"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-008",
+      "tier": "selective",
+      "path": "docs/awm/context/release.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-008",
+      "when": "legacy evidence for CONSTITUTION.md:17-17"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-009",
+      "tier": "selective",
+      "path": "docs/awm/context/sensors.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-009",
+      "when": "legacy evidence for CONSTITUTION.md:19-19"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-010",
+      "tier": "selective",
+      "path": "docs/awm/context/review.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-010",
+      "when": "legacy evidence for CONSTITUTION.md:21-21"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-011",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-011",
+      "when": "legacy evidence for CONSTITUTION.md:23-23"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-012",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-012",
+      "when": "legacy evidence for CONSTITUTION.md:25-25"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-013",
+      "tier": "selective",
+      "path": "docs/awm/context/release.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-013",
+      "when": "legacy evidence for CONSTITUTION.md:27-27"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-014",
+      "tier": "selective",
+      "path": "docs/awm/context/sensors.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-014",
+      "when": "legacy evidence for CONSTITUTION.md:29-29"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-015",
+      "tier": "selective",
+      "path": "docs/awm/context/review.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-015",
+      "when": "legacy evidence for CONSTITUTION.md:31-31"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-016",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-016",
+      "when": "legacy evidence for CONSTITUTION.md:33-33"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-017",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-017",
+      "when": "legacy evidence for CONSTITUTION.md:35-35"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-018",
+      "tier": "selective",
+      "path": "docs/awm/context/release.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-018",
+      "when": "legacy evidence for CONSTITUTION.md:37-37"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-019",
+      "tier": "selective",
+      "path": "docs/awm/context/sensors.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-019",
+      "when": "legacy evidence for CONSTITUTION.md:39-39"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-020",
+      "tier": "selective",
+      "path": "docs/awm/context/review.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-020",
+      "when": "legacy evidence for CONSTITUTION.md:41-41"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-021",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-021",
+      "when": "legacy evidence for CONSTITUTION.md:43-43"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-022",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-022",
+      "when": "legacy evidence for CONSTITUTION.md:45-45"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-023",
+      "tier": "selective",
+      "path": "docs/awm/context/release.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-023",
+      "when": "legacy evidence for CONSTITUTION.md:47-47"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-024",
+      "tier": "selective",
+      "path": "docs/awm/context/sensors.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-024",
+      "when": "legacy evidence for CONSTITUTION.md:49-49"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-025",
+      "tier": "selective",
+      "path": "docs/awm/context/review.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-025",
+      "when": "legacy evidence for CONSTITUTION.md:51-51"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-026",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-026",
+      "when": "legacy evidence for CONSTITUTION.md:53-59"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-027",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-027",
+      "when": "legacy evidence for CONSTITUTION.md:61-61"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-028",
+      "tier": "selective",
+      "path": "docs/awm/context/release.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-028",
+      "when": "legacy evidence for CONSTITUTION.md:63-63"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-029",
+      "tier": "selective",
+      "path": "docs/awm/context/sensors.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-029",
+      "when": "legacy evidence for CONSTITUTION.md:65-72"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-030",
+      "tier": "selective",
+      "path": "docs/awm/context/review.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-030",
+      "when": "legacy evidence for CONSTITUTION.md:74-74"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-031",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-031",
+      "when": "legacy evidence for CONSTITUTION.md:76-76"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-032",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-032",
+      "when": "legacy evidence for CONSTITUTION.md:78-78"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-033",
+      "tier": "selective",
+      "path": "docs/awm/context/release.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-033",
+      "when": "legacy evidence for CONSTITUTION.md:80-80"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-034",
+      "tier": "selective",
+      "path": "docs/awm/context/sensors.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-034",
+      "when": "legacy evidence for CONSTITUTION.md:82-82"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-035",
+      "tier": "selective",
+      "path": "docs/awm/context/review.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-035",
+      "when": "legacy evidence for CONSTITUTION.md:84-84"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-036",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-036",
+      "when": "legacy evidence for CONSTITUTION.md:86-86"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-037",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-037",
+      "when": "legacy evidence for CONSTITUTION.md:88-88"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-038",
+      "tier": "selective",
+      "path": "docs/awm/context/release.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-038",
+      "when": "legacy evidence for CONSTITUTION.md:90-90"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-039",
+      "tier": "selective",
+      "path": "docs/awm/context/sensors.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-039",
+      "when": "legacy evidence for CONSTITUTION.md:92-92"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-040",
+      "tier": "selective",
+      "path": "docs/awm/context/review.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-040",
+      "when": "legacy evidence for CONSTITUTION.md:94-94"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-041",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-041",
+      "when": "legacy evidence for CONSTITUTION.md:96-96"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-042",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-042",
+      "when": "legacy evidence for CONSTITUTION.md:98-98"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-043",
+      "tier": "selective",
+      "path": "docs/awm/context/release.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-043",
+      "when": "legacy evidence for CONSTITUTION.md:100-100"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-044",
+      "tier": "selective",
+      "path": "docs/awm/context/sensors.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-044",
+      "when": "legacy evidence for CONSTITUTION.md:102-102"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-045",
+      "tier": "selective",
+      "path": "docs/awm/context/review.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-045",
+      "when": "legacy evidence for CONSTITUTION.md:104-104"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-046",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-046",
+      "when": "legacy evidence for CONSTITUTION.md:106-106"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-047",
+      "tier": "selective",
+      "path": "docs/awm/context/process.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-047",
+      "when": "legacy evidence for CONSTITUTION.md:108-108"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-048",
+      "tier": "selective",
+      "path": "docs/awm/context/release.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-048",
+      "when": "legacy evidence for CONSTITUTION.md:110-110"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-049",
+      "tier": "selective",
+      "path": "docs/awm/context/sensors.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-049",
+      "when": "legacy evidence for CONSTITUTION.md:112-115"
+    },
+    {
+      "id": "CTX-CONSTITUTION-MD-050",
+      "tier": "selective",
+      "path": "docs/awm/context/review.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-MD-050",
+      "when": "legacy evidence for CONSTITUTION.md:117-117"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-001",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-001",
+      "when": "legacy evidence for CLAUDE.md:1-1"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-002",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-002",
+      "when": "legacy evidence for CLAUDE.md:3-3"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-003",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-003",
+      "when": "legacy evidence for CLAUDE.md:5-5"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-004",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-004",
+      "when": "legacy evidence for CLAUDE.md:7-7"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-005",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-005",
+      "when": "legacy evidence for CLAUDE.md:9-9"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-006",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-006",
+      "when": "legacy evidence for CLAUDE.md:11-12"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-007",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-007",
+      "when": "legacy evidence for CLAUDE.md:14-14"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-008",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-008",
+      "when": "legacy evidence for CLAUDE.md:16-16"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-009",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-009",
+      "when": "legacy evidence for CLAUDE.md:18-18"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-010",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-010",
+      "when": "legacy evidence for CLAUDE.md:20-20"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-011",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-011",
+      "when": "legacy evidence for CLAUDE.md:22-22"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-012",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-012",
+      "when": "legacy evidence for CLAUDE.md:24-24"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-013",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-013",
+      "when": "legacy evidence for CLAUDE.md:26-26"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-014",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-014",
+      "when": "legacy evidence for CLAUDE.md:28-31"
+    },
+    {
+      "id": "CTX-CLAUDE-MD-015",
+      "tier": "selective",
+      "path": "docs/awm/context/operations.md",
+      "anchor": "awm-context:CTX-CLAUDE-MD-015",
+      "when": "legacy evidence for CLAUDE.md:33-35"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "1.8.0"
+version: "1.9.0"
 license: Apache-2.0
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
@@ -282,6 +282,23 @@ awm preflight --verify-sensors
 This gate is read-only. It must not be deferred to the implementer: unattended work cannot
 recover a silently failing harness when no person is watching.
 
+### Context Kernel decision (after preflight, before context budget)
+
+Read the `context-kernel` result from the preflight already run above. A legacy full context
+result is advisory: show its remedy and record whether the owner
+migrates now or intentionally runs this plan with complete context. Do not
+create migration metadata during planning.
+
+partial or invalid metadata is blocking for selective handoff: preserve full
+context, show the diagnostic, and require its reviewed repair before offering a
+selective execution path. A valid kernel may continue to the Context Budget
+Gate below.
+
+If a valid kernel exceeds its context budget, offer controlled card maintenance,
+a reviewed budget increase, or continuation with the decision recorded. The
+threshold does not authorize pruning, and a budget never authorizes deletion of
+a protected rule, card, or ID.
+
 ## Context Budget Gate (pre-handoff)
 
 **This is the last moment the human is guaranteed to be here.** Everything past the execution
@@ -302,9 +319,9 @@ It measures the files injected into **every** session — `AGENTS.md`, `CONSTITU
 `CLAUDE.md` — against the budget pinned in `.awm/context-budget.json`. Silence means within
 budget; proceed. If it reports, present the three options and let the user pick:
 
-1. **Prune now.** The cheapest moment there is: that context is already loaded, and the user is
-   deciding what matters for the work about to start. Lessons already internalized, or superseded
-   by a newer rule, are what should go.
+1. **Controlled maintenance.** Keep the complete context intact; the owner may organize or
+   compact presentation without removing content, or record a separately reviewed maintenance
+   proposal for a later owner-approved removal.
 2. **Raise `maxBytes`** in `.awm/context-budget.json` — a committed, reviewed decision to keep
    paying for that context in every future session.
 3. **Proceed and note it** in the plan, if the growth is not worth interrupting for right now.

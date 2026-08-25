@@ -36,7 +36,7 @@ role: code-quality reviewer
 scope: <cohesive task ID/slice>
 requirements: <public and robustness constraints, or n/a>
 surfaces: <changed files/components>
-sources: <authoritative paths, commits, commands>
+sources: <initial CTX-ID | path | anchor references; retrieved authoritative sources>
 evidence: <task diff/source, tests, sensors>
-retrieval history: <none or ordered source + reason>
+retrieval history: <none or ordered ID | source | reason | result>
 fallback: <selective or full-context: exact-trigger>
