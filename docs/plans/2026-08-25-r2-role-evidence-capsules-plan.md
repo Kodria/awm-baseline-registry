@@ -1,5 +1,9 @@
 # R2 Stable Prefixes and Role Evidence Capsules Implementation Plan
 
+<!-- awm-qa-complete: 2026-08-25 — Track A plus robustness/logic/tests QA closed; 94/94 release-gate tests green. `awm sensors run` is `not_certified` because this registry has no `.awm/sensors.json`; owner-approved native registry gates were used and the non-pass remains explicit. -->
+<!-- awm-docs-complete: 2026-08-25 — no user-facing documentation changed; skill contracts, canonical reference, plan ledger, and executable R13 contract carry the released behavior. -->
+<!-- awm-retro-complete: 2026-08-25 — ledger archived and verified empty; reviewer-ledger omission recorded as an operational recommendation, with no new authority required. -->
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `subagent-driven-development`
 > (recommended) or `executing-plans` to implement this plan task-by-task. Steps
 > use checkbox (`- [ ]`) syntax for tracking.
@@ -176,7 +180,7 @@ _Requirements: R2.1, R2.2, R2.3, R2.4, R2.5, R2.6, R2.7, R2.8, R2.9, R2.10, R2.1
 
 **Skills:** test-driven-development, verification-before-completion
 
-- [ ] **Step 1: Reconfirm the frozen baseline before editing a prompt**
+- [x] **Step 1: Reconfirm the frozen baseline before editing a prompt**
 
 Run:
 
@@ -198,7 +202,7 @@ Expected: HEAD starts from `e91c61b`; only this plan may differ; total source by
 `66805`; hashes equal the ledger. If history or a hash differs, stop and recapture T0 in
 this plan instead of comparing different corpora.
 
-- [ ] **Step 2: Add the failing R13 contract and release-gate wiring**
+- [x] **Step 2: Add the failing R13 contract and release-gate wiring**
 
 Create `tests/r13-role-evidence-capsule-contract.test.mjs` with `node:test`. Use
 `execFileSync('git', args, { encoding: 'utf8', maxBuffer: 5_000_000 })` (never shell
@@ -278,7 +282,7 @@ node --test tests/r13-role-evidence-capsule-contract.test.mjs
 Expected: FAIL with missing shared reference/marker/contract errors. Record the exact red
 result in the T1 notes; do not weaken assertions to make legacy prompts pass.
 
-- [ ] **Step 3: Create the one canonical Evidence Capsule v1 reference**
+- [x] **Step 3: Create the one canonical Evidence Capsule v1 reference**
 
 Create `skills/subagent-driven-development/references/evidence-capsule-v1.md` with:
 
@@ -300,7 +304,7 @@ Create `skills/subagent-driven-development/references/evidence-capsule-v1.md` wi
 This file is the sole normative capsule definition. Consumers link to it; they must not
 copy its field/allowlist/fallback tables into another skill.
 
-- [ ] **Step 4: Convert SDD assembly and its three role templates**
+- [x] **Step 4: Convert SDD assembly and its three role templates**
 
 In `skills/subagent-driven-development/SKILL.md`:
 
@@ -333,7 +337,7 @@ insufficient. Specifically:
 
 Do not add a runtime serializer or provider branch. Markdown is the contract.
 
-- [ ] **Step 5: Convert Track A/B QA assembly without making Track B plan-aware**
+- [x] **Step 5: Convert Track A/B QA assembly without making Track B plan-aware**
 
 In `skills/post-implementation-qa/SKILL.md`:
 
@@ -356,7 +360,7 @@ the marker. Track B templates must not contain a full-plan placeholder. A first-
 request returns the universal three-line `NEEDS_CONTEXT` response instead of findings JSON;
 normal verdicts keep the existing compact JSON shape.
 
-- [ ] **Step 6: Bump bundle metadata and make the candidate green**
+- [x] **Step 6: Bump bundle metadata and make the candidate green**
 
 Apply the additive minor bump in both duplicated locations:
 
@@ -382,7 +386,7 @@ provider usage `unobservable`.
 Update T1 from observed output and add an issue #126 checkpoint comment. This is structural
 evidence only; do not claim billed-token, cost, or quota savings.
 
-- [ ] **Step 7: Prove the new gate fails under mutation**
+- [x] **Step 7: Prove the new gate fails under mutation**
 
 The in-test mutation subtests are mandatory, but also run one disposable file mutation
 against the actual command. Temporarily change one Track B capsule fixture to include the
@@ -396,7 +400,7 @@ Expected: non-zero with an actionable `Track B initial capsule contains complete
 message. Restore the file with `apply_patch`, rerun, and require green. Do not use
 `git checkout --` or `git reset` to restore it.
 
-- [ ] **Step 8: Run full verification and record T2/T3 without extra workers**
+- [x] **Step 8: Run full verification and record T2/T3 without extra workers**
 
 After the normal specification and code-quality reviewers close their findings, update T2
 from their existing reports. Do not dispatch a measurement reviewer. Then run the exact
