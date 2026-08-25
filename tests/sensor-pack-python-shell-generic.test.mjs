@@ -59,6 +59,10 @@ for (const [name, pack] of [['python', python], ['shell', shell], ['generic', ge
 for (const sensor of ['typecheck', 'lint', 'test', 'security']) assert.ok(python.sensors[sensor].variants.length > 0, `${sensor} without variants`);
 assert.ok(python.sensors.typecheck.variants.some((variant) => variant.requirements.configFiles.includes('pyproject.toml')));
 const command = shell.sensors.lint.variants[0].command;
+for (const sensor of ['lint', 'security']) {
+  assert.deepEqual(shell.sensors[sensor].applicability, { kind: 'explicit-or-supported-language' },
+    `${sensor} applies when the shell pack is explicit or supported, not through literal glob paths`);
+}
 assert.deepEqual(command.args.slice(-1), ['{files}']);
 assert.doesNotMatch(JSON.stringify(command), /\bfind\b|\bexec\b|sh -c/);
 assert.deepEqual(Object.keys(generic.sensors), ['security']);

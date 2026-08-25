@@ -1,0 +1,85 @@
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import test from 'node:test';
+
+const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+const bytes = path => statSync(new URL(`../${path}`, import.meta.url)).size;
+const plan = read('docs/plans/2026-08-25-r1-context-footprint-plan.md');
+const usingAwm = read('skills/using-awm/SKILL.md');
+const development = read('skills/development-process/SKILL.md');
+const brainstorming = read('skills/brainstorming/SKILL.md');
+const BASELINE_BYTES = 48103;
+const MAX_OBSERVED_BYTES = Math.floor(BASELINE_BYTES * 0.60);
+const observedClosure = [
+  'skills/using-awm/SKILL.md',
+  'skills/development-process/SKILL.md',
+  'skills/brainstorming/SKILL.md',
+  'skills/brainstorming/references/brief-preload.md',
+  'skills/brainstorming/references/spec-contract.md',
+  'skills/brainstorming/references/specialist-gate.md',
+];
+
+test('R1.1-R1.4, R1.9, R1.13: the embedded zero-model ledger is durable and honest', () => {
+  assert.match(plan, /^## Embedded R0 Measurement Ledger$/m);
+  assert.match(plan, /T0 \| Captured[\s\S]*12b08cb133c67889b1a5484c0b791cf510302ed1/);
+  assert.match(plan, /total `67481`[\s\S]*total `27325`/);
+  assert.match(plan, /total `48103` bytes \/ `699` lines/);
+  for (const classification of ['`exact`', '`provider-reported`', '`estimated`', '`unobservable`']) assert.ok(plan.includes(classification), `missing metric classification ${classification}`);
+  for (const checkpoint of ['T1', 'T2', 'T3', 'T4']) assert.match(plan, new RegExp(`\\| ${checkpoint} \\| (Scheduled|Captured) \\|`));
+  assert.match(plan, /After Task 1's spec and code-quality reviewers approve, change T2 to `Captured`/);
+  assert.match(plan, /After the normal final reviewer and post-implementation QA finish, change T3 to `Captured`/);
+  assert.match(plan, /zero model invocations and zero model tokens added/i);
+  assert.match(plan, /must never dispatch a measurement-only worker or invoke a model/i);
+  assert.match(plan, /unobservable[\s\S]{0,240}never replace with zero/i);
+});
+
+test('R1.5-R1.6: branch-only instructions are reachable and core routing stays self-contained', () => {
+  const references = [
+    'skills/using-awm/references/declared-orchestrators.md', 'skills/using-awm/references/subagent-policy.md',
+    'skills/development-process/references/execution-mode.md', 'skills/development-process/references/frontend-handoff.md', 'skills/development-process/references/business-gap.md',
+    'skills/brainstorming/references/brief-preload.md', 'skills/brainstorming/references/spec-contract.md', 'skills/brainstorming/references/specialist-gate.md', 'skills/brainstorming/references/ui-screen-detection.md',
+  ];
+  for (const path of references) {
+    assert.equal(existsSync(new URL(`../${path}`, import.meta.url)), true, `missing ${path}`);
+    const relative = path.split('/').slice(2).join('/');
+    const owner = path.includes('/using-awm/') ? usingAwm : path.includes('/development-process/') ? development : brainstorming;
+    assert.ok(owner.includes(relative), `${path} is unreachable from its entry skill`);
+  }
+  assert.match(usingAwm, /Ambiguous[\s\S]{0,220}(ask|ASK)/i);
+  assert.match(development, /\|\s*Executing\s*\|[\s\S]{0,160}(executing-plans|subagent-driven-development)/i);
+  assert.match(brainstorming, /Do NOT[\s\S]{0,120}implementation[\s\S]{0,120}approved/i);
+});
+
+test('R1.7: quality, approval, security, and completion invariants survive', () => {
+  const runtime = [usingAwm, development, brainstorming, read('skills/using-awm/references/subagent-policy.md'), read('skills/development-process/references/execution-mode.md'), read('skills/brainstorming/references/spec-contract.md')].join('\n');
+  for (const contract of [/user instructions[\s\S]{0,100}(precedence|priority|win)/i, /test-driven-development|TDD/, /systematic-debugging/, /post-implementation-qa/, /verification-before-completion/, /security\/robustness|security and robustness/i, /explicit approval|user approval/i, /BLOCKED[\s\S]{0,120}(never|must not)[\s\S]{0,80}(skip|ignore)/i]) assert.match(runtime, contract);
+});
+
+test('R1.8: non-executable research/docs use proportional verification', () => {
+  const runtime = `${development}\n${brainstorming}`;
+  assert.match(runtime, /research|documentation/i);
+  assert.match(runtime, /proportional structural verification/i);
+  assert.match(runtime, /full tests[\s\S]{0,120}sensors[\s\S]{0,120}(CI|PR)/i);
+});
+
+test('R1.10: the observed mandatory closure is at least 40 percent smaller', () => {
+  const actual = observedClosure.reduce((sum, path) => sum + bytes(path), 0);
+  assert.ok(actual <= MAX_OBSERVED_BYTES, `observed closure ${actual} bytes exceeds ${MAX_OBSERVED_BYTES}`);
+  assert.throws(() => assert.ok(MAX_OBSERVED_BYTES + 1 <= MAX_OBSERVED_BYTES), /false == true|The expression evaluated to a falsy value/);
+});
+
+test('R1.11-R1.12: net savings wait for a real T4 cycle', () => {
+  assert.match(plan, /^### Net-savings rule$/m);
+  assert.match(plan, /retrieval, assembly, retry, cache-write, cache-read, and extra invocation cost/i);
+  assert.match(plan, /Only T4 may support an end-to-end savings claim/i);
+  assert.match(plan, /first normal development cycle after the released registry is installed/i);
+  assert.match(plan, /Do not create a synthetic benchmark/i);
+});
+
+test('R1.14: Codex and Claude Code remain one provider-neutral contract', () => {
+  const runtime = `${usingAwm}\n${development}`;
+  assert.match(runtime, /Codex/); assert.match(runtime, /Claude Code/);
+  assert.match(runtime, /native (skill-loading|runtime|capabilit)/i);
+  assert.match(runtime, /unavailable[\s\S]{0,160}(state|report|say)[\s\S]{0,120}(limitation|degradation)/i);
+  assert.doesNotMatch(runtime, /SKILL\.codex\.md|SKILL\.claude\.md/);
+});
