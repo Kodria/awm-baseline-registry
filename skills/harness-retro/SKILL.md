@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "2.6.3"
+version: "2.7.0"
 license: Apache-2.0
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
@@ -281,7 +281,7 @@ Append (or create) `docs/harness-retros.md`:
 Before archiving, read `minCliVersion` from `awm-registry.json` and require that `awm --version` meets it using a semver-aware comparison. If the installed CLI is too old, fail loudly and do not archive; for this release's declared floor, give this exact upgrade command:
 
 ```bash
-npm i -g "agentic-workflow-manager@>=8.5.0"
+npm i -g "agentic-workflow-manager@>=9.3.0"
 ```
 
 Use this executable compatibility gate. It validates both versions, performs a numeric semver comparison, and quotes the package spec in the upgrade instruction so it is shell-safe:

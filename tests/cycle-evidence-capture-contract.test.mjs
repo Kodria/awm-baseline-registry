@@ -4,7 +4,7 @@ import { test } from 'node:test';
 
 const read = (file) => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 
-const EXPECTED_MIN_CLI_VERSION = '8.5.0';
+const EXPECTED_MIN_CLI_VERSION = '9.3.0';
 const EXPECTED_UPGRADE_COMMAND = `npm i -g "agentic-workflow-manager@>=${EXPECTED_MIN_CLI_VERSION}"`;
 
 function assertCanonicalActivePlanResolver(skill) {
@@ -34,7 +34,7 @@ function assertCanonicalActivePlanResolver(skill) {
 function assertCycleEvidenceCapture(skill, registry) {
   assert.equal(registry.minCliVersion, EXPECTED_MIN_CLI_VERSION,
     'the registry must require the first published CLI that supports evidence capture');
-  assert.doesNotMatch(skill, /npm i -g agentic-workflow-manager@>=8\.5\.0/,
+  assert.doesNotMatch(skill, /npm i -g agentic-workflow-manager@>=9\.3\.0/,
     'retro must not present an unquoted upgrade package spec');
   assert.match(skill, new RegExp(EXPECTED_UPGRADE_COMMAND.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
     'retro must give the exact compatible-CLI upgrade command');
@@ -98,7 +98,7 @@ test('RED mutation: capture failure cannot fall through to archive', () => {
 test('RED mutation: an unquoted displayed upgrade command is rejected', () => {
   const weakened = read('skills/harness-retro/SKILL.md').replace(
     EXPECTED_UPGRADE_COMMAND,
-    'npm i -g agentic-workflow-manager@>=8.5.0',
+    'npm i -g agentic-workflow-manager@>=9.3.0',
   );
   assert.throws(
     () => assertCycleEvidenceCapture(weakened, JSON.parse(read('awm-registry.json'))),

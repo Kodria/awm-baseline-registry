@@ -146,7 +146,7 @@ _Requirements: R3.1, R3.3, R3.5, R3.12, R3.14, R3.15_
 - Create: `tests/r14-context-kernel-cli-acceptance.mjs`
 - Modify: `awm-registry.json`
 
-- [ ] **Step 1: Demostrar la dependencia publicada antes de editar el manifest**
+- [x] **Step 1: Demostrar la dependencia publicada antes de editar el manifest**
 
 ```bash
 R3A_MERGE_SHA="$(gh pr list --repo Kodria/agentic-workflow --head feat/issue-126-r3a-context-kernel-preflight --state merged --json mergeCommit --jq '.[0].mergeCommit.oid')"
@@ -160,7 +160,7 @@ test "$(awm --version)" = "$R3A_VERSION"
 
 Expected: versión publicada, release commit y su padre merge verifican exit 0. Si falla una, R3b permanece bloqueado; no se sustituye por una versión local.
 
-- [ ] **Step 2: Escribir el manifest con el valor observado y probarlo**
+- [x] **Step 2: Escribir el manifest con el valor observado y probarlo**
 
 Usar `apply_patch` para reemplazar el `minCliVersion` vigente por la salida exacta de `$R3A_VERSION` obtenida en Step 1 y agregar `"projectContextSchema": 1`. El archivo final contiene sólo esas dos propiedades JSON; no conserva una variable ni una cadena simbólica. Verificar:
 
@@ -170,7 +170,7 @@ node -e 'const m=require("./awm-registry.json"); if(m.projectContextSchema!==1||
 
 Expected: exit 0. Esto verifica R3.1 sin adivinar versión.
 
-- [ ] **Step 3: Congelar el corpus y su inventario determinista**
+- [x] **Step 3: Congelar el corpus y su inventario determinista**
 
 Copiar los tres blobs del commit inmutable indicado arriba. Generar `block-inventory.json` con un script dentro del test: normalizar sólo finales de línea LF, dividir por una o más líneas vacías, y guardar para cada bloque `{ id, file, startLine, endLine, sha256 }`. El test vuelve a derivar el inventario desde los blobs y exige igualdad exacta; el JSON committed es evidencia revisable, no una segunda fuente.
 
@@ -186,7 +186,7 @@ test('R3.14: frozen corpus is exact and inventory covers every non-empty block',
 });
 ```
 
-- [ ] **Step 4: Crear la referencia canónica y los tests inicialmente rojos**
+- [x] **Step 4: Crear la referencia canónica y los tests inicialmente rojos**
 
 Escribir el contrato normativo de la sección superior más el schema/index completo del diseño. En R14, exigir:
 
@@ -204,7 +204,7 @@ Run: `node tests/r14-context-kernel-contract.test.mjs`
 
 Expected: FAIL porque aún no existe candidate ni consumers.
 
-- [ ] **Step 5: Crear aceptación del CLI publicado, no un segundo parser**
+- [x] **Step 5: Crear aceptación del CLI publicado, no un segundo parser**
 
 `r14-context-kernel-cli-acceptance.mjs` crea un `AWM_HOME` temporal, copia el registry candidate mínimo (`awm-registry.json`, `catalog.json`, `bundles/`, `skills/`), escribe `registries.json`, y ejecuta el binario de `$AWM_R3A_BIN` o `awm` con `cwd` en tres copias descartables:
 
@@ -220,7 +220,7 @@ assert.match(runPreflight(candidate).stdout, /degraded|invalid|partial/i);
 
 El fixture incluye `.awm/sensors.json` con todos los sensores generic declarados `enabled:false`, decisión explícita para que este test mida sólo kernel y no dependa de herramientas del host.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add awm-registry.json skills/project-context-init/references/context-kernel-v1.md tests/fixtures/context-kernel-v1/legacy tests/r14-context-kernel-contract.test.mjs tests/r14-context-kernel-cli-acceptance.mjs
@@ -247,7 +247,7 @@ _Requirements: R3.3, R3.4, R3.5, R3.6, R3.14_
 - Create: `tests/fixtures/context-kernel-v1/candidate/docs/awm/context/operations.md`
 - Modify: `tests/r14-context-kernel-contract.test.mjs`
 
-- [ ] **Step 1: Añadir tests rojos de trace, markers e IDs**
+- [x] **Step 1: Añadir tests rojos de trace, markers e IDs**
 
 ```js
 test('R3.4-R3.6: migration is complete, unique, and protected', () => {       // verifies R3.4, R3.5, R3.6
@@ -269,7 +269,7 @@ test('R3.14: fixed bytes fall by at least half without losing trace', () => { //
 });
 ```
 
-- [ ] **Step 2: Hacer que `project-context-init` sea el único writer/migrator**
+- [x] **Step 2: Hacer que `project-context-init` sea el único writer/migrator**
 
 Agregar un branch `Context Kernel v1` que:
 
@@ -280,11 +280,11 @@ Agregar un branch `Context Kernel v1` que:
 5. Si detecta metadata parcial/invalid, no la regenera silenciosamente: reporta diagnóstico, conserva full context y exige reparación revisada.
 6. Nunca edita `CLAUDE.md` salvo selección explícita del owner, aunque siempre lo cuenta en `maxFixedBytes`.
 
-- [ ] **Step 3: Separar en `project-constitution` regla incondicional y detalle**
+- [x] **Step 3: Separar en `project-constitution` regla incondicional y detalle**
 
 La skill conserva dentro de markers sólo no negociables de seguridad, robustez, release y proceso que aplican a toda tarea. Narrativa forense, ejemplos largos y reglas situacionales van a cards con IDs y `when`. Toda actualización relee el index actual y ejecuta igualdad de inventario; una eliminación requiere una entrada con formato `owner-approved removal: CTX-RELEASE-001 — superseded by CTX-RELEASE-002` registrada en migration/maintenance history.
 
-- [ ] **Step 4: Construir y revisar el candidate fixture**
+- [x] **Step 4: Construir y revisar el candidate fixture**
 
 Migrar el corpus congelado siguiendo las skills ya editadas. Cada card usa anchors únicos; `migration-v1.md` tiene columnas `Legacy block | Source range/hash | Context ID | Destination | Rationale`. Antes de comprimir un bloque, su fila debe existir. Mantener `CLAUDE.md` byte-idéntico al legacy.
 
@@ -297,7 +297,7 @@ AWM_R3A_BIN="$(command -v awm)" node tests/r14-context-kernel-cli-acceptance.mjs
 
 Expected: trace completo, candidate ≤33,740, CLI valid/pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add skills/project-context-init skills/project-constitution tests/fixtures/context-kernel-v1/candidate tests/r14-context-kernel-contract.test.mjs
@@ -314,7 +314,7 @@ _Requirements: R3.2, R3.3, R3.6, R3.7, R3.8, R3.12_
 - Modify: `skills/writing-plans/SKILL.md`
 - Modify: `tests/r14-context-kernel-contract.test.mjs`
 
-- [ ] **Step 1: Escribir tests rojos de las prohibiciones**
+- [x] **Step 1: Escribir tests rojos de las prohibiciones**
 
 ```js
 test('R3.6-R3.8: maintenance cannot prune kernel or infer deletion authority', () => { // verifies R3.6, R3.7, R3.8
@@ -330,7 +330,7 @@ test('R3.6-R3.8: maintenance cannot prune kernel or infer deletion authority', (
 });
 ```
 
-- [ ] **Step 2: Reemplazar merge-and-prune automático en proyecto migrado**
+- [x] **Step 2: Reemplazar merge-and-prune automático en proyecto migrado**
 
 `harness-retro` bifurca por preflight:
 
@@ -340,7 +340,7 @@ test('R3.6-R3.8: maintenance cannot prune kernel or infer deletion authority', (
 
 Una regla genuinamente incondicional se propone al owner; no se inserta automáticamente. Borrar ID/card requiere aprobación y razón explícitas.
 
-- [ ] **Step 3: Añadir el gate humano correcto en `writing-plans`**
+- [x] **Step 3: Añadir el gate humano correcto en `writing-plans`**
 
 Después de `awm preflight`:
 
@@ -350,11 +350,11 @@ Después de `awm preflight`:
 
 No cambiar la semántica existente de sensores ni el orden preflight → context-budget → handoff.
 
-- [ ] **Step 4: Probar una mutación de poda y restaurar**
+- [x] **Step 4: Probar una mutación de poda y restaurar**
 
 Quitar temporalmente `MUST NOT automatically edit` de `harness-retro`; ejecutar R14 y exigir FAIL con mensaje de protección. Restaurar y exigir PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add skills/harness-retro/SKILL.md skills/writing-plans/SKILL.md tests/r14-context-kernel-contract.test.mjs
@@ -376,7 +376,7 @@ _Requirements: R3.3, R3.9, R3.10, R3.11, R3.12, R3.13, R3.15_
 - Modify: `tests/r13-role-evidence-capsule-contract.test.mjs`
 - Modify: `tests/r14-context-kernel-contract.test.mjs`
 
-- [ ] **Step 1: Extender primero los fixtures R13/R14**
+- [x] **Step 1: Extender primero los fixtures R13/R14**
 
 La cápsula conserva su marcador v1 y orden actual; `sources` incorpora referencias compactas `ID | path | anchor`, y `retrieval history` registra `ID | source | reason | result`. No se agrega un segundo formato.
 
@@ -397,19 +397,19 @@ test('R3.12-R3.13: providers and legacy preserve identical obligations', () => {
 });
 ```
 
-- [ ] **Step 2: Implementar selección conservadora en el controller SDD**
+- [x] **Step 2: Implementar selección conservadora en el controller SDD**
 
 Antes de cada dispatch, leer index validado por preflight y seleccionar entries cuyo `when`, surface y requirements aplican. La cápsula inicial contiene referencias, no cuerpos. Si no se puede demostrar aplicabilidad, seleccionar `full-context: selection-uncertain` antes del dispatch.
 
 El rol puede responder una vez con `NEEDS_CONTEXT` nombrando IDs/fuentes; el controller hace un solo batch de reads nativos dentro de la misma invocación, actualiza history y re-dispatcha. Segundo pedido o cualquier trigger R3.11 toma full context. No hay comando CLI de retrieval ni llamada de medición.
 
-- [ ] **Step 3: Aplicar el mismo contrato a todos los roles existentes**
+- [x] **Step 3: Aplicar el mismo contrato a todos los roles existentes**
 
 Actualizar implementer, specification, code-quality, Track A y cada Track B lens. Track B conserva su exclusión de plan completo y recibe sólo cards relevantes a su lente. Todas las obligaciones previas de self-review, anti-bias, sensores, blockers, findings y design-fidelity permanecen.
 
 Codex/Claude sólo difieren en el mecanismo nativo de lectura/dispatch; IDs, history, triggers, evidencia y verdict son idénticos.
 
-- [ ] **Step 4: Ejecutar regresión y mutaciones**
+- [x] **Step 4: Ejecutar regresión y mutaciones**
 
 ```bash
 node tests/r13-role-evidence-capsule-contract.test.mjs
@@ -418,7 +418,7 @@ node tests/r14-context-kernel-contract.test.mjs
 
 Expected: PASS. Luego probar por separado y restaurar estas mutaciones: borrar un role; borrar `second-context-request`; insertar card completa en initial capsule; cambiar sólo Claude a dos batches; borrar un quality gate. Cada una debe producir exit no-cero y mensaje específico.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add skills/subagent-driven-development skills/post-implementation-qa tests/r13-role-evidence-capsule-contract.test.mjs tests/r14-context-kernel-contract.test.mjs
@@ -442,7 +442,7 @@ _Requirements: R3.1, R3.12, R3.14, R3.15, R3.16_
 - Modify: `.github/workflows/auto-tag.yml`
 - Modify: `docs/plans/2026-08-25-r3b-context-kernel-retrieval-plan.md`
 
-- [ ] **Step 1: Aplicar bumps coordinados**
+- [x] **Step 1: Aplicar bumps coordinados**
 
 Versiones exactas de contenido:
 
@@ -458,7 +458,7 @@ Versiones exactas de contenido:
 
 No fijar manualmente el tag del registry; `auto-tag.yml` lo deriva del título conventional del merge.
 
-- [ ] **Step 2: Incorporar R14 en ambos jobs que protegen entrega**
+- [x] **Step 2: Incorporar R14 en ambos jobs que protegen entrega**
 
 Agregar, después de R13 y antes de version-gates, en `validate.yml` y en `auto-tag.yml`:
 
@@ -476,7 +476,7 @@ En ambos workflows cambiar `actions/setup-node` de Node 20 a Node 22, que es el 
     npm install --global "agentic-workflow-manager@$R3A_VERSION"
 ```
 
-- [ ] **Step 3: Completar T2/T3 con datos observados**
+- [x] **Step 3: Completar T2/T3 con datos observados**
 
 Agregar `## Release Evidence` con filas R3 T2 y T3: legacy/candidate bytes, porcentaje estructural, inventario/mapping counts, dispatches reales, retrievals/fallbacks naturales, hallazgos/correcciones/rollback, provider usage `unobservable`, owner quota sólo si fue entregada, commits, PR y tags/releases. Escribir expresamente `structural bytes are not billed-token or cost savings`.
 
@@ -486,7 +486,7 @@ Verificación:
 rg -n '^\| R3 T2 |^\| R3 T3 |67,481|33,740|unobservable|structural bytes are not billed-token or cost savings|issue #126' docs/plans/2026-08-25-r3b-context-kernel-retrieval-plan.md
 ```
 
-- [ ] **Step 4: Ejecutar una sola matriz local completa**
+- [x] **Step 4: Ejecutar una sola matriz local completa**
 
 ```bash
 node scripts/validate-portability.mjs
@@ -549,4 +549,11 @@ Forward gaps: ninguno. Backward gaps: ninguno. El plan es serial: manifest/CLI, 
 
 ## Release Evidence
 
-Durante Task 5 se agregan las filas observadas R3 T2 y T3. La medición cerrada de entrada es 67,481 bytes; el acceptance threshold es 33,740. Provider usage permanece `unobservable` salvo telemetría nativa y structural bytes are not billed-token or cost savings.
+La medición cerrada de entrada es 67,481 bytes; el acceptance threshold es 33,740. Provider usage permanece `unobservable` salvo telemetría nativa y structural bytes are not billed-token or cost savings.
+
+| Checkpoint | Corpus fijo (bytes) | Estructural | Inventario / mapping | Dispatches / retrievals / fallbacks naturales | Calidad, corrección y rollback | Provider / owner quota | Commit / release / PR |
+|---|---:|---:|---|---|---|---|---|
+| R3 T2 | legacy 67,481; candidate 5,267 | 92.19% menos bytes fijos | 124 / 124; 2 kernel + 122 selective | 0 / 0 / 0 (fixture y gates deterministas, no sesión productiva) | R14 era rojo hasta que existió candidate válido; protección de marcadores, anchors, cardinalidad y trazabilidad verificada; rollback: ninguno | `unobservable` / no atribuible por checkpoint | `2568a3e`; release y PR R3b pendientes |
+| R3 T3 | legacy 67,481; candidate 5,267 | 92.19% menos bytes fijos | 124 / 124 preservados | 0 / 0 / 0 (sin invocación productiva) | Gate detectó ausencia de frase owner approval; corregido en `b25695a`; poda automática, metadata parcial y presupuesto no autorizan borrado; rollback: ninguno | `unobservable` / no atribuible por checkpoint | `6e2af9d`, `b25695a`; release y PR R3b pendientes |
+
+T2/T3 están enlazados al tracking [issue #126](https://github.com/Kodria/agentic-workflow/issues/126). No se registró una cuota del owner atribuible a estos checkpoints; los bytes estructurales no se presentan como ahorro de tokens facturados o de costo.

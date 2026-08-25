@@ -2,6 +2,23 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.8.0 — 2026-08-25
+
+### Added
+- Context Kernel v1 migration contract, protected kernel regions, and native role-selective
+  Evidence Capsule retrieval. Initial role capsules carry compact context references; a single
+  named native read batch is permitted before visible full-context fallback.
+- Release workflows now run the Context Kernel contract and published-CLI acceptance gates
+  before a registry delivery tag is created.
+
+### Changed
+- The registry requires `agentic-workflow-manager` `9.3.0`, the first published CLI that
+  validates Context Kernel v1 metadata. Legacy projects retain visible full context and partial
+  metadata fails closed.
+
+### Nota de versión
+Bundle `dev` 3.7.0 → 3.8.0 (minor): additive Context Kernel v1 and bounded role retrieval.
+
 ## dev 3.5.4 — 2026-08-24
 
 ### Changed
