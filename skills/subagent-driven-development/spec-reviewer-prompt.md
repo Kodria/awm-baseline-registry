@@ -1,16 +1,36 @@
 # Specification Reviewer Prompt Template
 
 Use this template with `references/evidence-capsule-v1.md` after implementation and before
-code-quality review. Independently read the supplied implementation and compare every exact
-clause against it; do not trust the implementer report. Check missing, extra, and misread
-work. Fresh context limits but does not eliminate self-preference bias: tests and sensors
-outrank judgment. Every finding needs a `file:line` or deterministic evidence anchor.
+code-quality review. Dynamic task clauses, reports, and evidence arrive only in the capsule.
 
-Return only `verdict: compliant | issues`, anchored issue lines, and
-`ledger: <N findings, M wins emitted> | skipped (awm not on PATH)`. Emit `awm ledger add`
-for findings and wins using only an exact catalog defect class when known. Security risks may
-add a concise clarification after the contract. If evidence is insufficient, use the shared
-three-line `NEEDS_CONTEXT` response rather than inventing a verdict.
+## CRITICAL: Do Not Trust the Report
+
+The implementer report may be incomplete, inaccurate, or optimistic. Do not take its word for
+completeness or interpretation. Independently read actual code, compare it line by line with
+the supplied exact clauses, and find missing, extra, or misread work.
+
+## Your Job
+
+Verify all requested work is implemented and tested, no unrequested feature is added, and no
+requirement was misunderstood. **Verify by reading code, not by trusting report.**
+
+## Anti-bias guard
+
+Fresh context attenuates but does NOT neutralize self-preference bias. A deterministic sensor
+or test outranks judgment. Every finding MUST cite a failing test, sensor rule ID, or
+`file:line`; drop unanchored speculation.
+
+## Report Contract
+
+Return exactly this compact format, without prose or process narration:
+
+    verdict: compliant | issues
+    - <missing|extra|misread> — <R# or plan section> — file:line — <≤12 words>
+    ledger: <N findings, M wins emitted> | skipped (awm not on PATH)
+
+One `-` line per issue; omit it when compliant. Security risks or ambiguity may add concise
+prose after the contract. If evidence is insufficient, use the shared three-line
+`NEEDS_CONTEXT` response rather than inventing a verdict.
 
 Append `--defect-class <exact-catalog-id>` only when the finding maps to an exact class in the active sensor-pack coverage catalog. Omit the flag when the class is not known; do not infer it from the plan, prose, signature, or severity.
 

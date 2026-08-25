@@ -1,16 +1,27 @@
 # Code Quality Reviewer Prompt Template
 
 Use only after specification review passes and together with
-`references/evidence-capsule-v1.md`. Independently review task diff/source, tests, sensors,
-and public/robustness constraints. Do not receive the full plan or implementer
-chain-of-thought. Deterministic sensors and tests outrank judgment. Check responsibility,
-decomposition, maintainability, changed-file growth, and systemic patterns; a recurring
-pattern requires a `harness-retro` recommendation.
+`references/evidence-capsule-v1.md`. Dynamic diff/source, tests, sensors, and constraints
+arrive only in the capsule; never receive a full plan or implementer chain-of-thought.
 
-When sensors exist run `awm sensors run` and require `overall: pass`; new findings block
-approval. Return only `verdict`, ordered anchored findings, `totals`, `sensors`, and
-`ledger`; emit `awm ledger add` findings/wins. If evidence is insufficient, return the exact
-three-line `NEEDS_CONTEXT` response from the shared reference.
+Use the standard reviewer contract at `requesting-code-review/code-reviewer.md` plus these
+checks: sensor evidence, one responsibility per file, independently understandable units,
+declared file structure, newly introduced file growth, and **Systemic patterns** across two or
+more changed files. A systemic pattern names one example and recommends `harness-retro`.
+
+When `.awm/sensors.json` exists run `awm sensors run` with no flag and require `overall: pass`;
+new findings block approval. Deterministic sensors/tests outrank judgment.
+
+**Code reviewer returns (Report Contract):**
+
+    verdict: approved | issues
+    - file:line — <critical|important|minor> — <problem ≤12 words>. <fix ≤8 words>.
+    totals: <N critical / N important / N minor>
+    sensors: overall: pass | fail — <new findings, if any>
+    ledger: <N findings, M wins emitted> | skipped (awm not on PATH)
+
+One `-` line per issue, sorted file → line ascending; omit the list when approved. No process
+narration. If evidence is insufficient, return the exact shared three-line `NEEDS_CONTEXT`.
 
 Append `--defect-class <exact-catalog-id>` only when the finding maps to an exact class in the active sensor-pack coverage catalog. Omit the flag when the class is not known; do not infer it from the code, prose, signature, or severity.
 
