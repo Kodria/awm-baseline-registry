@@ -283,7 +283,7 @@ test('S3 pins the observed R4a release and keeps bundle/catalog delivery metadat
   for (const [file, version] of [
     ['skills/development-process/SKILL.md', '1.8.0'], ['skills/writing-plans/SKILL.md', '1.10.0'],
     ['skills/subagent-driven-development/SKILL.md', '1.12.2'], ['skills/executing-plans/SKILL.md', '1.3.2'],
-    ['skills/requesting-code-review/SKILL.md', '1.2.0'], ['skills/post-implementation-qa/SKILL.md', '1.9.0'],
+    ['skills/requesting-code-review/SKILL.md', '1.2.0'], ['skills/post-implementation-qa/SKILL.md', '1.9.1'],
     ['skills/verification-before-completion/SKILL.md', '1.3.2'], ['skills/setup-sensors/SKILL.md', '1.1.2'],
   ]) assert.match(read(file), new RegExp(`^version: \"${version.replaceAll('.', '\\.')}\"$`, 'm'), `${file} must have its one approved version`);
 });
