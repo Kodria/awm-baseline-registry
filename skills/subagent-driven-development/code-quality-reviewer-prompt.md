@@ -40,3 +40,9 @@ sources: <initial CTX-ID | path | anchor references; retrieved authoritative sou
 evidence: <task diff/source, tests, sensors>
 retrieval history: <none or ordered ID | source | reason | result>
 fallback: <selective or full-context: exact-trigger>
+
+For a compact slice, remain a fresh code-quality reviewer. Review only the supplied diff, source,
+tests, sensors, and public/robustness constraints; never receive a full plan or implementer
+chain-of-thought. A risk requires full relevant context and verification from the controller, not
+a downgraded review. Findings stay open until the same implementer fixes them and this fresh role
+returns `approved`.

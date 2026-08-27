@@ -78,3 +78,9 @@ sources: <initial CTX-ID | path | anchor references; retrieved authoritative sou
 evidence: <verification and design evidence>
 retrieval history: <none or ordered ID | source | reason | result>
 fallback: <selective or full-context: exact-trigger>
+
+For a compact dispatch, `scope` is one complete dependency-ready slice. Work only from its
+declared sources, requirements, and commands; report `NEEDS_CONTEXT` rather than discovering
+history or plan content. An omission, new requirement, incorrect boundary, or risk is not a code
+fix: stop for amendment-required so the controller can create a durable amendment, revalidate,
+and record the deviation.

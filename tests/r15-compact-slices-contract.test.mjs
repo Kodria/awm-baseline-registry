@@ -102,3 +102,116 @@ test('RED mutations reject each compact-planning regression', () => {
     'compact assumptions route',
   )), /complete quality route/);
 });
+
+const S2_SDD = 'skills/subagent-driven-development/SKILL.md';
+const S2_EXEC = 'skills/executing-plans/SKILL.md';
+const S2_REVIEW = 'skills/requesting-code-review/SKILL.md';
+const S2_QA = 'skills/post-implementation-qa/SKILL.md';
+const S2_TEMPLATES = [
+  'skills/subagent-driven-development/implementer-prompt.md',
+  'skills/subagent-driven-development/spec-reviewer-prompt.md',
+  'skills/subagent-driven-development/code-quality-reviewer-prompt.md',
+];
+
+function assertS2CompactStateMachine(text) {
+  for (const state of ['pending', 'implementing', 'spec-review', 'quality-review', 'complete']) {
+    assert.match(text, new RegExp(`\\b${state}\\b`), `missing compact state ${state}`);
+  }
+  assert.match(text, /amendment-required/, 'plan defects must exit to amendment-required');
+  assert.match(text, /fresh specification reviewer/i, 'spec reviewer must be fresh');
+  assert.match(text, /fresh code-quality reviewer/i, 'quality reviewer must be fresh');
+  assert.match(text, /both reviewers[^.]{0,120}clean/i, 'both clean reviewers gate completion');
+  assert.match(text, /reconcile[^.]{0,180}(?:files|file-derived)[^.]{0,180}truth/i, 'completion must reconcile durable truth');
+  assert.match(text, /same implementer[^.]{0,160}fix/i, 'the original implementer owns review fixes');
+}
+
+function assertS2AmendmentAndRisk(text) {
+  assert.match(text, /omission|new requirement|incorrect boundary/i, 'discoveries must identify plan defects');
+  assert.match(text, /durable amendment/i, 'plan defects require a durable amendment');
+  assert.match(text, /revalidate|validate again/i, 'amended plans must be revalidated');
+  assert.match(text, /deviation record/i, 'amended execution must record a deviation');
+  assert.match(text, /code[^.]{0,120}(?:never|cannot)[^.]{0,120}close/i, 'code alone cannot close a plan defect');
+  assert.match(text, /full relevant context/i, 'risk fallback must provide full relevant context');
+  assert.match(text, /preserv(?:e|ing)[^.]{0,160}(?:roles|gates)/i, 'risk fallback must preserve roles and gates');
+}
+
+function assertS2RoleTemplates() {
+  const [implementer, specification, quality] = S2_TEMPLATES.map(read);
+  assert.match(implementer, /complete dependency-ready slice/i);
+  assert.match(implementer, /declared sources|declared requirements|declared commands/i);
+  assert.match(specification, /exact clauses[^.]{0,160}report[^.]{0,160}diff/i);
+  assert.match(quality, /diff[^.]{0,160}(?:tests|sensors)[^.]{0,160}(?:constraints|robustness)/i);
+  for (const source of [specification, quality]) {
+    assert.match(source, /never receive a full plan|do not ask to read a full plan/i);
+    assert.match(source, /chain-of-thought/i);
+  }
+}
+
+test('S2 compact handoff dispatches only a validated dependency-ready slice and preserves the legacy route (R4-CS-3)', () => {
+  const sdd = read(S2_SDD);
+  assert.match(sdd, /complete dependency-ready slice/i);
+  assert.match(sdd, /only declared sources, requirements, and commands/i);
+  assert.match(sdd, /invalid or unsupported[^.]{0,180}(?:stop|block)/i);
+  assert.match(sdd, /legacy[^.]{0,180}(?:unchanged|existing behavior)/i);
+});
+
+test('S2 state machine requires fresh spec and quality reviews before a compact slice advances (R4-CS-4)', () => {
+  assertS2CompactStateMachine(read(S2_SDD));
+});
+
+test('S2 makes defects durable, revalidates them, and keeps risk fallbacks fully gated (R4-CS-5, R4-CS-6)', () => {
+  assertS2AmendmentAndRisk(read(S2_SDD));
+});
+
+test('S2 templates keep the stable Evidence Capsule boundary while scoping each role (R4-CS-3, R4-CS-4)', () => {
+  assertS2RoleTemplates();
+  for (const source of S2_TEMPLATES) assert.equal((read(source).match(/## Evidence Capsule v1/g) ?? []).length, 1, `${source} marker must remain singular`);
+});
+
+test('S2 preserves execution reviews and global two-track QA instead of replacing them with slice review (R4-QUAL-1, R4-QUAL-2)', () => {
+  const execution = read(S2_EXEC);
+  const review = read(S2_REVIEW);
+  const qa = read(S2_QA);
+  assert.match(execution, /legacy batches\/checkpoints intact/i);
+  assert.match(execution, /compact slice[^.]{0,160}(?:spec|quality)[^.]{0,160}review/i);
+  assert.match(review, /each task[^.]{0,120}legacy or compact slice/i);
+  assert.match(review, /never end-only/i);
+  for (const token of ['Track A', 'Track B', 'one subagent per lens', 'full applicable verification', 'fix loop', 'post-implementation-docs', 'harness-retro', 'finishing-a-development-branch']) assert.match(qa, new RegExp(token), `missing QA continuity: ${token}`);
+  assert.match(qa, /Track B receives no full plan/i);
+});
+
+test('S2 RED mutation matrix rejects compact-slice shortcuts and quality regressions', () => {
+  const sdd = read(S2_SDD);
+  assert.throws(() => assert.match(sdd.replace('fresh code-quality reviewer', 'reviewer'), /fresh code-quality reviewer/i),
+    /fresh code-quality reviewer/);
+  assert.throws(() => assert.match(sdd.replace(/both reviewers[^.]*clean/i, 'one reviewer clean'), /both reviewers[^.]{0,120}clean/i),
+    /both reviewers/);
+  assert.throws(() => assertS2AmendmentAndRisk(sdd.replace('durable amendment', 'note')),
+    /durable amendment/);
+  assert.throws(() => assertS2AmendmentAndRisk(sdd.replace('revalidate', 'defer validation')),
+    /amended plans must be revalidated/);
+  assert.throws(() => assertS2AmendmentAndRisk(sdd.replace('full relevant context', 'brief context')),
+    /full relevant context/);
+  assert.throws(() => assert.match(read(S2_TEMPLATES[2]).replaceAll('chain-of-thought', 'notes'), /chain-of-thought/),
+    /chain-of-thought/);
+  const execution = read(S2_EXEC);
+  assert.throws(() => assert.match(execution.replace('Legacy batches/checkpoints intact', 'Legacy batches removed'), /legacy batches\/checkpoints intact/i));
+  const qa = read(S2_QA);
+  assert.throws(() => assert.match(qa.replace('one subagent per lens', 'one reviewer'), /one subagent per lens/));
+  assert.throws(() => assert.match(qa.replace('Track B receives no full plan', 'Track B may receive the full plan'), /Track B receives no full plan/i));
+});
+
+test('S2 pressure mutations reject fragmented dispatch, hidden scope, report shortcuts, and removed final quality gates', () => {
+  const sdd = read(S2_SDD);
+  assert.match(sdd, /validate every report/i, 'controller must validate each report');
+  assert.throws(() => assert.match(sdd.replace('complete dependency-ready slice', 'fragment'), /complete dependency-ready slice/i));
+  assert.throws(() => assert.match(sdd.replace('branch history', 'history'), /branch history/i));
+  assert.throws(() => assert.match(sdd.replace('fresh specification reviewer', 'existing reviewer'), /fresh specification reviewer/i));
+  assert.throws(() => assert.match(sdd.replace('both reviewers are clean', 'a reviewer is clean'), /both reviewers are clean/i));
+  assert.throws(() => assert.match(sdd.replace('only declared sources, requirements, and commands', 'declared sources and commands'), /only declared sources, requirements, and commands/i));
+  assert.throws(() => assert.match(sdd.replace('full relevant context', 'brief context'), /full relevant context/i));
+  assert.throws(() => assert.match(sdd.replace('slice clauses, tests, sensors, ledger', 'slice clauses, tests, ledger'), /slice clauses, tests, sensors, ledger/i));
+  const qa = read(S2_QA);
+  assert.throws(() => assert.match(qa.replaceAll('Track A', 'local review'), /Track A/i));
+  assert.throws(() => assert.match(qa.replaceAll('Track B', 'local review'), /Track B/i));
+});

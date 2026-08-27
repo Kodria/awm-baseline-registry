@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.11.0"
+version: "1.12.0"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
@@ -34,6 +34,31 @@ and never silently drop a role.
 
 For Context Kernel v1, read `../project-context-init/references/context-kernel-v1.md`; it is
 the sole normative contract for retrieval.
+
+## Compact sliced execution (R4-CS)
+
+Use this protocol only for a plan validated as `compact-slices/v1`. Select exactly one complete dependency-ready slice: every declared dependency is complete, its requirement owner is unique,
+and its declared sources, requirements, and commands are sufficient and inert. Dispatch only
+that slice and only declared sources, requirements, and commands. Do not ask an implementer to
+inspect or discover the plan, branch history, or unrelated files. Invalid or unsupported compact
+input stops execution; an unmarked plan keeps existing legacy behavior unchanged.
+
+The compact state machine is `pending → implementing → spec-review → quality-review → complete`.
+The same implementer fixes findings. A fresh specification reviewer and a fresh code-quality reviewer are mandatory and distinct from the implementer; no slice advances until both reviewers
+are clean and every declared gate is green. Before `complete`, reconcile the report with
+file-derived truth, the slice clauses, tests, sensors, ledger, skills/design declarations, and
+the current diff. Validate every report against that durable evidence; files win over reports.
+
+If an omission, new requirement, or incorrect boundary is discovered, exit to
+`amendment-required` (or `blocked` when it cannot be resolved). Create a durable amendment in
+the plan, revalidate the plan, and write a deviation record before selecting a slice again. Code
+never closes a plan defect by itself. For a security, robustness, public-contract, or uncertain
+cross-cutting risk, provide full relevant context and required verification, while preserving all
+roles and gates; risk fallback never downgrades review or replaces a reviewer.
+
+Compact completion is local only. After all slices, retain the existing full-quality final route:
+TDD, traceability, per-slice reviews, applicable sensors, global Track A/Track B QA, docs,
+retro, and finish remain mandatory.
 
 <!-- awm-context-kernel-dispatch-v1
 provider: codex

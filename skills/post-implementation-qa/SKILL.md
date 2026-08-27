@@ -1,6 +1,6 @@
 ---
 name: post-implementation-qa
-version: "1.8.0"
+version: "1.9.0"
 license: Apache-2.0
 description: Use after implementation is complete and before finishing the branch — runs two-track QA (Track A fidelity vs. the plan, Track B plan-agnostic quality lenses), drives a fix loop until clean. Also works standalone when a bug is found independently.
 ---
@@ -30,6 +30,11 @@ visible fallback, provider parity, and ephemeral-record rules. This QA skill MUS
 fork, or weaken those normative retrieval rules. Preserve sensor precedence, deterministic
 dedup, ledger gate, fix loop, design-fidelity condition, completion marker, docs handoff, and
 robustness/security floor; record the reference-required ledger fields separately.
+
+Compact-slice reviews are local gates, never a substitute for global QA. Once all slices are
+complete, run Track A ID-driven fidelity and one agent per applicable Track B lens with full applicable verification and the existing fix loop. Track B receives no full plan. Preserve TDD,
+traceability, applicable sensors, docs handoff, `harness-retro`, and `finishing-a-development-branch`; a compact context reduction
+cannot waive a coverage, correctness, robustness, or security regression.
 
 For Context Kernel v1, read `../project-context-init/references/context-kernel-v1.md`; it is
 the sole normative contract for retrieval.

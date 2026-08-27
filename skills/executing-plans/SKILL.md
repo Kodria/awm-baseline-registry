@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-version: "1.2.0"
+version: "1.3.0"
 license: Apache-2.0
 description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
 ---
@@ -14,6 +14,15 @@ Load plan, review critically, execute tasks in batches, report for review betwee
 **Core principle:** Batch execution with checkpoints for architect review.
 
 **Announce at start:** "I'm using the executing-plans skill to implement this plan."
+
+## Compact-slice compatibility
+
+Legacy batches/checkpoints intact: Task and parallel-track execution keep their existing
+semantics. For a validated compact slice, use the equivalent sequence — dispatch the one
+dependency-ready slice, implement, run spec review then quality review, reconcile durable truth,
+and advance only after both are clean and declared gates pass. A plan defect requires durable
+amendment, revalidation, and a deviation record before continuation; risk receives full relevant
+context without removing roles or gates. This local review never replaces final global QA.
 
 ## The Process
 
