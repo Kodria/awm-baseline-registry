@@ -130,7 +130,7 @@
 ## 2026-08-27 — R4b compact sliced execution
 
 - **Class:** process / structural.
-- **Occurrences (ledger count):** 10 resolved findings and 37 wins; the recurring report identifies the version-gate sequence and registry-sensor policy as systemic patterns.
-- **Rule:** no new rule. The delivery itself cures both patterns: S3 owns release-only gates, and the versioned single-owner R8 policy restricts registry closure to all-disabled sensors while preserving local `not_certified`.
-- **Sensor:** `tests/r15-compact-slices-contract.test.mjs` (20/20), `tests/r8-sensor-gate-contract.test.mjs` (25/25), and release version gate (3/3); candidate-SHA R8 evidence is required in `validate.yml` and `auto-tag.yml`.
+- **Occurrences (ledger count):** 12 resolved findings and 38 wins; the recurring report identifies version-gate sequencing, the QA-version expectation, and registry-sensor policy as systemic patterns.
+- **Rule:** no new rule. The delivery itself cures the patterns: S3 owns release-only gates, R15 pins the QA skill's approved version, and the versioned single-owner R8 policy restricts registry closure to all-disabled sensors while preserving local `not_certified`.
+- **Sensor:** `tests/r15-compact-slices-contract.test.mjs` (20/20), `tests/r8-sensor-gate-contract.test.mjs` (27/27), and release version gate (3/3); candidate-SHA R8 evidence is required in `validate.yml` and `auto-tag.yml`.
 - **Descartes (modo desatendido):** earlier slice findings were fixed and re-reviewed; no additional context or constitution rule is authorized or necessary. User-facing documentation inventory found no changed README or guide.
