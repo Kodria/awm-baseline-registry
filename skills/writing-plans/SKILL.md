@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "1.9.0"
+version: "1.10.0"
 license: Apache-2.0
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
@@ -43,6 +43,21 @@ This structure informs the task decomposition. Each task should produce self-con
 - "Implement the minimal code to make the test pass" - step
 - "Run the tests and make sure they pass" - step
 - "Commit" - step
+
+## Compact serial plans (eligible only)
+
+Use `references/compact-slices-v1.md` only when the plan is a formed serial plan
+with explicitly sliceable requirements and one explicit owner per requirement. Do not
+infer a slice boundary from prose. A plan declaring `## Tracks`, lacking a complete
+requirement set, or needing product/architecture judgment remains legacy and keeps the
+current Task Structure and Parallel track declaration unchanged.
+
+The compact manifest is exactly `compact-slices/v1`; it carries stable source and
+command IDs plus complete five-section slice prose. An executor must receive behavior,
+surfaces, interfaces, sequence, edge cases, RED/GREEN evidence, commands, risks, and
+fallback without discovery work. Inline a needed fact when its source is insufficient,
+unavailable, unstable, unsafe, inaccessible, or ambiguous; never delegate repository
+inspection as a substitute.
 
 ## Plan Document Header
 
@@ -231,6 +246,31 @@ Before offering the execution choice, run this gate on the traceability matrix. 
 - **No task or test lacks a requirement ID.** Anything unanchored is orphan scope — resolve it before handoff.
 
 Do not proceed to the execution handoff while the gate reports gaps. *(Tier: skipped for trivial single-file diffs with no `## Requirements` section.)*
+
+## Compact validation and strict currentness (pre-handoff) — BLOCKING
+
+For an eligible compact plan, after self-review and `awm plan analyze`, run:
+
+```bash
+awm plan validate PLAN_PATH --cwd . --json
+```
+
+Only `valid` may continue. `invalid` or `unsupported` stops the handoff; do not
+reinterpret either result as legacy. A plan with no marker or schema is legacy and
+continues through the existing full-quality Task/Tracks route.
+
+Immediately before execution handoff run:
+
+```bash
+awm preflight --require-current
+```
+
+This is blocking for compact and unattended handoff. A stale verdict, non-zero exit, or
+missing strict flag blocks handoff; unlike the older unknown-command compatibility
+exception, do not continue without strict currentness. For unattended projects with
+enabled applicable sensors, combine strict currentness with `--verify-sensors`. When all
+configured sensors are deliberate opt-outs, use strict currentness locally and retain
+the versioned `validate.yml` sensor-certification matrix plus R8 as applicable evidence.
 
 ## Harness Preflight Gate (pre-handoff) — BLOCKING
 

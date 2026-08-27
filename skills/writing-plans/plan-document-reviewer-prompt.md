@@ -27,6 +27,11 @@ Dispatch a general-purpose subagent:
     | Traceability | The Self-Review matrix covers every spec requirement ID — forward gaps (a requirement ID with no task/test) are flagged |
     | Orphans | No task or test lacks a requirement ID (backward gap = scope creep / orphan code) |
     | Unattended empirical gate | If the plan offers `desatendido` execution, it requires `awm preflight --verify-sensors` immediately before handoff and says that a non-zero/non-pass result blocks or stops that handoff while the human is present |
+    | Compact fields | Reject missing compact fields: exact manifest/schema, five slice sections, serial dependency data, and one owner for every requirement |
+    | Compact sources | Reject unowned requirements and unsafe delegation; sources must be authoritative stable IDs and insufficient facts must be inlined, never sent to “inspect the repo” |
+    | Compact gates | Reject omitted CLI validation/currentness: `awm plan validate` must precede handoff and `awm preflight --require-current` must block stale or missing-strict support |
+    | Compatibility | Reject a legacy regression: unmarked/future-invalid compact input must not be reinterpreted as legacy, and current Task/Tracks behavior must remain intact |
+    | Efficiency evidence | Reject an efficiency/non-inferiority claim based on structural evidence alone |
 
     (If the spec intentionally has no `## Requirements` section — a trivial one-file diff per the tier guardrail — the three rows above do not apply; do not flag their absence.)
 

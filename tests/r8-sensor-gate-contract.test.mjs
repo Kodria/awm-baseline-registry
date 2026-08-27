@@ -50,6 +50,24 @@ function assertTimeoutRemediation(text) {
     'timeout remediation must require a conclusive passing rerun');
 }
 
+function assertStrictCurrentness(text, filename, { advisory = false } = {}) {
+  assert.match(text, /awm preflight --require-current/,
+    `${filename} must require strict currentness`);
+  if (advisory) {
+    assert.match(text, /advisory[\s\S]{0,180}(?:one line|one bounded line)/i,
+      `${filename} must make entry currentness advisory and bounded`);
+    assert.match(text, /no writes|without writes/i,
+      `${filename} must not write while checking entry currentness`);
+    assert.match(text, /do not repeatedly recheck/i,
+      `${filename} must not repeat the entry check in one phase`);
+  } else {
+    assert.match(text, /missing strict flag[\s\S]{0,180}(?:block|stop)/i,
+      `${filename} must block handoff when strict currentness is unsupported`);
+    assert.match(text, /(?:stale|non-zero)[\s\S]{0,180}(?:block|stop)/i,
+      `${filename} must block stale currentness at handoff`);
+  }
+}
+
 test('writing-plans requires empirical preflight before unattended handoff (R7.3)', () => {
   assertEmpiricalUnattendedHandoff(read('skills/writing-plans/SKILL.md'));
 });
@@ -71,6 +89,14 @@ test('plan reviewer rejects an unattended plan without empirical preflight (R7.3
   assert.match(text, /unattended[\s\S]{0,400}awm preflight --verify-sensors[\s\S]{0,400}(?:non-pass|non-zero)[\s\S]{0,400}(?:block|stop)/i);
 });
 
+test('development entry makes strict currentness advisory and bounded (R4-CUR-6)', () => {
+  assertStrictCurrentness(read('skills/development-process/SKILL.md'), 'development-process', { advisory: true });
+});
+
+test('writing-plans blocks compact handoff on stale or unsupported strict currentness (R4-CUR-6)', () => {
+  assertStrictCurrentness(read('skills/writing-plans/SKILL.md'), 'writing-plans');
+});
+
 test('runs the R8 workflow contract before validation and release', () => {
   for (const workflow of ['validate.yml', 'auto-tag.yml']) {
     assert.match(read(`.github/workflows/${workflow}`), /node tests\/r8-sensor-gate-contract\.test\.mjs/,
@@ -88,4 +114,10 @@ test('RED mutation: removing timeout remediation from an execution skill is reje
   const original = read('skills/subagent-driven-development/SKILL.md');
   const weakened = original.replace(/\n\*\*Timeout remediation is narrow\.\*[\s\S]*?(?=\n## )/, '\n');
   assert.throws(() => assertTimeoutRemediation(weakened), /healthy progressing process/i);
+});
+
+test('RED mutation: omitting strict currentness blocks the compact handoff contract', () => {
+  const original = read('skills/writing-plans/SKILL.md');
+  const weakened = original.replace('awm preflight --require-current', 'awm preflight');
+  assert.throws(() => assertStrictCurrentness(weakened, 'writing-plans'), /strict currentness/);
 });

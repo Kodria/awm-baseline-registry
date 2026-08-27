@@ -1,6 +1,6 @@
 ---
 name: development-process
-version: "1.7.5"
+version: "1.8.0"
 license: Apache-2.0
 description: Use when starting, resuming, or routing a development task
 ---
@@ -11,9 +11,10 @@ Invoke the `development-process` skill. You do NOT write code directly: read sta
 
 ## Harness Preflight (advisory at entry)
 
-Before reading state, run `awm preflight`. Report its result in one line and continue:
-this entry check is advisory, not blocking. If the command is unavailable, say so once
-and continue; `writing-plans` owns the blocking preflight gate before execution.
+Before reading state, run `awm preflight --require-current`. Report one bounded line and
+continue: this entry check is advisory, not blocking, performs no writes; do not repeatedly recheck during one phase. If the command or strict flag is unavailable, say so
+once and continue. At unattended handoff, `writing-plans` reruns strict currentness as the
+authoritative blocking gate.
 
 WHEN an active plan exists, read `references/execution-mode.md` before routing.
 WHEN UI is pending or a plan declares `**Design artifacts:**`, read `references/frontend-handoff.md` and apply its blocking bundle gate.
