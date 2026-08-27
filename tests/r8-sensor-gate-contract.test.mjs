@@ -11,6 +11,11 @@ const EXECUTION_SKILLS = [
   'skills/verification-before-completion/SKILL.md',
 ];
 
+const REGISTRY_CLOSURE_CONSUMERS = [
+  ...EXECUTION_SKILLS,
+  'skills/post-implementation-qa/SKILL.md',
+];
+
 const TIMEOUT_REMEDIATION_SKILLS = [
   'skills/executing-plans/SKILL.md',
   'skills/subagent-driven-development/SKILL.md',
@@ -121,7 +126,7 @@ for (const file of TIMEOUT_REMEDIATION_SKILLS) {
   });
 }
 
-for (const file of EXECUTION_SKILLS) {
+for (const file of REGISTRY_CLOSURE_CONSUMERS) {
   test(`${file} links the single R8 registry-closure policy owner`, () => {
     assertRegistryClosureConsumer(read(file), file);
   });
@@ -195,6 +200,14 @@ test('RED mutation: removing the R8 owner link from a consumer is rejected', () 
   const weakened = original.replace(/\[Registry Sensor Closure Policy \(R8 v1\)\]\(\.\.\/setup-sensors\/references\/registry-closure-policy-r8\.md\)/, 'the policy');
   assert.notEqual(weakened, original, 'mutation must remove the policy-owner link');
   assert.throws(() => assertRegistryClosureConsumer(weakened, EXECUTION_SKILLS[0]), /single R8 policy owner/);
+});
+
+test('RED mutation: QA must not sever the R8 policy-owner link', () => {
+  const qa = 'skills/post-implementation-qa/SKILL.md';
+  const original = read(qa);
+  const weakened = original.replace(/\[Registry Sensor Closure Policy \(R8 v1\)\]\(\.\.\/setup-sensors\/references\/registry-closure-policy-r8\.md\)/, 'the policy');
+  assert.notEqual(weakened, original, 'mutation must remove the QA policy-owner link');
+  assert.throws(() => assertRegistryClosureConsumer(weakened, qa), /single R8 policy owner/);
 });
 
 test('RED mutation: removing R8 evidence from release validation fails', () => {
