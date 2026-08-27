@@ -3,8 +3,6 @@
 <!-- awm-qa-complete: 2026-08-27 -->
 <!-- awm-docs-complete: 2026-08-27 -->
 <!-- awm-retro-complete: 2026-08-27 -->
-<!-- awm-qa-complete: 2026-08-27 -->
-<!-- awm-docs-complete: 2026-08-27 -->
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `subagent-driven-development`
 > (recommended) or `executing-plans` to implement this plan task-by-task. Steps
