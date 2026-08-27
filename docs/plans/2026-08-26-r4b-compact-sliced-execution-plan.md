@@ -49,8 +49,7 @@
     {"id":"CMD-RELEASE","program":"npm","args":["exec","--","node","tests/release-skill-version-gate.test.mjs"],"covers":["R4-QUAL-1","R4-CUR-6"]},
     {"id":"CMD-SKILL-VERSIONS","program":"scripts/check-skill-version-bumps.sh","args":["origin/main"],"covers":["R4-QUAL-1"]},
     {"id":"CMD-PLAN-VALIDATE","program":"awm","args":["plan","validate","docs/plans/2026-08-26-r4b-compact-sliced-execution-plan.md","--cwd",".","--json"],"covers":["R4-CP-2","R4-CP-4","R4-CP-5"]},
-    {"id":"CMD-PREFLIGHT","program":"awm","args":["preflight","--require-current","--verify-sensors"],"covers":["R4-CUR-6","R4-QUAL-1"]},
-    {"id":"CMD-SENSORS","program":"awm","args":["sensors","run","--event","pre-commit","--format","json"],"covers":["R4-QUAL-1","R4-QUAL-2"]},
+    {"id":"CMD-PREFLIGHT","program":"awm","args":["preflight","--require-current"],"covers":["R4-CUR-6"]},
     {"id":"CMD-DIFF-CHECK","program":"git","args":["diff","--check"],"covers":["R4-QUAL-1"]}
   ],
   "slices": [
@@ -66,7 +65,7 @@
       "id":"S2","title":"Execute and review complete slices",
       "requirements":["R4-CS-3","R4-CS-4","R4-CS-5","R4-CS-6","R4-QUAL-1","R4-QUAL-2"],"dependsOn":["S1"],"sectionAnchor":"slice-s2",
       "sources":["SRC-SDD","SRC-EXEC","SRC-REVIEW","SRC-QA","SRC-R13"],
-      "redCommands":["CMD-R15-CONTRACT","CMD-R5","CMD-R13"],"greenCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R5","CMD-R13","CMD-R14","CMD-R14-CLI","CMD-PORTABILITY","CMD-RELEASE","CMD-SKILL-VERSIONS","CMD-PREFLIGHT","CMD-SENSORS","CMD-DIFF-CHECK"],
+      "redCommands":["CMD-R15-CONTRACT","CMD-R5","CMD-R13"],"greenCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R5","CMD-R13","CMD-R14","CMD-R14-CLI","CMD-PORTABILITY","CMD-RELEASE","CMD-SKILL-VERSIONS","CMD-PREFLIGHT","CMD-DIFF-CHECK"],
       "reviewEvidence":["specification","code-quality"],"risk":"full-context",
       "fallback":["slice boundary is invalid, evidence is insufficient, or a declared risk trigger activates"]
     },
@@ -75,12 +74,12 @@
       "requirements":["R4-EVID-1","R4-EVID-2","R4-EVID-3","R4-EVID-4"],"dependsOn":["S2"],"sectionAnchor":"slice-s3",
       "sources":["SRC-TAG-WF","SRC-REGISTRY","SRC-BUNDLE"],
       "redCommands":["CMD-R15-CLI","CMD-RELEASE"],
-      "greenCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R8","CMD-R5","CMD-R12","CMD-R13","CMD-R14","CMD-R14-CLI","CMD-PORTABILITY","CMD-RELEASE","CMD-SKILL-VERSIONS","CMD-PLAN-VALIDATE","CMD-PREFLIGHT","CMD-SENSORS","CMD-DIFF-CHECK"],
+      "greenCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R8","CMD-R5","CMD-R12","CMD-R13","CMD-R14","CMD-R14-CLI","CMD-PORTABILITY","CMD-RELEASE","CMD-SKILL-VERSIONS","CMD-PLAN-VALIDATE","CMD-PREFLIGHT","CMD-DIFF-CHECK"],
       "reviewEvidence":["specification","code-quality"],"risk":"full-context",
       "fallback":["R4a npm gitHead mismatches its merge SHA, a legacy quality contract regresses, or release evidence is incomplete"]
     }
   ],
-  "closureCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R8","CMD-R5","CMD-R12","CMD-R13","CMD-R14","CMD-R14-CLI","CMD-PORTABILITY","CMD-RELEASE","CMD-SKILL-VERSIONS","CMD-PLAN-VALIDATE","CMD-PREFLIGHT","CMD-SENSORS","CMD-DIFF-CHECK"]
+  "closureCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R8","CMD-R5","CMD-R12","CMD-R13","CMD-R14","CMD-R14-CLI","CMD-PORTABILITY","CMD-RELEASE","CMD-SKILL-VERSIONS","CMD-PLAN-VALIDATE","CMD-PREFLIGHT","CMD-DIFF-CHECK"]
 }
 <!-- AWM:COMPACT-SLICES:END v1 -->
 
@@ -92,7 +91,7 @@
 - R4a publication is observed as `agentic-workflow-manager@9.4.0`, npm `gitHead` `9dd36deda006d14e6e213d9e56f2d8c4929613f2`; its parent is the R4a merge `47910806f45a1fcd2bb51d301a8057df15b92cc4`. R4b accepts this release provenance; never guess a version from a future commit or tag.
 - R4b modifies the baseline registry only. It does not modify the CLI, global npm installation, installed registry clones, user projects, `AGENTS.md`, or `CONSTITUTION.md`.
 - The new contract is release-neutral and permanent. R3/R4 names, T0–T4 labels, quota observations, and the three-cycle corpus stay in initiative evidence, not general runtime instructions.
-- Issue #129 remains the owner for cross-environment sensor-detection differences. R4b may harden gate wording/tests but does not redesign sensor discovery.
+- Issue #129 remains the owner for cross-environment sensor-detection differences. R4b may harden gate wording/tests but does not redesign sensor discovery. This registry deliberately opts out of local shell sensors; its applicable sensor evidence is the versioned `validate.yml` sensor-certification matrix. Therefore local R4b handoff runs strict currentness only, while R8 and the release workflow prove the sensor contract. Do not run `--verify-sensors` or `awm sensors run` as a local R4b gate when every configured sensor is disabled.
 
 ## Requirements
 
@@ -153,7 +152,7 @@ Use `writing-skills` and `test-driven-development` for every edited skill, and `
 4. Add mutation tests that remove one slice section, make a source “go inspect the repo,” duplicate shared commands in every step, skip CLI validation, reinterpret an invalid/future plan as legacy, or replace full-quality legacy execution with compact assumptions. Each mutation must make R15 fail for the requirement it violates.
 5. In the new reference, define the permanent release-neutral authoring contract: manifest boundary, exact fields/limits, one requirement owner, complete slice prose, authoritative-source rule, narrow shared payload, inert commands, explicit risk/fallback, deterministic validation outcomes, and no semantic autogrouping. Include a minimal complete example that the R4a CLI accepts.
 6. Update `writing-plans` to load that reference only when compact mode is eligible. A compact plan is still robust: each slice must let a basic executor implement without product/architecture judgment. If a source is insufficient, inline the needed fact. Require `awm plan validate PLAN_PATH` after self-review/analyze and before handoff; invalid/unsupported blocks, legacy follows the existing route.
-7. Preserve current static preflight for interactive/local compatibility. Add `awm preflight --require-current` as the blocking currentness gate before execution handoff and combine it with `--verify-sensors` for unattended handoff so one strict invocation proves both. The installed CLI must support the flag; unlike the old unknown-command exception, a missing strict flag blocks compact handoff.
+7. Preserve current static preflight for interactive/local compatibility. Add `awm preflight --require-current` as the blocking currentness gate before execution handoff. For projects with applicable enabled sensors, combine it with `--verify-sensors` for unattended handoff so one strict invocation proves both; for this deliberately sensor-opted-out registry, R8 plus the `validate.yml` sensor-certification matrix are the applicable evidence. The installed CLI must support the strict currentness flag; unlike the old unknown-command exception, a missing strict flag blocks compact handoff.
 8. Update `development-process` so entry invokes strict currentness as advisory, reports one bounded line, and continues without automatic writes. It must not repeatedly recheck during one phase. A later unattended handoff reruns strict mode as the authoritative blocking observation.
 9. Update the plan reviewer to reject missing compact fields, unowned requirements, unsafe delegation, skipped validation/currentness, legacy regressions, and efficiency claims based only on structural evidence.
 10. Bump each edited skill’s frontmatter version exactly once. Run `CMD-R15-CONTRACT` and `CMD-R8` to GREEN, then run the same pressure matrix against the edited skills. Record the compact verdict delta without retaining generated prose.
@@ -243,7 +242,7 @@ Use `writing-skills` and `test-driven-development` for every edited skill, and `
 5. Add R15 contract and CLI acceptance commands to `.github/workflows/validate.yml` after the compatible CLI install. Add both to the `Verify registry before tagging` step in `.github/workflows/auto-tag.yml`; the release-producing job itself must fail before tag computation when either test fails.
 6. Bump edited skill versions once: `development-process` 1.8.0, `writing-plans` 1.10.0, `subagent-driven-development` 1.12.0, `executing-plans` 1.3.0, `requesting-code-review` 1.2.0, and `post-implementation-qa` 1.9.0, unless branch history already contains one of those versions—in that case choose the next valid semantic version and keep the release test authoritative.
 7. Bump the dev bundle and matching catalog entry from 3.8.0 to 3.9.0 unless branch history already used it; if so, choose the next unused minor version in both files. Add a release-neutral changelog entry describing compact plans, strict handoff and unchanged legacy quality.
-8. Run `CMD-R15-CONTRACT`, `CMD-R15-CLI`, R8, R5, R12, R13, R14 core/acceptance, portability, release metadata/version gates, `CMD-SKILL-VERSIONS`, plan validation, strict empirical preflight, sensors and diff check. Run every other command listed in both validation/release workflows before handoff; use the workflow files as the exhaustive source so no duplicated stale list is invented here.
+8. Run `CMD-R15-CONTRACT`, `CMD-R15-CLI`, R8, R5, R12, R13, R14 core/acceptance, portability, release metadata/version gates, `CMD-SKILL-VERSIONS`, plan validation, strict currentness preflight and diff check. Run every other command listed in both validation/release workflows before handoff; use the workflow files as the exhaustive source so no duplicated stale list is invented here. For this registry's deliberate local sensor opt-out, retain the `validate.yml` sensor-certification matrix as the empirical sensor evidence.
 9. Verify the modified active development process composes through the existing process-lifecycle verification path. Do not regenerate unrelated process artifacts or edit installed registry content.
 10. Record observed T2/T3 values in this plan and issue #126: plan/context bytes, requirements/slices/dispatches, source retrieval/fallback, retries, reviewer findings, gates, commits and PR. Provider token/cache/model/price/cost fields remain `unobservable` when absent. Record owner quota only if the owner supplies a cycle-bound observation.
 11. Complete post-implementation QA, docs verification, retro, and finish checks. Open a feature PR with a conventional `feat:` title so the existing auto-tag policy computes the release. After merge, monitor validation and auto-tag; verify the exact stable tag before declaring R4b delivered.
@@ -310,20 +309,19 @@ Forward coverage is complete: every requirement has one owning slice and a claim
 Run from the registry root after installing the exact published R4a CLI:
 
 ```bash
-node tests/r15-compact-slices-contract.test.mjs
-node tests/r15-compact-slices-cli-acceptance.mjs
-node tests/r8-sensor-gate-contract.test.mjs
-node tests/r5-track-contract.test.mjs
-node tests/r12-context-footprint-contract.test.mjs
-node tests/r13-role-evidence-capsule-contract.test.mjs
-node tests/r14-context-kernel-contract.test.mjs
-node tests/r14-context-kernel-cli-acceptance.mjs
-node scripts/validate-portability.mjs
-node tests/release-skill-version-gate.test.mjs
-./scripts/check-skill-version-bumps.sh origin/main
+npm exec -- node tests/r15-compact-slices-contract.test.mjs
+npm exec -- node tests/r15-compact-slices-cli-acceptance.mjs
+npm exec -- node tests/r8-sensor-gate-contract.test.mjs
+npm exec -- node tests/r5-track-contract.test.mjs
+npm exec -- node tests/r12-context-footprint-contract.test.mjs
+npm exec -- node tests/r13-role-evidence-capsule-contract.test.mjs
+npm exec -- node tests/r14-context-kernel-contract.test.mjs
+npm exec -- node tests/r14-context-kernel-cli-acceptance.mjs
+npm exec -- node scripts/validate-portability.mjs
+npm exec -- node tests/release-skill-version-gate.test.mjs
+scripts/check-skill-version-bumps.sh origin/main
 awm plan validate docs/plans/2026-08-26-r4b-compact-sliced-execution-plan.md --cwd . --json
-awm preflight --require-current --verify-sensors
-awm sensors run --event pre-commit --format json
+awm preflight --require-current
 git diff --check
 ```
 
