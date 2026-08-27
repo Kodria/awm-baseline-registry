@@ -33,6 +33,15 @@ function assertCompactRouting(text) {
   assert.match(text, /(?:no marker|no schema)[\s\S]{0,180}legacy/i, 'unmarked plans must retain legacy routing');
   assert.match(text, /Task Structure/, 'legacy Task syntax must remain');
   assert.match(text, /Parallel track declaration/, 'legacy parallel Tracks syntax must remain');
+  assert.match(text, /existing full-quality Task\/Tracks route/i,
+    'legacy plans must retain the complete quality route, not compact assumptions');
+}
+
+function assertSharedPayloadBoundary(text) {
+  assert.match(text, /shared payload[\s\S]{0,180}(?:once|single)/i,
+    'shared payload must be declared once by stable ID');
+  assert.match(text, /do not repeat shared commands or source prose in every step/i,
+    'shared commands and payload must not be duplicated in every step');
 }
 
 function assertStrictHandoff(text) {
@@ -48,6 +57,10 @@ test('compact reference defines exact five-section serial slice contract (R4-CP-
 
 test('writing-plans routes only eligible compact plans and preserves legacy/parallel syntax (R4-CP-2, R4-CP-5)', () => {
   assertCompactRouting(read('skills/writing-plans/SKILL.md'));
+});
+
+test('compact reference declares shared payload and commands once by ID (R4-CP-5)', () => {
+  assertSharedPayloadBoundary(read('skills/writing-plans/references/compact-slices-v1.md'));
 });
 
 test('writing-plans validates before strict currentness handoff (R4-CUR-6)', () => {
@@ -75,9 +88,17 @@ test('RED mutations reject each compact-planning regression', () => {
   assert.throws(() => assertCompactReference(reference.replaceAll('## Commands', '## Removed commands')), /missing slice section/);
   assert.throws(() => assertCompactReference(reference.replace(/Do not delegate[\s\S]*?\n/, 'Delegate: go inspect the repo\n')), /unsafe delegated discovery/);
   assert.throws(() => assertCompactReference(reference.replace(/shared payload[\s\S]*?\n/i, '')), /shared payload/);
+  assert.throws(() => assertSharedPayloadBoundary(reference.replace(
+    'do not repeat shared commands or source prose in every step',
+    'repeat shared commands and payload in every step',
+  )), /must not be duplicated/);
 
   const writing = read('skills/writing-plans/SKILL.md');
   assert.throws(() => assertStrictHandoff(writing.replace('awm plan validate PLAN_PATH', 'plan validation later')), /validation/);
   assert.throws(() => assertCompactRouting(writing.replace(/(?:no marker|no schema)[\s\S]{0,180}legacy/i, 'future schema is legacy')), /unmarked plans/);
   assert.throws(() => assertCompactRouting(writing.replaceAll('Task Structure', 'Compact task structure')), /legacy Task syntax/);
+  assert.throws(() => assertCompactRouting(writing.replace(
+    'existing full-quality Task/Tracks route',
+    'compact assumptions route',
+  )), /complete quality route/);
 });
