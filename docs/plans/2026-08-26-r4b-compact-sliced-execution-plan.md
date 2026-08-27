@@ -37,16 +37,16 @@
     {"id":"SRC-BUNDLE","path":"bundles/dev/bundle.json","locator":"\"version\"","fact":"Dev bundle release version and included workflow skills."}
   ],
   "commands": [
-    {"id":"CMD-R15-CONTRACT","program":"node","args":["tests/r15-compact-slices-contract.test.mjs"],"covers":["R4-CP-2","R4-CP-4","R4-CP-5","R4-CS-3","R4-CS-4","R4-CS-5","R4-CS-6","R4-QUAL-1","R4-QUAL-2","R4-EVID-1","R4-EVID-2","R4-EVID-3","R4-EVID-4","R4-CUR-6"]},
-    {"id":"CMD-R15-CLI","program":"node","args":["tests/r15-compact-slices-cli-acceptance.mjs"],"covers":["R4-CP-2","R4-CS-3","R4-CUR-6"]},
-    {"id":"CMD-R8","program":"node","args":["tests/r8-sensor-gate-contract.test.mjs"],"covers":["R4-QUAL-1","R4-CUR-6"]},
-    {"id":"CMD-R5","program":"node","args":["tests/r5-track-contract.test.mjs"],"covers":["R4-CS-6","R4-QUAL-1"]},
-    {"id":"CMD-R12","program":"node","args":["tests/r12-context-footprint-contract.test.mjs"],"covers":["R4-QUAL-2","R4-EVID-1"]},
-    {"id":"CMD-R13","program":"node","args":["tests/r13-role-evidence-capsule-contract.test.mjs"],"covers":["R4-CS-3","R4-CS-4","R4-QUAL-1"]},
-    {"id":"CMD-R14","program":"node","args":["tests/r14-context-kernel-contract.test.mjs"],"covers":["R4-CS-3","R4-QUAL-2"]},
-    {"id":"CMD-R14-CLI","program":"node","args":["tests/r14-context-kernel-cli-acceptance.mjs"],"covers":["R4-CS-3","R4-QUAL-2"]},
-    {"id":"CMD-PORTABILITY","program":"node","args":["scripts/validate-portability.mjs"],"covers":["R4-QUAL-1","R4-QUAL-2"]},
-    {"id":"CMD-RELEASE","program":"node","args":["tests/release-skill-version-gate.test.mjs"],"covers":["R4-QUAL-1","R4-CUR-6"]},
+    {"id":"CMD-R15-CONTRACT","program":"npm","args":["exec","--","node","tests/r15-compact-slices-contract.test.mjs"],"covers":["R4-CP-2","R4-CP-4","R4-CP-5","R4-CS-3","R4-CS-4","R4-CS-5","R4-CS-6","R4-QUAL-1","R4-QUAL-2","R4-EVID-1","R4-EVID-2","R4-EVID-3","R4-EVID-4","R4-CUR-6"]},
+    {"id":"CMD-R15-CLI","program":"npm","args":["exec","--","node","tests/r15-compact-slices-cli-acceptance.mjs"],"covers":["R4-CP-2","R4-CS-3","R4-CUR-6"]},
+    {"id":"CMD-R8","program":"npm","args":["exec","--","node","tests/r8-sensor-gate-contract.test.mjs"],"covers":["R4-QUAL-1","R4-CUR-6"]},
+    {"id":"CMD-R5","program":"npm","args":["exec","--","node","tests/r5-track-contract.test.mjs"],"covers":["R4-CS-6","R4-QUAL-1"]},
+    {"id":"CMD-R12","program":"npm","args":["exec","--","node","tests/r12-context-footprint-contract.test.mjs"],"covers":["R4-QUAL-2","R4-EVID-1"]},
+    {"id":"CMD-R13","program":"npm","args":["exec","--","node","tests/r13-role-evidence-capsule-contract.test.mjs"],"covers":["R4-CS-3","R4-CS-4","R4-QUAL-1"]},
+    {"id":"CMD-R14","program":"npm","args":["exec","--","node","tests/r14-context-kernel-contract.test.mjs"],"covers":["R4-CS-3","R4-QUAL-2"]},
+    {"id":"CMD-R14-CLI","program":"npm","args":["exec","--","node","tests/r14-context-kernel-cli-acceptance.mjs"],"covers":["R4-CS-3","R4-QUAL-2"]},
+    {"id":"CMD-PORTABILITY","program":"npm","args":["exec","--","node","scripts/validate-portability.mjs"],"covers":["R4-QUAL-1","R4-QUAL-2"]},
+    {"id":"CMD-RELEASE","program":"npm","args":["exec","--","node","tests/release-skill-version-gate.test.mjs"],"covers":["R4-QUAL-1","R4-CUR-6"]},
     {"id":"CMD-SKILL-VERSIONS","program":"scripts/check-skill-version-bumps.sh","args":["origin/main"],"covers":["R4-QUAL-1"]},
     {"id":"CMD-PLAN-VALIDATE","program":"awm","args":["plan","validate","docs/plans/2026-08-26-r4b-compact-sliced-execution-plan.md","--cwd",".","--json"],"covers":["R4-CP-2","R4-CP-4","R4-CP-5"]},
     {"id":"CMD-PREFLIGHT","program":"awm","args":["preflight","--require-current","--verify-sensors"],"covers":["R4-CUR-6","R4-QUAL-1"]},
@@ -58,7 +58,7 @@
       "id":"S1","title":"Author compact planning and strict handoff",
       "requirements":["R4-CP-2","R4-CP-4","R4-CP-5","R4-CUR-6"],"dependsOn":[],"sectionAnchor":"slice-s1",
       "sources":["SRC-DEV","SRC-WRITE","SRC-R8","SRC-VALIDATE-WF"],
-      "redCommands":["CMD-R15-CONTRACT","CMD-R8"],"greenCommands":["CMD-R15-CONTRACT","CMD-R8","CMD-PLAN-VALIDATE"],
+      "redCommands":["CMD-R15-CONTRACT","CMD-R8"],"greenCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R8","CMD-RELEASE","CMD-PREFLIGHT","CMD-PLAN-VALIDATE"],
       "reviewEvidence":["specification","code-quality"],"risk":"full-context",
       "fallback":["published R4a CLI is absent or compact guidance cannot determine a slice without new product decisions"]
     },
@@ -66,7 +66,7 @@
       "id":"S2","title":"Execute and review complete slices",
       "requirements":["R4-CS-3","R4-CS-4","R4-CS-5","R4-CS-6","R4-QUAL-1","R4-QUAL-2"],"dependsOn":["S1"],"sectionAnchor":"slice-s2",
       "sources":["SRC-SDD","SRC-EXEC","SRC-REVIEW","SRC-QA","SRC-R13"],
-      "redCommands":["CMD-R15-CONTRACT","CMD-R5","CMD-R13"],"greenCommands":["CMD-R15-CONTRACT","CMD-R5","CMD-R13","CMD-R14","CMD-R14-CLI"],
+      "redCommands":["CMD-R15-CONTRACT","CMD-R5","CMD-R13"],"greenCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R5","CMD-R13","CMD-R14","CMD-R14-CLI","CMD-PORTABILITY","CMD-RELEASE","CMD-SKILL-VERSIONS","CMD-PREFLIGHT","CMD-SENSORS","CMD-DIFF-CHECK"],
       "reviewEvidence":["specification","code-quality"],"risk":"full-context",
       "fallback":["slice boundary is invalid, evidence is insufficient, or a declared risk trigger activates"]
     },
@@ -88,8 +88,8 @@
 
 - Approved design: `agentic-workflow@676f9cc`, `docs/plans/2026-08-26-r4-compact-plans-cohesive-slices-design.md`.
 - Initiative baton: [agentic-workflow#126](https://github.com/Kodria/agentic-workflow/issues/126).
-- Registry base: `origin/main@0bbacf0`, tag `v3.9.2`, dev bundle `3.8.0`, `minCliVersion` `9.3.0`.
-- R4b starts only after R4a is merged and npm reports a `gitHead` equal to that merge SHA. Discover the resulting version; never guess it in advance.
+- Registry base: `origin/main@0bbacf0`, tag `v3.9.2`, dev bundle `3.8.0`, `minCliVersion` `9.3.0` before S3 updates it to observed R4a version `9.4.0`.
+- R4a publication is observed as `agentic-workflow-manager@9.4.0`, npm `gitHead` `9dd36deda006d14e6e213d9e56f2d8c4929613f2`; its parent is the R4a merge `47910806f45a1fcd2bb51d301a8057df15b92cc4`. R4b accepts this release provenance; never guess a version from a future commit or tag.
 - R4b modifies the baseline registry only. It does not modify the CLI, global npm installation, installed registry clones, user projects, `AGENTS.md`, or `CONSTITUTION.md`.
 - The new contract is release-neutral and permanent. R3/R4 names, T0–T4 labels, quota observations, and the three-cycle corpus stay in initiative evidence, not general runtime instructions.
 - Issue #129 remains the owner for cross-environment sensor-detection differences. R4b may harden gate wording/tests but does not redesign sensor discovery.
@@ -176,7 +176,7 @@ Use `writing-skills` and `test-driven-development` for every edited skill, and `
 
 #### Fallback
 
-- If R4a is unpublished, `gitHead` mismatches, or the CLI cannot validate this plan, stop R4b; do not copy a registry-side validator or weaken the gate.
+- If R4a is unpublished, its release `gitHead` does not contain the R4a merge, or the CLI cannot validate this plan, stop R4b; do not copy a registry-side validator or weaken the gate.
 - If a compact slice needs new product/architecture judgment, amend the plan or use the legacy full-context path and record the fallback.
 - If pressure tests reveal broad ambiguity, retain full relevant context and strengthen instructions before continuing.
 
@@ -236,7 +236,7 @@ Use `writing-skills` and `test-driven-development` for every edited skill, and `
 
 #### Implementation
 
-1. Before metadata edits, obtain the merged R4a SHA and run `npm view agentic-workflow-manager version` plus `npm view agentic-workflow-manager gitHead`. Stop unless `gitHead` exactly equals the R4a merge SHA. Record the observed published version and SHA; do not infer a version from commits or tags.
+1. Before metadata edits, obtain the merged R4a SHA and run `npm view agentic-workflow-manager version` plus `npm view agentic-workflow-manager gitHead`. Stop unless the published release commit contains the R4a merge (for example, a release commit whose parent is that merge). Record the observed published version and SHA; do not infer a version from future commits or tags.
 2. Create a portable valid compact fixture whose source paths/locators exist in the registry and whose commands are inert. Write `tests/r15-compact-slices-cli-acceptance.mjs` to spawn the declared compatible CLI with `awm plan validate FIXTURE --cwd ROOT --json`; require exit 0, schema `compact-slices/v1`, exact counts, and complete traceability. Add invalid partial/future fixtures in temporary files and require nonzero bounded outcomes.
 3. Complete R15 static tests for all process text, role boundaries, legacy routing, full quality gates, evidence vocabulary, claim boundary, skill versions, bundle/catalog consistency, workflow order, and release-producing gate. Mutations must prove every assertion detects removal or weakening rather than merely matching a broad marker.
 4. Set `awm-registry.json.minCliVersion` to the observed published R4a version. Do not set it to `latest`, a range, or an unverified predicted version. Preserve compatibility as distinct from runtime currentness.
@@ -250,7 +250,7 @@ Use `writing-skills` and `test-driven-development` for every edited skill, and `
 
 #### Edge cases
 
-- A newly published npm version with the wrong `gitHead` is not an acceptable R4a dependency even if its semver is higher.
+- A newly published npm version whose release commit does not contain the R4a merge is not an acceptable R4a dependency even if its semver is higher.
 - Workflow acceptance must run against `minCliVersion`; passing only with a developer’s globally newer CLI is a false positive.
 - A registry release tag is computed by existing automation; this plan does not hardcode the future tag.
 - Context-footprint failure cannot be waived by dispatch reduction. Reduce duplicated prose/reference placement or deliberately update the established budget through its own reviewed contract.
@@ -337,4 +337,4 @@ awm preflight
 awm context-budget
 ```
 
-R4b execution remains blocked until R4a is merged/published with matching npm `gitHead`; at that point rerun planning preflight with the fresh CLI and require strict currentness. Work serially S1 → S2 → S3, commit each reviewed slice separately, and do not open the PR before full QA/docs/retro/finish and all release-producing gates pass.
+R4b execution remains blocked until R4a is merged/published in an npm release whose `gitHead` contains that merge; at that point rerun planning preflight with the fresh CLI and require strict currentness. Work serially S1 → S2 → S3, commit each reviewed slice separately, and do not open the PR before full QA/docs/retro/finish and all release-producing gates pass.
