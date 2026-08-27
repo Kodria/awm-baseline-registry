@@ -50,6 +50,30 @@ function assertTimeoutRemediation(text) {
     'timeout remediation must require a conclusive passing rerun');
 }
 
+function assertRegistryClosureException(text, filename) {
+  const section = text.match(/## Registry-content closure exception \(R8\)[\s\S]*?(?=\n## |\s*$)/)?.[0];
+  assert.ok(section, `${filename} must define the R8 registry-content closure exception in its own section`);
+  assert.match(section, /one or more applicable sensors[\s\S]{0,220}overall:\s*pass/i,
+    `${filename} must retain absolute overall pass whenever any sensor is applicable`);
+  assert.match(section, /only\s+when\s+all\s+declared\s+sensors\s+are\s+explicitly\s+disabled/i,
+    `${filename} must limit registry closure to every declared sensor being explicitly disabled`);
+  assert.match(section, /not_certified[\s\S]{0,180}skipped[\s\S]{0,180}never\s+call\s+either\s+verdict\s+`pass`/i,
+    `${filename} must preserve local non-pass verdicts without renaming them pass`);
+  assert.match(section, /versioned R8 evidence[\s\S]{0,180}candidate SHA[\s\S]{0,180}validate[\s\S]{0,180}auto-tag/i,
+    `${filename} must require versioned R8 evidence for the candidate SHA in validate and auto-tag`);
+  assert.match(section, /`fail`,\s*`inconclusive`,\s*missing CI evidence, or any applicable sensor[\s\S]{0,180}(?:never|cannot|must not)[\s\S]{0,120}exception/i,
+    `${filename} must deny the exception to fail, inconclusive, missing CI evidence, and applicable sensors`);
+}
+
+function assertR8EvidenceRunsForCandidateSha(workflow, filename, { release = false } = {}) {
+  const scope = release
+    ? workflow.match(/- name: Verify registry before tagging[\s\S]*?(?=\n\s*- name: Compute and push next tag)/)?.[0]
+    : workflow.match(/jobs:\n[\s\S]*?portability:[\s\S]*?(?=\n\s{2}[a-z][\w-]*:|\s*$)/)?.[0];
+  assert.ok(scope, `${filename} must expose the registry validation scope`);
+  assert.match(scope, /node tests\/r8-sensor-gate-contract\.test\.mjs/,
+    `${filename} must execute versioned R8 evidence for the candidate SHA`);
+}
+
 function assertStrictCurrentness(text, filename, { advisory = false } = {}) {
   assert.match(text, /awm preflight --require-current/,
     `${filename} must require strict currentness`);
@@ -84,6 +108,12 @@ for (const file of TIMEOUT_REMEDIATION_SKILLS) {
   });
 }
 
+for (const file of EXECUTION_SKILLS) {
+  test(`${file} preserves the narrow all-disabled registry closure exception (R8)`, () => {
+    assertRegistryClosureException(read(file), file);
+  });
+}
+
 test('plan reviewer rejects an unattended plan without empirical preflight (R7.3)', () => {
   const text = read('skills/writing-plans/plan-document-reviewer-prompt.md');
   assert.match(text, /unattended[\s\S]{0,400}awm preflight --verify-sensors[\s\S]{0,400}(?:non-pass|non-zero)[\s\S]{0,400}(?:block|stop)/i);
@@ -97,17 +127,49 @@ test('writing-plans blocks compact handoff on stale or unsupported strict curren
   assertStrictCurrentness(read('skills/writing-plans/SKILL.md'), 'writing-plans');
 });
 
-test('runs the R8 workflow contract before validation and release', () => {
-  for (const workflow of ['validate.yml', 'auto-tag.yml']) {
-    assert.match(read(`.github/workflows/${workflow}`), /node tests\/r8-sensor-gate-contract\.test\.mjs/,
-      `${workflow} must execute the R8 workflow contract before accepting or releasing registry content`);
-  }
+test('runs versioned R8 evidence for the candidate SHA in validation and release', () => {
+  assertR8EvidenceRunsForCandidateSha(read('.github/workflows/validate.yml'), 'validate.yml');
+  assertR8EvidenceRunsForCandidateSha(read('.github/workflows/auto-tag.yml'), 'auto-tag.yml', { release: true });
 });
 
 test('RED mutation: removing not_certified makes an execution gate contract fail', () => {
   const original = read(EXECUTION_SKILLS[0]);
-  const weakened = original.replace('not_certified', 'unconfigured');
+  const weakened = original.replace(/not_certified/g, 'unconfigured');
   assert.throws(() => assertStopsNonPassBeforeProgression(weakened, EXECUTION_SKILLS[0]), /not_certified/);
+});
+
+test('RED mutation: weakening all-disabled makes the registry closure contract fail', () => {
+  const original = read(EXECUTION_SKILLS[0]);
+  const weakened = original.replace(/only\s+when\s+all\s+declared\s+sensors\s+are\s+explicitly\s+disabled/i, 'when some declared sensors are disabled');
+  assert.notEqual(weakened, original, 'mutation must change the all-disabled rule');
+  assert.throws(() => assertRegistryClosureException(weakened, EXECUTION_SKILLS[0]), /every declared sensor/);
+});
+
+test('RED mutation: removing candidate-SHA R8 evidence makes the registry closure contract fail', () => {
+  const original = read(EXECUTION_SKILLS[0]);
+  const weakened = original.replace(/Versioned R8 evidence for the candidate SHA\s+must run in both `validate` and `auto-tag`/i, 'R8 evidence may be recorded locally');
+  assert.notEqual(weakened, original, 'mutation must change the candidate-SHA evidence rule');
+  assert.throws(() => assertRegistryClosureException(weakened, EXECUTION_SKILLS[0]), /candidate SHA/);
+});
+
+test('RED mutation: accepting fail or inconclusive makes the registry closure contract fail', () => {
+  const original = read(EXECUTION_SKILLS[0]);
+  const weakened = original.replace(/`fail`,\s*`inconclusive`,\s*missing CI evidence, or any applicable sensor/, '`pass`, `inconclusive`, missing CI evidence, or any applicable sensor');
+  assert.notEqual(weakened, original, 'mutation must change the fail/inconclusive denial');
+  assert.throws(() => assertRegistryClosureException(weakened, EXECUTION_SKILLS[0]), /fail, inconclusive/);
+});
+
+test('RED mutation: reporting a local non-pass verdict as green makes the registry closure contract fail', () => {
+  const original = read(EXECUTION_SKILLS[0]);
+  const weakened = original.replace(/never\s+call\s+either\s+verdict\s+`pass`/i, 'report either verdict as green');
+  assert.notEqual(weakened, original, 'mutation must change the local-verdict preservation rule');
+  assert.throws(() => assertRegistryClosureException(weakened, EXECUTION_SKILLS[0]), /without renaming them pass/);
+});
+
+test('RED mutation: removing R8 evidence from release validation fails', () => {
+  const original = read('.github/workflows/auto-tag.yml');
+  const weakened = original.replace('          node tests/r8-sensor-gate-contract.test.mjs\n', '');
+  assert.throws(() => assertR8EvidenceRunsForCandidateSha(weakened, 'auto-tag.yml', { release: true }), /versioned R8 evidence/);
 });
 
 test('RED mutation: removing timeout remediation from an execution skill is rejected', () => {

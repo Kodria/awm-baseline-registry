@@ -319,6 +319,15 @@ Forward coverage is complete: every requirement has one owning slice and a claim
 
 ## Final verification and handoff gate
 
+### QA process amendment — R8 registry closure
+
+The local registry sensor opt-out is a closure exception only when **all declared sensors are
+explicitly disabled**. It never changes the absolute `overall: pass` requirement for a project
+with one or more applicable sensors. Preserve local `not_certified`/`skipped` as non-pass
+verdicts; they are never reported as green. The candidate SHA must carry versioned R8 evidence
+in both `validate.yml` and the release-producing `auto-tag.yml` verification step. `fail`,
+`inconclusive`, missing CI evidence, or any applicable sensor blocks this exception and closure.
+
 Run from the registry root after installing the exact published R4a CLI:
 
 ```bash

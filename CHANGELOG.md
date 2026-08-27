@@ -2,6 +2,18 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.9.1 — 2026-08-27
+
+### Fixed
+- R8 preserves `overall: pass` as absolute whenever any sensor is applicable. The registry-only
+  closure exception now requires every declared sensor to be explicitly disabled, preserves local
+  `not_certified`/`skipped` verdicts as non-pass, and requires versioned R8 evidence for the
+  candidate SHA in both validation and the release-producing auto-tag job.
+
+### Nota de versión
+Bundle `dev` 3.9.0 → 3.9.1 (patch): QA correction to the sensor-gate process contract and its
+mutation-tested release evidence.
+
 ## dev 3.9.0 — 2026-08-27
 
 ### Added

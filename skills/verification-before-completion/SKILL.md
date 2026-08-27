@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-version: "1.3.0"
+version: "1.3.1"
 license: Apache-2.0
 description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
 ---
@@ -191,6 +191,18 @@ For a timeout, first diagnose whether the process is hung or a **healthy progres
 Only evidence of healthy progress may justify a **finite timeout override**. Record that
 justification in the plan or commit, apply no unbounded override, and require a **conclusive
 rerun with `overall: pass`** before continuing.
+
+## Registry-content closure exception (R8)
+
+For any project with one or more applicable sensors, `overall: pass` remains absolute: no
+completion, QA, retro, PR, tag, or release claim has an exception. Registry-content closure is
+the sole narrow case: it is allowed only when all declared sensors are explicitly disabled.
+Preserve a local `not_certified` or `skipped` verdict exactly as reported and never call either
+verdict `pass`.
+
+This local exception never waives release proof. Versioned R8 evidence for the candidate SHA
+must run in both `validate` and `auto-tag` before registry content can close. `fail`,
+`inconclusive`, missing CI evidence, or any applicable sensor can never receive this exception.
 
 **Recurrence trigger:**
 

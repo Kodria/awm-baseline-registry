@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-version: "1.3.0"
+version: "1.3.1"
 license: Apache-2.0
 description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
 ---
@@ -41,6 +41,18 @@ For each task:
 3. Run verifications as specified
 4. **Run sensors before marking complete.** If the repo has `.awm/sensors.json`, run `awm sensors run` (no flag — all sensors; `--slow` skips lint/typecheck). Continue only when `overall: pass`; `fail`, `not_certified`, and `skipped` are all non-pass verdicts. On any non-pass, invoke `systematic-debugging`, stop task progression, and do not mark the checkbox or commit as complete or advance toward review, QA, retro, or PR. <!-- AWM-INTEGRATION: executing-plans-sensor-gate -->
 5. Mark as completed
+
+## Registry-content closure exception (R8)
+
+For any project with one or more applicable sensors, `overall: pass` remains absolute: no
+task, batch, review, QA, retro, or release progression has an exception. Registry-content
+closure is the sole narrow case: it is allowed only when all declared sensors are explicitly
+disabled. Preserve a local `not_certified` or `skipped` verdict exactly as reported and never
+call either verdict `pass`.
+
+This local exception never waives release proof. Versioned R8 evidence for the candidate SHA
+must run in both `validate` and `auto-tag` before registry content can close. `fail`,
+`inconclusive`, missing CI evidence, or any applicable sensor can never receive this exception.
 
 ### Step 3: Report
 When batch complete:
