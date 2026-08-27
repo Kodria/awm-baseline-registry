@@ -56,7 +56,7 @@
     {"id":"CMD-R14-CLI","program":"npm","args":["exec","--","node","tests/r14-context-kernel-cli-acceptance.mjs"],"covers":["R4-CS-3","R4-QUAL-2"]},
     {"id":"CMD-PORTABILITY","program":"npm","args":["exec","--","node","scripts/validate-portability.mjs"],"covers":["R4-QUAL-1","R4-QUAL-2"]},
     {"id":"CMD-RELEASE","program":"npm","args":["exec","--","node","tests/release-skill-version-gate.test.mjs"],"covers":["R4-QUAL-1","R4-CUR-6"]},
-    {"id":"CMD-SKILL-VERSIONS","program":"scripts/check-skill-version-bumps.sh","args":["origin/main"],"covers":["R4-QUAL-1"]},
+    {"id":"CMD-SKILL-VERSIONS","program":"scripts/check-skill-version-bumps.sh","args":["origin/main"],"covers":["R4-EVID-4"]},
     {"id":"CMD-PLAN-VALIDATE","program":"awm","args":["plan","validate","docs/plans/2026-08-26-r4b-compact-sliced-execution-plan.md","--cwd",".","--json"],"covers":["R4-CP-2","R4-CP-4","R4-CP-5"]},
     {"id":"CMD-PREFLIGHT","program":"awm","args":["preflight","--require-current"],"covers":["R4-CUR-6"]},
     {"id":"CMD-DIFF-CHECK","program":"git","args":["diff","--check"],"covers":["R4-QUAL-1"]}
@@ -74,7 +74,7 @@
       "id":"S2","title":"Execute and review complete slices",
       "requirements":["R4-CS-3","R4-CS-4","R4-CS-5","R4-CS-6","R4-QUAL-1","R4-QUAL-2"],"dependsOn":["S1"],"sectionAnchor":"slice-s2",
       "sources":["SRC-SDD","SRC-EXEC","SRC-REVIEW","SRC-QA","SRC-R13"],
-      "redCommands":["CMD-R15-CONTRACT","CMD-R5","CMD-R13"],"greenCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R5","CMD-R13","CMD-R14","CMD-R14-CLI","CMD-PORTABILITY","CMD-RELEASE","CMD-SKILL-VERSIONS","CMD-PREFLIGHT","CMD-DIFF-CHECK"],
+      "redCommands":["CMD-R15-CONTRACT","CMD-R5","CMD-R13"],"greenCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R5","CMD-R13","CMD-R14","CMD-R14-CLI","CMD-PORTABILITY","CMD-RELEASE","CMD-PREFLIGHT","CMD-DIFF-CHECK"],
       "reviewEvidence":["specification","code-quality"],"risk":"full-context",
       "fallback":["slice boundary is invalid, evidence is insufficient, or a declared risk trigger activates"]
     },
