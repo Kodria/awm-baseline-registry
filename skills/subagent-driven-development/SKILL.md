@@ -44,7 +44,7 @@ inspect or discover the plan, branch history, or unrelated files. Invalid or uns
 input stops execution; an unmarked plan keeps existing legacy behavior unchanged.
 
 The compact state machine is `pending → implementing → spec-review → quality-review → complete`.
-The same implementer fixes findings. A fresh specification reviewer and a fresh code-quality reviewer are mandatory and distinct from the implementer; no slice advances until both reviewers
+The same implementer fixes findings. Use three distinct identities: implementer, fresh specification reviewer, and different fresh code-quality reviewer. No slice advances until both reviewers
 are clean and every declared gate is green. Before `complete`, reconcile the report with
 file-derived truth, the slice clauses, tests, sensors, ledger, skills/design declarations, and
 the current diff. Validate every report against that durable evidence; files win over reports.

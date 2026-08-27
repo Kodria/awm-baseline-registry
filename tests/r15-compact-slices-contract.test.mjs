@@ -215,3 +215,13 @@ test('S2 pressure mutations reject fragmented dispatch, hidden scope, report sho
   assert.throws(() => assert.match(qa.replaceAll('Track A', 'local review'), /Track A/i));
   assert.throws(() => assert.match(qa.replaceAll('Track B', 'local review'), /Track B/i));
 });
+
+test('S2 semantic mutation rejects reusing the spec reviewer as the quality reviewer', () => {
+  const sdd = read(S2_SDD);
+  const identities = /three distinct identities: implementer, fresh specification reviewer, and different fresh code-quality reviewer/i;
+  assert.match(sdd, identities, 'compact review must use three distinct identities');
+  assert.throws(() => assert.match(
+    sdd.replace('different fresh code-quality reviewer', 'same specification reviewer'),
+    identities,
+  ), /three distinct identities/);
+});
