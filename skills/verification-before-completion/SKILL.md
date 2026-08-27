@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-version: "1.3.0"
+version: "1.3.2"
 license: Apache-2.0
 description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
 ---
@@ -191,6 +191,11 @@ For a timeout, first diagnose whether the process is hung or a **healthy progres
 Only evidence of healthy progress may justify a **finite timeout override**. Record that
 justification in the plan or commit, apply no unbounded override, and require a **conclusive
 rerun with `overall: pass`** before continuing.
+
+## Registry-content closure exception (R8)
+
+Apply [Registry Sensor Closure Policy (R8 v1)](../setup-sensors/references/registry-closure-policy-r8.md)
+exactly. It is the single normative owner; do not restate the policy here.
 
 **Recurrence trigger:**
 

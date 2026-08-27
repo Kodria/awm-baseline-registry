@@ -2,6 +2,44 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.9.2 — 2026-08-27
+
+### Fixed
+- The R8 registry-closure policy now has one versioned owner under `setup-sensors`; execution
+  and completion skills link it instead of maintaining divergent copies. R8 mutation coverage
+  rejects a missing owner/link and any local policy restatement.
+
+### Nota de versión
+Bundle `dev` 3.9.1 → 3.9.2 (patch): process-policy deduplication with executable ownership
+and release-metadata verification.
+
+## dev 3.9.1 — 2026-08-27
+
+### Fixed
+- R8 preserves `overall: pass` as absolute whenever any sensor is applicable. The registry-only
+  closure exception now requires every declared sensor to be explicitly disabled, preserves local
+  `not_certified`/`skipped` verdicts as non-pass, and requires versioned R8 evidence for the
+  candidate SHA in both validation and the release-producing auto-tag job.
+
+### Nota de versión
+Bundle `dev` 3.9.0 → 3.9.1 (patch): QA correction to the sensor-gate process contract and its
+mutation-tested release evidence.
+
+## dev 3.9.0 — 2026-08-27
+
+### Added
+- Compact `compact-slices/v1` planning and complete-slice execution are certified against the
+  observed published CLI `agentic-workflow-manager` 9.4.1, with portable CLI acceptance and
+  release-job gates before tagging.
+
+### Changed
+- Unattended compact handoff now requires strict currentness while legacy and parallel plans
+  retain their existing full-quality execution, final QA, documentation, retro, and finish gates.
+
+### Nota de versión
+Bundle `dev` 3.8.0 → 3.9.0 (minor): additive compact-plan compatibility and release evidence;
+no generalized cost or quality claim is made from this single cycle.
+
 ## dev 3.8.0 — 2026-08-25
 
 ### Added

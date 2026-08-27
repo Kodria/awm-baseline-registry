@@ -1,6 +1,6 @@
 ---
 name: post-implementation-qa
-version: "1.8.0"
+version: "1.9.1"
 license: Apache-2.0
 description: Use after implementation is complete and before finishing the branch — runs two-track QA (Track A fidelity vs. the plan, Track B plan-agnostic quality lenses), drives a fix loop until clean. Also works standalone when a bug is found independently.
 ---
@@ -30,6 +30,11 @@ visible fallback, provider parity, and ephemeral-record rules. This QA skill MUS
 fork, or weaken those normative retrieval rules. Preserve sensor precedence, deterministic
 dedup, ledger gate, fix loop, design-fidelity condition, completion marker, docs handoff, and
 robustness/security floor; record the reference-required ledger fields separately.
+
+Compact-slice reviews are local gates, never a substitute for global QA. Once all slices are
+complete, run Track A ID-driven fidelity and one agent per applicable Track B lens with full applicable verification and the existing fix loop. Track B receives no full plan. Preserve TDD,
+traceability, applicable sensors, docs handoff, `harness-retro`, and `finishing-a-development-branch`; a compact context reduction
+cannot waive a coverage, correctness, robustness, or security regression.
 
 For Context Kernel v1, read `../project-context-init/references/context-kernel-v1.md`; it is
 the sole normative contract for retrieval.
@@ -110,6 +115,10 @@ A quality defect (division by zero → `Infinity`, crash on invalid input) is a 
 **Dedup:** the robustness and logic lenses may both flag the same `file:line`. Merge overlapping findings before presenting.
 
 > **The deterministic gate outranks every lens.** No lens may declare "clean" over a red `awm sensors run`. The panel *adds to* the sensor gate; it never overrides it. On any conflict between a lens's judgment and a sensor/test, the sensor wins — fresh context attenuates self-preference bias but does not neutralize it.
+
+## Registry-content closure exception (R8)
+
+For registry-content QA, consult the [Registry Sensor Closure Policy (R8 v1)](../setup-sensors/references/registry-closure-policy-r8.md). Do not restate the policy here. Preserve the local sensor verdict in the QA evidence; the policy determines the only permitted closure path for that verdict.
 
 ## The Process
 
@@ -240,7 +249,7 @@ Each Track-B finding is tagged with the lens that raised it.
 
 Proceed only when ALL:
 - [ ] Findings list empty (all resolved or discarded with reason)
-- [ ] `awm sensors run` clean
+- [ ] `awm sensors run` clean, or registry-content closure is eligible exclusively under the linked R8 policy
 - [ ] `verification-before-completion` passed for each fix
 
 ### Step 7: Mark QA complete
@@ -256,7 +265,7 @@ Report: "QA complete. N findings found and closed. Ready for `post-implementatio
 
 ```
 NO "QA COMPLETE" CLAIM WITHOUT:
-1. Clean awm sensors run  (no lens overrides a red sensor)
+1. Clean `awm sensors run`, or the linked R8 policy's registry-content closure eligibility (no lens overrides a red sensor)
 2. verification-before-completion per each fix
 3. Empty list or justified discards
 ```

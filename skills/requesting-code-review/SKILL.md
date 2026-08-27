@@ -1,6 +1,6 @@
 ---
 name: requesting-code-review
-version: "1.1.2"
+version: "1.2.0"
 license: Apache-2.0
 description: Use when completing tasks, implementing major features, or before merging to verify work meets requirements
 ---
@@ -15,6 +15,7 @@ Dispatch a `code-reviewer` subagent to catch issues before they cascade.
 
 **Mandatory:**
 - After each task in subagent-driven development
+- After each task — legacy or compact slice; never end-only
 - After completing major feature
 - Before merge to main
 
@@ -81,6 +82,7 @@ You: [Fix progress indicators]
 
 **Subagent-Driven Development:**
 - Review after EACH task
+- Each task may be a legacy task or compact slice; never end-only review
 - Catch issues before they compound
 - Fix before moving to next task
 

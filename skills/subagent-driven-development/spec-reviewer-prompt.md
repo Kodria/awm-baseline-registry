@@ -49,3 +49,9 @@ sources: <initial CTX-ID | path | anchor references; retrieved authoritative sou
 evidence: <implementer report and task diff/test evidence>
 retrieval history: <none or ordered ID | source | reason | result>
 fallback: <selective or full-context: exact-trigger>
+
+For a compact slice, review only the exact clauses, implementer report, diff, and evidence in
+the capsule. You are a fresh specification reviewer: do not reuse the implementer identity,
+never receive a full plan or implementer chain-of-thought, or infer omitted requirements. Report an omission, new requirement, or
+incorrect boundary as `amendment-required`; the controller must amend and revalidate before any
+further implementation.

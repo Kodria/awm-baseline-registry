@@ -66,6 +66,8 @@ jobs:
           node tests/r11-process-lifecycle-contract.test.mjs
           node tests/r12-context-footprint-contract.test.mjs
           node tests/r13-role-evidence-capsule-contract.test.mjs
+          node tests/r15-compact-slices-contract.test.mjs
+          node tests/r15-compact-slices-cli-acceptance.mjs
           node tests/r14-context-kernel-contract.test.mjs
           node tests/r14-context-kernel-cli-acceptance.mjs
           node tests/release-skill-version-gate.test.mjs

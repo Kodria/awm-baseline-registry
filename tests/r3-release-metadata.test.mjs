@@ -43,12 +43,12 @@ test('the registry never declares a CLI floor below the R3 contract', () => {
 });
 
 function assertCurrentCliCompatibilityMetadata(registry, changelog) {
-    assert.equal(registry.minCliVersion, '9.3.0');
-    assert.match(changelog, /^## dev 3\.8\.0 — 2026-08-25$/m);
-    const currentEntry = changelog.split(/^## dev 3\.8\.0 — 2026-08-25$/m)[1]
+    assert.equal(registry.minCliVersion, '9.4.1');
+    assert.match(changelog, /^## dev 3\.9\.0 — 2026-08-27$/m);
+    const currentEntry = changelog.split(/^## dev 3\.9\.0 — 2026-08-27$/m)[1]
         .split(/^## /m)[0];
-    assert.match(currentEntry, /`agentic-workflow-manager` `9\.3\.0`/);
-    assert.match(currentEntry, /Context Kernel/i);
+    assert.match(currentEntry, /`agentic-workflow-manager` 9\.4\.1/);
+    assert.match(currentEntry, /compact-slices\/v1/i);
 }
 
 function assertCliCompatibilityReleaseGate(workflow) {
@@ -61,10 +61,10 @@ function assertCliCompatibilityReleaseGate(workflow) {
         'the release-producing verification step must enforce the CLI compatibility boundary');
 }
 
-// Context Kernel v1 first ships in CLI 9.3.0. This exact current boundary
-// extends (rather than rewrites) the historical conclusive-execution record:
-// an older CLI cannot parse every published registry guarantee, so the registry
-// must not silently advertise this content to it.
+// Compact plans first ship in CLI 9.4.1. This exact current boundary extends
+// (rather than rewrites) the historical conclusive-execution record: an older
+// CLI cannot validate every published registry guarantee, so the registry must
+// not silently advertise this content to it.
 test('records the published CLI boundary for conclusive execution and cycle evidence capture', () => {
     assertCurrentCliCompatibilityMetadata(readJson('awm-registry.json'), read('CHANGELOG.md'));
 });
@@ -73,7 +73,7 @@ test('RED mutation: downgrading the current CLI boundary is rejected', () => {
     const downgraded = { ...readJson('awm-registry.json'), minCliVersion: '8.1.4' };
     assert.throws(
         () => assertCurrentCliCompatibilityMetadata(downgraded, read('CHANGELOG.md')),
-        /9\.3\.0/,
+        /9\.4\.1/,
     );
 });
 

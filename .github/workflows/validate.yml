@@ -41,6 +41,8 @@ jobs:
         run: |
           R3A_VERSION="$(node -p "require('./awm-registry.json').minCliVersion")"
           npm install --global "agentic-workflow-manager@$R3A_VERSION"
+      - run: node tests/r15-compact-slices-contract.test.mjs
+      - run: node tests/r15-compact-slices-cli-acceptance.mjs
       - run: node tests/r14-context-kernel-contract.test.mjs
       - run: node tests/r14-context-kernel-cli-acceptance.mjs
       - run: node tests/release-skill-version-gate.test.mjs

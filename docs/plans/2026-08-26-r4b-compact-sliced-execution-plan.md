@@ -1,5 +1,9 @@
 # R4b Compact Sliced Execution Implementation Plan
 
+<!-- awm-qa-complete: 2026-08-27 -->
+<!-- awm-docs-complete: 2026-08-27 -->
+<!-- awm-retro-complete: 2026-08-27 -->
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `subagent-driven-development`
 > (recommended) or `executing-plans` to implement this plan task-by-task. Steps
 > use checkbox (`- [ ]`) syntax for tracking.
@@ -10,7 +14,16 @@
 
 **Tech Stack:** Markdown AWM skills and prompts, Node.js `node:test` contract tests, JSON registry metadata, GitHub Actions, published `agentic-workflow-manager` CLI.
 
-**Modo de ejecución:** interactivo
+**Modo de ejecución:** desatendido
+
+> Mandato de ejecución desatendida: ejecución completa sin pausas de check-in
+> entre tareas, ni de confirmación entre fases (development-process rutea
+> automáticamente y subagent-driven-development no pregunta si continuar con
+> el cierre). harness-retro triagea con criterio propio del agente (solo valor
+> real, recurrente o sistémico — descarta el resto sin preguntar).
+> post-implementation-qa corrige TODOS los hallazgos que surjan, no solo algunos.
+> finishing-a-development-branch crea el PR directamente (opción "push + PR"),
+> sin presentar el menú de 4 opciones.
 
 ---
 
@@ -38,7 +51,7 @@
   ],
   "commands": [
     {"id":"CMD-R15-CONTRACT","program":"npm","args":["exec","--","node","tests/r15-compact-slices-contract.test.mjs"],"covers":["R4-CP-2","R4-CP-4","R4-CP-5","R4-CS-3","R4-CS-4","R4-CS-5","R4-CS-6","R4-QUAL-1","R4-QUAL-2","R4-EVID-1","R4-EVID-2","R4-EVID-3","R4-EVID-4","R4-CUR-6"]},
-    {"id":"CMD-R15-CLI","program":"npm","args":["exec","--","node","tests/r15-compact-slices-cli-acceptance.mjs"],"covers":["R4-CP-2","R4-CS-3","R4-CUR-6"]},
+    {"id":"CMD-R15-CLI","program":"npm","args":["exec","--","node","tests/r15-compact-slices-cli-acceptance.mjs"],"covers":["R4-EVID-4"]},
     {"id":"CMD-R8","program":"npm","args":["exec","--","node","tests/r8-sensor-gate-contract.test.mjs"],"covers":["R4-QUAL-1","R4-CUR-6"]},
     {"id":"CMD-R5","program":"npm","args":["exec","--","node","tests/r5-track-contract.test.mjs"],"covers":["R4-CS-6","R4-QUAL-1"]},
     {"id":"CMD-R12","program":"npm","args":["exec","--","node","tests/r12-context-footprint-contract.test.mjs"],"covers":["R4-QUAL-2","R4-EVID-1"]},
@@ -47,7 +60,7 @@
     {"id":"CMD-R14-CLI","program":"npm","args":["exec","--","node","tests/r14-context-kernel-cli-acceptance.mjs"],"covers":["R4-CS-3","R4-QUAL-2"]},
     {"id":"CMD-PORTABILITY","program":"npm","args":["exec","--","node","scripts/validate-portability.mjs"],"covers":["R4-QUAL-1","R4-QUAL-2"]},
     {"id":"CMD-RELEASE","program":"npm","args":["exec","--","node","tests/release-skill-version-gate.test.mjs"],"covers":["R4-QUAL-1","R4-CUR-6"]},
-    {"id":"CMD-SKILL-VERSIONS","program":"scripts/check-skill-version-bumps.sh","args":["origin/main"],"covers":["R4-QUAL-1"]},
+    {"id":"CMD-SKILL-VERSIONS","program":"scripts/check-skill-version-bumps.sh","args":["origin/main"],"covers":["R4-EVID-4"]},
     {"id":"CMD-PLAN-VALIDATE","program":"awm","args":["plan","validate","docs/plans/2026-08-26-r4b-compact-sliced-execution-plan.md","--cwd",".","--json"],"covers":["R4-CP-2","R4-CP-4","R4-CP-5"]},
     {"id":"CMD-PREFLIGHT","program":"awm","args":["preflight","--require-current"],"covers":["R4-CUR-6"]},
     {"id":"CMD-DIFF-CHECK","program":"git","args":["diff","--check"],"covers":["R4-QUAL-1"]}
@@ -57,7 +70,7 @@
       "id":"S1","title":"Author compact planning and strict handoff",
       "requirements":["R4-CP-2","R4-CP-4","R4-CP-5","R4-CUR-6"],"dependsOn":[],"sectionAnchor":"slice-s1",
       "sources":["SRC-DEV","SRC-WRITE","SRC-R8","SRC-VALIDATE-WF"],
-      "redCommands":["CMD-R15-CONTRACT","CMD-R8"],"greenCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R8","CMD-RELEASE","CMD-PREFLIGHT","CMD-PLAN-VALIDATE"],
+      "redCommands":["CMD-R15-CONTRACT","CMD-R8"],"greenCommands":["CMD-R15-CONTRACT","CMD-R8","CMD-RELEASE","CMD-PREFLIGHT","CMD-PLAN-VALIDATE"],
       "reviewEvidence":["specification","code-quality"],"risk":"full-context",
       "fallback":["published R4a CLI is absent or compact guidance cannot determine a slice without new product decisions"]
     },
@@ -65,7 +78,7 @@
       "id":"S2","title":"Execute and review complete slices",
       "requirements":["R4-CS-3","R4-CS-4","R4-CS-5","R4-CS-6","R4-QUAL-1","R4-QUAL-2"],"dependsOn":["S1"],"sectionAnchor":"slice-s2",
       "sources":["SRC-SDD","SRC-EXEC","SRC-REVIEW","SRC-QA","SRC-R13"],
-      "redCommands":["CMD-R15-CONTRACT","CMD-R5","CMD-R13"],"greenCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R5","CMD-R13","CMD-R14","CMD-R14-CLI","CMD-PORTABILITY","CMD-RELEASE","CMD-SKILL-VERSIONS","CMD-PREFLIGHT","CMD-DIFF-CHECK"],
+      "redCommands":["CMD-R15-CONTRACT","CMD-R5","CMD-R13"],"greenCommands":["CMD-R15-CONTRACT","CMD-R5","CMD-R13","CMD-R14","CMD-R14-CLI","CMD-PORTABILITY","CMD-RELEASE","CMD-PREFLIGHT","CMD-DIFF-CHECK"],
       "reviewEvidence":["specification","code-quality"],"risk":"full-context",
       "fallback":["slice boundary is invalid, evidence is insufficient, or a declared risk trigger activates"]
     },
@@ -87,8 +100,8 @@
 
 - Approved design: `agentic-workflow@676f9cc`, `docs/plans/2026-08-26-r4-compact-plans-cohesive-slices-design.md`.
 - Initiative baton: [agentic-workflow#126](https://github.com/Kodria/agentic-workflow/issues/126).
-- Registry base: `origin/main@0bbacf0`, tag `v3.9.2`, dev bundle `3.8.0`, `minCliVersion` `9.3.0` before S3 updates it to observed R4a version `9.4.0`.
-- R4a publication is observed as `agentic-workflow-manager@9.4.0`, npm `gitHead` `9dd36deda006d14e6e213d9e56f2d8c4929613f2`; its parent is the R4a merge `47910806f45a1fcd2bb51d301a8057df15b92cc4`. R4b accepts this release provenance; never guess a version from a future commit or tag.
+- Registry base: `origin/main@0bbacf0`, tag `v3.9.2`, dev bundle `3.8.0`, `minCliVersion` `9.3.0` before S3 updates it to observed R4a version `9.4.1`.
+- R4a publication is observed as `agentic-workflow-manager@9.4.1`, npm `gitHead` `047715db866a57501ae9bb1314238b28fa18c791`; its release parent is `481f7576791815e74139eecfe757e9519dc8640c`, whose merge-base with R4a merge `47910806f45a1fcd2bb51d301a8057df15b92cc4` is exactly that R4a merge (published parent is two commits ahead). R4b accepts this release provenance; never guess a version from a future commit or tag.
 - R4b modifies the baseline registry only. It does not modify the CLI, global npm installation, installed registry clones, user projects, `AGENTS.md`, or `CONSTITUTION.md`.
 - The new contract is release-neutral and permanent. R3/R4 names, T0–T4 labels, quota observations, and the three-cycle corpus stay in initiative evidence, not general runtime instructions.
 - Issue #129 remains the owner for cross-environment sensor-detection differences. R4b may harden gate wording/tests but does not redesign sensor discovery. This registry deliberately opts out of local shell sensors; its applicable sensor evidence is the versioned `validate.yml` sensor-certification matrix. Therefore local R4b handoff runs strict currentness only, while R8 and the release workflow prove the sensor contract. Do not run `--verify-sensors` or `awm sensors run` as a local R4b gate when every configured sensor is disabled.
@@ -277,11 +290,15 @@ Use `writing-skills` and `test-driven-development` for every edited skill, and `
 | R4b planning analyze gate | installed CLI `9.3.0` returned `unknown command 'plan'` | exact capability limitation; no substitute inferred |
 | R4b planning preflight | `ready`; deliberate 2/2 sensor opt-out; legacy full-context migration advisory | exact gate evidence; full context retained |
 | R4b local context budget | `27,325` bytes pinned in ignored runtime `.awm/context-budget.json` | exact local evidence; no tracked context/pruning change |
-| R4b plan topology | 14 requirements, 3 slices, 12 declared sources, 15 declared commands | exact after final validation |
+| R4b plan topology | 14 requirements, 3 slices, 12 declared sources, 14 declared commands | exact after final validation |
 | Dispatch candidate | one implementer + specification + code-quality review per slice, plus retained final QA/docs/retro/finish | derived until execution |
 | Provider tokens/cache/model/price/cost | `unobservable` unless provider evidence appears naturally | unavailable |
-| Owner quota | record only a newly supplied cycle-bound observation | unavailable at planning |
-| Generalized claim | deferred until three fresh normal cycles | policy boundary |
+| Owner quota | record only an owner observation with its cycle boundary | unavailable at planning |
+| Generalized claim | three fresh cycles are required; generalized savings/non-inferiority remains deferred | policy boundary |
+| R4 S3 T2 — plan/context bytes | plan/context bytes: 36,626 plan bytes immediately before this S3 evidence append; 27,325-byte local context-budget observation retained from planning | exact, boundary-labeled structural evidence |
+| R4 S3 T3 — structural counts | requirements/slices/dispatches: 14/3/0 model dispatches in this S3 implementation; source retrieval/fallback: none/none (the supplied capsule recorded retrieval history `none`) | exact slice-boundary observation; no measurement-only model work |
+| R4 S3 T3 — retries/findings/gates | retries: 1 bounded fixture correction after published CLI rejected `node --version`; findings: 1 `PLAN_COMMAND_UNSAFE`, remedied with inert `git --version`; gates: R15 contract and published-CLI acceptance are wired into validation and release jobs | exact test-derived evidence; independent slice reviews remain controller-owned |
+| R4 S3 T3 — delivery boundary | commits before S3: 7 branch commits; S3 commit and PR: pending at this record; provider tokens/cache/model/price/cost: `unobservable`; owner quota: `unobservable` because no owner-supplied cycle-bound observation exists | exact/unobservable separation; no generalized savings or non-inferiority claim before three fresh normal cycles |
 
 ## Requirement traceability
 
@@ -305,6 +322,11 @@ Use `writing-skills` and `test-driven-development` for every edited skill, and `
 Forward coverage is complete: every requirement has one owning slice and a claim-specific test. Backward coverage is complete: every planned file/test/command serves at least one listed requirement. There is no UI surface or design-artifact propagation requirement.
 
 ## Final verification and handoff gate
+
+### QA process amendment — R8 registry closure
+
+The durable closure contract is owned by
+[Registry Sensor Closure Policy (R8 v1)](../../skills/setup-sensors/references/registry-closure-policy-r8.md).
 
 Run from the registry root after installing the exact published R4a CLI:
 
