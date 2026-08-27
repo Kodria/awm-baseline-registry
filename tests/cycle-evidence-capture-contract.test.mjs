@@ -4,8 +4,9 @@ import { test } from 'node:test';
 
 const read = (file) => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 
-const EXPECTED_MIN_CLI_VERSION = '9.3.0';
-const EXPECTED_UPGRADE_COMMAND = `npm i -g "agentic-workflow-manager@>=${EXPECTED_MIN_CLI_VERSION}"`;
+const EXPECTED_MIN_CLI_VERSION = '9.4.1';
+const EVIDENCE_CAPTURE_MIN_CLI_VERSION = '9.3.0';
+const EXPECTED_UPGRADE_COMMAND = `npm i -g "agentic-workflow-manager@>=${EVIDENCE_CAPTURE_MIN_CLI_VERSION}"`;
 
 function assertCanonicalActivePlanResolver(skill) {
   const resolverStart = skill.indexOf('PLANS_DIR="$PWD/docs/plans"');

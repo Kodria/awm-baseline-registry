@@ -39,7 +39,7 @@ function runPreflight(cwd, home) {
 
 function requirePublishedR3a() {
   const version = execFileSync(awm, ['--version'], { encoding: 'utf8' }).trim();
-  assert.equal(version, '9.3.0', 'acceptance must execute the published R3a CLI');
+  assert.equal(version, '9.4.1', 'acceptance must execute the declared published compatible CLI');
 }
 
 function removeSandbox(sandbox, remove = rmSync) {

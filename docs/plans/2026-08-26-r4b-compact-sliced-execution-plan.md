@@ -96,8 +96,8 @@
 
 - Approved design: `agentic-workflow@676f9cc`, `docs/plans/2026-08-26-r4-compact-plans-cohesive-slices-design.md`.
 - Initiative baton: [agentic-workflow#126](https://github.com/Kodria/agentic-workflow/issues/126).
-- Registry base: `origin/main@0bbacf0`, tag `v3.9.2`, dev bundle `3.8.0`, `minCliVersion` `9.3.0` before S3 updates it to observed R4a version `9.4.0`.
-- R4a publication is observed as `agentic-workflow-manager@9.4.0`, npm `gitHead` `9dd36deda006d14e6e213d9e56f2d8c4929613f2`; its parent is the R4a merge `47910806f45a1fcd2bb51d301a8057df15b92cc4`. R4b accepts this release provenance; never guess a version from a future commit or tag.
+- Registry base: `origin/main@0bbacf0`, tag `v3.9.2`, dev bundle `3.8.0`, `minCliVersion` `9.3.0` before S3 updates it to observed R4a version `9.4.1`.
+- R4a publication is observed as `agentic-workflow-manager@9.4.1`, npm `gitHead` `047715db866a57501ae9bb1314238b28fa18c791`; its release parent is `481f7576791815e74139eecfe757e9519dc8640c`, whose merge-base with R4a merge `47910806f45a1fcd2bb51d301a8057df15b92cc4` is exactly that R4a merge (published parent is two commits ahead). R4b accepts this release provenance; never guess a version from a future commit or tag.
 - R4b modifies the baseline registry only. It does not modify the CLI, global npm installation, installed registry clones, user projects, `AGENTS.md`, or `CONSTITUTION.md`.
 - The new contract is release-neutral and permanent. R3/R4 names, T0–T4 labels, quota observations, and the three-cycle corpus stay in initiative evidence, not general runtime instructions.
 - Issue #129 remains the owner for cross-environment sensor-detection differences. R4b may harden gate wording/tests but does not redesign sensor discovery. This registry deliberately opts out of local shell sensors; its applicable sensor evidence is the versioned `validate.yml` sensor-certification matrix. Therefore local R4b handoff runs strict currentness only, while R8 and the release workflow prove the sensor contract. Do not run `--verify-sensors` or `awm sensors run` as a local R4b gate when every configured sensor is disabled.
@@ -286,11 +286,15 @@ Use `writing-skills` and `test-driven-development` for every edited skill, and `
 | R4b planning analyze gate | installed CLI `9.3.0` returned `unknown command 'plan'` | exact capability limitation; no substitute inferred |
 | R4b planning preflight | `ready`; deliberate 2/2 sensor opt-out; legacy full-context migration advisory | exact gate evidence; full context retained |
 | R4b local context budget | `27,325` bytes pinned in ignored runtime `.awm/context-budget.json` | exact local evidence; no tracked context/pruning change |
-| R4b plan topology | 14 requirements, 3 slices, 12 declared sources, 15 declared commands | exact after final validation |
+| R4b plan topology | 14 requirements, 3 slices, 12 declared sources, 14 declared commands | exact after final validation |
 | Dispatch candidate | one implementer + specification + code-quality review per slice, plus retained final QA/docs/retro/finish | derived until execution |
 | Provider tokens/cache/model/price/cost | `unobservable` unless provider evidence appears naturally | unavailable |
-| Owner quota | record only a newly supplied cycle-bound observation | unavailable at planning |
-| Generalized claim | deferred until three fresh normal cycles | policy boundary |
+| Owner quota | record only an owner observation with its cycle boundary | unavailable at planning |
+| Generalized claim | three fresh cycles are required; generalized savings/non-inferiority remains deferred | policy boundary |
+| R4 S3 T2 — plan/context bytes | plan/context bytes: 36,626 plan bytes immediately before this S3 evidence append; 27,325-byte local context-budget observation retained from planning | exact, boundary-labeled structural evidence |
+| R4 S3 T3 — structural counts | requirements/slices/dispatches: 14/3/0 model dispatches in this S3 implementation; source retrieval/fallback: none/none (the supplied capsule recorded retrieval history `none`) | exact slice-boundary observation; no measurement-only model work |
+| R4 S3 T3 — retries/findings/gates | retries: 1 bounded fixture correction after published CLI rejected `node --version`; findings: 1 `PLAN_COMMAND_UNSAFE`, remedied with inert `git --version`; gates: R15 contract and published-CLI acceptance are wired into validation and release jobs | exact test-derived evidence; independent slice reviews remain controller-owned |
+| R4 S3 T3 — delivery boundary | commits before S3: 7 branch commits; S3 commit and PR: pending at this record; provider tokens/cache/model/price/cost: `unobservable`; owner quota: `unobservable` because no owner-supplied cycle-bound observation exists | exact/unobservable separation; no generalized savings or non-inferiority claim before three fresh normal cycles |
 
 ## Requirement traceability
 

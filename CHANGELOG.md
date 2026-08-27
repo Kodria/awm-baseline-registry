@@ -2,6 +2,21 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.9.0 — 2026-08-27
+
+### Added
+- Compact `compact-slices/v1` planning and complete-slice execution are certified against the
+  observed published CLI `agentic-workflow-manager` 9.4.1, with portable CLI acceptance and
+  release-job gates before tagging.
+
+### Changed
+- Unattended compact handoff now requires strict currentness while legacy and parallel plans
+  retain their existing full-quality execution, final QA, documentation, retro, and finish gates.
+
+### Nota de versión
+Bundle `dev` 3.8.0 → 3.9.0 (minor): additive compact-plan compatibility and release evidence;
+no generalized cost or quality claim is made from this single cycle.
+
 ## dev 3.8.0 — 2026-08-25
 
 ### Added

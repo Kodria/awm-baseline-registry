@@ -14,7 +14,7 @@ const expectedCorpus = Object.freeze({
   'CONSTITUTION.md': [30164, 'db8751796453223e27357bf0593d84e83c0bc00d2700d05bff531e9c030723b7'],
   'CLAUDE.md': [4539, '444f00ac58d96acf8d7cdbff909388279a1a46238ad83ba8fd2b63af6d5e6d22'],
 });
-const expectedManifest = Object.freeze({ minCliVersion: '9.3.0', projectContextSchema: 1 });
+const expectedManifest = Object.freeze({ minCliVersion: '9.4.1', projectContextSchema: 1 });
 const fullContextTriggers = Object.freeze([
   'second-context-request', 'missing-or-invalid-indexed-source', 'selection-uncertain',
   'security-or-robustness', 'root-configuration', 'public-contract',

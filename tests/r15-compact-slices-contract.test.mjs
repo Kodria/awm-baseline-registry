@@ -225,3 +225,84 @@ test('S2 semantic mutation rejects reusing the spec reviewer as the quality revi
     identities,
   ), /three distinct identities/);
 });
+
+const S3_FIXTURE = 'tests/fixtures/compact-slices-v1/valid-plan.md';
+const R4A_VERSION = '9.4.1';
+
+function compactManifest(text) {
+  const match = text.match(/<!-- AWM:COMPACT-SLICES:START v1 -->\s*([\s\S]*?)\s*<!-- AWM:COMPACT-SLICES:END v1 -->/);
+  assert.ok(match, 'fixture must contain one compact-slices/v1 manifest');
+  const manifest = JSON.parse(match[1]);
+  assert.equal(manifest.schema, 'compact-slices/v1', 'fixture schema must remain exact');
+  return manifest;
+}
+
+function assertR4EvidenceLedger(text) {
+  const ledgerStart = text.indexOf('## Measurement ledger');
+  const traceabilityStart = text.indexOf('## Requirement traceability');
+  assert.ok(ledgerStart >= 0 && traceabilityStart > ledgerStart, 'plan must retain a bounded R4 measurement ledger');
+  const ledger = text.slice(ledgerStart, traceabilityStart);
+  for (const field of ['plan/context bytes', 'requirements/slices/dispatches', 'retrieval/fallback', 'retries', 'findings', 'gates', 'commits', 'PR']) {
+    assert.match(ledger, new RegExp(field.replace('/', '[\\s\\S]{0,80}')), `ledger must record ${field}`);
+  }
+  assert.match(ledger, /tokens\/cache\/model\/price\/cost[\s\S]{0,180}unobservable/i);
+  assert.match(ledger, /owner quota[\s\S]{0,180}(?:owner observation|owner supplies)[\s\S]{0,180}cycle/i);
+  assert.match(ledger, /three fresh cycles[\s\S]{0,180}(?:deferred|waits)/i);
+}
+
+function assertR15ReleaseWorkflow(workflow) {
+  const install = workflow.indexOf('Install Context Kernel compatible CLI');
+  const verify = workflow.indexOf('Verify registry before tagging');
+  const tag = workflow.indexOf('Compute and push next tag');
+  assert.ok(install >= 0 && verify > install && tag > verify, 'release workflow must install, verify, then compute its tag');
+  const releaseGate = workflow.slice(verify, tag);
+  for (const command of ['node tests/r15-compact-slices-contract.test.mjs', 'node tests/r15-compact-slices-cli-acceptance.mjs']) {
+    assert.match(releaseGate, new RegExp(`^\\s*${command.replaceAll('.', '\\.') }\\s*$`, 'm'), `release gate must run ${command}`);
+  }
+}
+
+test('S3 fixture is portable and declares complete compact-plan traceability (R4-EVID-4)', () => {
+  const manifest = compactManifest(read(S3_FIXTURE));
+  assert.equal(manifest.schema, 'compact-slices/v1');
+  assert.deepEqual(
+    { requirements: manifest.requirements.length, sources: manifest.sources.length, commands: manifest.commands.length, slices: manifest.slices.length },
+    { requirements: 14, sources: 12, commands: 14, slices: 3 },
+  );
+  assert.ok(manifest.slices.every(slice => slice.requirements.every(requirement => manifest.requirements.includes(requirement))), 'every fixture slice requirement must be declared');
+  assert.ok(manifest.slices.every(slice => slice.sources.every(source => manifest.sources.some(candidate => candidate.id === source))), 'every slice source must resolve');
+  assert.ok(manifest.slices.every(slice => slice.greenCommands.every(command => manifest.commands.some(candidate => candidate.id === command))), 'every green command must resolve');
+});
+
+test('S3 pins the observed R4a release and keeps bundle/catalog delivery metadata consistent (R4-EVID-4)', () => {
+  const registry = JSON.parse(read('awm-registry.json'));
+  const bundle = JSON.parse(read('bundles/dev/bundle.json'));
+  const catalog = JSON.parse(read('catalog.json'));
+  assert.equal(registry.minCliVersion, R4A_VERSION, 'minCliVersion must be the observed published R4a release');
+  assert.equal(bundle.version, '3.9.0');
+  assert.equal(catalog.bundles.find(entry => entry.name === 'dev')?.version, bundle.version, 'catalog and bundle must agree');
+  for (const [file, version] of [
+    ['skills/development-process/SKILL.md', '1.8.0'], ['skills/writing-plans/SKILL.md', '1.10.0'],
+    ['skills/subagent-driven-development/SKILL.md', '1.12.0'], ['skills/executing-plans/SKILL.md', '1.3.0'],
+    ['skills/requesting-code-review/SKILL.md', '1.2.0'], ['skills/post-implementation-qa/SKILL.md', '1.9.0'],
+  ]) assert.match(read(file), new RegExp(`^version: \"${version.replaceAll('.', '\\.')}\"$`, 'm'), `${file} must have its one approved version`);
+});
+
+test('S3 records bounded structural evidence and honest unavailable-provider claim boundaries (R4-EVID-1, R4-EVID-2, R4-EVID-3)', () => {
+  assertR4EvidenceLedger(read('docs/plans/2026-08-26-r4b-compact-sliced-execution-plan.md'));
+});
+
+test('S3 validation and release workflows run both R15 gates before a release tag (R4-EVID-4)', () => {
+  const validation = read('.github/workflows/validate.yml');
+  const install = validation.indexOf('Install Context Kernel compatible CLI');
+  for (const command of ['node tests/r15-compact-slices-contract.test.mjs', 'node tests/r15-compact-slices-cli-acceptance.mjs']) {
+    assert.ok(validation.indexOf(command) > install, `validate workflow must run ${command} after compatible CLI install`);
+  }
+  assertR15ReleaseWorkflow(read('.github/workflows/auto-tag.yml'));
+});
+
+test('S3 RED mutations reject weakened evidence, metadata, and release gates', () => {
+  const fixture = read(S3_FIXTURE);
+  assert.throws(() => compactManifest(fixture.replace('"schema": "compact-slices/v1"', '"schema": "compact-slices/v2"')), /compact-slices\/v1/);
+  assert.throws(() => assertR4EvidenceLedger(read('docs/plans/2026-08-26-r4b-compact-sliced-execution-plan.md').replaceAll('unobservable', 'estimated')), /unobservable/);
+  assert.throws(() => assertR15ReleaseWorkflow(read('.github/workflows/auto-tag.yml').replace('node tests/r15-compact-slices-cli-acceptance.mjs', '# acceptance removed')), /release gate must run/);
+});
