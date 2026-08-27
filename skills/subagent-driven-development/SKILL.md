@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "1.12.1"
+version: "1.12.2"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
@@ -276,15 +276,8 @@ conclusive rerun to report `overall: pass` before any progression.
 
 ## Registry-content closure exception (R8)
 
-For any project with one or more applicable sensors, `overall: pass` remains absolute: no
-task, slice, reviewer, QA, retro, or release progression has an exception. Registry-content
-closure is the sole narrow case: it is allowed only when all declared sensors are explicitly
-disabled. Preserve a local `not_certified` or `skipped` verdict exactly as reported and never
-call either verdict `pass`.
-
-This local exception never waives release proof. Versioned R8 evidence for the candidate SHA
-must run in both `validate` and `auto-tag` before registry content can close. `fail`,
-`inconclusive`, missing CI evidence, or any applicable sensor can never receive this exception.
+Apply [Registry Sensor Closure Policy (R8 v1)](../setup-sensors/references/registry-closure-policy-r8.md)
+exactly. It is the single normative owner; do not restate the policy here.
 
 ## Ledger Gate (AWM)
 

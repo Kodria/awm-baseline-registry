@@ -2,6 +2,17 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.9.2 — 2026-08-27
+
+### Fixed
+- The R8 registry-closure policy now has one versioned owner under `setup-sensors`; execution
+  and completion skills link it instead of maintaining divergent copies. R8 mutation coverage
+  rejects a missing owner/link and any local policy restatement.
+
+### Nota de versión
+Bundle `dev` 3.9.1 → 3.9.2 (patch): process-policy deduplication with executable ownership
+and release-metadata verification.
+
 ## dev 3.9.1 — 2026-08-27
 
 ### Fixed

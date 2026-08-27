@@ -17,6 +17,8 @@ const TIMEOUT_REMEDIATION_SKILLS = [
   'skills/verification-before-completion/SKILL.md',
 ];
 
+const REGISTRY_CLOSURE_POLICY = 'skills/setup-sensors/references/registry-closure-policy-r8.md';
+
 function assertEmpiricalUnattendedHandoff(text) {
   const staticPreflight = text.indexOf('awm preflight');
   const empiricalPreflight = text.indexOf('awm preflight --verify-sensors');
@@ -50,19 +52,30 @@ function assertTimeoutRemediation(text) {
     'timeout remediation must require a conclusive passing rerun');
 }
 
-function assertRegistryClosureException(text, filename) {
+function assertRegistryClosurePolicy(text) {
+  assert.match(text, /^# Registry Sensor Closure Policy \(R8 v1\)$/m,
+    'the R8 policy reference must have a versioned identity');
+  assert.match(text, /one or more applicable sensors[\s\S]{0,220}overall:\s*pass/i,
+    'the owner must retain absolute overall pass whenever any sensor is applicable');
+  assert.match(text, /only\s+when\s+all\s+declared\s+sensors\s+are\s+explicitly\s+disabled/i,
+    'the owner must limit registry closure to every declared sensor being explicitly disabled');
+  assert.match(text, /not_certified[\s\S]{0,180}skipped[\s\S]{0,180}never\s+call\s+either\s+verdict\s+`pass`/i,
+    'the owner must preserve local non-pass verdicts without renaming them pass');
+  assert.match(text, /versioned R8 evidence[\s\S]{0,180}candidate SHA[\s\S]{0,180}validate[\s\S]{0,180}auto-tag/i,
+    'the owner must require versioned R8 evidence for the candidate SHA in validate and auto-tag');
+  assert.match(text, /`fail`,\s*`inconclusive`,\s*missing CI evidence, or any applicable sensor[\s\S]{0,180}(?:never|cannot|must not)[\s\S]{0,120}exception/i,
+    'the owner must deny the exception to fail, inconclusive, missing CI evidence, and applicable sensors');
+}
+
+function assertRegistryClosureConsumer(text, filename) {
   const section = text.match(/## Registry-content closure exception \(R8\)[\s\S]*?(?=\n## |\s*$)/)?.[0];
-  assert.ok(section, `${filename} must define the R8 registry-content closure exception in its own section`);
-  assert.match(section, /one or more applicable sensors[\s\S]{0,220}overall:\s*pass/i,
-    `${filename} must retain absolute overall pass whenever any sensor is applicable`);
-  assert.match(section, /only\s+when\s+all\s+declared\s+sensors\s+are\s+explicitly\s+disabled/i,
-    `${filename} must limit registry closure to every declared sensor being explicitly disabled`);
-  assert.match(section, /not_certified[\s\S]{0,180}skipped[\s\S]{0,180}never\s+call\s+either\s+verdict\s+`pass`/i,
-    `${filename} must preserve local non-pass verdicts without renaming them pass`);
-  assert.match(section, /versioned R8 evidence[\s\S]{0,180}candidate SHA[\s\S]{0,180}validate[\s\S]{0,180}auto-tag/i,
-    `${filename} must require versioned R8 evidence for the candidate SHA in validate and auto-tag`);
-  assert.match(section, /`fail`,\s*`inconclusive`,\s*missing CI evidence, or any applicable sensor[\s\S]{0,180}(?:never|cannot|must not)[\s\S]{0,120}exception/i,
-    `${filename} must deny the exception to fail, inconclusive, missing CI evidence, and applicable sensors`);
+  assert.ok(section, `${filename} must link the R8 registry-closure policy`);
+  assert.match(section, /\[Registry Sensor Closure Policy \(R8 v1\)\]\(\.\.\/setup-sensors\/references\/registry-closure-policy-r8\.md\)/,
+    `${filename} must link the single R8 policy owner`);
+  assert.match(section, /do not restate/i, `${filename} must keep the policy out of the consumer skill`);
+  for (const phrase of ['all declared sensors', 'candidate SHA', 'inconclusive', 'never call either verdict']) {
+    assert.doesNotMatch(section, new RegExp(phrase, 'i'), `${filename} must not restate ${phrase}`);
+  }
 }
 
 function assertR8EvidenceRunsForCandidateSha(workflow, filename, { release = false } = {}) {
@@ -109,10 +122,14 @@ for (const file of TIMEOUT_REMEDIATION_SKILLS) {
 }
 
 for (const file of EXECUTION_SKILLS) {
-  test(`${file} preserves the narrow all-disabled registry closure exception (R8)`, () => {
-    assertRegistryClosureException(read(file), file);
+  test(`${file} links the single R8 registry-closure policy owner`, () => {
+    assertRegistryClosureConsumer(read(file), file);
   });
 }
+
+test('R8 keeps the complete registry-closure policy in its single versioned owner', () => {
+  assertRegistryClosurePolicy(read(REGISTRY_CLOSURE_POLICY));
+});
 
 test('plan reviewer rejects an unattended plan without empirical preflight (R7.3)', () => {
   const text = read('skills/writing-plans/plan-document-reviewer-prompt.md');
@@ -139,31 +156,45 @@ test('RED mutation: removing not_certified makes an execution gate contract fail
 });
 
 test('RED mutation: weakening all-disabled makes the registry closure contract fail', () => {
-  const original = read(EXECUTION_SKILLS[0]);
+  const original = read(REGISTRY_CLOSURE_POLICY);
   const weakened = original.replace(/only\s+when\s+all\s+declared\s+sensors\s+are\s+explicitly\s+disabled/i, 'when some declared sensors are disabled');
   assert.notEqual(weakened, original, 'mutation must change the all-disabled rule');
-  assert.throws(() => assertRegistryClosureException(weakened, EXECUTION_SKILLS[0]), /every declared sensor/);
+  assert.throws(() => assertRegistryClosurePolicy(weakened), /every declared sensor/);
 });
 
 test('RED mutation: removing candidate-SHA R8 evidence makes the registry closure contract fail', () => {
-  const original = read(EXECUTION_SKILLS[0]);
-  const weakened = original.replace(/Versioned R8 evidence for the candidate SHA\s+must run in both `validate` and `auto-tag`/i, 'R8 evidence may be recorded locally');
+  const original = read(REGISTRY_CLOSURE_POLICY);
+  const weakened = original.replace(/Versioned R8 evidence for the candidate SHA\s+must\s+run in both `validate` and `auto-tag`/i, 'R8 evidence may be recorded locally');
   assert.notEqual(weakened, original, 'mutation must change the candidate-SHA evidence rule');
-  assert.throws(() => assertRegistryClosureException(weakened, EXECUTION_SKILLS[0]), /candidate SHA/);
+  assert.throws(() => assertRegistryClosurePolicy(weakened), /candidate SHA/);
 });
 
 test('RED mutation: accepting fail or inconclusive makes the registry closure contract fail', () => {
-  const original = read(EXECUTION_SKILLS[0]);
+  const original = read(REGISTRY_CLOSURE_POLICY);
   const weakened = original.replace(/`fail`,\s*`inconclusive`,\s*missing CI evidence, or any applicable sensor/, '`pass`, `inconclusive`, missing CI evidence, or any applicable sensor');
   assert.notEqual(weakened, original, 'mutation must change the fail/inconclusive denial');
-  assert.throws(() => assertRegistryClosureException(weakened, EXECUTION_SKILLS[0]), /fail, inconclusive/);
+  assert.throws(() => assertRegistryClosurePolicy(weakened), /fail, inconclusive/);
 });
 
 test('RED mutation: reporting a local non-pass verdict as green makes the registry closure contract fail', () => {
-  const original = read(EXECUTION_SKILLS[0]);
+  const original = read(REGISTRY_CLOSURE_POLICY);
   const weakened = original.replace(/never\s+call\s+either\s+verdict\s+`pass`/i, 'report either verdict as green');
   assert.notEqual(weakened, original, 'mutation must change the local-verdict preservation rule');
-  assert.throws(() => assertRegistryClosureException(weakened, EXECUTION_SKILLS[0]), /without renaming them pass/);
+  assert.throws(() => assertRegistryClosurePolicy(weakened), /without renaming them pass/);
+});
+
+test('RED mutation: restating the R8 policy in a consumer is rejected', () => {
+  const original = read(EXECUTION_SKILLS[0]);
+  const weakened = original.replace('do not restate the policy here.', 'do not restate the link. Only when all declared sensors are explicitly disabled.');
+  assert.notEqual(weakened, original, 'mutation must replace the consumer non-restatement guard');
+  assert.throws(() => assertRegistryClosureConsumer(weakened, EXECUTION_SKILLS[0]), /must not restate all declared sensors/);
+});
+
+test('RED mutation: removing the R8 owner link from a consumer is rejected', () => {
+  const original = read(EXECUTION_SKILLS[0]);
+  const weakened = original.replace(/\[Registry Sensor Closure Policy \(R8 v1\)\]\(\.\.\/setup-sensors\/references\/registry-closure-policy-r8\.md\)/, 'the policy');
+  assert.notEqual(weakened, original, 'mutation must remove the policy-owner link');
+  assert.throws(() => assertRegistryClosureConsumer(weakened, EXECUTION_SKILLS[0]), /single R8 policy owner/);
 });
 
 test('RED mutation: removing R8 evidence from release validation fails', () => {

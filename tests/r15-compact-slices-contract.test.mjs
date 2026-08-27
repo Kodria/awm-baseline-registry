@@ -278,12 +278,13 @@ test('S3 pins the observed R4a release and keeps bundle/catalog delivery metadat
   const bundle = JSON.parse(read('bundles/dev/bundle.json'));
   const catalog = JSON.parse(read('catalog.json'));
   assert.equal(registry.minCliVersion, R4A_VERSION, 'minCliVersion must be the observed published R4a release');
-  assert.equal(bundle.version, '3.9.1');
+  assert.equal(bundle.version, '3.9.2');
   assert.equal(catalog.bundles.find(entry => entry.name === 'dev')?.version, bundle.version, 'catalog and bundle must agree');
   for (const [file, version] of [
     ['skills/development-process/SKILL.md', '1.8.0'], ['skills/writing-plans/SKILL.md', '1.10.0'],
-    ['skills/subagent-driven-development/SKILL.md', '1.12.1'], ['skills/executing-plans/SKILL.md', '1.3.1'],
+    ['skills/subagent-driven-development/SKILL.md', '1.12.2'], ['skills/executing-plans/SKILL.md', '1.3.2'],
     ['skills/requesting-code-review/SKILL.md', '1.2.0'], ['skills/post-implementation-qa/SKILL.md', '1.9.0'],
+    ['skills/verification-before-completion/SKILL.md', '1.3.2'], ['skills/setup-sensors/SKILL.md', '1.1.2'],
   ]) assert.match(read(file), new RegExp(`^version: \"${version.replaceAll('.', '\\.')}\"$`, 'm'), `${file} must have its one approved version`);
 });
 
