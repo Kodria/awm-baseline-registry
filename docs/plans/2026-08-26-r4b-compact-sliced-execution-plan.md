@@ -47,7 +47,7 @@
   ],
   "commands": [
     {"id":"CMD-R15-CONTRACT","program":"npm","args":["exec","--","node","tests/r15-compact-slices-contract.test.mjs"],"covers":["R4-CP-2","R4-CP-4","R4-CP-5","R4-CS-3","R4-CS-4","R4-CS-5","R4-CS-6","R4-QUAL-1","R4-QUAL-2","R4-EVID-1","R4-EVID-2","R4-EVID-3","R4-EVID-4","R4-CUR-6"]},
-    {"id":"CMD-R15-CLI","program":"npm","args":["exec","--","node","tests/r15-compact-slices-cli-acceptance.mjs"],"covers":["R4-CP-2","R4-CS-3","R4-CUR-6"]},
+    {"id":"CMD-R15-CLI","program":"npm","args":["exec","--","node","tests/r15-compact-slices-cli-acceptance.mjs"],"covers":["R4-EVID-4"]},
     {"id":"CMD-R8","program":"npm","args":["exec","--","node","tests/r8-sensor-gate-contract.test.mjs"],"covers":["R4-QUAL-1","R4-CUR-6"]},
     {"id":"CMD-R5","program":"npm","args":["exec","--","node","tests/r5-track-contract.test.mjs"],"covers":["R4-CS-6","R4-QUAL-1"]},
     {"id":"CMD-R12","program":"npm","args":["exec","--","node","tests/r12-context-footprint-contract.test.mjs"],"covers":["R4-QUAL-2","R4-EVID-1"]},
@@ -66,7 +66,7 @@
       "id":"S1","title":"Author compact planning and strict handoff",
       "requirements":["R4-CP-2","R4-CP-4","R4-CP-5","R4-CUR-6"],"dependsOn":[],"sectionAnchor":"slice-s1",
       "sources":["SRC-DEV","SRC-WRITE","SRC-R8","SRC-VALIDATE-WF"],
-      "redCommands":["CMD-R15-CONTRACT","CMD-R8"],"greenCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R8","CMD-RELEASE","CMD-PREFLIGHT","CMD-PLAN-VALIDATE"],
+      "redCommands":["CMD-R15-CONTRACT","CMD-R8"],"greenCommands":["CMD-R15-CONTRACT","CMD-R8","CMD-RELEASE","CMD-PREFLIGHT","CMD-PLAN-VALIDATE"],
       "reviewEvidence":["specification","code-quality"],"risk":"full-context",
       "fallback":["published R4a CLI is absent or compact guidance cannot determine a slice without new product decisions"]
     },
@@ -74,7 +74,7 @@
       "id":"S2","title":"Execute and review complete slices",
       "requirements":["R4-CS-3","R4-CS-4","R4-CS-5","R4-CS-6","R4-QUAL-1","R4-QUAL-2"],"dependsOn":["S1"],"sectionAnchor":"slice-s2",
       "sources":["SRC-SDD","SRC-EXEC","SRC-REVIEW","SRC-QA","SRC-R13"],
-      "redCommands":["CMD-R15-CONTRACT","CMD-R5","CMD-R13"],"greenCommands":["CMD-R15-CONTRACT","CMD-R15-CLI","CMD-R5","CMD-R13","CMD-R14","CMD-R14-CLI","CMD-PORTABILITY","CMD-RELEASE","CMD-PREFLIGHT","CMD-DIFF-CHECK"],
+      "redCommands":["CMD-R15-CONTRACT","CMD-R5","CMD-R13"],"greenCommands":["CMD-R15-CONTRACT","CMD-R5","CMD-R13","CMD-R14","CMD-R14-CLI","CMD-PORTABILITY","CMD-RELEASE","CMD-PREFLIGHT","CMD-DIFF-CHECK"],
       "reviewEvidence":["specification","code-quality"],"risk":"full-context",
       "fallback":["slice boundary is invalid, evidence is insufficient, or a declared risk trigger activates"]
     },
