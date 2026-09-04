@@ -2,6 +2,19 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## process 1.0.1 — 2026-09-04
+
+### Fixed
+- `process-lifecycle` now publishes an HTA structure example in the literal syntax accepted by
+  `awm process list`: unadorned `SG-N` lines and nested `OP-N.x` lines whose numeric prefix
+  identifies their parent.
+- The R11 contract now rejects parser-incompatible examples, and validation plus the release
+  job execute the published example against the compatible CLI before a registry tag can ship.
+
+### Nota de versión
+Bundle `process` 1.0.0 → 1.0.1 (patch): corrige la desincronización entre el ejemplo de
+autoría, su contrato ejecutable y el parser publicado del CLI.
+
 ## dev 3.9.2 — 2026-08-27
 
 ### Fixed

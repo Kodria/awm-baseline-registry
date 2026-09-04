@@ -64,6 +64,7 @@ jobs:
           node tests/r9-declared-orchestrators-contract.test.mjs
           node tests/r10-documentation-phase-contract.test.mjs
           node tests/r11-process-lifecycle-contract.test.mjs
+          node tests/r11-process-lifecycle-cli-acceptance.mjs
           node tests/r12-context-footprint-contract.test.mjs
           node tests/r13-role-evidence-capsule-contract.test.mjs
           node tests/r15-compact-slices-contract.test.mjs

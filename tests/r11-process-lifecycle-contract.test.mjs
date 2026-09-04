@@ -1,12 +1,32 @@
 // tests/r11-process-lifecycle-contract.test.mjs
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 const root = new URL('..', import.meta.url);
+const rootPath = fileURLToPath(root);
 const read = relative => readFileSync(new URL(relative, root), 'utf8');
 
 const SKILL = 'skills/process-lifecycle/SKILL.md';
+
+function assertCliAcceptanceWiring(source, workflow) {
+  const lines = source.split(/\r?\n/);
+  const installStep = lines.findIndex(line =>
+    /^\s*-\s+name:\s+Install Context Kernel compatible CLI\s*$/.test(line));
+  const installCommand = lines.findIndex(line =>
+    /^\s*npm install --global "agentic-workflow-manager@\$R3A_VERSION"\s*$/.test(line));
+  const acceptance = lines.findIndex(line =>
+    /^\s*(?:-\s+run:\s*)?node tests\/r11-process-lifecycle-cli-acceptance\.mjs\s*$/.test(line));
+  assert.ok(installStep >= 0, `${workflow} must name the compatible published CLI install step`);
+  assert.ok(installCommand > installStep,
+    `${workflow} must install the compatible published CLI with an executable npm command`);
+  assert.ok(acceptance > installCommand,
+    `${workflow} must run the process-lifecycle CLI acceptance after installing the compatible CLI`);
+}
 
 test('R2.1: pregunta primero en que registry vive el proceso', () => {
   const text = read(SKILL);                                    // verifies R2.1
@@ -29,12 +49,18 @@ test('R2.2 y R2.3: escribe en el clon del registry y rechaza ~/.awm', () => {
 test('R2.4 y R2.5: elicitacion HTA con criterio de parada', () => {
   const text = read(SKILL);                                    // verifies R2.4, R2.5
   const lines = text.split('\n');
-  const sgIndex = lines.findIndex(line => line.includes('SG-'));
-  assert.ok(sgIndex >= 0, 'the skill must use the SG- id scheme from the model contract');
-  const relationship = /SG-\d+/i;
-  const nestedOp = lines.slice(sgIndex + 1).find(line => line.includes('OP-') && relationship.test(line));
+  const sgLine = /^-\s+SG-(\d+)\s+—\s+\S/;
+  const opLine = /^\s+-\s+OP-(\d+)\.\d+\s+—\s+\S/;
+  const sgIndex = lines.findIndex(line => sgLine.test(line));
+  assert.ok(sgIndex >= 0,
+    'the skill must show a literal `- SG-N — text` line in the exact shape accepted by the CLI parser');
+  const owner = sgLine.exec(lines[sgIndex])[1];
+  const nestedOp = lines.slice(sgIndex + 1).find(line => {
+    const match = opLine.exec(line);
+    return match !== null && match[1] === owner;
+  });
   assert.ok(nestedOp,
-    'the skill must show OP- operations nested under an SG- subgoal (an OP- line naming the SG-# it belongs to) — mentioning SG- and OP- independently anywhere in the document does not prove the hierarchical decomposition R2.4 requires');
+    'the skill must show an indented `- OP-N.x — text` accepted by the CLI parser, with a numeric prefix matching its SG-N parent and no redundant `(SG-N)` annotation');
   assert.match(text, /skill invocable/i,
     'the skill must state the stop criterion: decomposition ends when an operation could be an invocable skill');
 });
@@ -166,5 +192,66 @@ test('empaque: el bundle process depende de authoring y ambos son baseline', () 
     const manifest = JSON.parse(read(`bundles/${name}/bundle.json`));
     assert.equal(entry.version, manifest.version,
       `${name}: catalog and bundle versions must agree byte for byte`);
+  }
+});
+
+test('el gate de aceptación CLI corre después de instalar el CLI en validación y release', () => {
+  for (const workflow of ['.github/workflows/validate.yml', '.github/workflows/auto-tag.yml']) {
+    assertCliAcceptanceWiring(read(workflow), workflow);
+  }
+});
+
+test('el gate de workflow rechaza una aceptación presente solo como comentario', () => {
+  const workflow = '.github/workflows/validate.yml';
+  const source = read(workflow);
+  const commented = source.replace(
+    /^(\s*)- run: node tests\/r11-process-lifecycle-cli-acceptance\.mjs\s*$/m,
+    '$1# node tests/r11-process-lifecycle-cli-acceptance.mjs',
+  );
+  assert.notEqual(commented, source, 'the mutation must comment out the executable acceptance step');
+  assert.throws(() => assertCliAcceptanceWiring(commented, workflow),
+    /must run the process-lifecycle CLI acceptance/,
+    'a comment must not satisfy the executable workflow gate');
+});
+
+test('el gate de workflow rechaza una instalación del CLI presente solo como comentario', () => {
+  for (const workflow of ['.github/workflows/validate.yml', '.github/workflows/auto-tag.yml']) {
+    const source = read(workflow);
+    const commented = source.replace(
+      /^(\s*)npm install --global "agentic-workflow-manager@\$R3A_VERSION"\s*$/m,
+      '$1# npm install --global "agentic-workflow-manager@$R3A_VERSION"',
+    );
+    assert.notEqual(commented, source, `the mutation must comment out the executable CLI install in ${workflow}`);
+    assert.throws(() => assertCliAcceptanceWiring(commented, workflow),
+      /must install the compatible published CLI/,
+      'an install step name without its executable npm command must not satisfy the workflow gate');
+  }
+});
+
+test('la aceptación CLI limita cuánto espera por un binario que no responde', () => {
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), 'awm-r11-timeout-'));
+  try {
+    const slowAwm = path.join(sandbox, 'slow-awm');
+    writeFileSync(slowAwm, '#!/usr/bin/env node\nsetTimeout(() => process.exit(0), 750);\n');
+    chmodSync(slowAwm, 0o755);
+
+    const result = spawnSync(process.execPath, ['tests/r11-process-lifecycle-cli-acceptance.mjs'], {
+      cwd: rootPath,
+      env: {
+        ...process.env,
+        AWM_PROCESS_BIN: slowAwm,
+        AWM_PROCESS_TIMEOUT_MS: '50',
+      },
+      encoding: 'utf8',
+      timeout: 2_000,
+    });
+    const output = result.stdout + result.stderr;
+
+    assert.notEqual(result.error?.code, 'ETIMEDOUT', 'the acceptance harness itself must finish');
+    assert.notEqual(result.status, 0, 'the acceptance must fail when the CLI exceeds its deadline');
+    assert.match(output, /timed out after 50ms/,
+      'the failure must explain which CLI boundary timed out');
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
   }
 });
