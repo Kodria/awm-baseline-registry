@@ -29,12 +29,26 @@ test('R2.2 y R2.3: escribe en el clon del registry y rechaza ~/.awm', () => {
 test('R2.4 y R2.5: elicitacion HTA con criterio de parada', () => {
   const text = read(SKILL);                                    // verifies R2.4, R2.5
   const lines = text.split('\n');
-  const sgIndex = lines.findIndex(line => line.includes('SG-'));
-  assert.ok(sgIndex >= 0, 'the skill must use the SG- id scheme from the model contract');
-  const relationship = /SG-\d+/i;
-  const nestedOp = lines.slice(sgIndex + 1).find(line => line.includes('OP-') && relationship.test(line));
+  // La jerarquía se prueba con la MISMA regla que aplica el parser del CLI
+  // (cli/src/core/process/body.ts parseStructure): una línea `- SG-N — texto`
+  // seguida de una línea indentada `- OP-N.x — texto` cuyo prefijo numérico
+  // coincide con el subobjetivo. Antes esta prueba exigía que la línea OP-
+  // contuviera literalmente "SG-#" (una anotación `(SG-1)`), forma que el
+  // parser RECHAZA — el ejemplo del skill enseñaba una notación que hace que
+  // `awm process list` descarte el modelo entero. La coincidencia de prefijo
+  // es lo que el contrato exige, así que es lo que se verifica acá.
+  const SG_LINE = /^-\s+SG-(\d+)\s+—\s+\S/;
+  const OP_LINE = /^\s+-\s+OP-(\d+)\.\d+\s+—\s+\S/;
+  const sgIndex = lines.findIndex(line => SG_LINE.test(line));
+  assert.ok(sgIndex >= 0,
+    'the skill must show a literal `- SG-N — text` line in the exact shape the CLI parser accepts');
+  const owner = SG_LINE.exec(lines[sgIndex])[1];
+  const nestedOp = lines.slice(sgIndex + 1).find(line => {
+    const m = OP_LINE.exec(line);
+    return m !== null && m[1] === owner;
+  });
   assert.ok(nestedOp,
-    'the skill must show OP- operations nested under an SG- subgoal (an OP- line naming the SG-# it belongs to) — mentioning SG- and OP- independently anywhere in the document does not prove the hierarchical decomposition R2.4 requires');
+    'the skill must show an OP- operation nested under that SG- subgoal, in the exact shape the CLI parser accepts (indented `- OP-N.x — text`, no bold, no `(SG-N)` annotation) and with a numeric prefix matching its subgoal — mentioning SG- and OP- independently, or in a shape the parser rejects, does not prove the hierarchical decomposition R2.4 requires');
   assert.match(text, /skill invocable/i,
     'the skill must state the stop criterion: decomposition ends when an operation could be an invocable skill');
 });
