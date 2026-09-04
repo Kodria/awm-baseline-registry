@@ -29,12 +29,18 @@ test('R2.2 y R2.3: escribe en el clon del registry y rechaza ~/.awm', () => {
 test('R2.4 y R2.5: elicitacion HTA con criterio de parada', () => {
   const text = read(SKILL);                                    // verifies R2.4, R2.5
   const lines = text.split('\n');
-  const sgIndex = lines.findIndex(line => line.includes('SG-'));
-  assert.ok(sgIndex >= 0, 'the skill must use the SG- id scheme from the model contract');
-  const relationship = /SG-\d+/i;
-  const nestedOp = lines.slice(sgIndex + 1).find(line => line.includes('OP-') && relationship.test(line));
+  const sgLine = /^-\s+SG-(\d+)\s+—\s+\S/;
+  const opLine = /^\s+-\s+OP-(\d+)\.\d+\s+—\s+\S/;
+  const sgIndex = lines.findIndex(line => sgLine.test(line));
+  assert.ok(sgIndex >= 0,
+    'the skill must show a literal `- SG-N — text` line in the exact shape accepted by the CLI parser');
+  const owner = sgLine.exec(lines[sgIndex])[1];
+  const nestedOp = lines.slice(sgIndex + 1).find(line => {
+    const match = opLine.exec(line);
+    return match !== null && match[1] === owner;
+  });
   assert.ok(nestedOp,
-    'the skill must show OP- operations nested under an SG- subgoal (an OP- line naming the SG-# it belongs to) — mentioning SG- and OP- independently anywhere in the document does not prove the hierarchical decomposition R2.4 requires');
+    'the skill must show an indented `- OP-N.x — text` accepted by the CLI parser, with a numeric prefix matching its SG-N parent and no redundant `(SG-N)` annotation');
   assert.match(text, /skill invocable/i,
     'the skill must state the stop criterion: decomposition ends when an operation could be an invocable skill');
 });
@@ -166,5 +172,16 @@ test('empaque: el bundle process depende de authoring y ambos son baseline', () 
     const manifest = JSON.parse(read(`bundles/${name}/bundle.json`));
     assert.equal(entry.version, manifest.version,
       `${name}: catalog and bundle versions must agree byte for byte`);
+  }
+});
+
+test('el gate de aceptación CLI corre después de instalar el CLI en validación y release', () => {
+  for (const workflow of ['.github/workflows/validate.yml', '.github/workflows/auto-tag.yml']) {
+    const source = read(workflow);
+    const install = source.indexOf('Install Context Kernel compatible CLI');
+    const acceptance = source.indexOf('node tests/r11-process-lifecycle-cli-acceptance.mjs');
+    assert.ok(install >= 0, `${workflow} must install the compatible published CLI`);
+    assert.ok(acceptance > install,
+      `${workflow} must run the process-lifecycle CLI acceptance after installing the compatible CLI`);
   }
 });

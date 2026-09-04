@@ -1,6 +1,6 @@
 ---
 name: process-lifecycle
-version: "1.0.0"
+version: "1.0.1"
 license: Apache-2.0
 description: Use when creating, modifying, or verifying an AWM process — elicits the process as a hierarchical interview, generates its orchestrator, declaration, bundle and phase skills into a registry working copy, and verifies the result appears composed in a real installation before promoting it to active.
 ---
@@ -63,13 +63,15 @@ Antes de escribir, revisa si ya existe un modelo `draft` para ese nombre en el w
 
 Conduce la elicitación como entrevista conversacional jerárquica, siguiendo la descomposición HTA del artefacto: primero el objetivo raíz (`## Objetivo`), después los subobjetivos (`SG-#`), después las operaciones dentro de cada subobjetivo (`OP-#`), y en cada nivel las condiciones que lo disparan.
 
-Cada operación cita el subobjetivo del que depende — la jerarquía no es implícita. Ejemplo ilustrativo de la notación:
+Cada operación cita el subobjetivo del que depende en su propio id: `OP-N.x` pertenece a `SG-N`, y el CLI rechaza el modelo si el prefijo no coincide. La notación es literal —viñeta, id, raya (`—`) y texto—, sin negrita ni anotaciones entre paréntesis. Este ejemplo se puede copiar directamente a `## Estructura`:
 
-- **SG-1** — Preparar el entorno de trabajo
-  - OP-1.1 (SG-1) — Clonar el working copy del registry destino
-  - OP-1.2 (SG-1) — Verificar que no exista ya un modelo `draft` con ese nombre
-- **SG-2** — Elicitar la estructura del proceso
-  - OP-2.1 (SG-2) — Entrevistar al usuario sobre el objetivo raíz y sus disparadores
+- SG-1 — Preparar el entorno de trabajo
+  - OP-1.1 — Clonar el working copy del registry destino
+  - OP-1.2 — Verificar que no exista ya un modelo `draft` con ese nombre
+- SG-2 — Elicitar la estructura del proceso
+  - OP-2.1 — Entrevistar al usuario sobre el objetivo raíz y sus disparadores
+
+Agregar adornos a esa forma —por ejemplo `- **SG-1** —` o `(SG-1)` después del id de una operación— hace que `awm process list` descarte el modelo con un diagnóstico.
 
 **Criterio de parada:** una operación deja de descomponerse en el momento en que esa operación puede ser una skill invocable — no antes (deja huecos) y no después (produce un modelo infinitamente anidado e inusable). Ese criterio es de AWM, no de HTA, y es lo que evita el riesgo conocido de la descomposición jerárquica sin fondo.
 
