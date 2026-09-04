@@ -1,12 +1,28 @@
 // tests/r11-process-lifecycle-contract.test.mjs
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 const root = new URL('..', import.meta.url);
+const rootPath = fileURLToPath(root);
 const read = relative => readFileSync(new URL(relative, root), 'utf8');
 
 const SKILL = 'skills/process-lifecycle/SKILL.md';
+
+function assertCliAcceptanceWiring(source, workflow) {
+  const lines = source.split(/\r?\n/);
+  const install = lines.findIndex(line =>
+    /^\s*-\s+name:\s+Install Context Kernel compatible CLI\s*$/.test(line));
+  const acceptance = lines.findIndex(line =>
+    /^\s*(?:-\s+run:\s*)?node tests\/r11-process-lifecycle-cli-acceptance\.mjs\s*$/.test(line));
+  assert.ok(install >= 0, `${workflow} must install the compatible published CLI`);
+  assert.ok(acceptance > install,
+    `${workflow} must run the process-lifecycle CLI acceptance after installing the compatible CLI`);
+}
 
 test('R2.1: pregunta primero en que registry vive el proceso', () => {
   const text = read(SKILL);                                    // verifies R2.1
@@ -177,11 +193,47 @@ test('empaque: el bundle process depende de authoring y ambos son baseline', () 
 
 test('el gate de aceptación CLI corre después de instalar el CLI en validación y release', () => {
   for (const workflow of ['.github/workflows/validate.yml', '.github/workflows/auto-tag.yml']) {
-    const source = read(workflow);
-    const install = source.indexOf('Install Context Kernel compatible CLI');
-    const acceptance = source.indexOf('node tests/r11-process-lifecycle-cli-acceptance.mjs');
-    assert.ok(install >= 0, `${workflow} must install the compatible published CLI`);
-    assert.ok(acceptance > install,
-      `${workflow} must run the process-lifecycle CLI acceptance after installing the compatible CLI`);
+    assertCliAcceptanceWiring(read(workflow), workflow);
+  }
+});
+
+test('el gate de workflow rechaza una aceptación presente solo como comentario', () => {
+  const workflow = '.github/workflows/validate.yml';
+  const source = read(workflow);
+  const commented = source.replace(
+    /^(\s*)- run: node tests\/r11-process-lifecycle-cli-acceptance\.mjs\s*$/m,
+    '$1# node tests/r11-process-lifecycle-cli-acceptance.mjs',
+  );
+  assert.notEqual(commented, source, 'the mutation must comment out the executable acceptance step');
+  assert.throws(() => assertCliAcceptanceWiring(commented, workflow),
+    /must run the process-lifecycle CLI acceptance/,
+    'a comment must not satisfy the executable workflow gate');
+});
+
+test('la aceptación CLI limita cuánto espera por un binario que no responde', () => {
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), 'awm-r11-timeout-'));
+  try {
+    const slowAwm = path.join(sandbox, 'slow-awm');
+    writeFileSync(slowAwm, '#!/usr/bin/env node\nsetTimeout(() => process.exit(0), 750);\n');
+    chmodSync(slowAwm, 0o755);
+
+    const result = spawnSync(process.execPath, ['tests/r11-process-lifecycle-cli-acceptance.mjs'], {
+      cwd: rootPath,
+      env: {
+        ...process.env,
+        AWM_PROCESS_BIN: slowAwm,
+        AWM_PROCESS_TIMEOUT_MS: '50',
+      },
+      encoding: 'utf8',
+      timeout: 2_000,
+    });
+    const output = result.stdout + result.stderr;
+
+    assert.notEqual(result.error?.code, 'ETIMEDOUT', 'the acceptance harness itself must finish');
+    assert.notEqual(result.status, 0, 'the acceptance must fail when the CLI exceeds its deadline');
+    assert.match(output, /timed out after 50ms/,
+      'the failure must explain which CLI boundary timed out');
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
   }
 });
