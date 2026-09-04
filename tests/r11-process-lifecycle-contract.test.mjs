@@ -15,12 +15,16 @@ const SKILL = 'skills/process-lifecycle/SKILL.md';
 
 function assertCliAcceptanceWiring(source, workflow) {
   const lines = source.split(/\r?\n/);
-  const install = lines.findIndex(line =>
+  const installStep = lines.findIndex(line =>
     /^\s*-\s+name:\s+Install Context Kernel compatible CLI\s*$/.test(line));
+  const installCommand = lines.findIndex(line =>
+    /^\s*npm install --global "agentic-workflow-manager@\$R3A_VERSION"\s*$/.test(line));
   const acceptance = lines.findIndex(line =>
     /^\s*(?:-\s+run:\s*)?node tests\/r11-process-lifecycle-cli-acceptance\.mjs\s*$/.test(line));
-  assert.ok(install >= 0, `${workflow} must install the compatible published CLI`);
-  assert.ok(acceptance > install,
+  assert.ok(installStep >= 0, `${workflow} must name the compatible published CLI install step`);
+  assert.ok(installCommand > installStep,
+    `${workflow} must install the compatible published CLI with an executable npm command`);
+  assert.ok(acceptance > installCommand,
     `${workflow} must run the process-lifecycle CLI acceptance after installing the compatible CLI`);
 }
 
@@ -208,6 +212,20 @@ test('el gate de workflow rechaza una aceptación presente solo como comentario'
   assert.throws(() => assertCliAcceptanceWiring(commented, workflow),
     /must run the process-lifecycle CLI acceptance/,
     'a comment must not satisfy the executable workflow gate');
+});
+
+test('el gate de workflow rechaza una instalación del CLI presente solo como comentario', () => {
+  for (const workflow of ['.github/workflows/validate.yml', '.github/workflows/auto-tag.yml']) {
+    const source = read(workflow);
+    const commented = source.replace(
+      /^(\s*)npm install --global "agentic-workflow-manager@\$R3A_VERSION"\s*$/m,
+      '$1# npm install --global "agentic-workflow-manager@$R3A_VERSION"',
+    );
+    assert.notEqual(commented, source, `the mutation must comment out the executable CLI install in ${workflow}`);
+    assert.throws(() => assertCliAcceptanceWiring(commented, workflow),
+      /must install the compatible published CLI/,
+      'an install step name without its executable npm command must not satisfy the workflow gate');
+  }
 });
 
 test('la aceptación CLI limita cuánto espera por un binario que no responde', () => {
