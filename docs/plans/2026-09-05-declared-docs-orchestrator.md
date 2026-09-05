@@ -126,7 +126,7 @@ _Requirements: R1.4, R4.1, R4.2_
 
 **Skills:** verification-before-completion
 
-- [ ] **Step 1: Verify the valid declaration with the published CLI**
+- [x] **Step 1: Verify the valid declaration with the published CLI**
 
 Create a fresh temporary directory with `mktemp -d`, use a child directory as an isolated
 `AWM_HOME`, and run:
@@ -143,7 +143,7 @@ AWM_HOME="$DOCS_VALID_AWM_HOME" npx -y agentic-workflow-manager@9.7.0 context or
 Expected: JSON contains exactly the approved declaration and `--verify` exits 0 with
 `"docs-system-orchestrator" is composed into the session context.`
 
-- [ ] **Step 2: Prove the runtime gate rejects an unresolved declaration**
+- [x] **Step 2: Prove the runtime gate rejects an unresolved declaration**
 
 Create a disposable clone of the committed documentation worktree under the same temporary
 root. Use `apply_patch` in that disposable clone to replace only:
@@ -178,7 +178,7 @@ Expected: exit 2; stderr says the declaration was dropped because the skill is n
 discoverable; available orchestrators are `(none)`. Delete only the disposable temporary
 root after recording the result.
 
-- [ ] **Step 3: Push and create the documentation-registry PR**
+- [x] **Step 3: Push and create the documentation-registry PR**
 
 ```bash
 git push -u origin feat/issue-37-declare-docs-orchestrator
@@ -187,7 +187,7 @@ gh pr create --repo Kodria/awm-documentation-registry --title "feat(registry): d
 
 Expected: an open PR whose diff contains only the three Task 1 files.
 
-- [ ] **Step 4: Stop at the external merge checkpoint**
+- [x] **Step 4: Stop at the external merge checkpoint**
 
 Report the PR URL and wait for the user to merge it. Do not edit the baseline hardcode while
 the PR is unmerged.
