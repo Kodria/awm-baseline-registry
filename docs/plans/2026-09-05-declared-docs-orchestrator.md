@@ -47,13 +47,13 @@ _Requirements: R1.1, R1.2, R1.3_
 
 **Skills:** test-driven-development
 
-- [ ] **Step 1: Create an isolated documentation-registry worktree**
+- [x] **Step 1: Create an isolated documentation-registry worktree**
 
 Fetch `origin/main`, create branch `feat/issue-37-declare-docs-orchestrator`, and place its
 worktree under the established workspace `.worktrees/awm-documentation-registry/` area.
 Confirm `git status --short --branch` is clean before continuing.
 
-- [ ] **Step 2: Run the desired-state assertion and observe RED**
+- [x] **Step 2: Run the desired-state assertion and observe RED**
 
 Run from the documentation-registry worktree:
 
@@ -82,7 +82,7 @@ NODE
 Expected: FAIL because the current manifest has `minCliVersion: 2.0.0`, no
 `orchestrator`, and the bundle remains at 1.0.0.
 
-- [ ] **Step 3: Apply the minimal declaration and release metadata**
+- [x] **Step 3: Apply the minimal declaration and release metadata**
 
 Replace `awm-registry.json` with:
 
@@ -101,13 +101,13 @@ Set the `docs` bundle version to `1.1.0` in both `catalog.json` and
 `bundles/docs/bundle.json`. Do not edit `skills/docs-system-orchestrator/SKILL.md`; its
 behavior and frontmatter are unchanged.
 
-- [ ] **Step 4: Re-run the desired-state assertion and observe GREEN**
+- [x] **Step 4: Re-run the desired-state assertion and observe GREEN**
 
 Run the exact Node command from Step 2.
 
 Expected: exit 0 with no output.
 
-- [ ] **Step 5: Commit the documentation-registry change**
+- [x] **Step 5: Commit the documentation-registry change**
 
 ```bash
 git add awm-registry.json catalog.json bundles/docs/bundle.json
