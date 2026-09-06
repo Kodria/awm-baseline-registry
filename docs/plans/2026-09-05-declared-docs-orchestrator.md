@@ -286,7 +286,7 @@ _Requirements: R2.1, R2.2, R2.3, R2.4, R3.1_
 
 **Skills:** writing-skills, test-driven-development
 
-- [ ] **Step 1: Apply the minimal routing fix**
+- [x] **Step 1: Apply the minimal routing fix**
 
 In `skills/using-awm/SKILL.md`, change the frontmatter version from `1.4.1` to `1.4.2`.
 Replace:
@@ -304,7 +304,7 @@ with:
 Do not alter the declared-orchestrator directive, reference contract, or built-in routing
 table.
 
-- [ ] **Step 2: Update release metadata and changelog**
+- [x] **Step 2: Update release metadata and changelog**
 
 Set the `dev` bundle version from `3.9.2` to `3.9.3` in both `catalog.json` and
 `bundles/dev/bundle.json`.
@@ -325,7 +325,7 @@ Bundle `dev` 3.9.2 → 3.9.3 (patch): restores the registry ownership boundary f
 documentation routing without changing the built-in product/development pair.
 ```
 
-- [ ] **Step 3: Correct the stale historical statement in AGENTS.md**
+- [x] **Step 3: Correct the stale historical statement in AGENTS.md**
 
 In the `portable: true` lesson, replace the pending-work clause with this exact historical
 statement:
@@ -336,7 +336,7 @@ El transform mecánico ya corrige ese ruido cosmético desde [agentic-workflow#1
 
 Keep the rest of the lesson unchanged.
 
-- [ ] **Step 4: Run the focused contract**
+- [x] **Step 4: Run the focused contract**
 
 ```bash
 node tests/r9-declared-orchestrators-contract.test.mjs
@@ -344,7 +344,7 @@ node tests/r9-declared-orchestrators-contract.test.mjs
 
 Expected: R9 passes all tests, including the external-skill mutation.
 
-- [ ] **Step 5: Verify the AGENTS.md correction precisely**
+- [x] **Step 5: Verify the AGENTS.md correction precisely**
 
 ```bash
 node --input-type=module <<'NODE'
@@ -360,14 +360,14 @@ NODE
 
 Expected: exit 0 with no output.
 
-- [ ] **Step 6: Commit the baseline fix**
+- [x] **Step 6: Commit the baseline fix**
 
 ```bash
 git add skills/using-awm/SKILL.md tests/r9-declared-orchestrators-contract.test.mjs catalog.json bundles/dev/bundle.json CHANGELOG.md AGENTS.md
 git commit -m "fix(using-awm): delegate docs routing to registry declaration"
 ```
 
-- [ ] **Step 7: Run the post-commit version gate**
+- [x] **Step 7: Run the post-commit version gate**
 
 ```bash
 ./scripts/check-skill-version-bumps.sh origin/main HEAD
