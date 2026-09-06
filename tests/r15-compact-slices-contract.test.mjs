@@ -278,7 +278,7 @@ test('S3 pins the observed R4a release and keeps bundle/catalog delivery metadat
   const bundle = JSON.parse(read('bundles/dev/bundle.json'));
   const catalog = JSON.parse(read('catalog.json'));
   assert.equal(registry.minCliVersion, R4A_VERSION, 'minCliVersion must be the observed published R4a release');
-  assert.equal(bundle.version, '3.9.2');
+  assert.equal(bundle.version, '3.9.3');
   assert.equal(catalog.bundles.find(entry => entry.name === 'dev')?.version, bundle.version, 'catalog and bundle must agree');
   for (const [file, version] of [
     ['skills/development-process/SKILL.md', '1.8.0'], ['skills/writing-plans/SKILL.md', '1.10.0'],

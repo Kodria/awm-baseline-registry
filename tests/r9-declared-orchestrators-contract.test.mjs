@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const root = new URL('..', import.meta.url);
@@ -14,12 +14,42 @@ function orchestrationSection(text) {
   const nextHeading = rest.indexOf('\n## ', 1);
   return nextHeading >= 0 ? rest.slice(0, nextHeading) : rest;
 }
+
+function assertBuiltInSkillReferencesResolve(text) {
+  const references = [...orchestrationSection(text).matchAll(/`([^`\n]+)`/g)]
+    .map(([, value]) => value)
+    .filter(value => !value.includes('/') && !value.includes('.'));
+  const missing = [...new Set(references)]
+    .filter(name => !existsSync(new URL(`skills/${name}/SKILL.md`, root)));
+
+  assert.deepEqual(
+    missing,
+    [],
+    `using-awm built-in orchestration references non-local skills: ${missing.join(', ')}`,
+  );
+}
+
 const declaredContract = () => read(DECLARED);
 
 test('using-awm reaches the declared-orchestrator contract', () => {
   const core = orchestrationSection(read(USING_AWM));
   assert.match(core, /references\/declared-orchestrators\.md/);
   assert.match(core, /installed declared orchestrators may apply/i);
+});
+
+test('built-in orchestration references only local baseline skills', () => {
+  assertBuiltInSkillReferencesResolve(read(USING_AWM)); // verifies R2.1, R2.2
+});
+
+test('RED mutation: a hardcoded external skill is rejected', () => {
+  const mutated = read(USING_AWM).replace(
+    '### The built-in pair',
+    'External routing uses `missing-external-orchestrator`.\n\n### The built-in pair',
+  );
+  assert.throws(
+    () => assertBuiltInSkillReferencesResolve(mutated),
+    /missing-external-orchestrator/,
+  ); // verifies R2.3
 });
 
 test('R2.1: declared orchestrators precede the built-in pair', () => {

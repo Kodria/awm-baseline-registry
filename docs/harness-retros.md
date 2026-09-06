@@ -134,3 +134,12 @@
 - **Rule:** no new rule. The delivery itself cures the patterns: S3 owns release-only gates, R15 pins the QA skill's approved version, and the versioned single-owner R8 policy restricts registry closure to all-disabled sensors while preserving local `not_certified`.
 - **Sensor:** `tests/r15-compact-slices-contract.test.mjs` (20/20), `tests/r8-sensor-gate-contract.test.mjs` (27/27), and release version gate (3/3); candidate-SHA R8 evidence is required in `validate.yml` and `auto-tag.yml`.
 - **Descartes (modo desatendido):** earlier slice findings were fixed and re-reviewed; no additional context or constitution rule is authorized or necessary. User-facing documentation inventory found no changed README or guide.
+
+## 2026-09-06 — Issue #37: routing de documentación declarado por registry
+
+- **Class:** process / logic.
+- **Occurrences (ledger count):** 7 wins, 0 findings. Dos revisiones independientes confirmaron el contrato R9 de referencias locales; el panel QA (fidelidad, robustez, lógica y tests) no encontró gaps.
+- **Rule:** no new rule. R9 ya cura de forma mecánica el patrón: una referencia externa bare en el routing built-in falla, incluida la mutación explícita.
+- **Sensor:** `tests/r9-declared-orchestrators-contract.test.mjs` (8/8) y la suite completa (165/165). `awm sensors run` permanece `not_certified`: el manifest legacy deshabilita `lint` y `security` antes de esta rama.
+- **Recommendation:** autorizar en una tarea separada `awm sensors init --pack shell` y resolver su baseline; habilitarlo excede #37.
+- **Descartes (modo desatendido):** los clusters recurrentes son wins convergentes de revisión, no defectos. No se agrega regla documental duplicada.

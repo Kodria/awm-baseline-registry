@@ -1,6 +1,6 @@
 ---
 name: using-awm
-version: "1.4.1"
+version: "1.4.2"
 license: Apache-2.0
 description: Use when starting any development conversation - establishes tiered skill invocation policy
 ---
@@ -45,7 +45,7 @@ never invent the missing contract.
 | A concrete code requirement, bug, refactor, or ready brief handed to build | `development-process` |
 | Ambiguous | ASK: “mature the idea (product layer) or build now (development)?” — never guess |
 
-`brainstorming` explores solution space through `development-process`; `product-discovery` explores problem space. Documentation uses `docs-system-orchestrator`. Returning from development to product goes through `product-process`, never an improvised business answer.
+`brainstorming` explores solution space through `development-process`; `product-discovery` explores problem space. Returning from development to product goes through `product-process`, never an improvised business answer.
 
 Architecture disambiguation: a full, standalone evaluation that produces a portable
 report goes to `product-process` → `architecture-assessment`. A one-off advisory
