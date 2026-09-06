@@ -1,5 +1,7 @@
 # Declared Documentation Orchestrator Implementation Plan
 
+<!-- awm-qa-complete: 2026-09-06 -->
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `subagent-driven-development`
 > (recommended) or `executing-plans` to implement this plan task-by-task. Steps
 > use checkbox (`- [ ]`) syntax for tracking.
@@ -403,7 +405,7 @@ AWM_HOME="$RELEASE_AWM_HOME" npx -y agentic-workflow-manager@9.7.0 context orche
 Expected: exit 0. This is the blocking evidence for R4.2; do not continue on a non-zero
 result.
 
-- [ ] **Step 2: Run baseline focused and full verification**
+- [x] **Step 2: Run baseline focused and full verification**
 
 Run each command separately from the baseline worktree:
 
@@ -420,6 +422,12 @@ git diff --check origin/main...HEAD
 
 Expected: every command exits 0; sensors report `overall: pass`; the version gate reports
 the `using-awm` and `dev` bumps are valid.
+
+Observed: all focused and full test, portability, release-metadata, version, and diff gates
+passed (165/165 full-suite tests). `awm sensors run` reports `overall: not_certified` because
+the repository's existing legacy manifest deliberately disables both `lint` and `security`.
+On 2026-09-06 the user explicitly authorized opening this issue's PR without changing that
+out-of-scope sensor configuration; it is reported as non-certified, never as a passing gate.
 
 - [x] **Step 3: Review both diffs against their live shared contracts**
 
