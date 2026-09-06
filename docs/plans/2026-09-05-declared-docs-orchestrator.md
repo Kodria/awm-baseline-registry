@@ -387,7 +387,7 @@ _Requirements: R1.4, R2.1, R2.2, R2.3, R2.4, R3.1, R4.1, R4.2_
 
 **Skills:** verification-before-completion, requesting-code-review
 
-- [ ] **Step 1: Re-verify the released documentation declaration**
+- [x] **Step 1: Re-verify the released documentation declaration**
 
 Use a new isolated `AWM_HOME`, clone the released tag, and register that checkout. Run:
 
@@ -421,7 +421,7 @@ git diff --check origin/main...HEAD
 Expected: every command exits 0; sensors report `overall: pass`; the version gate reports
 the `using-awm` and `dev` bumps are valid.
 
-- [ ] **Step 3: Review both diffs against their live shared contracts**
+- [x] **Step 3: Review both diffs against their live shared contracts**
 
 Re-read the released documentation `awm-registry.json`, the baseline
 `skills/using-awm/SKILL.md`, and `skills/using-awm/references/declared-orchestrators.md` from
@@ -429,7 +429,7 @@ their current branches. Confirm name, applicability, termination, precedence, an
 remain mutually consistent. Run the normal specification and code-quality reviews before
 reporting implementation complete.
 
-- [ ] **Step 4: Prepare the baseline PR for the completion phase**
+- [x] **Step 4: Prepare the baseline PR for the completion phase**
 
 The eventual PR title must be:
 
