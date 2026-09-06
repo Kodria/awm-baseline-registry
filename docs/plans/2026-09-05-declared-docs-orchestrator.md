@@ -192,7 +192,7 @@ Expected: an open PR whose diff contains only the three Task 1 files.
 Report the PR URL and wait for the user to merge it. Do not edit the baseline hardcode while
 the PR is unmerged.
 
-- [ ] **Step 5: Publish and verify documentation registry v1.1.0**
+- [x] **Step 5: Publish and verify documentation registry v1.1.0**
 
 After the user confirms the PR is merged, fetch `origin/main` and tags in the documentation
 repository. Confirm the merge commit contains the declaration, then create and push annotated
