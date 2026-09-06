@@ -221,7 +221,7 @@ _Requirements: R2.1, R2.2, R2.3_
 
 **Skills:** test-driven-development
 
-- [ ] **Step 1: Add the local-resolution helper and contract tests**
+- [x] **Step 1: Add the local-resolution helper and contract tests**
 
 Add `existsSync` to the `node:fs` import and define:
 
@@ -260,7 +260,7 @@ test('RED mutation: a hardcoded external skill is rejected', () => {
 });
 ```
 
-- [ ] **Step 2: Run R9 and observe RED on the production defect**
+- [x] **Step 2: Run R9 and observe RED on the production defect**
 
 ```bash
 node tests/r9-declared-orchestrators-contract.test.mjs
