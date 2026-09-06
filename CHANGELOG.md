@@ -2,6 +2,18 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 3.9.3 — 2026-09-05
+
+### Fixed
+- `using-awm` no longer hardcodes the opt-in documentation registry's orchestrator; the
+  owning registry supplies it through AWM's declared-orchestrator contract.
+- R9 now rejects bare built-in routing references that do not resolve to local baseline
+  skills, including an explicit mutation proof for external hardcodes.
+
+### Nota de versión
+Bundle `dev` 3.9.2 → 3.9.3 (patch): restores the registry ownership boundary for
+documentation routing without changing the built-in product/development pair.
+
 ## process 1.0.1 — 2026-09-04
 
 ### Fixed
