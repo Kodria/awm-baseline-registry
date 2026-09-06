@@ -441,6 +441,18 @@ Its body must link the merged documentation PR, the published `v1.1.0` tag, and 
 `#37`. Do not merge the baseline PR from this task; `finishing-a-development-branch` owns
 the push-and-PR action after QA and retro.
 
+## Enmienda de verificación final: expectativa R15 de metadata `dev`
+
+- [x] La verificación final descubrió que `tests/r15-compact-slices-contract.test.mjs`
+  fijaba `bundles/dev/bundle.json` en `3.9.2`, mientras que Task 4 elevó de forma
+  deliberada y consistente el bundle y catálogo `dev` a `3.9.3`. La falla era una
+  expectativa de release obsoleta, no un defecto de producto.
+- [x] Se actualizó exclusivamente esa expectativa a `3.9.3` en
+  `tests/r15-compact-slices-contract.test.mjs`; no se modificó producción ni la
+  configuración de sensores.
+- [x] Verificación posterior: `node tests/r15-compact-slices-contract.test.mjs`
+  (20/20) y `node tests/r9-declared-orchestrators-contract.test.mjs` (8/8).
+
 ## Traceability matrix
 
 | Requirement | Task(s) | Verification |
