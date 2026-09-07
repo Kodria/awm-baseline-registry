@@ -31,7 +31,7 @@ WHEN el modo es `desatendido`, corré la elicitación, la generación y la verif
 
 Este skill se activa solo cuando el usuario expresa intención explícita de crear, formalizar, extraer o convertir trabajo en un proceso durable de AWM. Que una conversación contenga pasos, una rutina o actividad procedural no basta y no activa ni invoca este ciclo.
 
-Este skill cubre cuatro entradas distintas al mismo ciclo de vida:
+Este skill cubre cinco entradas distintas al mismo ciclo de vida:
 
 1. **Crear un proceso nuevo** — no existe modelo para ese nombre en el registry destino. Arranca en el Paso 1.
 2. **Retomar un `draft`** — ya existe un modelo con `status: draft` en el registry destino. Se retoma leyéndolo (ver R2.6 en el Paso 2), nunca volviendo a relatar el proceso desde cero.
