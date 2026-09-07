@@ -6,6 +6,8 @@ const root = new URL('..', import.meta.url);
 const readJson = relative => JSON.parse(readFileSync(new URL(relative, root), 'utf8'));
 const read = relative => readFileSync(new URL(relative, root), 'utf8');
 const CONTRACT_COMMAND = 'node --test tests/bundle-skill-reference-contract.test.mjs';
+const VALIDATE_RUN_LINE = `      - run: ${CONTRACT_COMMAND}`;
+const AUTO_TAG_RUN_LINE = `          ${CONTRACT_COMMAND}`;
 
 const expected = [
   'using-awm', 'development-process', 'brainstorming', 'writing-plans', 'executing-plans',
@@ -55,15 +57,17 @@ test('active bundle manifests contain no onSignal metadata at any depth', () => 
 });
 
 function assertReleaseGateRunsBundleContract(workflow, workflowName) {
-  const command = workflow.indexOf(CONTRACT_COMMAND);
-  const portability = workflow.indexOf('node scripts/validate-portability.mjs');
-  assert.ok(command > portability,
-    `${workflowName} must run the bundle-reference contract after portability validation`);
+  const isRelease = workflowName === 'auto-tag.yml';
+  const scope = isRelease
+    ? workflow.match(/- name: Verify registry before tagging[\s\S]*?(?=\n\s*- name: Compute and push next tag)/)?.[0]
+    : workflow.match(/^  portability:\n[\s\S]*?(?=^  [\w-]+:|(?![\s\S]))/m)?.[0];
+  const runLine = isRelease ? AUTO_TAG_RUN_LINE : VALIDATE_RUN_LINE;
 
-  if (workflowName === 'auto-tag.yml') {
-    const tag = workflow.indexOf('- name: Compute and push next tag');
-    assert.ok(tag > command, 'auto-tag must run the bundle-reference contract before creating a delivery tag');
-  }
+  assert.ok(scope, `${workflowName} must expose the expected validation scope`);
+  assert.match(scope, new RegExp(`^${runLine.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'm'),
+    `${workflowName} must execute the bundle-reference contract as an active run line`);
+  assert.ok(scope.indexOf(runLine) > scope.indexOf('node scripts/validate-portability.mjs'),
+    `${workflowName} must run the bundle-reference contract after portability validation`);
 }
 
 test('validation and release gates execute the bundle-reference contract', () => {
@@ -72,10 +76,15 @@ test('validation and release gates execute the bundle-reference contract', () =>
   }
 });
 
-test('RED mutation: removing bundle-reference release evidence blocks the gate contract', () => {
-  const autoTag = read('.github/workflows/auto-tag.yml');
-  assert.throws(
-    () => assertReleaseGateRunsBundleContract(autoTag.replace(`          ${CONTRACT_COMMAND}\n`, ''), 'auto-tag.yml'),
-    /must run the bundle-reference contract/,
-  );
+test('RED mutation: commenting out bundle-reference evidence blocks both gate contracts', () => {
+  for (const [workflowName, runLine] of [
+    ['validate.yml', VALIDATE_RUN_LINE],
+    ['auto-tag.yml', AUTO_TAG_RUN_LINE],
+  ]) {
+    const workflow = read(`.github/workflows/${workflowName}`);
+    assert.throws(
+      () => assertReleaseGateRunsBundleContract(workflow.replace(runLine, `${runLine.slice(0, -CONTRACT_COMMAND.length)}# ${CONTRACT_COMMAND}`), workflowName),
+      /must execute the bundle-reference contract as an active run line/,
+    );
+  }
 });
