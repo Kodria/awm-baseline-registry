@@ -1,6 +1,6 @@
 {
   "name": "dev",
-  "version": "3.9.3",
+  "version": "3.9.4",
   "description": "Agentic software development core: SDD spine, quality gates, sensors, and advisory.",
   "scope": "baseline",
   "dependsOn": [],
@@ -9,16 +9,9 @@
     "subagent-driven-development", "test-driven-development", "requesting-code-review",
     "receiving-code-review", "post-implementation-qa", "post-implementation-docs", "finishing-a-development-branch",
     "verification-before-completion", "systematic-debugging",
-    { "name": "dispatching-parallel-agents", "onSignal": true },
-    { "name": "using-git-worktrees", "onSignal": true },
-    { "name": "project-context-init", "onSignal": true },
-    { "name": "project-constitution", "onSignal": true },
-    { "name": "setup-sensors", "onSignal": true },
-    { "name": "harness-retro", "onSignal": true },
-    { "name": "architecture-advisor", "onSignal": true },
-    { "name": "nfr-checklist-generator", "onSignal": true },
-    { "name": "technology-evaluator", "onSignal": true },
-    { "name": "mermaid-diagrams", "onSignal": true }
+    "dispatching-parallel-agents", "using-git-worktrees", "project-context-init",
+    "project-constitution", "setup-sensors", "harness-retro", "architecture-advisor",
+    "nfr-checklist-generator", "technology-evaluator", "mermaid-diagrams"
   ],
   "workflows": ["development-process"],
   "agents": ["development-process"]
