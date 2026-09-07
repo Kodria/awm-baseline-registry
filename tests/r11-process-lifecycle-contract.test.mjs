@@ -154,6 +154,14 @@ test('R2.14-R2.17 y R2.19: reconcilia evidencia antes de persistir', () => {
     /solo|[uú]nicamente|[uú]nico/i,
     /persist/i,
   ], 7, 'only the confirmed durable model may persist beyond normalized session context');
+  assertTogether(context, [
+    /ef[ií]mer/i,
+    /sesi[oó]n/i,
+    /modelo durable/i,
+    /no copia/i,
+    /fuente|contenido/i,
+    /registry/i,
+  ], 7, 'ephemeral session context must not copy raw source content into the registry');
   assertTogether(context, [/contexto confirmad/i, /precarg/i, /pregunt/i, /vac[ií]os|contradicciones|decisiones/i], 6,
     'only confirmed context may prefill the model and questions must cover unresolved categories');
   assertTogether(context, [/pregunt/i, /solo|[uú]nicamente/i, /vac[ií]os|contradicciones|decisiones/i], 6,
