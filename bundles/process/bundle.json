@@ -1,7 +1,7 @@
 {
   "name": "process",
-  "version": "1.0.1",
-  "description": "Process lifecycle: elicit, generate, verify and modify an AWM process and its orchestrator.",
+  "version": "1.1.0",
+  "description": "Process lifecycle: incorporate context, elicit, generate, verify and modify a durable AWM process in a conformant target registry.",
   "scope": "baseline",
   "dependsOn": ["authoring"],
   "skills": ["process-lifecycle"],

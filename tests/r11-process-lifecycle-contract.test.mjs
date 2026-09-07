@@ -13,6 +13,23 @@ const read = relative => readFileSync(new URL(relative, root), 'utf8');
 
 const SKILL = 'skills/process-lifecycle/SKILL.md';
 
+function section(text, heading) {
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex(line => line === heading);
+  assert.ok(start >= 0, `missing section: ${heading}`);
+  const end = lines.findIndex((line, index) => index > start && /^## /.test(line));
+  return lines.slice(start, end >= 0 ? end : lines.length).join('\n');
+}
+
+function assertTogether(text, terms, windowSize, message) {
+  const lines = text.split(/\r?\n/);
+  const found = lines.some((_, index) => {
+    const window = lines.slice(index, index + windowSize).join('\n');
+    return terms.every(term => term.test(window));
+  });
+  assert.ok(found, message);
+}
+
 function assertCliAcceptanceWiring(source, workflow) {
   const lines = source.split(/\r?\n/);
   const installStep = lines.findIndex(line =>
@@ -95,6 +112,64 @@ test('R2.8: aporta el overlay de obligaciones de fase', () => {
     `the phase overlay must cover at least 3 of ${overlay.join('/')} together within a small window of text — scattered independent mentions anywhere in the document do not prove a coherent overlay statement, it is the tierra de nadie writing-skills does not carry`);
 });
 
+test('R2.9: solo la intención durable explícita activa el ciclo', () => {
+  const applies = section(read(SKILL), '## Cuándo aplica');   // verifies R2.9
+  assertTogether(applies, [
+    /intenci[oó]n/i,
+    /durable/i,
+    /expl[ií]cit/i,
+    /pasos|procedural|procedimiento/i,
+    /no activa|no invoca/i,
+  ], 5, 'only explicit durable intent, not procedural-looking work, must trigger process-lifecycle');
+});
+
+test('R2.10-R2.13 y R2.18: la frontera de contexto es abierta, host-owned y no confiable', () => {
+  const context = section(read(SKILL), '## Incorporación de contexto');
+  // verifies R2.10, R2.11, R2.12, R2.13, R2.18
+  assert.match(context, /cualquier capacidad disponible del host/i);
+  assert.match(context, /ejemplos no exhaustivos|lista no exhaustiva/i);
+  assertTogether(context, [/host/i, /obtiene|recupera|interpreta/i, /antes/i, /model/i], 6,
+    'the host must obtain and interpret context before AWM modeling');
+  assertTogether(context, [/sin contexto|ninguna fuente/i, /entrevista HTA/i], 5,
+    'no-source creation must retain the HTA path');
+  assertTogether(context, [/fuente|contenido/i, /datos/i, /no.*instrucciones/i], 5,
+    'source material must be treated as data, never instructions');
+  assertTogether(context, [/no\s+implementa|SHALL NOT/i, /adapter/i, /proveedor/i], 5,
+    'the skill must reject provider-specific adapters');
+});
+
+test('R2.14-R2.17 y R2.19: reconcilia evidencia antes de persistir', () => {
+  const context = section(read(SKILL), '## Incorporación de contexto');
+  // verifies R2.14, R2.15, R2.16, R2.17, R2.19
+  for (const category of ['respaldad', 'inferid', 'contradic', 'vacío']) {
+    assert.match(context, new RegExp(category, 'i'), `missing evidence category ${category}`);
+  }
+  assertTogether(context, [/memoria|inferencia/i, /## Sin verificar|Sin verificar/i], 5,
+    'memory and inferences must remain unverified');
+  assertTogether(context, [
+    /ef[ií]mer/i,
+    /sesi[oó]n/i,
+    /confirmad/i,
+    /modelo durable/i,
+    /solo|[uú]nicamente|[uú]nico/i,
+    /persist/i,
+  ], 7, 'only the confirmed durable model may persist beyond normalized session context');
+  assertTogether(context, [
+    /ef[ií]mer/i,
+    /sesi[oó]n/i,
+    /modelo durable/i,
+    /no copia/i,
+    /fuente|contenido/i,
+    /registry/i,
+  ], 7, 'ephemeral session context must not copy raw source content into the registry');
+  assertTogether(context, [/contexto confirmad/i, /precarg/i, /pregunt/i, /vac[ií]os|contradicciones|decisiones/i], 6,
+    'only confirmed context may prefill the model and questions must cover unresolved categories');
+  assertTogether(context, [/pregunt/i, /solo|[uú]nicamente/i, /vac[ií]os|contradicciones|decisiones/i], 6,
+    'questions must be restricted to unresolved categories');
+  assertTogether(context, [/contradic/i, /resolver|resoluci[oó]n/i, /antes de generar/i], 6,
+    'contradictions must block generation until user resolution');
+});
+
 test('R3.1: genera en loop dirigido con aprobacion por fase', () => {
   const text = read(SKILL);                                    // verifies R3.1
   const lines = text.split('\n');
@@ -145,12 +220,69 @@ test('R3.5 y R3.6: el ciclo de verificacion llega a composicion real y recien ah
     'the skill must name the status it promotes to');
 });
 
+test('R3.7-R3.10 y R3.13-R3.14: verifica la forma real del registry destino', () => {
+  const conformity = section(read(SKILL), '## Conformidad del registry destino');
+  // verifies R3.7, R3.8, R3.9, R3.10, R3.13, R3.14
+  for (const term of ['estructura', 'bundle', 'catalog.json', 'versionado', 'validadores']) {
+    assert.match(conformity, new RegExp(term.replace('.', '\\.'), 'i'), `missing ${term}`);
+  }
+  assertTogether(conformity, [/modelo/i, /skills de fase/i, /bundle/i], 7, 'model and every phase skill must belong to the target bundle');
+  assertTogether(conformity, [/bundle/i, /catalog\\.json/i, /declarad/i], 6, 'the bundle must be declared in catalog.json');
+  assertTogether(conformity, [/version/i, /catalog\\.json/i, /bundle\\.json/i, /coincid/i], 6, 'bundle metadata versions must match');
+  assertTogether(conformity, [/referencia/i, /resuelv|exist/i], 5, 'catalog and bundle references must resolve');
+  assertTogether(conformity, [/pol[ií]tica/i, /bump/i], 5, 'version bumps must follow the target registry policy');
+  assertTogether(conformity, [/ejecut/i, /validadores/i, /registry destino/i], 5, 'target-provided validators must run');
+});
+
+test('R3.11-R3.12 y R3.15: separa metadata de bundle y publicación autorizada', () => {
+  const conformity = section(read(SKILL), '## Conformidad del registry destino');
+  // verifies R3.11, R3.12, R3.15
+  assertTogether(conformity, [/tag/i, /registry/i, /bundle/i, /independ/i], 6, 'registry tag and bundle versions must be independent counters');
+  assertTogether(conformity, [/informa|reporta/i, /publicaci[oó]n/i, /pendiente/i], 5, 'the skill must report the pending publication mechanism');
+  assertTogether(conformity, [/no crea|no empuja|nunca crea/i, /tag/i, /autorizad/i], 6, 'the skill must not publish tags outside the authorized flow');
+});
+
 test('R4.1: un modelo active se puede cargar, editar y regenerar', () => {
   const text = read(SKILL);                                    // verifies R4.1
   assert.match(text, /awm process show/,
     'loading an existing model must go through the CLI parser, never a second parser');
   assert.match(text, /regenera|regeneración/i,
     'the skill must describe regenerating the derived artifacts after an edit');
+});
+
+test('R4.2 y R4.4: extracción y retrospectiva usan el mismo flujo', () => {
+  const context = section(read(SKILL), '## Incorporación de contexto');
+  // verifies R4.2, R4.4
+  assertTogether(context, [/skills/i, /documentos/i, /herramientas externas/i, /conversaci[oó]n/i, /memoria confirmada/i], 7,
+    'context sources must independently include skills, documents, external tools, conversation, and confirmed memory');
+  assertTogether(context, [/retrospectiv|conversaci[oó]n/i, /mismo flujo/i], 5, 'retrospective capture must use the same reconciliation flow');
+  const retrospective = context.split(/\r?\n/).find(line => /La captura retrospectiva/i.test(line));
+  assert.ok(retrospective, 'the context section must contain the retrospective-capture rule');
+  for (const [term, label] of [
+    [/\badapter\b/i, 'adapter'],
+    [/\b(?:artefacto durable|sidecar)\b/i, 'durable artifact or sidecar'],
+    [/\brelease separado\b/i, 'separate release'],
+  ]) {
+    assert.match(retrospective, new RegExp(`\\bno agrega\\b(?=[^.]*${term.source})`, 'i'),
+      `retrospective capture must explicitly forbid a ${label} in its own rule`);
+  }
+});
+
+test('R4.3: el round-trip compara dimensiones funcionales y reporta pérdida', () => {
+  const roundTrip = section(read(SKILL), '## Round-trip semántico'); // verifies R4.3
+  assertTogether(roundTrip, [
+    /original.*regenerad|regenerad.*original|equivalencia funcional/i,
+    /objetivo/i,
+    /aplicabilidad/i,
+    /jerarquía/i,
+    /ruteo/i,
+    /gates/i,
+    /terminación/i,
+    /modo de ejecución/i,
+    /obligaciones de fases/i,
+  ], 20, 'the semantic comparison must evaluate every functional dimension between original and regenerated process');
+  assertTogether(roundTrip, [/p[eé]rdida/i, /report/i, /antes de publicar/i], 5, 'semantic loss must be reported before publication');
+  assert.match(roundTrip, /development-process/);
 });
 
 test('R7.1: sin el comando de verificacion degrada, no bloquea', () => {
