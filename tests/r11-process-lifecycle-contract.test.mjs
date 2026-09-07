@@ -248,7 +248,16 @@ test('R4.2 y R4.4: extracción y retrospectiva usan el mismo flujo', () => {
   assertTogether(context, [/skills/i, /documentos/i, /herramientas externas/i, /conversaci[oó]n/i, /memoria confirmada/i], 7,
     'context sources must independently include skills, documents, external tools, conversation, and confirmed memory');
   assertTogether(context, [/retrospectiv|conversaci[oó]n/i, /mismo flujo/i], 5, 'retrospective capture must use the same reconciliation flow');
-  assertTogether(context, [/retrospectiv|conversaci[oó]n/i, /sin|no/i, /adapter|artefacto|release/i], 7, 'retrospective capture must not introduce separate adapters, artifacts, or releases');
+  const retrospective = context.split(/\r?\n/).find(line => /La captura retrospectiva/i.test(line));
+  assert.ok(retrospective, 'the context section must contain the retrospective-capture rule');
+  for (const [term, label] of [
+    [/\badapter\b/i, 'adapter'],
+    [/\b(?:artefacto durable|sidecar)\b/i, 'durable artifact or sidecar'],
+    [/\brelease separado\b/i, 'separate release'],
+  ]) {
+    assert.match(retrospective, new RegExp(`\\bno agrega\\b(?=[^.]*${term.source})`, 'i'),
+      `retrospective capture must explicitly forbid a ${label} in its own rule`);
+  }
 });
 
 test('R4.3: el round-trip compara dimensiones funcionales y reporta pérdida', () => {
