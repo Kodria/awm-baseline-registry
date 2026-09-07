@@ -6,7 +6,7 @@
 
 **Goal:** Migrate the baseline `dev` bundle from inert object skill references to canonical ordered strings without changing installed content.
 
-**Architecture:** Add a repository contract test over the real manifests, then perform a data-only migration and synchronized patch version bump. Keep skill files, hooks, sensor packs, workflows, and agents unchanged.
+**Architecture:** Add a repository contract test over the real manifests, then perform a data-only migration and synchronized patch version bump. Keep skill files, hooks, sensor packs, and agents unchanged; wire only that contract into the existing validation and pre-tag workflow sequences.
 
 **Tech Stack:** JSON manifests, Node.js 22 built-in test runner, existing registry portability and release gates.
 
@@ -94,7 +94,7 @@ git diff --name-only origin/main
 git diff --unified=0 origin/main -- bundles/dev/bundle.json catalog.json
 ```
 
-Expected changed runtime files: only the two manifests; no `skills/`, `hooks/`, `workflows/`, `agents/`, or `sensor-packs/` path.
+Expected changed runtime files: only the two manifests; no `skills/`, `hooks/`, `agents/`, or `sensor-packs/` path. The sole allowed workflow diff wires the new contract test into existing validation and pre-tag verification.
 
 - [ ] Commit:
 
