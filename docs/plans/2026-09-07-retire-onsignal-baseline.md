@@ -30,7 +30,7 @@
 - **BR1:** THE baseline `dev` bundle SHALL contain exactly the same 24 ordered skill names as version 3.9.3, represented only as non-empty strings.
 - **BR2:** THE `dev` version SHALL be 3.9.4 in both `catalog.json` and `bundles/dev/bundle.json`.
 - **BR3:** THE active AWM-owned bundle manifests SHALL contain no `onSignal` property.
-- **BR4:** THE registry's complete validation and release gates SHALL pass without changing any `SKILL.md`, hook, workflow, agent, or sensor-pack content.
+- **BR4:** THE registry's complete validation and release gates SHALL pass without changing any `SKILL.md`, hook, agent, or sensor-pack content. The only permitted workflow change is invoking `tests/bundle-skill-reference-contract.test.mjs` in the existing validation and pre-tag verification sequences, before release publication; no workflow behavior beyond that gate wiring may change.
 
 ## Task 1: Add the canonical-reference contract
 
