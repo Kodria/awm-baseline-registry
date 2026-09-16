@@ -553,3 +553,18 @@ Registry publication, candidate validation certification, actual auto-tag certif
 and public registry-tag acceptance remain pending; no QA/docs/retro closure marker or
 global R1 availability is inferred from this checkpoint. Provider native acceptance
 and billed quota savings remain unverified where not actually observed.
+
+## Published release closure (2026-09-16)
+
+The pending publication checkpoint above is now superseded by actual baseline `v4.0.0`
+at `304f0849e29f6a643b4061bf00eb8b4d826dada4` paired with public npm CLI `9.8.0`.
+Candidate validation, main validation and actual auto-tag certifications passed. The
+published-remote acceptance and read-only #148 dry run are recorded precisely in
+[published evidence](2026-09-16-compact-only-r1-published-evidence.md), including the
+initial inconclusive currentness checks and the unchanged-artifact targeted PASS.
+Native journal is missing, so cycle capture is explicitly skipped; the real branch ledger
+was archived and subsequent list is empty. R2 is not started and no billed savings are claimed.
+
+<!-- awm-qa-complete: 2026-09-16 -->
+<!-- awm-docs-complete: 2026-09-16 -->
+<!-- awm-retro-complete: 2026-09-16 -->
