@@ -21,6 +21,11 @@
       "version": "5.9.3",
       "source": "https://registry.npmjs.org/typescript"
     },
+    "npm": {
+      "package": "npm",
+      "version": "10.8.3",
+      "source": "https://registry.npmjs.org/npm"
+    },
     "prettier": {
       "package": "prettier",
       "version": "3.9.6",

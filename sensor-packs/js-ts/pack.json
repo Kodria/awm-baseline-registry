@@ -241,12 +241,6 @@
         {
           "id": "semgrep-js-ts",
           "priority": 10,
-          "requirements": {
-            "tool": "semgrep",
-            "toolRange": ">=1.0.0",
-            "runtime": "python",
-            "runtimeRange": ">=3.9.0"
-          },
           "certifiedRange": "=1.173.0",
           "command": {
             "executable": "semgrep",
@@ -268,9 +262,7 @@
             ".semgrep.awm.yml"
           ],
           "formatter": "semgrep",
-          "probe": {
-            "kind": "semgrep-validate"
-          }
+          "policyRef": "shared/semgrep-policy.json"
         }
       ]
     },
@@ -389,19 +381,15 @@
           "priority": 40,
           "requirements": {
             "tool": "npm",
-            "toolRange": ">=8.0.0",
+            "toolRange": ">=10.8.3 <11.0.0",
             "runtime": "node",
             "runtimeRange": ">=16.0.0"
           },
-          "certifiedRange": ">=8.0.0",
+          "certifiedRange": "=10.8.3",
           "command": {
             "executable": "npm",
             "resolution": "path",
-            "args": [
-              "test",
-              "--",
-              "--silent"
-            ],
+            "args": ["test"],
             "packageManager": "npm"
           },
           "assets": [],
