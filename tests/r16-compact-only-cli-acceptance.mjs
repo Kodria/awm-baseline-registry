@@ -6,11 +6,17 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { requireCompatibleRuntime } from './compatible-cli-runtime.mjs';
+import { runInstalledAdmissionAcceptance } from './installed-admission-acceptance.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const awm = process.env.AWM_R4A_BIN || 'awm';
 const fixture = 'tests/fixtures/compact-slices-v1/reference-example.md';
 const invoke = args => spawnSync(awm, args, { cwd: root, encoding: 'utf8', timeout: 30_000, maxBuffer: 20_000 });
+test('RF-2.5 consumed registry rejects old/mismatched CLI before dispatch; installed pair must actually admit', async () => {
+  requireCompatibleRuntime(awm, root);
+  await runInstalledAdmissionAcceptance(awm, root, { negativesOnly: process.env.AWM_R16_INSTALLED_ACCEPTANCE !== '1', publishedRemote: process.env.AWM_R16_PUBLISHED_ACCEPTANCE === '1' });
+  if (process.env.AWM_R16_INSTALLED_ACCEPTANCE !== '1') process.stderr.write('R16 installed matched-pair acceptance BLOCKED pending compatible published CLI; only prerelease negatives checked\n');
+});
 function parse(result, status, state) {
   assert.equal(result.status, status, result.stderr.slice(0, 2000));
   assert.ok((result.stdout + result.stderr).length < 15_000);

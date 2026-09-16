@@ -56,6 +56,14 @@ const consumers = ['writing-plans', 'development-process', 'executing-plans', 's
 const admissionPath = 'skills/writing-plans/references/compact-admission-v1.md';
 const migrationPath = 'skills/writing-plans/references/compact-migration-v1.md';
 
+test('RF-2.5 installed acceptance wires genuine matched provenance and incompatible component negatives', () => {
+  const acceptance = read('tests/r16-compact-only-cli-acceptance.mjs');
+  assert.match(acceptance, /runInstalledAdmissionAcceptance/);
+  const gate = read('tests/installed-admission-acceptance.mjs');
+  for (const clause of ['ADMISSION_REGISTRY_CLI_INCOMPATIBLE', 'registry:baseline', '99.0.0', 'require-current', 'verify-sensors', 'published-remote', 'local-git-fixture', 'dispatchCount']) assert.ok(gate.includes(clause), clause);
+  for (const workflow of ['validate.yml', 'auto-tag.yml']) assert.match(read(`.github/workflows/${workflow}`), /AWM_R16_INSTALLED_ACCEPTANCE: "1"/);
+});
+
 test('RF-1.1/1.2/1.3/5.1 compact-only semantic authoring is fail-closed', () => {
   requireClauses(read('skills/writing-plans/SKILL.md'), '## Compact-only authoring', producer);
   assert.doesNotMatch(read('skills/writing-plans/SKILL.md'), /awm plan analyze|### Task N:|## Parallel track declaration/);
