@@ -1,28 +1,32 @@
 ---
 name: executing-plans
-version: "1.3.2"
+version: "2.0.0"
 license: Apache-2.0
 description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
 ---
 
 # Executing Plans
 
+## Compact admission — BLOCKING
+
+Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
+Apply it exactly; only `admitted` for the current plan identity may continue.
+
 ## Overview
 
-Load plan, review critically, execute tasks in batches, report for review between batches.
+Load the admitted plan, review critically and execute one serial compact slice at a time.
 
-**Core principle:** Batch execution with checkpoints for architect review.
+**Core principle:** Compact serial execution with independent specification and quality reviews.
 
 **Announce at start:** "I'm using the executing-plans skill to implement this plan."
 
 ## Compact-slice compatibility
 
-Legacy batches/checkpoints intact: Task and parallel-track execution keep their existing
-semantics. For a validated compact slice, use the equivalent sequence — dispatch the one
-dependency-ready slice, implement, run spec review then quality review, reconcile durable truth,
-and advance only after both are clean and declared gates pass. A plan defect requires durable
-amendment, revalidation, and a deviation record before continuation; risk receives full relevant
-context without removing roles or gates. This local review never replaces final global QA.
+Only admitted compact execution is supported: for each compact slice obtain spec and quality review; select one complete dependency-ready slice,
+implement with TDD, run distinct spec and quality reviewers, reconcile current durable truth,
+and advance only after both clean verdicts and declared gates. No historical Task/batch/track
+route. Plan defects require durable amendment, revalidation/new identity and visible deviation;
+risk receives full relevant context with every role/gate. Local review never replaces final QA.
 
 ## The Process
 
@@ -32,8 +36,8 @@ context without removing roles or gates. This local review never replaces final 
 3. If concerns: Raise them with your human partner before starting
 4. If no concerns: Create or update the task plan with one item per checklist entry, then proceed
 
-### Step 2: Execute Batch
-**Default: First 3 tasks**
+### Step 2: Execute admitted serial slice
+**Default: One dependency-ready slice, never a historical batch**
 
 For each task:
 1. Mark as in_progress
@@ -56,15 +60,15 @@ When batch complete:
 ### Step 4: Continue
 Based on feedback:
 - Apply changes if needed
-- Execute next batch
+- Re-admit and execute the next dependency-ready slice
 - Repeat until complete
 
 ### Step 5: Complete Development
 
 After all tasks complete and verified:
-- Announce: "I'm using the finishing-a-development-branch skill to complete this work."
-- **REQUIRED SUB-SKILL:** Use `finishing-a-development-branch`
-- Follow that skill to verify tests, present options, execute choice
+- Return to `development-process` for final review, `post-implementation-qa`,
+  `post-implementation-docs`, `harness-retro`, verification and finishing in order.
+- Do not invoke `finishing-a-development-branch` until those mandatory gates pass.
 
 ## When to Stop and Ask for Help
 

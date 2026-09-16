@@ -1,3 +1,4 @@
+import { requireCompatibleRuntime } from './compatible-cli-runtime.mjs';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -9,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fixture = path.join(root, 'tests/fixtures/compact-slices-v1/valid-plan.md');
 const awm = process.env.AWM_R4A_BIN || 'awm';
-const expectedVersion = '9.4.1';
+const expectedVersion = JSON.parse(readFileSync(path.join(root, 'awm-registry.json'), 'utf8')).minCliVersion;
 
 function validate(planPath) {
   return spawnSync(awm, ['plan', 'validate', planPath, '--cwd', root, '--json'], { cwd: root, encoding: 'utf8' });
@@ -21,7 +22,7 @@ function assertBoundedFailure(result) {
 }
 
 test('published R4a CLI accepts the portable compact fixture and rejects partial/future manifests', () => {
-  assert.equal(execFileSync(awm, ['--version'], { encoding: 'utf8' }).trim(), expectedVersion, 'acceptance must run the declared published R4a CLI');
+  requireCompatibleRuntime(awm, root);
   const valid = validate(fixture);
   assert.equal(valid.status, 0, valid.stdout + valid.stderr);
   const report = JSON.parse(valid.stdout);

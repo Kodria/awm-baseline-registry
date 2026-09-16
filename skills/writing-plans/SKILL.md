@@ -1,11 +1,16 @@
 ---
 name: writing-plans
-version: "1.10.0"
+version: "2.0.0"
 license: Apache-2.0
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
 
 # Writing Plans
+
+## Compact admission — BLOCKING
+
+Read `references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
+Apply it exactly; only `admitted` for the current plan identity may continue.
 
 ## Overview
 
@@ -44,20 +49,25 @@ This structure informs the task decomposition. Each task should produce self-con
 - "Run the tests and make sure they pass" - step
 - "Commit" - step
 
-## Compact serial plans (eligible only)
+## Compact-only authoring
 
-Use `references/compact-slices-v1.md` only when the plan is a formed serial plan
-with explicitly sliceable requirements and one explicit owner per requirement. Do not
-infer a slice boundary from prose. A plan declaring `## Tracks`, lacking a complete
-requirement set, or needing product/architecture judgment remains legacy and keeps the
-current Task Structure and Parallel track declaration unchanged.
+Complete approved requirements and explicit unique ownership produce only supported serial compact plans.
+Incomplete requirements, ambiguous ownership, unresolved product/architecture decisions, unsafe slice boundaries, or parallel tracks return `planning-required`; do not write an executable implementation plan.
+Preserve canonical requirement IDs such as `RF-1.1`, `RNF-T.1`, and safe hyphenated IDs without translation.
+Group adjacent requirements only when behavior, surfaces, dependencies, and verification boundaries justify one cohesive slice; state that rationale and one owner per requirement.
+Unmarked historical plans are readable migration inputs, never executable; there is no Task/Tracks or legacy execution option.
 
-The compact manifest is exactly `compact-slices/v1`; it carries stable source and
-command IDs plus complete five-section slice prose. An executor must receive behavior,
-surfaces, interfaces, sequence, edge cases, RED/GREEN evidence, commands, risks, and
-fallback without discovery work. Inline a needed fact when its source is insufficient,
-unavailable, unstable, unsafe, inaccessible, or ambiguous; never delegate repository
-inspection as a substitute.
+Read `references/compact-slices-v1.md` completely. Emit exactly its v1 manifest and
+five canonical `####` subsections per serial slice. Inline necessary facts when their
+source is insufficient, unavailable, unstable, unsafe, inaccessible or ambiguous.
+The executor receives complete behavior, surfaces, interfaces, sequence, edge cases,
+RED/GREEN assertions/commands, risks and fallback, never a discovery assignment.
+
+## Historical migration — BLOCKING
+
+Read `references/compact-migration-v1.md` for historical or partially executed input.
+Apply it exactly; preserve the original bytes and completed checkpoints, and write only
+a separately accepted continuation. Missing evidence/ownership never implies completion.
 
 ## Plan Document Header
 
@@ -100,100 +110,15 @@ WHEN el modo es `desatendido`, incluye este blockquote canónico inmediatamente 
 
 Los skills lectores (`development-process`, `subagent-driven-development`, `post-implementation-qa`, `harness-retro`, `finishing-a-development-branch`) parsean únicamente la línea del campo; el blockquote es para humanos y para robustez ante compactación de contexto. El modo desatendido quita pausas, no controles: todos los gates corren igual.
 
-## Task Structure
+## Slice Structure
 
-````markdown
-### Task N: [Component Name]
-
-_Requirements: R1.1, R2.3_
-
-**Track:** core            ← only for plans using Parallel track declaration below; single line, right after _Requirements:_ and before **Files:** (omit line if the plan is serial)
-
-**Files:**
-- Create: `exact/path/to/file.py`
-- Modify: `exact/path/to/existing.py:123-145`
-- Test: `tests/exact/path/to/test.py`
-
-**Skills:** frontend-craft            ← skills the implementer MUST invoke; single line, comma-separated (add ui-ux-pro-max only for the standalone case below — omit line if none)
-**Design artifacts:** .stitch/designs/login.html, .stitch/designs/login.png   ← single line, comma-separated (UI tasks only — omit line if not applicable)
-
-- [ ] **Step 1: Write the failing test**
-
-```python
-def test_specific_behavior():  # verifies R1.1
-    result = function(input)
-    assert result == expected
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: FAIL with "function not defined"
-
-- [ ] **Step 3: Write minimal implementation**
-
-```python
-def function(input):
-    return expected
-```
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: PASS
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add tests/path/test.py src/path/file.py
-git commit -m "feat: add specific feature"
-```
-````
-
-**Requirement traceability tag.** The `_Requirements: R1.1, R2.3_` line names the requirement IDs (from the spec's `## Requirements` section) that the task satisfies, and each test comment names the ID it verifies (`# verifies R1.1`). This is what makes the traceability matrix and the analyze gate below mechanical rather than guesswork. **Tier:** omit the tag only for trivial single-file diffs whose spec intentionally has no `## Requirements` section.
-
-**Skill & artifact propagation (UI tasks).** Any task that creates or modifies UI belonging to a designed screen MUST declare `**Skills:**` (at minimum `frontend-craft`) and `**Design artifacts:**` with the exact paths inherited from the design doc's `## UI Screens` Artifacts column (see `skills/ui-design/SKILL.md` Step 4 for the table format). The execution controller copies both into the subagent prompt — a UI task without them ships an implementer who has never seen the design. The design doc's table cell separates paths with `·` (e.g. `.stitch/designs/login.html · .stitch/designs/login.png`); when inheriting them into `**Design artifacts:**`, convert that `·`-separated cell into the comma-separated single-line format shown above (`.stitch/designs/login.html, .stitch/designs/login.png`) — comma-separated is what the execution controller mechanically copies into implementer prompts, so don't carry the `·` over. Inherit only real file paths: if a cell entry is a degradation token rather than a path (e.g. `n/a (offline, no browser)` when no PNG exists), do NOT carry it into the field — declare only the paths that exist (e.g. just the `.html`).
-
-A task counts as touching a designed screen when its `**Files:**` list includes a route/component/page file that corresponds to a screen listed in the design doc's `## UI Screens` table — cross-check the Files list against that table's Screen column before deciding.
-
-`frontend-craft` alone is normally sufficient — it consults `ui-ux-pro-max` internally when a color/typography/UX decision needs it. Only declare `ui-ux-pro-max` directly in `**Skills:**` if the task needs to invoke its search independent of frontend-craft (e.g. a task that's purely about generating/persisting a design system, with no frontend-craft escalation).
-
-## Parallel track declaration (optional, fail-closed)
-
-<!-- AWM-INTEGRATION: track-plan-contract -->
-
-Use this only when two or more task groups have no overlap in files,
-dependencies, declared resources, lockfiles, manifests, migrations, snapshots,
-or generated outputs. If that claim cannot be made explicitly, omit all track
-fields and keep the plan serial.
-
-Add one `**Track:** <id>` line to every tracked task immediately after its
-`_Requirements:_` line and before `**Files:**`. Add one plan-level block:
-
-```markdown
-## Tracks
-
-**Integration argv:** ["npm","test","--","--runInBand"]
-**Integration paths:** ["src/**","tests/**"]
-
-| Track | Depends on | Shared resources |
-|---|---|---|
-| core | none | [] |
-| docs | none | [] |
-```
-
-`Integration argv` and `Integration paths` are JSON string[] values, not shell
-text. Derive argv from a command already verified in the repository; preserve
-each token as a separate array element.
-
-`Depends on` is `none` only when there is no dependency; any other value forces
-serial execution. `Shared resources` must be explicit, including `[]`; omitted
-means serial. Resource IDs use `<class>:<value>` such as `port:5432`, `db:dev`,
-or `path:.cache/tool`.
-
-A plan is never marked parallel because of how many tasks it has; whether it
-can run in parallel is derived from analyzing Files/declared-resources overlap
-(or the lack of it), and the design always preserves a serial fallback.
+Use the exact manifest/anchor/five-subsection structure in
+`references/compact-slices-v1.md`. Declare unique owned requirement IDs, contained stable
+sources, tokenized inert RED/GREEN commands, closureCommands, dependencies, grouping
+rationale, interfaces, complete implementation code/facts, exact edge assertions and
+independent review evidence. Every UI slice inherits Required Skills and exact real
+Design artifacts from the approved design; no artifact path may be invented.
+R1 v1 is serial: do not emit tracks or semantic implementer profiles.
 
 ## No Placeholders
 
@@ -238,9 +163,9 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
-## Analyze Gate (coverage, pre-handoff)
+## Coverage Gate (self-review, pre-handoff)
 
-Before offering the execution choice, run this gate on the traceability matrix. It is the `analyze` step: a mechanical coverage check, not a judgment call.
+Before offering the execution choice, run this gate on the traceability matrix. This is a planning self-review coverage check, not a CLI analyze command.
 
 - **Every requirement ID has ≥1 task AND ≥1 test.** A requirement with a task but no test is built-but-unverified — not done.
 - **No task or test lacks a requirement ID.** Anything unanchored is orphan scope — resolve it before handoff.
@@ -249,15 +174,16 @@ Do not proceed to the execution handoff while the gate reports gaps. *(Tier: ski
 
 ## Compact validation and strict currentness (pre-handoff) — BLOCKING
 
-For an eligible compact plan, after self-review and `awm plan analyze`, run:
+For every implementation plan, after bidirectional coverage self-review, run:
 
 ```bash
 awm plan validate PLAN_PATH --cwd . --json
 ```
 
-Only `valid` may continue. `invalid` or `unsupported` stops the handoff; do not
-reinterpret either result as legacy. A plan with no marker or schema is legacy and
-continues through the existing full-quality Task/Tracks route.
+Only `valid` may proceed to admission. `migration-required`, `invalid` and
+`unsupported` block; do not reinterpret any result as a successful historical route.
+After a plan amendment revalidate and retain the new CLI-derived identity; old-digest
+evidence cannot complete current obligations.
 
 Immediately before execution handoff run:
 
@@ -299,8 +225,7 @@ config, or to opt out deliberately (`awm sensors init`, then set the sensors to
 `"enabled": false`) so the decision is recorded in a committed file rather than implied by
 silence. Never proceed by treating "not configured" as "no findings".
 
-*(If `awm preflight` reports an unknown command, the project is on an older AWM CLI — say
-so once and continue; do not improvise a substitute check.)*
+*(Missing preflight or strict support blocks handoff: install the compatible released CLI; never bypass or improvise a substitute.)*
 
 ### Unattended empirical handoff — BLOCKING
 

@@ -1,11 +1,16 @@
 ---
 name: development-process
-version: "1.8.0"
+version: "2.0.0"
 license: Apache-2.0
 description: Use when starting, resuming, or routing a development task
 ---
 
 # Development Process
+
+## Compact admission — BLOCKING
+
+Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
+Apply it exactly; only `admitted` for the current plan identity may continue.
 
 Invoke the `development-process` skill. You do NOT write code directly: read state, decide the phase, and invoke the next skill.
 
@@ -16,7 +21,7 @@ continue: this entry check is advisory, not blocking, performs no writes; do not
 once and continue. At unattended handoff, `writing-plans` reruns strict currentness as the
 authoritative blocking gate.
 
-WHEN an active plan exists, read `references/execution-mode.md` before routing.
+WHEN an active plan exists, require compact admission, then read `references/execution-mode.md` before routing. If unavailable, report the limitation and stop; never bypass or route without it. Filename/checkbox/marker state never authorizes dispatch.
 WHEN UI is pending or a plan declares `**Design artifacts:**`, read `references/frontend-handoff.md` and apply its blocking bundle gate.
 IF a business-level unknown appears during development, read
 `references/business-gap.md`; do not improvise the answer.

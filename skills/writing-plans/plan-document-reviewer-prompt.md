@@ -30,7 +30,7 @@ Dispatch a general-purpose subagent:
     | Compact fields | Reject missing compact fields: exact manifest/schema, five slice sections, serial dependency data, and one owner for every requirement |
     | Compact sources | Reject unowned requirements and unsafe delegation; sources must be authoritative stable IDs and insufficient facts must be inlined, never sent to “inspect the repo” |
     | Compact gates | Reject omitted CLI validation/currentness: `awm plan validate` must precede handoff and `awm preflight --require-current` must block stale or missing-strict support |
-    | Compatibility | Reject a legacy regression: unmarked/future-invalid compact input must not be reinterpreted as legacy, and current Task/Tracks behavior must remain intact |
+    | Compact-only admission | Reject every successful legacy execution route: unmarked input requires separate migration; invalid/future input blocks, never Task/Tracks fallback. Require `awm plan admit` before dispatch and lifecycle transition with current digest and unattended bound journal |
     | Efficiency evidence | Reject an efficiency/non-inferiority claim based on structural evidence alone |
 
     (If the spec intentionally has no `## Requirements` section — a trivial one-file diff per the tier guardrail — the three rows above do not apply; do not flag their absence.)

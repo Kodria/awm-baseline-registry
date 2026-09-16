@@ -1,139 +1,76 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { test } from 'node:test';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import test from 'node:test';
 
-const read = (file) => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
-
-const EXPECTED_MIN_CLI_VERSION = '9.4.1';
-const EVIDENCE_CAPTURE_MIN_CLI_VERSION = '9.3.0';
-const EXPECTED_UPGRADE_COMMAND = `npm i -g "agentic-workflow-manager@>=${EVIDENCE_CAPTURE_MIN_CLI_VERSION}"`;
-
-function assertCanonicalActivePlanResolver(skill) {
-  const resolverStart = skill.indexOf('PLANS_DIR="$PWD/docs/plans"');
-  const capture = skill.indexOf('awm evidence capture --plan "$active_plan"');
-  assert.ok(resolverStart >= 0 && capture > resolverStart,
-    'capture must use the canonical resolver before invoking the CLI');
-  const resolver = skill.slice(resolverStart, capture);
-
-  assert.match(resolver, /while IFS= read -r plan_file;/,
-    'the resolver must inspect candidates in deterministic modification order');
-  assert.match(resolver, /case "\$\(basename "\$plan_file"\)" in \*-design\.md\) continue;; esac/,
-    'the resolver must not select a design document');
-  // The plan a retro closes is, by this skill's own precondition, already
-  // qa-complete with every checkbox done — NOT "open work". A resolver that
-  // requires open checkboxes (the SessionStart re-anchor criterion, for what
-  // to work on NEXT) silently picks a different, unrelated plan whenever more
-  // than one exists in docs/plans/. See docs/harness-retros.md 2026-08-24.
-  assert.match(resolver, /grep -qE '<!--\[\[:space:\]\]\*awm-qa-complete' "\$plan_file" 2>\/dev\/null \|\| continue/,
-    'the resolver must require awm-qa-complete before considering a plan');
-  assert.match(resolver, /grep -qE '<!--\[\[:space:\]\]\*awm-retro-complete' "\$plan_file" 2>\/dev\/null && continue/,
-    'the resolver must skip a plan that already has awm-retro-complete');
-  assert.match(resolver, /done < <\(ls -t "\$PLANS_DIR"\/\*\.md 2>\/dev\/null \|\| true\)/,
-    'the resolver must consider newer plans before older plans');
+const read = file => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+function closure(skill) {
+  const start = skill.indexOf('### 11. Capture and close the retro');
+  const end = skill.indexOf('## Anti-patterns', start);
+  assert.ok(start >= 0 && end > start);
+  return skill.slice(start, end);
 }
-
-function assertCycleEvidenceCapture(skill, registry) {
-  assert.equal(registry.minCliVersion, EXPECTED_MIN_CLI_VERSION,
-    'the registry must require the first published CLI that supports evidence capture');
-  assert.doesNotMatch(skill, /npm i -g agentic-workflow-manager@>=9\.3\.0/,
-    'retro must not present an unquoted upgrade package spec');
-  assert.match(skill, new RegExp(EXPECTED_UPGRADE_COMMAND.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
-    'retro must give the exact compatible-CLI upgrade command');
-  assert.match(skill, /installed_cli_version="\$\(awm --version\)"/,
-    'retro must read the installed CLI version');
-  assert.match(skill, /min_cli_version=.*awm-registry\.json/,
-    'retro must read the minimum CLI version from the registry');
-  assert.match(skill, /process\.exit\(meets \? 0 : 1\)/,
-    'retro must execute a semver comparison that rejects an old CLI');
-  assert.match(skill, /printf 'npm i -g %q\\n' "agentic-workflow-manager@>=\$\{min_cli_version\}"/,
-    'the executable upgrade command must quote the package spec');
-
-  const versionCheck = skill.indexOf('awm --version');
-  const capture = skill.indexOf('awm evidence capture --plan "$active_plan"');
-  const archive = skill.lastIndexOf('awm ledger archive');
-
-  assert.ok(versionCheck >= 0, 'retro must check the installed CLI version before archiving');
-  assert.ok(capture >= 0, 'retro must capture cycle evidence for the active plan');
-  assert.ok(versionCheck < capture, 'compatibility must be checked before evidence capture');
-  assert.ok(capture < archive, 'evidence capture must happen before the ledger is archived');
-  assert.match(skill, /require exit 0/i, 'retro must fail loudly when evidence capture fails');
-  // The capture call may legitimately be nested inside a conditional (e.g. a
-  // journal-availability check), so the closing brace can carry leading
-  // indentation — match structure, not exact column position.
-  assert.match(skill, /awm evidence capture --plan "\$active_plan" \|\| \{[\s\S]*?exit 1;?[\s\S]*?\n\s*\}/,
-    'a failed capture must exit before the archive step is reachable');
-  assert.match(skill, /must work in unattended mode|modo desatendido[\s\S]*?evidence capture|mandatory in modo desatendido/i,
-    'evidence capture must remain mandatory in unattended mode');
-  assertCanonicalActivePlanResolver(skill);
+const required = [
+  'Use only the explicit admitted active_plan and its CLI identity; never resolve another plan by filename, mtime, marker, or checkbox scans.',
+  'Read minCliVersion only when this project contains awm-registry.json; a CLI project without registry metadata must not invent that file or fail merely because it is absent.',
+  'Query the current branch with `awm watch journal-status --json`; a global .awm/journal directory is never evidence of an active branch journal.',
+  'Only a present, non-bootstrapUnused journal with cycleState COMPLETE and a passing current interlock permits cycle evidence capture.',
+  'Missing journal skips capture explicitly with manual/native QA evidence and no fabricated cycle; it never permits missing-journal unattended dispatch.',
+  'Corrupt, nonterminal, or mismatched journal blocks capture and archive; unused bootstrap state is administrative abandonment, never completed execution.',
+];
+function assertClosure(skill) {
+  const body = closure(skill);
+  for(const rule of required) assert.ok(body.includes(rule), `missing closure rule: ${rule}`);
+  assert.ok(body.includes('awm evidence capture --plan "$active_plan" || {'), 'failed capture blocks archive');
+  assert.ok(body.includes('awm ledger archive'), 'archive remains mandatory');
+  assert.ok(body.includes('awm ledger list'), 'archive must be verified');
+  assert.ok(!body.includes('ls -t "$PLANS_DIR"'), 'no heuristic active-plan resolver');
+  assert.ok(!body.includes('[ -d "$JOURNAL_DIR" ]'), 'no global journal-presence test');
 }
-
-test('harness retro captures compatible cycle evidence before archive', () => {
-  assertCycleEvidenceCapture(
-    read('skills/harness-retro/SKILL.md'),
-    JSON.parse(read('awm-registry.json')),
-  );
+test('RF-3.1/3.2/5.5 retro has project-aware compatibility and current-branch capture', () => assertClosure(read('skills/harness-retro/SKILL.md')));
+test('RED mutation rejects every exact closure sentence independently', () => {
+  const text = read('skills/harness-retro/SKILL.md'); assertClosure(text);
+  for(const rule of required) assert.throws(() => assertClosure(text.replace(rule, '')), /missing closure rule/);
 });
-
-test('RED mutation: archive without preceding capture is rejected', () => {
-  const skill = read('skills/harness-retro/SKILL.md').replace(
-    'awm evidence capture --plan "$active_plan"',
-    'awm evidence skipped --plan "$active_plan"',
-  );
-  assert.throws(
-    () => assertCycleEvidenceCapture(skill, { minCliVersion: EXPECTED_MIN_CLI_VERSION }),
-    /must capture cycle evidence/i,
-  );
+test('RF-2.5 executable registry floor accepts no-registry CLI context and rejects malformed or old registry versions', () => {
+  const body = closure(read('skills/harness-retro/SKILL.md'));
+  const snippet = body.match(/<!-- retro-compatibility-script -->\n```bash\n([\s\S]*?)\n```/)[1];
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), 'awm-retro-floor-'));
+  try {
+    const run = version => spawnSync('bash', ['-c', `awm() { printf '%s\\n' '${version}'; }\n${snippet}`], { cwd:sandbox, encoding:'utf8', timeout:5000 });
+    assert.equal(run('9.7.1').status, 0, 'CLI project without registry metadata cannot be blocked by a fabricated floor');
+    writeFileSync(path.join(sandbox,'awm-registry.json'), JSON.stringify({minCliVersion:'invalid'}));
+    assert.notEqual(run('9.8.0').status, 0);
+    writeFileSync(path.join(sandbox,'awm-registry.json'), JSON.stringify({minCliVersion:'9.8.0'}));
+    const old=run('9.7.1'); assert.notEqual(old.status,0); assert.match(old.stderr,/does not meet required/);
+    assert.equal(run('9.8.0').status,0);
+    assert.equal(run('10.0.0').status,0);
+  } finally { rmSync(sandbox,{recursive:true,force:true}); }
 });
-
-test('RED mutation: capture failure cannot fall through to archive', () => {
-  const weakened = read('skills/harness-retro/SKILL.md').replace(
-    /awm evidence capture --plan "\$active_plan" \|\| \{[\s\S]*?\n\s*\}/,
-    'awm evidence capture --plan "$active_plan"',
-  );
-  assert.throws(
-    () => assertCycleEvidenceCapture(weakened, JSON.parse(read('awm-registry.json'))),
-    /exit before the archive step is reachable/i,
-  );
+test('RF-6.1 actual validation and release jobs retain this executable contract', () => {
+  for (const workflow of ['validate.yml','auto-tag.yml']) assert.ok(read(`.github/workflows/${workflow}`).includes('node tests/cycle-evidence-capture-contract.test.mjs'));
 });
-
-test('RED mutation: an unquoted displayed upgrade command is rejected', () => {
-  const weakened = read('skills/harness-retro/SKILL.md').replace(
-    EXPECTED_UPGRADE_COMMAND,
-    'npm i -g agentic-workflow-manager@>=9.3.0',
-  );
-  assert.throws(
-    () => assertCycleEvidenceCapture(weakened, JSON.parse(read('awm-registry.json'))),
-    /unquoted upgrade package spec/i,
-  );
-});
-
-test('RED mutation: a plan without awm-qa-complete cannot become the active capture target', () => {
-  const weakened = read('skills/harness-retro/SKILL.md').replace(
-    "grep -qE '<!--[[:space:]]*awm-qa-complete' \"$plan_file\" 2>/dev/null || continue",
-    '# any plan qualifies, qa-complete not required',
-  );
-  assert.throws(() => assertCanonicalActivePlanResolver(weakened), /require awm-qa-complete/i);
-});
-
-test('RED mutation: a plan already carrying awm-retro-complete cannot be re-selected', () => {
-  const weakened = read('skills/harness-retro/SKILL.md').replace(
-    "grep -qE '<!--[[:space:]]*awm-retro-complete' \"$plan_file\" 2>/dev/null && continue",
-    '# retro-complete plans are not filtered',
-  );
-  assert.throws(() => assertCanonicalActivePlanResolver(weakened), /skip a plan that already has awm-retro-complete/i);
-});
-
-test('RED mutation: an older plan cannot be preferred over a newer active plan', () => {
-  const weakened = read('skills/harness-retro/SKILL.md').replace(
-    'done < <(ls -t "$PLANS_DIR"/*.md 2>/dev/null || true)',
-    'done < <(ls "$PLANS_DIR"/*.md 2>/dev/null || true)',
-  );
-  assert.throws(() => assertCanonicalActivePlanResolver(weakened), /newer plans before older plans/i);
-});
-
-test('validation and release gates execute the cycle evidence capture contract', () => {
-  for (const workflow of ['validate.yml', 'auto-tag.yml']) {
-    assert.match(read(`.github/workflows/${workflow}`), /node tests\/cycle-evidence-capture-contract\.test\.mjs/,
-      `${workflow} must run the cycle evidence capture contract`);
-  }
+test('RF-3.2 executable missing-current-branch recipe never captures retained global journals', () => {
+  const body = closure(read('skills/harness-retro/SKILL.md'));
+  const snippet = body.match(/```bash\n(test -n "\$active_plan"[\s\S]*?)\n```/)[1];
+  const run = state => spawnSync('bash', ['-c', `
+active_plan=docs/plans/current.md
+active_provider=codex
+manual_qa_evidence=durable-manual-review-reference
+awm() {
+  if [ "$1 $2" = "watch journal-status" ]; then printf '%s\\n' '${state}';
+  elif [ "$1 $2" = "evidence capture" ]; then printf 'CAPTURE_CALLED\\n';
+  else return 0; fi
+}
+${snippet}`], { encoding:'utf8', timeout:5000, maxBuffer:10000 });
+  const missing=run('{"state":"missing"}');
+  assert.equal(missing.status,0,missing.stderr);
+  assert.doesNotMatch(missing.stdout,/CAPTURE_CALLED/);
+  assert.match(missing.stderr,/Skipping cycle evidence capture/);
+  assert.notEqual(run('{"state":"corrupt"}').status,0);
+  assert.notEqual(run('{"state":"present","cycleState":"IN_PROGRESS","bootstrapUnused":true}').status,0);
+  const complete=run('{"state":"present","cycleState":"COMPLETE","bootstrapUnused":false}');
+  assert.equal(complete.status,0,complete.stderr); assert.match(complete.stdout,/CAPTURE_CALLED/);
 });

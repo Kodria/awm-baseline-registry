@@ -1,53 +1,77 @@
 # Compact Slices v1
 
-Use this reference only for a formed serial implementation plan whose explicit requirements can be divided without product or architecture judgment. A plan with `## Tracks`, incomplete requirements, or uncertain ownership stays on the legacy Task/Tracks route.
+Every executable implementation plan is compact. Complete approved serial requirements and
+unique ownership use this reference; incomplete facts or parallel tracks return planning-required,
+never legacy execution. R1 has no semantic model profiles or parallel compact schema.
 
 ## Manifest boundary
 
-Place exactly one `<!-- AWM:COMPACT-SLICES:START v1 -->` JSON manifest and one matching `<!-- AWM:COMPACT-SLICES:END v1 -->` after the plan header. Its schema is exactly `compact-slices/v1`. It declares stable `planId`, requirement IDs, source IDs, command IDs, and serial slices. Every requirement has one requirement owner; every slice declares `dependsOn`, sources, RED/GREEN command IDs, review evidence, risk, and fallback. Do not semantically autogroup tasks: amend the plan when a safe boundary cannot be stated.
+Place exactly one `<!-- AWM:COMPACT-SLICES:START v1 -->` JSON manifest and matching
+`<!-- AWM:COMPACT-SLICES:END v1 -->` after the header. Schema is exactly
+`compact-slices/v1`. Declare planId, requirements, sources, commands, slices, closureCommands.
+Every requirement has one requirement owner; every serial slice declares id, title,
+requirements, dependsOn, sectionAnchor, sources, redCommands, greenCommands, reviewEvidence,
+risk and fallback. Preserve canonical IDs (`RF-1.1`, `RNF-T.1`, safe hyphenated IDs);
+no translation. Unique ownership and explicit grouping rationale are mandatory.
 
-## Behavior and surfaces
+Source IDs are authoritative, stable contained regular paths with exact locator and fact.
+Do not delegate an executor to inspect or discover the repository. Inline a required fact
+when its source is insufficient, unavailable, unstable, unsafe, inaccessible or ambiguous;
+if ownership/behavior cannot be approved, stop with planning-required. Shared payload is stated
+once at the narrowest shared boundary; do not repeat shared commands or source prose in every step.
 
-Each slice states the behavior to deliver, exact files/surfaces, interfaces it changes, and the requirement IDs it owns. Write enough complete prose that a basic executor can act without a new product or architecture decision.
+## Canonical slice prose
 
-## Interfaces and sequence
+Each exact anchor immediately precedes its manifest-matching `### Slice ID: Title`.
+Each slice contains exactly five complete sections:
 
-State dependency order, inputs/outputs, and the complete RED → implementation → GREEN sequence. Shared payload is stated once at the narrowest shared boundary and slices refer to its stable IDs; do not repeat shared commands or source prose in every step.
-
-## Edge cases and evidence
-
-State edge cases, exact test assertions, review evidence, and traceability. Source IDs are authoritative, stable, and include path, locator, and the fact they supply. Do not delegate an executor to inspect or discover the repository. If a source is unavailable, unstable, unsafe, inaccessible, ambiguous, or insufficient, inline the needed fact in the slice.
+- `#### Surfaces`: behavior, owned requirement IDs, exact files, interfaces and grouping rationale.
+- `#### Implementation`: dependencies, inputs/outputs, actual RED → implementation → GREEN
+  steps and complete code/facts to act without new product/architecture discovery.
+- `#### Edge cases`: invalid/edge inputs, exact assertions, robustness and security constraints.
+- `#### Evidence`: declared sources, RED/GREEN commands, independent spec/quality evidence,
+  tests/sensors and current-plan identity required for completion.
+- `#### Fallback`: risk trigger, durable deviation/amendment and full relevant context.
 
 ## Commands
 
-Commands have stable IDs and are inert: each names `program`, tokenized `args`, and covered requirements without writes, prompts, network mutation, or destructive scope. Reuse a command ID rather than duplicating it across slice prose. Run `awm plan validate PLAN_PATH --cwd . --json` after self-review and `awm plan analyze`, before any execution handoff; `valid` may proceed, while `invalid` or `unsupported` blocks. No marker or schema signal is legacy, not compact.
+Commands are inert, tokenized program/args with stable IDs and covered requirements;
+closureCommands lists reused final verification IDs. No writes, prompts, network mutation,
+destructive scope or shell syntax. Use real verified repository commands; never substitute
+`git --version` for a test. Generic shell/interpreter launchers are rejected; npm scripts
+run the actual named verification. Mechanical validity is not evidence that tests passed.
+
+Self-review bidirectional coverage, then run `awm plan validate PLAN_PATH --cwd . --json`.
+Only valid proceeds to admission; migration-required, invalid and unsupported block.
+An unmarked plan requires separate migration, never another executable route. Coverage is
+a planning self-review, not a fabricated CLI command. Revalidate every amendment, retain
+the new CLI identity and obsolete stale verdicts before continuation.
 
 ## Risks and fallback
 
-Name risk triggers, full relevant-context fallback, retained reviews, and the exact record to make. A fallback changes context size, never quality gates. Structural counts alone do not prove efficiency or non-inferiority.
+Full relevant-context fallback retains the compact state machine, all reviewers and gates.
+Read `compact-admission-v1.md` for the blocking handoff. Structural counts alone do not
+prove efficiency, billed cost savings or non-inferiority. Read existing Evidence Capsule v1;
+never persist prompt payload/source or response bodies as telemetry.
 
 ## Minimal complete example
 
 ```markdown
+# Example compact plan
+**Modo de ejecución:** interactivo
 <!-- AWM:COMPACT-SLICES:START v1 -->
-{"schema":"compact-slices/v1","planId":"example","requirements":["R1"],"sources":[{"id":"SRC-ONE","path":"skills/writing-plans/SKILL.md","locator":"## Bite-Sized Task Granularity","fact":"Steps are bite-sized."}],"commands":[{"id":"CMD-TEST","program":"node","args":["--test","tests/example.test.mjs"],"covers":["R1"]}],"slices":[{"id":"S1","title":"Example","requirements":["R1"],"dependsOn":[],"sectionAnchor":"slice-s1","sources":["SRC-ONE"],"redCommands":["CMD-TEST"],"greenCommands":["CMD-TEST"],"reviewEvidence":["specification","code-quality"],"risk":"full-context","fallback":["insufficient source"]}]}
+{"schema":"compact-slices/v1","planId":"reference-example","requirements":["RF-1.4"],"sources":[{"id":"SRC-ONE","path":"skills/writing-plans/SKILL.md","locator":"## Bite-Sized Task Granularity","fact":"Steps are bite-sized with real RED/GREEN evidence."}],"commands":[{"id":"CMD-TEST","program":"npm","args":["run","test:compact-only"],"covers":["RF-1.4"]}],"slices":[{"id":"S1","title":"Example","requirements":["RF-1.4"],"dependsOn":[],"sectionAnchor":"slice-s1","sources":["SRC-ONE"],"redCommands":["CMD-TEST"],"greenCommands":["CMD-TEST"],"reviewEvidence":["specification","code-quality"],"risk":"full-context","fallback":["public-contract"]}],"closureCommands":["CMD-TEST"]}
 <!-- AWM:COMPACT-SLICES:END v1 -->
-
 <a id="slice-s1"></a>
 ### Slice S1: Example
-
-## Behavior and surfaces
-Implement R1 in `tests/example.test.mjs`.
-
-## Interfaces and sequence
-Write RED, implement the stated behavior, then run GREEN.
-
-## Edge cases and evidence
-The test verifies R1; SRC-ONE supplies the bite-sized-step rule.
-
-## Commands
-Run CMD-TEST before and after the implementation.
-
-## Risks and fallback
-If SRC-ONE is insufficient, inline its needed fact and amend/revalidate.
+#### Surfaces
+Own RF-1.4 in the compact reference and its structural fixture/test; one cohesive vocabulary boundary.
+#### Implementation
+Add the assertion for exact five canonical subsections; run CMD-TEST and observe RED for a removed heading. Correct the reference and run CMD-TEST GREEN. SRC-ONE supplies bite-sized RED/GREEN discipline.
+#### Edge cases
+Missing or duplicate headings must fail; dotted requirement IDs remain unchanged and unknown schemas block.
+#### Evidence
+CMD-TEST executes the actual structural contract. Obtain distinct current clean specification and quality verdicts; reconcile files, tests, sensors and CLI-derived plan identity before completion.
+#### Fallback
+Public-contract risk expands full relevant context under Evidence Capsule v1 without removing gates. An insufficient fact requires durable amendment and revalidation, never delegated discovery.
 ```

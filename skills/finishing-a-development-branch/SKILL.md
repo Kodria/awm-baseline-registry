@@ -1,11 +1,16 @@
 ---
 name: finishing-a-development-branch
-version: "1.3.1"
+version: "2.0.0"
 license: Apache-2.0
 description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR/MR, or cleanup
 ---
 
 # Finishing a Development Branch
+
+## Compact admission — BLOCKING
+
+Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
+Apply it exactly; only `admitted` for the current plan identity may continue.
 
 ## Overview
 
@@ -17,7 +22,7 @@ Guide completion of development work by presenting clear options and handling ch
 
 ## Modo de ejecución (lectura del campo)
 
-Al arrancar, localiza el plan activo (`docs/plans/*-plan.md` de la rama actual) y lee su línea `**Modo de ejecución:**`:
+Al arrancar, usa únicamente el plan activo y la identidad confirmados por admission; lee su línea `**Modo de ejecución:**` desde esos mismos bytes validados:
 
 - Ausente o `interactivo` → modo interactivo (default): comportamiento estándar de este skill.
 - `desatendido` → aplica la sección **Modo desatendido** de este skill.

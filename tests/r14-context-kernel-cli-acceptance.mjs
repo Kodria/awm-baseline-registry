@@ -1,3 +1,4 @@
+import { requireCompatibleRuntime } from './compatible-cli-runtime.mjs';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -38,8 +39,7 @@ function runPreflight(cwd, home) {
 }
 
 function requirePublishedR3a() {
-  const version = execFileSync(awm, ['--version'], { encoding: 'utf8' }).trim();
-  assert.equal(version, '9.4.1', 'acceptance must execute the declared published compatible CLI');
+  requireCompatibleRuntime(awm, root);
 }
 
 function removeSandbox(sandbox, remove = rmSync) {
