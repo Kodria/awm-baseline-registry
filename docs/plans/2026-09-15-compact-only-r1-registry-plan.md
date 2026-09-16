@@ -352,17 +352,17 @@ each changed skill version and later dev bundle/catalog metadata once.
 
 #### Implementation
 
-- [ ] Write mutation-resistant RED tests that scope every assertion to the relevant skill
+- [x] Write mutation-resistant RED tests that scope every assertion to the relevant skill
   section and fail if legacy output, missing ownership, missing five `####` headings, unsafe
   source discovery, fake `awm plan analyze`, model names, or unvalidated amendment is restored.
-- [ ] Make formed, serial, owner-complete requirements produce only `compact-slices/v1`; make
+- [x] Make formed, serial, owner-complete requirements produce only `compact-slices/v1`; make
   missing requirements/ownership/product/architecture/boundaries return planning-required and
   write no executable plan. Preserve canonical IDs byte-for-byte and align reference/example
   to `Surfaces`, `Implementation`, `Edge cases`, `Evidence`, `Fallback`.
-- [ ] Require revalidation/new CLI identity after plan amendment and require exact documented
+- [x] Require revalidation/new CLI identity after plan amendment and require exact documented
   public commands only. The planner may self-review traceability but must not claim a missing
   CLI command exists.
-- [ ] Run CMD-CONTRACT RED/GREEN and CMD-CLI-ACCEPT against the compatible compiled CLI; clean
+- [x] Run CMD-CONTRACT RED/GREEN and CMD-CLI-ACCEPT against the compatible compiled CLI; clean
   reviews and commit `feat(planning): require compact-only plans (#126)`.
 
 #### Edge cases
@@ -392,17 +392,17 @@ finishing lifecycle consumers only where they locate plan identity. Add structur
 
 #### Implementation
 
-- [ ] Write RED contract/mutation tests proving each execution entry calls `awm plan admit`
+- [x] Write RED contract/mutation tests proving each execution entry calls `awm plan admit`
   before a role dispatch; invalid, unsupported, migration-required, currentness mismatch,
   missing/corrupt/stale journal, or unverified provider blocks with zero dispatches.
-- [ ] Route every consumer through CLI admission/digest rather than filename or checkbox
+- [x] Route every consumer through CLI admission/digest rather than filename or checkbox
   scans. In unattended mode require journal-first reconcile; retain existing journal ledger,
   sensors, TDD, two reviewers, final review, Track A/B QA, docs, retro, verification, and
   finishing obligations unchanged.
-- [ ] Add the evidence-backed migration protocol: consume CLI facts, preserve original bytes,
+- [x] Add the evidence-backed migration protocol: consume CLI facts, preserve original bytes,
   write a separate compact continuation only for supported remaining work, and represent #148
   as Task 1 antecedent, Task 2 pending quality review, Tasks 3–14 unstarted. Ambiguity stops.
-- [ ] Keep evidence capsules bounded and role-specific; risk expands context only, never
+- [x] Keep evidence capsules bounded and role-specific; risk expands context only, never
   removes reviewers/gates. Run CMD-CONTRACT RED/GREEN and CMD-CLI-ACCEPT, review, then commit
   `feat(workflow): require admitted compact execution (#126)`.
 
@@ -432,15 +432,15 @@ validate.yml`, `.github/workflows/auto-tag.yml`, changelog, and contract accepta
 
 #### Implementation
 
-- [ ] Add RED installed-pair acceptance that invokes the declared min CLI against the published
+- [x] Add RED installed-pair acceptance that invokes the declared min CLI against the published
   reference fixture and an intentionally mismatched registry fixture; matched passes, mismatch
   blocks and names components before dispatch.
-- [ ] Set `minCliVersion` only to the observed published compatible CLI after the CLI PR is
+- [x] Set `minCliVersion` only to the observed published compatible CLI after the CLI PR is
   accepted; make validation and auto-tag run structural and installed acceptance before any
   registry tag. Bump changed skill, bundle, and catalog versions consistently.
-- [ ] Link commits, plan paths, verification, #148 dry-run, provider evidence classification,
+- [x] Link commits, plan paths, verification, #148 dry-run, provider evidence classification,
   and PRs from issue #126; unavailable capability remains `unverified`, never compatibility.
-- [ ] Run CMD-CLI-ACCEPT, CMD-RELEASE, CMD-PORTABILITY, CMD-VERSION, CMD-DIFF; clean reviews
+- [x] Run CMD-CLI-ACCEPT, CMD-RELEASE, CMD-PORTABILITY, CMD-VERSION, CMD-DIFF; clean reviews
   and commit `feat(registry): certify compact-only R1 contract (#126)`.
 
 #### Edge cases
@@ -507,7 +507,7 @@ The external source never becomes an unsafe/out-of-repository manifest source.
 - **RNF-T.6** — THE workflow SHALL retain every existing quality gate and SHALL reject an optimization when quality, robustness, security, or acceptance coverage regresses.
 - **RNF-T.7** — THE unattended workflow SHALL be deterministic and idempotent for plan identity, slice, role, command, and verdict across interruption and retry.
 
-Registry source has a prospective minCliVersion 9.8.0 selected by the controller from
+At the initial source checkpoint, registry source had a prospective minCliVersion 9.8.0 selected by the controller from
 the verified current 9.7.1 release pipeline; this is not evidence of publication.
 Publication remains blocked until exact compatible tarball, installed pair and #148 dry run.
 
@@ -522,3 +522,34 @@ malformed/future/unmarked admission controls and historical v1/context-kernel: 4
 These are source/prerelease results, not global QA, independent review, published/installed
 acceptance, #148 migration success, R1 availability or cost/billing savings. Closure remains
 controller-owned and pending. Commands are local npm scripts, never npm exec network installs.
+
+## Observed CLI-first acceptance checkpoint (2026-09-16)
+
+CLI `9.8.0` is actually available from the public npm registry, with `gitHead`
+`055c4484b7641fb3b08fd478390f63a148c95283` and verified SHA-512 integrity. The
+release's six native targets and the three installed consumer jobs all passed:
+https://github.com/Kodria/agentic-workflow/actions/runs/35131415835 . The npm
+visibility race is fixed separately in merged CLI PR #153; it never retries publication.
+
+The real npm artifact, paired with this candidate's original registry content over
+real Git/HTTPS fixture transport, passes all five R15/R16 installed tests. The fixture
+explicitly selects its sole project-owned npm-script sensor, with live certification
+from the installed artifact's internal resolver and serializer, then public admission
+executes the real test. It does not claim all-pack `sensors init` success or a stable
+public module API. npm `10.8.3`, currentness and sensor PASS are observed; unchanged
+published CLI `9.7.1`, future minimum `99.0.0`, invalid plans and a real in-worktree npm
+cache mutation block without creating journal custody. Operator HOME/cache live outside
+the consumer worktree, not in user-specific machine paths. Final structural/release
+regression: 50 PASS; portability: 39 skills; native Bash version gate and diff checks PASS.
+
+The published CLI's read-only #148 migration dry run returns `planning-required`
+(expected exit 2): T1 completed, T2 pending `quality-review`, T3–14 unstarted. Original
+plan SHA-256 remains `c11477dd59cb19094983c671cc0b760f1d1e51b9679e13dba90f1b0c2cba48e7`;
+#148 is not resumed. Evidence is tracked from #126, including
+https://github.com/Kodria/agentic-workflow/issues/126#issuecomment-5702501470 .
+
+These slice checkboxes record source work and installed-CLI fixture acceptance only.
+Registry publication, candidate validation certification, actual auto-tag certification
+and public registry-tag acceptance remain pending; no QA/docs/retro closure marker or
+global R1 availability is inferred from this checkpoint. Provider native acceptance
+and billed quota savings remain unverified where not actually observed.

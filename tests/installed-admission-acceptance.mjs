@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -11,13 +11,16 @@ export function assertNoDispatchCustody(cwd) {
 }
 export async function runInstalledAdmissionAcceptance(bin, root, { negativesOnly = false, publishedRemote = false } = {}) {
   const sandbox = mkdtempSync(path.join(os.tmpdir(), 'awm-r16-installed-'));
+  const operatorHome = mkdtempSync(path.join(os.tmpdir(), 'awm-r16-operator-'));
   const home = path.join(sandbox, 'installation');
   const registry = path.join(home, 'registries', 'baseline');
   let remote = 'https://github.com/Kodria/awm-baseline-registry.git';
-  const env = { ...process.env, HOME: sandbox, AWM_HOME: home, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_COUNT: '0' };
+  // npm writes cache/logs under HOME: operator state must not live in the
+  // consumer worktree or read-only admission correctly rejects that mutation.
+  const env = { ...process.env, HOME: operatorHome, NPM_CONFIG_CACHE: path.join(operatorHome, '.npm'), AWM_HOME: home, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_COUNT: '0' };
   const run = (program, args, cwd = sandbox) => spawnSync(program, args, { cwd, env, encoding: 'utf8', timeout: 30_000, maxBuffer: 30_000 });
-  const ok = (program, args, cwd) => { const result = run(program, args, cwd); assert.equal(result.status, 0, `${program} ${args.join(' ')}: ${result.stderr}`); return result.stdout.trim(); };
-  const json = (args, status) => { const result = run(bin, args); assert.equal(result.status, status, result.stderr); assert.ok(result.stdout.length < 20_000); return JSON.parse(result.stdout); };
+  const ok = (program, args, cwd) => { const result = run(program, args, cwd); assert.equal(result.status, 0, `${program} ${args.join(' ')}: ${[(result.stdout ?? ''), (result.stderr ?? ''), (result.error?.message ?? '')].join('\n').slice(0, 4000)}`); return result.stdout.trim(); };
+  const json = (args, status) => { const result = run(bin, args); assert.equal(result.status, status, [(result.stdout ?? ''), (result.stderr ?? ''), (result.error?.message ?? '')].join('\n').slice(0, 4000)); assert.ok(result.stdout.length < 20_000); return JSON.parse(result.stdout); };
   let server;
   try {
     mkdirSync(path.dirname(registry), { recursive: true });
@@ -99,21 +102,54 @@ export async function runInstalledAdmissionAcceptance(bin, root, { negativesOnly
     assert.equal(ok('npm', ['--version']), '10.8.3', 'use the genuinely certified npm-script runtime');
     cpSync(path.join(root, 'tests/fixtures/npm-script-certification/package.json'), path.join(sandbox, 'package.json'));
     cpSync(path.join(root, 'tests/fixtures/npm-script-certification/test.mjs'), path.join(sandbox, 'test.mjs'));
-    // Selection/probe/initialized compatibility are produced by the actual public CLI.
-    ok(bin, ['sensors', 'init', '--pack', 'js-ts', '--registry-root', registry, '--no-configure']);
+    cpSync(path.join(root, 'awm-registry.json'), path.join(registry, 'awm-registry.json'));
+    // This consumer selects only its project-owned npm test surface. Bootstrap
+    // of the whole js-ts pack would require real lint/security/depcheck tools.
+    // Use the exact installed npm artifact's internal resolver and serializer,
+    // never a checkout, invented compatibility, or a modified sensor pack.
+    const binPath = path.isAbsolute(bin) ? bin : (env.PATH || '').split(path.delimiter)
+      .map(directory => path.join(directory, bin)).find(candidatePath => existsSync(candidatePath));
+    assert.ok(binPath, 'installed CLI executable must resolve physically');
+    const cliRoot = path.resolve(path.dirname(realpathSync(binPath)), '../..');
+    assert.equal(JSON.parse(readFileSync(path.join(cliRoot, 'package.json'), 'utf8')).version, actual);
+    const materialize = `
+      const fs = require('fs'), path = require('path'), assert = require('assert/strict');
+      const base = path.join(process.argv[1], 'dist/src/commands/sensors/compatibility');
+      const {parseSensorPack} = require(path.join(base, 'contract.js'));
+      const {resolvePackSource} = require(path.join(base, 'pack-source.js'));
+      const {resolveParsedPackCompatibility} = require(path.join(base, 'live.js'));
+      const {serializeManifestV3} = require(path.join(base, 'manifest.js'));
+      const source = resolvePackSource('js-ts', {registries:[{name:'baseline', remote:'local', contentRoot:process.argv[2]}]});
+      const pack = parseSensorPack(JSON.parse(source.content), source.path).pack;
+      resolveParsedPackCompatibility(process.cwd(), pack).then(live => {
+        const evidence = live.sensors.test;
+        assert.equal(evidence.state, 'certified'); assert.equal(evidence.variantId, 'npm-script');
+        assert.equal(evidence.toolVersion, '10.8.3');
+        const sensor = live.pack.sensors.test, variant = sensor.variants.find(item => item.id === evidence.variantId);
+        const manifest = {schemaVersion:3, mode:'project-sensors', pack:'js-ts', source:{registry:'baseline'}, sensors:{
+          test:{enabled:true, fast:sensor.fast, timeout:sensor.timeout, variantId:variant.id,
+            command:variant.command, assets:variant.assets, initializedCompatibility:evidence}}};
+        process.stdout.write(serializeManifestV3(manifest));
+      }).catch(error => {console.error(error); process.exitCode=1;});
+    `;
     const sensorsPath = path.join(sandbox, '.awm', 'sensors.json');
+    writeFileSync(sensorsPath, ok(process.execPath, ['-e', materialize, cliRoot, registry]));
     const sensors = JSON.parse(readFileSync(sensorsPath, 'utf8'));
     assert.equal(sensors.sensors.test.variantId, 'npm-script');
     assert.equal(sensors.sensors.test.initializedCompatibility.state, 'certified');
-    // This tiny fixture has only the project-owned test surface, not eslint/tsc/security inputs.
-    sensors.sensors = { test: sensors.sensors.test };
-    writeFileSync(sensorsPath, JSON.stringify(sensors));
-    cpSync(path.join(root, 'awm-registry.json'), path.join(registry, 'awm-registry.json'));
+    assert.deepEqual(Object.keys(sensors.sensors), ['test']);
     ok('git', ['add', '.']);
     ok('git', ['-c', 'user.name=R16 fixture', '-c', 'user.email=r16@example.invalid', 'commit', '--quiet', '-m', 'Actual admitted project']);
     const admitted = json(args, 0);
     assert.equal(admitted.state, 'admitted'); assert.equal(admitted.planDigest, valid.planDigest);
     assert.equal(admitted.currentness, 'current'); assert.equal(admitted.sensors, 'pass');
+    assertNoDispatchCustody(sandbox);
+    // Negative control: npm logs inside the worktree are a real mutation, not
+    // a mocked sensor verdict; admission must reject it without new custody.
+    env.NPM_CONFIG_CACHE = path.join(sandbox, '.npm-mutation-negative');
+    const mutated = json(args, 2);
+    assert.equal(mutated.state, 'blocked'); assert.equal(mutated.sensors, 'not-certified');
+    assert.ok(mutated.diagnostics.some(item => item.code === 'ADMISSION_SENSORS_BLOCKED'));
     assertNoDispatchCustody(sandbox);
     // This observes journal side effects, not the provider's native dispatch
     // mechanism. Supervisor zero-dispatch is covered by its actual gate tests.
@@ -121,5 +157,6 @@ export async function runInstalledAdmissionAcceptance(bin, root, { negativesOnly
   } finally {
     if (server && server.exitCode === null) { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill(); await exited; }
     rmSync(sandbox, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    rmSync(operatorHome, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
   }
 }
