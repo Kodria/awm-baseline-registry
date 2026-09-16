@@ -1,6 +1,6 @@
 ---
 name: post-implementation-qa
-version: "2.0.0"
+version: "2.0.1"
 license: Apache-2.0
 description: Use after implementation is complete and before finishing the branch — runs two-track QA (Track A fidelity vs. the plan, Track B plan-agnostic quality lenses), drives a fix loop until clean. Also works standalone when a bug is found independently.
 ---

@@ -1,11 +1,30 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, rmSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import * as installedAcceptance from './installed-admission-acceptance.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = file => readFileSync(path.join(root, file), 'utf8');
+test('installed admission custody observation fails when a real journal artifact appears', () => {
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), 'awm-custody-observation-'));
+  try {
+    installedAcceptance.assertNoDispatchCustody(sandbox);
+    mkdirSync(path.join(sandbox, '.awm', 'journal'), { recursive: true });
+    assert.throws(() => installedAcceptance.assertNoDispatchCustody(sandbox), /journal custody/);
+  } finally { rmSync(sandbox, { recursive: true, force: true }); }
+});
+test('QA ledger templates use supported structural class for test findings', () => {
+  const prompt = read('skills/post-implementation-qa/deep-review-prompt.md');
+  const check = text => {
+    assert.doesNotMatch(text, /--class <[^>]*\btests\b[^>]*>/);
+    assert.match(text, /--class <seguridad\|logica\|structural>/);
+  };
+  check(prompt);
+  assert.throws(() => check(prompt.replace('seguridad|logica|structural', 'seguridad|logica|tests')));
+});
 export function section(text, heading) {
   const start = text.indexOf(`${heading}\n`);
   assert.ok(start >= 0, `missing section ${heading}`);
@@ -97,7 +116,8 @@ test('RF-2.5 installed acceptance wires genuine matched provenance and incompati
   const acceptance = read('tests/r16-compact-only-cli-acceptance.mjs');
   assert.match(acceptance, /runInstalledAdmissionAcceptance/);
   const gate = read('tests/installed-admission-acceptance.mjs');
-  for (const clause of ['ADMISSION_REGISTRY_CLI_INCOMPATIBLE', 'registry:baseline', '99.0.0', 'require-current', 'verify-sensors', 'published-remote', 'local-git-fixture', 'dispatchCount']) assert.ok(gate.includes(clause), clause);
+  for (const clause of ['ADMISSION_REGISTRY_CLI_INCOMPATIBLE', 'registry:baseline', '99.0.0', 'require-current', 'verify-sensors', 'published-remote', 'local-git-fixture', 'assertNoDispatchCustody']) assert.ok(gate.includes(clause), clause);
+  assert.doesNotMatch(gate, /dispatchCount/, 'a fixed local counter is not observed dispatch evidence');
   for (const workflow of ['validate.yml', 'auto-tag.yml']) assert.match(read(`.github/workflows/${workflow}`), /AWM_R16_INSTALLED_ACCEPTANCE: "1"/);
 });
 

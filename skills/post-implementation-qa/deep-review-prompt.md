@@ -43,11 +43,12 @@ Append `--defect-class <exact-catalog-id>` only when the finding maps to an exac
 
 ```
 awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity finding --class proceso --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>"
-awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity finding --class <seguridad|logica|tests> --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>" --ref <file:line>
+awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity finding --class <seguridad|logica|structural> --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>" --ref <file:line>
 awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity win --class <appropriate-class> --signature <short-slug> --severity info --desc "<one line>"
 ```
 
 Use a stable lowercase signature. If `awm` is unavailable, ledger is best-effort.
+The tests lens records findings with `class: structural`; `tests` is a lens, not a supported ledger class.
 
 ## Track A — Fidelity subagent
 

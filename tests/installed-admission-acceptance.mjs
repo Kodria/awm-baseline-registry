@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 // This is real Git transport/CLI/sensor execution, not a mocked currentness verdict.
 // The prepublication fixture tag is deliberately NOT public registry release proof.
+export function assertNoDispatchCustody(cwd) {
+  assert.equal(existsSync(path.join(cwd, '.awm', 'journal')), false, 'read-only admission must not create journal custody');
+}
 export async function runInstalledAdmissionAcceptance(bin, root, { negativesOnly = false, publishedRemote = false } = {}) {
   const sandbox = mkdtempSync(path.join(os.tmpdir(), 'awm-r16-installed-'));
   const home = path.join(sandbox, 'installation');
@@ -15,7 +18,6 @@ export async function runInstalledAdmissionAcceptance(bin, root, { negativesOnly
   const run = (program, args, cwd = sandbox) => spawnSync(program, args, { cwd, env, encoding: 'utf8', timeout: 30_000, maxBuffer: 30_000 });
   const ok = (program, args, cwd) => { const result = run(program, args, cwd); assert.equal(result.status, 0, `${program} ${args.join(' ')}: ${result.stderr}`); return result.stdout.trim(); };
   const json = (args, status) => { const result = run(bin, args); assert.equal(result.status, status, result.stderr); assert.ok(result.stdout.length < 20_000); return JSON.parse(result.stdout); };
-  let dispatchCount = 0;
   let server;
   try {
     mkdirSync(path.dirname(registry), { recursive: true });
@@ -76,7 +78,7 @@ export async function runInstalledAdmissionAcceptance(bin, root, { negativesOnly
       assert.ok(compatibility, JSON.stringify(report));
       assert.equal(compatibility.ok, false);
       assert.match(compatibility.detail, /baseline requires CLI >= 9\.8\.0/);
-      assert.equal(dispatchCount, 0);
+      assertNoDispatchCustody(sandbox);
     }
     const assertIncompatible = (minimum, expectedActual) => {
       const manifest = JSON.parse(readFileSync(path.join(registry, 'awm-registry.json'), 'utf8'));
@@ -88,11 +90,11 @@ export async function runInstalledAdmissionAcceptance(bin, root, { negativesOnly
       assert.ok(diagnostic, JSON.stringify(report));
       assert.ok(diagnostic.message.includes('registry:baseline'));
       assert.ok(diagnostic.message.includes(minimum)); assert.ok(diagnostic.message.includes(expectedActual));
-      assert.equal(dispatchCount, 0);
+      assertNoDispatchCustody(sandbox);
     };
     if (actual === '9.7.1') assertIncompatible(candidate, actual);
     assertIncompatible('99.0.0', actual);
-    if (negativesOnly) return { kind: 'prerelease-negative-controls', actual, dispatchCount };
+    if (negativesOnly) return { kind: 'prerelease-negative-controls', actual, custody: 'journal-absent' };
     assert.equal(actual, candidate, 'matched installed acceptance requires the actual released compatible CLI; prerelease is not a PASS');
     assert.equal(ok('npm', ['--version']), '10.8.3', 'use the genuinely certified npm-script runtime');
     cpSync(path.join(root, 'tests/fixtures/npm-script-certification/package.json'), path.join(sandbox, 'package.json'));
@@ -112,8 +114,10 @@ export async function runInstalledAdmissionAcceptance(bin, root, { negativesOnly
     const admitted = json(args, 0);
     assert.equal(admitted.state, 'admitted'); assert.equal(admitted.planDigest, valid.planDigest);
     assert.equal(admitted.currentness, 'current'); assert.equal(admitted.sensors, 'pass');
-    assert.equal(dispatchCount, 0); // admission is read-only: this runner never dispatches.
-    return { kind: publishedRemote ? 'published-remote' : 'local-git-fixture', actual, installedCommit, dispatchCount };
+    assertNoDispatchCustody(sandbox);
+    // This observes journal side effects, not the provider's native dispatch
+    // mechanism. Supervisor zero-dispatch is covered by its actual gate tests.
+    return { kind: publishedRemote ? 'published-remote' : 'local-git-fixture', actual, installedCommit, custody: 'journal-absent' };
   } finally {
     if (server && server.exitCode === null) { const exited = new Promise(resolve => server.once('exit', resolve)); server.kill(); await exited; }
     rmSync(sandbox, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
