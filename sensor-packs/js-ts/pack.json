@@ -336,9 +336,7 @@
       "fast": true,
       "timeout": 30000,
       "applicability": {
-        "allFiles": [
-          "package.json"
-        ]
+        "kind": "explicit-opt-in"
       },
       "variants": [
         {
@@ -484,9 +482,7 @@
       "fast": false,
       "timeout": 600000,
       "applicability": {
-        "allFiles": [
-          "package.json"
-        ]
+        "kind": "explicit-opt-in"
       },
       "variants": [
         {

@@ -52,6 +52,10 @@ for (const sensorName of ['typecheck', 'depcheck', 'format', 'test', 'mutation']
   assert.ok(pack.sensors[sensorName].variants.every((variant) => !variant.changedCommand), `${sensorName} must remain whole-project in changed scope`);
 }
 assert.deepEqual(pack.sensors.test.variants.map((variant) => variant.id).sort(), ['bun-script', 'npm-script', 'pnpm-script', 'yarn-script']);
+assert.equal(pack.sensors.format.applicability.kind, 'explicit-opt-in', 'format must not become a default gate without an explicit project opt-in');
+assert.equal(pack.sensors.mutation.applicability.kind, 'explicit-opt-in', 'mutation must not become a default gate without an explicit project opt-in');
+assert.notEqual(pack.sensors.test.applicability.kind, 'explicit-opt-in', 'test remains a mandatory project gate');
+assert.notEqual(pack.sensors.security.applicability.kind, 'explicit-opt-in', 'security remains a mandatory project gate');
 assert.equal(pack.sensors.security.variants[0].policyRef, 'shared/semgrep-policy.json',
   'Semgrep must inherit its verified registry-owned policy rather than duplicate security requirements');
 
