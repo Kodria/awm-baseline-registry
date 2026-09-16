@@ -34,13 +34,13 @@ function assertNoOnSignal(value, manifestPath) {
   }
 }
 
-test('dev bundle uses the canonical ordered 24-string skill membership at 3.9.4', () => {
+test('dev bundle uses the canonical ordered 24-string skill membership at 4.0.0', () => {
   const bundle = readJson('bundles/dev/bundle.json');
   const catalog = readJson('catalog.json');
   const catalogDev = catalog.bundles.find(entry => entry.name === 'dev');
 
-  assert.equal(bundle.version, '3.9.4');
-  assert.equal(catalogDev?.version, '3.9.4');
+  assert.equal(bundle.version, '4.0.0');
+  assert.equal(catalogDev?.version, '4.0.0');
   assert.ok(bundle.skills.every(skill => typeof skill === 'string' && skill.length > 0),
     'every dev skill entry must be a non-empty string');
   assert.deepEqual(bundle.skills, expected);
