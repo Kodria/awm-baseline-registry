@@ -52,7 +52,7 @@ Apply [Registry Sensor Closure Policy (R8 v1)](../setup-sensors/references/regis
 exactly. It is the single normative owner; do not restate the policy here.
 
 ### Step 3: Report
-When batch complete:
+When the admitted serial slice is complete:
 - Show what was implemented
 - Show verification output
 - Say: "Ready for feedback."
@@ -73,7 +73,7 @@ After all tasks complete and verified:
 ## When to Stop and Ask for Help
 
 **STOP executing immediately when:**
-- Hit a blocker mid-batch (missing dependency, test fails, instruction unclear)
+- Hit a blocker within the current slice (missing dependency, test fails, instruction unclear)
 - Plan has critical gaps preventing starting
 - You don't understand an instruction
 - Verification fails repeatedly
@@ -98,7 +98,7 @@ conclusive rerun reports `overall: pass`.
 - Follow plan steps exactly
 - Don't skip verifications
 - Reference skills when plan says to
-- Between batches: just report and wait
+- Between serial slices: report verified evidence, then follow the declared execution mode without skipping review or admission
 - Stop when blocked, don't guess
 - Never start implementation on main/master branch without explicit user consent
 
@@ -107,5 +107,5 @@ conclusive rerun reports `overall: pass`.
 **Required workflow skills:**
 - **using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
 - **writing-plans** - Creates the plan this skill executes
-- **verification-before-completion** - Defines what "done" requires, including the AWM sensor gate (`awm sensors run`) applied per task and per batch <!-- AWM-INTEGRATION: executing-plans-sensor-gate -->
+- **verification-before-completion** - Defines what "done" requires, including the AWM sensor gate (`awm sensors run`) applied per task and serial slice <!-- AWM-INTEGRATION: executing-plans-sensor-gate -->
 - **finishing-a-development-branch** - Complete development after all tasks

@@ -377,9 +377,14 @@ run `awm ledger archive`. Then run `awm ledger list` and require an empty list (
 exit 0 alone is not enough. Archive failure or nonempty active ledger stops the retro.
 This capture/skip-and-archive verification is mandatory in modo desatendido too.
 
-After the archive is verified, add the `awm-retro-complete` lifecycle marker to the explicit
-active plan through the current CLI-supported lifecycle transition. Revalidate/re-admit its
-current identity; do not mark an unrelated plan or declare stale obligations current.
+Only after all retro gates, terminal capture or evidenced no-journal skip, and verified ledger archive pass, use the authorized native filesystem editor to add the standalone `awm-retro-complete` marker to the explicitly assigned active_plan only.
+There is no CLI marker-edit command; never invent a lifecycle command, fabricate COMPLETE, or change an unrelated plan.
+Validate the updated bytes with `awm plan validate "$active_plan" --cwd . --json` and retain the new CLI-derived identity.
+If a real current branch binding exists, use the existing `awm watch rebind --plan "$active_plan"` only when its actual binding/proof preconditions permit; otherwise block for reviewed recovery.
+When the current branch query is missing, do not rebind or initialize a journal: retain the evidenced no-journal skip and the admission mode's existing requirements.
+The pre-edit capture remains historical: rerun genuine affected verification when its fingerprint or current-evidence proof includes the changed plan; never relabel or re-fingerprint old PASS evidence.
+Use the existing obligation, supervisor-issued generation and declared paths/satisfies for a required rerun; unavailable custody or proof blocks, never substitutes an invented command or token.
+Re-admit the exact updated plan identity with all required currentness, sensor, journal and custody gates before the next lifecycle phase; a marker alone authorizes nothing.
 
 ```markdown
 <!-- awm-retro-complete: YYYY-MM-DD -->

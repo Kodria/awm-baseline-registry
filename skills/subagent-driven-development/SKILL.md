@@ -188,11 +188,11 @@ digraph when_to_use {
     "Tasks mostly independent?" -> "Stay in this session?" [label="yes"];
     "Tasks mostly independent?" -> "Manual execution or brainstorm first" [label="no - tightly coupled"];
     "Stay in this session?" -> "subagent-driven-development" [label="yes"];
-    "Stay in this session?" -> "executing-plans" [label="no - parallel session"];
+    "Stay in this session?" -> "executing-plans" [label="no - separate serial session"];
 }
 ```
 
-**vs. Executing Plans (parallel session):**
+**vs. Executing Plans (separate serial session):**
 - Same session (no context switch)
 - Fresh subagent per task (no context pollution)
 - Two-stage review after each task: spec compliance first, then code quality
@@ -516,4 +516,4 @@ Your sequence — execute steps 1-2 in order, then branch by mode at step 3:
 - **verification-before-completion** - Run `awm sensors run` (when `.awm/sensors.json` exists) before reporting DONE
 
 **Alternative workflow:**
-- **executing-plans** - Use for parallel session instead of same-session execution
+- **executing-plans** - Use for a separate serial session instead of same-session execution

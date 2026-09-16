@@ -56,9 +56,24 @@ test('RF-1.5 documented read-only lifecycle commands exist on the paired compile
     const status = spawnSync(awm, ['watch','journal-status','--json'], { cwd:sandbox, encoding:'utf8', timeout:15_000, maxBuffer:10_000 });
     const report=parse(status,0,'missing');
     assert.equal(report.bootstrapUnused,false);
-    for (const command of [['watch','archive-unused','--help'],['plan','migration-facts','--help']]) {
+    for (const command of [['watch','archive-unused','--help'],['watch','rebind','--help'],['plan','migration-facts','--help']]) {
       const result=invoke(command); assert.equal(result.status,0,result.stderr);
       assert.match(result.stdout,/Usage:/);
     }
   } finally { rmSync(sandbox,{recursive:true,force:true}); }
+});
+
+test('RNF-T.3/5 native standalone lifecycle marker remains valid and changes the exact CLI identity', () => {
+  requireCompatibleRuntime(awm, root);
+  const sandbox = mkdtempSync(path.join(root, 'tests', '.r16-marker-'));
+  try {
+    const file = path.join(sandbox, 'active.md');
+    const bytes = readFileSync(path.join(root, fixture), 'utf8');
+    writeFileSync(file, bytes);
+    const before = parse(invoke(['plan', 'validate', file, '--cwd', root, '--json']), 0, 'valid');
+    // Native file editing is the real operation: no fictional CLI marker command.
+    writeFileSync(file, `${bytes}\n<!-- awm-retro-complete: 2026-09-16 -->\n`);
+    const after = parse(invoke(['plan', 'validate', file, '--cwd', root, '--json']), 0, 'valid');
+    assert.notEqual(after.planDigest, before.planDigest, 'pre-edit identity is not current after marker mutation');
+  } finally { rmSync(sandbox, { recursive: true, force: true }); }
 });

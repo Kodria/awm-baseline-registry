@@ -305,16 +305,16 @@ After saving the plan, offer execution choice:
 
 **"Plan complete and saved to `docs/plans/<filename>.md`. Two execution options:**
 
-**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
+**1. Subagent-Driven (recommended)** - I dispatch a fresh implementer for one admitted serial compact slice at a time, with independent specification and quality reviews
 
-**2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
+**2. Inline Execution** - Execute one admitted serial compact slice at a time in this session using executing-plans, with independent specification and quality review checkpoints
 
 **Which approach?"**
 
 **If Subagent-Driven chosen:**
 - **REQUIRED SUB-SKILL:** Use `subagent-driven-development`
-- Fresh subagent per task + two-stage review
+- One admitted serial slice at a time + fresh implementer and distinct two-stage review
 
 **If Inline Execution chosen:**
 - **REQUIRED SUB-SKILL:** Use `executing-plans`
-- Batch execution with checkpoints for review
+- One admitted serial slice at a time with independent specification and quality review checkpoints

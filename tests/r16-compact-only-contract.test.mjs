@@ -56,6 +56,43 @@ const consumers = ['writing-plans', 'development-process', 'executing-plans', 's
 const admissionPath = 'skills/writing-plans/references/compact-admission-v1.md';
 const migrationPath = 'skills/writing-plans/references/compact-migration-v1.md';
 
+const retroMarkerClauses = [
+  'Only after all retro gates, terminal capture or evidenced no-journal skip, and verified ledger archive pass, use the authorized native filesystem editor to add the standalone `awm-retro-complete` marker to the explicitly assigned active_plan only.',
+  'There is no CLI marker-edit command; never invent a lifecycle command, fabricate COMPLETE, or change an unrelated plan.',
+  'Validate the updated bytes with `awm plan validate "$active_plan" --cwd . --json` and retain the new CLI-derived identity.',
+  'If a real current branch binding exists, use the existing `awm watch rebind --plan "$active_plan"` only when its actual binding/proof preconditions permit; otherwise block for reviewed recovery.',
+  'The pre-edit capture remains historical: rerun genuine affected verification when its fingerprint or current-evidence proof includes the changed plan; never relabel or re-fingerprint old PASS evidence.',
+  'Re-admit the exact updated plan identity with all required currentness, sensor, journal and custody gates before the next lifecycle phase; a marker alone authorizes nothing.',
+];
+function assertRetroMarker(text) {
+  const start = text.indexOf('### 11. Capture and close the retro');
+  const body = text.slice(start, text.indexOf('## Anti-patterns', start));
+  for (const clause of retroMarkerClauses) assert.ok(body.includes(clause), `missing closure amendment clause: ${clause}`);
+  assert.doesNotMatch(body, /current CLI-supported lifecycle transition/);
+  assert.ok(body.indexOf('awm evidence capture --plan') < body.indexOf(retroMarkerClauses[0]), 'terminal capture precedes marker edit');
+}
+test('RNF-T.3/5 authorized native marker edit retains identity and genuine proof gates', () => {
+  const text = read('skills/harness-retro/SKILL.md'); assertRetroMarker(text);
+  for (const clause of retroMarkerClauses) assert.throws(() => assertRetroMarker(text.replace(clause, '')), /missing closure amendment clause/);
+  assert.throws(() => assertRetroMarker(text.replace(retroMarkerClauses[0], 'Use the current CLI-supported lifecycle transition.')), /missing closure amendment clause/);
+});
+function assertSerialRecipes(files) {
+  const rules = [
+    ['writing-plans', '**2. Inline Execution** - Execute one admitted serial compact slice at a time in this session using executing-plans, with independent specification and quality review checkpoints', /batch execution|Batch execution/],
+    ['executing-plans', 'When the admitted serial slice is complete:', /When batch complete|mid-batch|Between batches|per batch/],
+    ['subagent-driven-development', '**vs. Executing Plans (separate serial session):**', /parallel session/],
+    ['finishing-a-development-branch', 'After all admitted serial slices and global closure gates complete', /After all batches complete/],
+  ];
+  for (const [name, positive, forbidden] of rules) { assert.ok(files[name].includes(positive), `${name}: missing serial recipe`); assert.doesNotMatch(files[name], forbidden); }
+}
+test('RF-1.2/5.1 positive sibling handoffs remain serial without banning independent QA lenses', () => {
+  const names = ['writing-plans', 'executing-plans', 'subagent-driven-development', 'finishing-a-development-branch'];
+  const files = Object.fromEntries(names.map(name => [name, read(`skills/${name}/SKILL.md`)]));
+  assertSerialRecipes(files);
+  for (const name of names) assert.throws(() => assertSerialRecipes({ ...files, [name]: `${files[name]}\n${name === 'subagent-driven-development' ? 'parallel session' : name === 'finishing-a-development-branch' ? 'After all batches complete' : name === 'executing-plans' ? 'When batch complete' : 'Batch execution'}` }));
+  assert.ok(read('skills/post-implementation-qa/SKILL.md').includes('Dispatch them in parallel.'), 'independent isolated quality lenses stay intact');
+});
+
 test('RF-2.5 installed acceptance wires genuine matched provenance and incompatible component negatives', () => {
   const acceptance = read('tests/r16-compact-only-cli-acceptance.mjs');
   assert.match(acceptance, /runInstalledAdmissionAcceptance/);
