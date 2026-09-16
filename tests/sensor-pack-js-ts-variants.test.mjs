@@ -69,6 +69,7 @@ for (const [id, executable] of [['npm-script', 'npm'], ['pnpm-script', 'pnpm'], 
   const variant = pack.sensors.test.variants.find((candidate) => candidate.id === id);
   assert.equal(variant.command.executable, executable);
   assert.equal(variant.command.packageManager, executable);
+  assert.deepEqual(variant.probe, { kind: 'package-script-present', script: 'test' }, `${id} must require the project test script`);
 }
 const npm = pack.sensors.test.variants.find((variant) => variant.id === 'npm-script');
 assert.equal(npm.certifiedRange, '=10.8.3', 'npm certification must name the exact manager version exercised in CI');

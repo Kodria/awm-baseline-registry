@@ -188,8 +188,10 @@ export function validatePackV2(pack, packRoot) {
       }
       text(variant.formatter, `${sensorId}: formatter required`);
       const probe = policy ? { kind: policy.probe } : object(variant.probe, `${sensorId}: probe required`);
-      exactFields(probe, ['kind'], `${sensorId}: probe has unknown fields`);
+      exactFields(probe, ['kind', 'script'], `${sensorId}: probe has unknown fields`);
       assert.ok(probes.has(probe.kind), `${sensorId}: probe must be a closed supported kind`);
+      if (probe.kind === 'package-script-present') text(probe.script, `${sensorId}: package-script-present probe requires script`);
+      else assert.ok(!Object.hasOwn(probe, 'script'), `${sensorId}: only package-script-present probes may declare script`);
       seen.push({ id: variantId, priority: variant.priority, toolRange, runtimeRange });
     }
     for (let left = 0; left < seen.length; left += 1) for (let right = left + 1; right < seen.length; right += 1) {

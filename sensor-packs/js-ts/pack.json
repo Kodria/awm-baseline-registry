@@ -395,7 +395,8 @@
           "assets": [],
           "formatter": "test",
           "probe": {
-            "kind": "package-script-present"
+            "kind": "package-script-present",
+            "script": "test"
           }
         },
         {
@@ -421,7 +422,8 @@
           "assets": [],
           "formatter": "test",
           "probe": {
-            "kind": "package-script-present"
+            "kind": "package-script-present",
+            "script": "test"
           }
         },
         {
@@ -446,7 +448,8 @@
           "assets": [],
           "formatter": "test",
           "probe": {
-            "kind": "package-script-present"
+            "kind": "package-script-present",
+            "script": "test"
           }
         },
         {
@@ -471,7 +474,8 @@
           "assets": [],
           "formatter": "test",
           "probe": {
-            "kind": "package-script-present"
+            "kind": "package-script-present",
+            "script": "test"
           }
         }
       ]

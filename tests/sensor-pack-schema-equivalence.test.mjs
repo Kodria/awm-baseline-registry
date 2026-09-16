@@ -111,6 +111,10 @@ const emptyChangedExtensions = structuredClone(boundedChanged);
 emptyChangedExtensions.sensors.lint.variants[0].changedCommand.fileInput.extensions = [];
 const missingChangedFileInput = structuredClone(boundedChanged);
 delete missingChangedFileInput.sensors.lint.variants[0].changedCommand.fileInput;
+const packageScript = clone();
+packageScript.sensors.lint.variants[0].probe = { kind: 'package-script-present', script: 'test' };
+const missingPackageScript = clone();
+missingPackageScript.sensors.lint.variants[0].probe = { kind: 'package-script-present' };
 
 for (const [name, pack, expected] of [
   ['native', native, true], ['baseline', base, true], ['hardening', hardening, true],
@@ -129,6 +133,7 @@ for (const [name, pack, expected] of [
   ['missing changed files placeholder', noChangedFiles, false], ['embedded changed files placeholder', embeddedChangedFiles, false],
   ['empty changed extensions', emptyChangedExtensions, false],
   ['missing changed file input', missingChangedFileInput, false],
+  ['package script probe', packageScript, true], ['package script probe without script', missingPackageScript, false],
 ]) {
   assert.equal(valid(pack, schema), expected, `formal schema verdict for ${name}`);
   let failure;
