@@ -88,12 +88,15 @@ function assertRetroMarker(text) {
   const body = text.slice(start, text.indexOf('## Anti-patterns', start));
   for (const clause of retroMarkerClauses) assert.ok(body.includes(clause), `missing closure amendment clause: ${clause}`);
   assert.doesNotMatch(body, /current CLI-supported lifecycle transition/);
+  assert.doesNotMatch(body, /awm watch archive-unused[^`\n]*--json/, 'archive-unused returns JSON without a --json option');
+  assert.ok(body.includes('awm watch archive-unused --plan "$active_plan"'), 'unused archive names the assigned plan');
   assert.ok(body.indexOf('awm evidence capture --plan') < body.indexOf(retroMarkerClauses[0]), 'terminal capture precedes marker edit');
 }
 test('RNF-T.3/5 authorized native marker edit retains identity and genuine proof gates', () => {
   const text = read('skills/harness-retro/SKILL.md'); assertRetroMarker(text);
   for (const clause of retroMarkerClauses) assert.throws(() => assertRetroMarker(text.replace(clause, '')), /missing closure amendment clause/);
   assert.throws(() => assertRetroMarker(text.replace(retroMarkerClauses[0], 'Use the current CLI-supported lifecycle transition.')), /missing closure amendment clause/);
+  assert.throws(() => assertRetroMarker(text.replace('awm watch archive-unused --plan "$active_plan"', 'awm watch archive-unused --plan "$active_plan" --json')), /archive-unused returns JSON/);
 });
 function assertSerialRecipes(files) {
   const rules = [
