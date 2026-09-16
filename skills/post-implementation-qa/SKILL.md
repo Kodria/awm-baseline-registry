@@ -1,11 +1,16 @@
 ---
 name: post-implementation-qa
-version: "1.9.1"
+version: "2.0.1"
 license: Apache-2.0
 description: Use after implementation is complete and before finishing the branch — runs two-track QA (Track A fidelity vs. the plan, Track B plan-agnostic quality lenses), drives a fix loop until clean. Also works standalone when a bug is found independently.
 ---
 
 # Post-Implementation QA
+
+## Compact admission — BLOCKING
+
+Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
+Apply it exactly; only `admitted` for the current plan identity may continue.
 
 **Announce at start:** "I'm using the post-implementation-qa skill to review what was built vs. what was planned."
 
@@ -41,7 +46,7 @@ the sole normative contract for retrieval.
 
 ## Modo de ejecución (lectura del campo)
 
-Al arrancar, localiza el plan activo (`docs/plans/*-plan.md` de la rama actual) y lee su línea `**Modo de ejecución:**`:
+Al arrancar, usa únicamente el plan activo y la identidad confirmados por admission; lee su línea `**Modo de ejecución:**` desde esos mismos bytes validados:
 
 - Ausente o `interactivo` → modo interactivo (default): comportamiento estándar de este skill.
 - `desatendido` → aplica la sección **Modo desatendido** de este skill.
@@ -60,7 +65,7 @@ Invoked when `subagent-driven-development` or `executing-plans` reports all task
 
 ### Entry Point 2 — Standalone
 The user invokes directly when finding a bug or wanting a QA pass without prior development.
-- If `*-plan.md` exists for the current branch in `docs/plans/` → use it as reference
+- If an active plan is explicitly assigned → require admission and use its current identity
 - If no plan → delegate directly to `systematic-debugging`
 
 ## Parallel-track final-head guard
@@ -89,7 +94,7 @@ Driven by the **requirement IDs** from the spec's `## Requirements` section (pro
 - **Forward gap** — a requirement ID with no implementation or no test → finding.
 - **Backward gap** — code with no requirement ID → scope creep → finding.
 
-Without requirement IDs there is nothing precise to measure fidelity against — fall back to reading the plan prose section by section, but say so.
+Missing requirement IDs block compact execution with planning-required; do not silently substitute unstructured plan prose.
 
 **Remediation:** correction subagent pointed at the gap + the plan section/ID. No root-cause analysis — the gap is clear from the plan.
 
@@ -168,10 +173,7 @@ digraph qa_process {
 
 ### Step 1: Locate the active plan
 
-```bash
-git branch --show-current
-ls docs/plans/ | grep -v design | sort | tail -5
-```
+Use the explicitly assigned active plan path and current CLI-admitted identity. Do not infer the active plan from newest filename or completed checkboxes.
 
 If no plan exists for the current branch → standalone mode → `systematic-debugging`.
 

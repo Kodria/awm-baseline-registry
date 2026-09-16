@@ -34,6 +34,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
+      - name: Exercise pinned npm project script
+        if: matrix.os == 'ubuntu-latest' && matrix.python-profile == 'current'
+        working-directory: tests/fixtures/npm-script-certification
+        run: |
+          npm install --global npm@10.8.3
+          npm --version | grep -Fx "10.8.3"
+          npm test
       - name: Validate frozen pack contracts and generated support
         run: |
           node tests/sensor-pack-variants.test.mjs

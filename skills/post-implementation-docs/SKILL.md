@@ -1,11 +1,16 @@
 ---
 name: post-implementation-docs
-version: "1.0.0"
+version: "2.0.0"
 license: Apache-2.0
 description: Use after post-implementation-qa closes and before harness-retro — updates the user-facing documentation that this cycle's changes made stale, verifying every claim against the real binary rather than against prose. Writes the awm-docs-complete marker.
 ---
 
 # Post-Implementation Docs
+
+## Compact admission — BLOCKING
+
+Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
+Apply it exactly; only `admitted` for the current plan identity may continue.
 
 **Announce at start:** "I'm using the post-implementation-docs skill to bring the user-facing documentation in line with what this cycle shipped."
 
@@ -19,7 +24,7 @@ Esta fase corre **después** de `post-implementation-qa` y **antes** de `harness
 
 ## Modo de ejecución (lectura del campo)
 
-Al arrancar, localiza el plan activo (`docs/plans/*-plan.md` de la rama actual) y lee su línea `**Modo de ejecución:**`:
+Al arrancar, usa únicamente el plan activo y la identidad confirmados por admission; lee su línea `**Modo de ejecución:**` desde esos mismos bytes validados:
 
 - Ausente o `interactivo` → modo interactivo (default): presentá el inventario del Step 2 y esperá confirmación antes de editar.
 - `desatendido` → aplicá la sección **Modo desatendido** de este skill.

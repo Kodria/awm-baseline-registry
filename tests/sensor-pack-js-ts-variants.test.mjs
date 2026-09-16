@@ -52,6 +52,12 @@ for (const sensorName of ['typecheck', 'depcheck', 'format', 'test', 'mutation']
   assert.ok(pack.sensors[sensorName].variants.every((variant) => !variant.changedCommand), `${sensorName} must remain whole-project in changed scope`);
 }
 assert.deepEqual(pack.sensors.test.variants.map((variant) => variant.id).sort(), ['bun-script', 'npm-script', 'pnpm-script', 'yarn-script']);
+assert.equal(pack.sensors.format.applicability.kind, 'explicit-opt-in', 'format must not become a default gate without an explicit project opt-in');
+assert.equal(pack.sensors.mutation.applicability.kind, 'explicit-opt-in', 'mutation must not become a default gate without an explicit project opt-in');
+assert.notEqual(pack.sensors.test.applicability.kind, 'explicit-opt-in', 'test remains a mandatory project gate');
+assert.notEqual(pack.sensors.security.applicability.kind, 'explicit-opt-in', 'security remains a mandatory project gate');
+assert.equal(pack.sensors.security.variants[0].policyRef, 'shared/semgrep-policy.json',
+  'Semgrep must inherit its verified registry-owned policy rather than duplicate security requirements');
 
 // dependency-cruiser 17 dropped nothing this pack's command relies on (verified against
 // the real 17.4.3 CLI: same --config/args argv, same exit-code and violation-detection
@@ -67,6 +73,10 @@ for (const [id, executable] of [['npm-script', 'npm'], ['pnpm-script', 'pnpm'], 
   const variant = pack.sensors.test.variants.find((candidate) => candidate.id === id);
   assert.equal(variant.command.executable, executable);
   assert.equal(variant.command.packageManager, executable);
+  assert.deepEqual(variant.probe, { kind: 'package-script-present', script: 'test' }, `${id} must require the project test script`);
 }
+const npm = pack.sensors.test.variants.find((variant) => variant.id === 'npm-script');
+assert.equal(npm.certifiedRange, '=10.8.3', 'npm certification must name the exact manager version exercised in CI');
+assert.deepEqual(npm.command.args, ['test'], 'npm must invoke the project test script without appending runner-specific flags');
 
 console.log('sensor-pack-js-ts-variants: v2 variants, native TypeScript, and local script argv OK');

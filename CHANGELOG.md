@@ -2,6 +2,26 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 4.0.0 — 2026-09-16 (R1 source; publication pending)
+
+### Changed
+- Compact v1 is the only executable implementation-plan family. Incomplete ownership,
+  requirements or safe serial boundaries return `planning-required`; historical plans are
+  preserved byte-for-byte and migrated only to separately accepted continuations.
+- The corrected example uses the validator's canonical five subsections and real test
+  commands. Every lifecycle consumer requires CLI admission/current identity; unattended
+  dispatch additionally requires bound healthy journal and observable supervisor custody.
+- Independent spec/quality identities, TDD, final review, Track A/B QA, docs, retro, sensors,
+  verification and finishing remain mandatory. Evidence Capsule v1 is unchanged.
+- Retro checks current-branch journal status rather than a global directory, and does not
+  fabricate registry metadata in CLI projects or completed cycles for unused bootstrap state.
+
+### Rollout boundary
+Requires compatible `agentic-workflow-manager` 9.8.0 after its actual CLI-first publication.
+Source/prerelease gates do not establish published or installed acceptance; R1 remains
+unavailable until isolated installed pair acceptance and #148 migration dry run pass.
+No R2 model policy, semantic profiles or compact parallel schema is included.
+
 ## dev 3.9.3 — 2026-09-05
 
 ### Fixed

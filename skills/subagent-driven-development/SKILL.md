@@ -1,11 +1,16 @@
 ---
 name: subagent-driven-development
-version: "1.12.2"
+version: "2.0.0"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
 
 # Subagent-Driven Development
+
+## Compact admission — BLOCKING
+
+Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
+Apply it exactly; only `admitted` for the current plan identity may continue.
 
 Execute plan by dispatching fresh subagent per task, with two-stage review after each: spec compliance review first, then code quality review.
 
@@ -41,7 +46,7 @@ Use this protocol only for a plan validated as `compact-slices/v1`. Select exact
 and its declared sources, requirements, and commands are sufficient and inert. Dispatch only
 that slice and only declared sources, requirements, and commands. Do not ask an implementer to
 inspect or discover the plan, branch history, or unrelated files. Invalid or unsupported compact
-input stops execution; an unmarked plan keeps existing legacy behavior unchanged.
+input stops execution; unmarked input returns migration-required and dispatches zero agents.
 
 The compact state machine is `pending → implementing → spec-review → quality-review → complete`.
 The same implementer fixes findings. Use three distinct identities: implementer, fresh specification reviewer, and different fresh code-quality reviewer. No slice advances until both reviewers
@@ -52,7 +57,7 @@ the current diff. Validate every report against that durable evidence; files win
 If an omission, new requirement, or incorrect boundary is discovered, exit to
 `amendment-required` (or `blocked` when it cannot be resolved). Create a durable amendment in
 the plan, revalidate the plan, and write a deviation record before selecting a slice again. Code
-never closes a plan defect by itself. For a security, robustness, public-contract, or uncertain
+never closes a plan defect by itself. For a security, robustness, root-configuration, public-contract, or uncertain
 cross-cutting risk, provide full relevant context and required verification, while preserving all
 roles and gates; risk fallback never downgrades review or replaces a reviewer.
 
@@ -73,7 +78,7 @@ canonical: ../project-context-init/references/context-kernel-v1.md
 
 ## Modo de ejecución (lectura del campo)
 
-Al arrancar, localiza el plan activo (`docs/plans/*-plan.md` de la rama actual) y lee su línea `**Modo de ejecución:**`:
+Al arrancar, usa únicamente el plan activo y la identidad confirmados por admission; lee su línea `**Modo de ejecución:**` desde esos mismos bytes validados:
 
 - Ausente o `interactivo` → modo interactivo (default): comportamiento estándar de este skill.
 - `desatendido` → aplica la sección **Modo desatendido** de este skill.
@@ -85,15 +90,30 @@ El modo desatendido quita pausas, no controles: los gates (sensor, ledger, recon
 
 La ejecución continua entre tareas es el comportamiento default en AMBOS modos (no cambia). WHEN el modo es `desatendido`, lo único que cambia es la TERMINATION_PHASE: no preguntes al usuario si continuar con el cierre — devuelve el control al orquestador, que rutea la fase siguiente automáticamente. IF un subagente reporta BLOCKED irresoluble o hay ambigüedad que impide el progreso, THEN detente y escala al usuario igual que en modo interactivo — BLOCKED nunca se salta.
 
-## Modo journal-first (continuidad durable — opt-in)
+## Modo journal-first (obligatorio desatendido; opcional interactivo)
 
 <!-- AWM-INTEGRATION: subagent-journal-gate -->
 
-WHEN el proyecto tiene journal inicializado (`<repo>/.awm/journal/<rama>/state.json`
-existe — se crea con `awm watch --init`), el controlador opera journal-first.
-IF el journal NO está inicializado, THEN este modo entero NO aplica: el skill se
-comporta exactamente como está descrito en el resto del documento, sin cambios
-(el flujo default de Claude Code es intocable).
+Journal initialization binds the plan only; an empty bootstrap journal is not an execution bridge or permission to dispatch.
+Before unattended dispatch require the actual supervisor-issued generation token, observable session custody, registered cycle-plan/tasks/ReviewObligations, and durable verification requests using the existing public job commands.
+If that native session bridge or generation/custody evidence is unavailable, return BLOCKED before dispatch; provider capability declarations alone never establish session custody.
+
+Use the existing `awm watch` supervisor/controller launch flow; do not invent a native adapter,
+generation token, registration payload, evidence event, or status. The controller receives
+the supervisor-issued token and records each declared task/review/command obligation through
+`awm job register` before executing, then requests the actual tests/sensors through
+`awm job request`, and submits received independent reviewer evidence through `awm job verdict`.
+`awm watch --init --plan PLAN_PATH` alone imports no task/review/verification bridge.
+When that bridge cannot be established, show the missing custody/registration boundary and
+require a supported supervisor-controlled launch before unattended work; never execute native
+agents directly and later portray the empty journal as evidence of their work.
+
+WHEN el modo es desatendido, admission exige un journal schema-2 sano enlazado al plan
+actual antes de cualquier despacho. Ausente, corrupto o stale bloquea; nunca cae al flujo
+sin journal. La inicialización `awm watch --init --plan PLAN_PATH` es explícita y no
+sobrescribe uno existente. En interactivo el journal es opcional; si no existe, se conserva
+el flujo compacto admitido con todas sus revisiones y gates, nunca ejecución histórica.
+En cada apertura/reanudación reconciliá plan, journal, Git, jobs, tests, sensors y verdicts.
 
 Con journal inicializado:
 
@@ -122,9 +142,13 @@ Con journal inicializado:
    fingerprint no vigente, fixes abiertos o corrupción: NO se cierra el ciclo.
    Solo con gate verde se declara COMPLETE.
 
-## Track mode (authenticated worktree only)
+## Historical track state (not executable in v1)
 
 <!-- AWM-INTEGRATION: track-mode -->
+
+R1 v1 cannot execute parallel tracks. Existing track state is readable historical evidence;
+return planning-required for an owner-approved serial continuation before work. The historical
+custody constraints below remain evidence, never an alternative dispatch path.
 
 WHEN `<repo>/.awm/track.json` exists, first authenticate it through
 `awm track status`. If authentication fails, stop; never infer track mode from
@@ -164,11 +188,11 @@ digraph when_to_use {
     "Tasks mostly independent?" -> "Stay in this session?" [label="yes"];
     "Tasks mostly independent?" -> "Manual execution or brainstorm first" [label="no - tightly coupled"];
     "Stay in this session?" -> "subagent-driven-development" [label="yes"];
-    "Stay in this session?" -> "executing-plans" [label="no - parallel session"];
+    "Stay in this session?" -> "executing-plans" [label="no - separate serial session"];
 }
 ```
 
-**vs. Executing Plans (parallel session):**
+**vs. Executing Plans (separate serial session):**
 - Same session (no context switch)
 - Fresh subagent per task (no context pollution)
 - Two-stage review after each task: spec compliance first, then code quality
@@ -221,22 +245,13 @@ digraph process {
 }
 ```
 
-## Model Selection
+## R1 provider capabilities
 
-Use the least powerful model that can handle each role to conserve cost and increase speed.
-
-**Mechanical implementation tasks** (isolated functions, clear specs, 1-2 files): use a fast, cheap model. Most implementation tasks are mechanical when the plan is well-specified.
-
-**Integration and judgment tasks** (multi-file coordination, pattern matching, debugging): use a standard model.
-
-**Architecture, design, and review tasks**: use the most capable available model.
-
-**Task complexity signals:**
-- Touches 1-2 files with a complete spec → cheap model
-- Touches multiple files with integration concerns → standard model
-- Requires design judgment or broad codebase understanding → most capable model
-
-**Reviewer model/role separation (anti-bias, tier).** Fresh context attenuates but does not neutralize self-preference bias — it lives in the weights and survives blinding. For critical-correction review tasks, dispatch the reviewer in a *different model family* from the implementer when the harness can; otherwise at least give it a distinct role/prompt and withhold the implementer's chain-of-thought. Where model separation isn't available, lean harder on the deterministic gate (`awm sensors run`, tests) — the only defense that neutralizes the bias rather than just attenuating it. Do NOT turn this into same-model debate: at equal compute it does not beat self-consistency.
+Validated v1 remains serial and uses the provider's native full-capability behavior.
+Do not add semantic profiles, concrete model defaults, policy approval, or cost-routing claims;
+those belong to separately approved R2. Review and QA roles retain full capability and distinct
+identities. Unsupported/unverified required execution or custody capability blocks visibly.
+Native capability never authorizes reduced quality gates or same-identity self-review.
 
 ## Handling Implementer Status
 
@@ -501,4 +516,4 @@ Your sequence — execute steps 1-2 in order, then branch by mode at step 3:
 - **verification-before-completion** - Run `awm sensors run` (when `.awm/sensors.json` exists) before reporting DONE
 
 **Alternative workflow:**
-- **executing-plans** - Use for parallel session instead of same-session execution
+- **executing-plans** - Use for a separate serial session instead of same-session execution

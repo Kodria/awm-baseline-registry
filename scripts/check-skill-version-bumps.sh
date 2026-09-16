@@ -19,7 +19,20 @@ TARGET="${2:-HEAD}"
 # answers the question this check actually needs — "does this file differ
 # from what's on BASE at this instant" — and degrades to the same result as
 # 3-dot in the normal fresh-branch case where BASE hasn't moved.
-mapfile -t changed_skills < <(git diff --name-only "$BASE" "$TARGET" -- 'skills/*/SKILL.md' || true)
+changed_skills=()
+changed_skill_count=0
+while IFS= read -r changed_skill; do
+  if [ -n "$changed_skill" ]; then
+    changed_skills+=("$changed_skill")
+    changed_skill_count=$((changed_skill_count + 1))
+  fi
+done < <(git diff --name-only "$BASE" "$TARGET" -- 'skills/*/SKILL.md' || true)
+
+# Bash 3.2 treats an empty array expansion as unset under nounset.
+if [ "$changed_skill_count" -eq 0 ]; then
+  echo "OK: every edited SKILL.md and affected bundle/catalog version advanced."
+  exit 0
+fi
 
 fail=0
 for f in "${changed_skills[@]}"; do
@@ -43,7 +56,10 @@ done
 # in catalog.json must advance in the same change. Work out affected bundles
 # from their live manifests rather than maintaining a second hard-coded map.
 if [ "${#changed_skills[@]}" -gt 0 ]; then
-  mapfile -t affected_bundles < <(node --input-type=module - "${changed_skills[@]}" <<'NODE'
+  affected_bundles=()
+  while IFS= read -r affected_bundle; do
+    [ -n "$affected_bundle" ] && affected_bundles+=("$affected_bundle")
+  done < <(node --input-type=module - "${changed_skills[@]}" <<'NODE'
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -57,7 +73,7 @@ for (const entry of fs.readdirSync('bundles', { withFileTypes: true })) {
 NODE
 )
 
-  for bundle in "${affected_bundles[@]}"; do
+  for bundle in ${affected_bundles[@]+"${affected_bundles[@]}"}; do
     bundle_path="bundles/$bundle/bundle.json"
     old_bundle_version=$(git show "$BASE:$bundle_path" 2>/dev/null | node -e '
       let text = ""; process.stdin.on("data", chunk => text += chunk); process.stdin.on("end", () => {

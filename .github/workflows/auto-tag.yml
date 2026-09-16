@@ -35,7 +35,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
 
       # Semgrep 1.173 requires Python >=3.10; make the release gate's
       # interpreter explicit instead of depending on runner defaults.
@@ -53,7 +53,12 @@ jobs:
       # workflow it cannot block this job — re-running the checks here is what
       # actually makes the release conditional on them.
       - name: Verify registry before tagging
+        env:
+          AWM_R16_INSTALLED_ACCEPTANCE: "1"
         run: |
+          npm install --global npm@10.8.3
+          npm install --prefix "$RUNNER_TEMP/r16-old-cli" agentic-workflow-manager@9.7.1
+          export AWM_R16_OLD_CLI_BIN="$RUNNER_TEMP/r16-old-cli/node_modules/.bin/awm"
           python -m pip install "semgrep==1.173.0"
           node scripts/validate-portability.mjs
           node --test tests/bundle-skill-reference-contract.test.mjs
@@ -70,6 +75,8 @@ jobs:
           node tests/r13-role-evidence-capsule-contract.test.mjs
           node tests/r15-compact-slices-contract.test.mjs
           node tests/r15-compact-slices-cli-acceptance.mjs
+          node tests/r16-compact-only-contract.test.mjs
+          node tests/r16-compact-only-cli-acceptance.mjs
           node tests/r14-context-kernel-contract.test.mjs
           node tests/r14-context-kernel-cli-acceptance.mjs
           node tests/release-skill-version-gate.test.mjs

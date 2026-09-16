@@ -241,12 +241,6 @@
         {
           "id": "semgrep-js-ts",
           "priority": 10,
-          "requirements": {
-            "tool": "semgrep",
-            "toolRange": ">=1.0.0",
-            "runtime": "python",
-            "runtimeRange": ">=3.9.0"
-          },
           "certifiedRange": "=1.173.0",
           "command": {
             "executable": "semgrep",
@@ -268,9 +262,7 @@
             ".semgrep.awm.yml"
           ],
           "formatter": "semgrep",
-          "probe": {
-            "kind": "semgrep-validate"
-          }
+          "policyRef": "shared/semgrep-policy.json"
         }
       ]
     },
@@ -344,9 +336,7 @@
       "fast": true,
       "timeout": 30000,
       "applicability": {
-        "allFiles": [
-          "package.json"
-        ]
+        "kind": "explicit-opt-in"
       },
       "variants": [
         {
@@ -389,25 +379,22 @@
           "priority": 40,
           "requirements": {
             "tool": "npm",
-            "toolRange": ">=8.0.0",
+            "toolRange": ">=10.8.3 <11.0.0",
             "runtime": "node",
             "runtimeRange": ">=16.0.0"
           },
-          "certifiedRange": ">=8.0.0",
+          "certifiedRange": "=10.8.3",
           "command": {
             "executable": "npm",
             "resolution": "path",
-            "args": [
-              "test",
-              "--",
-              "--silent"
-            ],
+            "args": ["test"],
             "packageManager": "npm"
           },
           "assets": [],
           "formatter": "test",
           "probe": {
-            "kind": "package-script-present"
+            "kind": "package-script-present",
+            "script": "test"
           }
         },
         {
@@ -433,7 +420,8 @@
           "assets": [],
           "formatter": "test",
           "probe": {
-            "kind": "package-script-present"
+            "kind": "package-script-present",
+            "script": "test"
           }
         },
         {
@@ -458,7 +446,8 @@
           "assets": [],
           "formatter": "test",
           "probe": {
-            "kind": "package-script-present"
+            "kind": "package-script-present",
+            "script": "test"
           }
         },
         {
@@ -483,7 +472,8 @@
           "assets": [],
           "formatter": "test",
           "probe": {
-            "kind": "package-script-present"
+            "kind": "package-script-present",
+            "script": "test"
           }
         }
       ]
@@ -492,9 +482,7 @@
       "fast": false,
       "timeout": 600000,
       "applicability": {
-        "allFiles": [
-          "package.json"
-        ]
+        "kind": "explicit-opt-in"
       },
       "variants": [
         {

@@ -6,11 +6,7 @@ const root = new URL('..', import.meta.url);
 const read = relative => readFileSync(new URL(relative, root), 'utf8');
 
 const SLICE_SECTIONS = [
-  '## Behavior and surfaces',
-  '## Interfaces and sequence',
-  '## Edge cases and evidence',
-  '## Commands',
-  '## Risks and fallback',
+  '#### Surfaces', '#### Implementation', '#### Edge cases', '#### Evidence', '#### Fallback',
 ];
 
 function assertCompactReference(text) {
@@ -24,17 +20,16 @@ function assertCompactReference(text) {
 }
 
 function assertCompactRouting(text) {
-  assert.match(text, /formed serial plan/i, 'compact routing needs a formed serial plan');
-  assert.match(text, /explicitly sliceable requirements/i, 'compact routing needs explicitly sliceable requirements');
-  assert.match(text, /compact-slices-v1\.md/, 'eligible compact plans must load the reference');
-  assert.match(text, /inline[\s\S]{0,220}(?:insufficient|unavailable|unsafe)/i, 'insufficient sources must be inlined');
-  assert.match(text, /awm plan validate PLAN_PATH/i, 'CLI validation must happen before handoff');
-  assert.match(text, /(?:invalid|unsupported)[\s\S]{0,180}(?:block|stop)/i, 'invalid or unsupported compact plans must block');
-  assert.match(text, /(?:no marker|no schema)[\s\S]{0,180}legacy/i, 'unmarked plans must retain legacy routing');
-  assert.match(text, /Task Structure/, 'legacy Task syntax must remain');
-  assert.match(text, /Parallel track declaration/, 'legacy parallel Tracks syntax must remain');
-  assert.match(text, /existing full-quality Task\/Tracks route/i,
-    'legacy plans must retain the complete quality route, not compact assumptions');
+  const start = text.indexOf('## Compact-only authoring');
+  const end = text.indexOf('## Historical migration', start);
+  const scope = text.slice(start, end);
+  assert.ok(scope.includes('Complete approved requirements and explicit unique ownership produce only supported serial compact plans.'), 'formed serial ownership must author compact only');
+  assert.ok(scope.includes('return `planning-required`; do not write an executable implementation plan.'), 'ambiguous plans must not be executable');
+  assert.ok(scope.includes('there is no Task/Tracks or legacy execution option.'), 'unmarked plans cannot execute');
+  assert.ok(scope.includes('references/compact-slices-v1.md'), 'compact plans load reference');
+  assert.ok(scope.includes('Inline necessary facts'), 'insufficient source facts are inlined');
+  assert.ok(!text.includes('awm plan analyze'), 'missing CLI command cannot be instructed');
+  assert.ok(!text.includes('## Parallel track declaration'), 'v1 cannot author tracks');
 }
 
 function assertSharedPayloadBoundary(text) {
@@ -55,7 +50,7 @@ test('compact reference defines exact five-section serial slice contract (R4-CP-
   assertCompactReference(read('skills/writing-plans/references/compact-slices-v1.md'));
 });
 
-test('writing-plans routes only eligible compact plans and preserves legacy/parallel syntax (R4-CP-2, R4-CP-5)', () => {
+test('writing-plans authors compact-only and stops ambiguous/parallel planning (R4-CP-2, R4-CP-5)', () => {
   assertCompactRouting(read('skills/writing-plans/SKILL.md'));
 });
 
@@ -69,7 +64,7 @@ test('writing-plans validates before strict currentness handoff (R4-CUR-6)', () 
 
 test('plan reviewer rejects compact omissions, unsafe delegation, missing gates, legacy regressions, and structural-only efficiency claims (R4-CP-2, R4-CP-4, R4-CP-5, R4-CUR-6)', () => {
   const text = read('skills/writing-plans/plan-document-reviewer-prompt.md');
-  for (const token of ['missing compact fields', 'unowned requirements', 'unsafe delegation', 'validation/currentness', 'legacy regression', 'structural evidence alone']) {
+  for (const token of ['missing compact fields', 'unowned requirements', 'unsafe delegation', 'validation/currentness', 'successful legacy execution route', 'structural evidence alone']) {
     assert.match(text, new RegExp(token, 'i'), `reviewer must reject ${token}`);
   }
 });
@@ -85,7 +80,7 @@ test('development entry keeps strict currentness advisory while handoff owns the
 
 test('RED mutations reject each compact-planning regression', () => {
   const reference = read('skills/writing-plans/references/compact-slices-v1.md');
-  assert.throws(() => assertCompactReference(reference.replaceAll('## Commands', '## Removed commands')), /missing slice section/);
+  assert.throws(() => assertCompactReference(reference.replaceAll('#### Evidence', '#### Removed evidence')), /missing slice section/);
   assert.throws(() => assertCompactReference(reference.replace(/Do not delegate[\s\S]*?\n/, 'Delegate: go inspect the repo\n')), /unsafe delegated discovery/);
   assert.throws(() => assertCompactReference(reference.replace(/shared payload[\s\S]*?\n/i, '')), /shared payload/);
   assert.throws(() => assertSharedPayloadBoundary(reference.replace(
@@ -95,12 +90,8 @@ test('RED mutations reject each compact-planning regression', () => {
 
   const writing = read('skills/writing-plans/SKILL.md');
   assert.throws(() => assertStrictHandoff(writing.replace('awm plan validate PLAN_PATH', 'plan validation later')), /validation/);
-  assert.throws(() => assertCompactRouting(writing.replace(/(?:no marker|no schema)[\s\S]{0,180}legacy/i, 'future schema is legacy')), /unmarked plans/);
-  assert.throws(() => assertCompactRouting(writing.replaceAll('Task Structure', 'Compact task structure')), /legacy Task syntax/);
-  assert.throws(() => assertCompactRouting(writing.replace(
-    'existing full-quality Task/Tracks route',
-    'compact assumptions route',
-  )), /complete quality route/);
+  assert.throws(() => assertCompactRouting(writing.replace('there is no Task/Tracks or legacy execution option.', 'legacy execution is available.')), /unmarked plans/);
+  assert.throws(() => assertCompactRouting(writing.replace('return `planning-required`; do not write an executable implementation plan.', 'write an executable historical plan.')), /ambiguous plans/);
 });
 
 const S2_SDD = 'skills/subagent-driven-development/SKILL.md';
@@ -147,12 +138,12 @@ function assertS2RoleTemplates() {
   }
 }
 
-test('S2 compact handoff dispatches only a validated dependency-ready slice and preserves the legacy route (R4-CS-3)', () => {
+test('S2 compact handoff dispatches only an admitted dependency-ready slice (R4-CS-3)', () => {
   const sdd = read(S2_SDD);
   assert.match(sdd, /complete dependency-ready slice/i);
   assert.match(sdd, /only declared sources, requirements, and commands/i);
   assert.match(sdd, /invalid or unsupported[^.]{0,180}(?:stop|block)/i);
-  assert.match(sdd, /legacy[^.]{0,180}(?:unchanged|existing behavior)/i);
+  assert.match(sdd, /unmarked input returns migration-required and dispatches zero agents/i);
 });
 
 test('S2 state machine requires fresh spec and quality reviews before a compact slice advances (R4-CS-4)', () => {
@@ -172,7 +163,7 @@ test('S2 preserves execution reviews and global two-track QA instead of replacin
   const execution = read(S2_EXEC);
   const review = read(S2_REVIEW);
   const qa = read(S2_QA);
-  assert.match(execution, /legacy batches\/checkpoints intact/i);
+  assert.match(execution, /Only admitted compact execution is supported/i);
   assert.match(execution, /compact slice[^.]{0,160}(?:spec|quality)[^.]{0,160}review/i);
   assert.match(review, /each task[^.]{0,120}legacy or compact slice/i);
   assert.match(review, /never end-only/i);
@@ -227,7 +218,7 @@ test('S2 semantic mutation rejects reusing the spec reviewer as the quality revi
 });
 
 const S3_FIXTURE = 'tests/fixtures/compact-slices-v1/valid-plan.md';
-const R4A_VERSION = '9.4.1';
+const R4A_VERSION = '9.8.0';
 
 function compactManifest(text) {
   const match = text.match(/<!-- AWM:COMPACT-SLICES:START v1 -->\s*([\s\S]*?)\s*<!-- AWM:COMPACT-SLICES:END v1 -->/);
@@ -278,12 +269,13 @@ test('S3 pins the observed R4a release and keeps bundle/catalog delivery metadat
   const bundle = JSON.parse(read('bundles/dev/bundle.json'));
   const catalog = JSON.parse(read('catalog.json'));
   assert.equal(registry.minCliVersion, R4A_VERSION, 'minCliVersion must be the observed published R4a release');
-  assert.equal(bundle.version, '3.9.4');
+  assert.equal(bundle.version, '4.0.0');
   assert.equal(catalog.bundles.find(entry => entry.name === 'dev')?.version, bundle.version, 'catalog and bundle must agree');
   for (const [file, version] of [
-    ['skills/development-process/SKILL.md', '1.8.0'], ['skills/writing-plans/SKILL.md', '1.10.0'],
-    ['skills/subagent-driven-development/SKILL.md', '1.12.2'], ['skills/executing-plans/SKILL.md', '1.3.2'],
-    ['skills/requesting-code-review/SKILL.md', '1.2.0'], ['skills/post-implementation-qa/SKILL.md', '1.9.1'],
+    ['skills/development-process/SKILL.md', '2.0.0'], ['skills/writing-plans/SKILL.md', '2.0.0'],
+    ['skills/subagent-driven-development/SKILL.md', '2.0.0'], ['skills/executing-plans/SKILL.md', '2.0.0'],
+    ['skills/requesting-code-review/SKILL.md', '1.2.0'], ['skills/post-implementation-qa/SKILL.md', '2.0.1'],
+    ['skills/harness-retro/SKILL.md', '3.0.1'],
     ['skills/verification-before-completion/SKILL.md', '1.3.2'], ['skills/setup-sensors/SKILL.md', '1.1.2'],
   ]) assert.match(read(file), new RegExp(`^version: \"${version.replaceAll('.', '\\.')}\"$`, 'm'), `${file} must have its one approved version`);
 });
@@ -303,7 +295,7 @@ test('S3 validation and release workflows run both R15 gates before a release ta
 
 test('S3 RED mutations reject weakened evidence, metadata, and release gates', () => {
   const fixture = read(S3_FIXTURE);
-  assert.throws(() => compactManifest(fixture.replace('"schema": "compact-slices/v1"', '"schema": "compact-slices/v2"')), /compact-slices\/v1/);
+  assert.throws(() => compactManifest(fixture.replace('"schema": "compact-slices/v1"', '"schema": "compact-slices/v2"')), /fixture schema must remain exact/);
   assert.throws(() => assertR4EvidenceLedger(read('docs/plans/2026-08-26-r4b-compact-sliced-execution-plan.md').replaceAll('unobservable', 'estimated')), /unobservable/);
   assert.throws(() => assertR15ReleaseWorkflow(read('.github/workflows/auto-tag.yml').replace('node tests/r15-compact-slices-cli-acceptance.mjs', '# acceptance removed')), /release gate must run/);
 });

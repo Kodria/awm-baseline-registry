@@ -1,0 +1,9 @@
+{
+  "name": "awm-npm-script-certification",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "npm@10.8.3",
+  "scripts": {
+    "test": "node --test test.mjs"
+  }
+}

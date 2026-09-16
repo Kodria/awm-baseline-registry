@@ -51,6 +51,9 @@ function assertReusableCertification(workflow) {
   ]) assert.match(certify, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${command} must run in certify`);
   assert.match(certify, /semgrep==1\.173\.0/, 'Ubuntu certification must exercise the pinned real security tool');
   assert.match(certify, /shellcheck/, 'Ubuntu certification must exercise the pinned real shell tool');
+  assert.match(certify, /npm@10\.8\.3/, 'certification must install the exact npm manager pin');
+  assert.match(certify, /npm --version \| grep -Fx "10\.8\.3"/, 'certification must verify the real npm manager version');
+  assert.match(certify, /npm test/, 'certification must execute npm against a project-owned test script');
 }
 
 function assertPythonToolchainCertification(workflow) {

@@ -18,7 +18,7 @@ Status: `certified` has a matching frozen tool pin; `compatible-unverified` has 
 | `js-ts` | `mutation` | `stryker` | `stryker` | `>=8.0.0` | Ubuntu, macOS, Windows | Ubuntu/macOS/Windows: contract | compatible-unverified | no matching pinned tool |
 | `js-ts` | `security` | `semgrep-js-ts` | `semgrep` | `=1.173.0` | Ubuntu, macOS, Windows | Ubuntu: real tool; macOS/Windows: contract | certified | pin: `semgrep@1.173.0` |
 | `js-ts` | `test` | `bun-script` | `bun` | `>=1.0.0` | Ubuntu, macOS, Windows | Ubuntu/macOS/Windows: contract | compatible-unverified | no matching pinned tool |
-| `js-ts` | `test` | `npm-script` | `npm` | `>=8.0.0` | Ubuntu, macOS, Windows | Ubuntu/macOS/Windows: contract | compatible-unverified | no matching pinned tool |
+| `js-ts` | `test` | `npm-script` | `npm` | `=10.8.3` | Ubuntu, macOS, Windows | Ubuntu/macOS/Windows: contract | certified | pin: `npm@10.8.3` |
 | `js-ts` | `test` | `pnpm-script` | `pnpm` | `>=8.0.0` | Ubuntu, macOS, Windows | Ubuntu/macOS/Windows: contract | compatible-unverified | no matching pinned tool |
 | `js-ts` | `test` | `yarn-script` | `yarn` | `>=1.22.0` | Ubuntu, macOS, Windows | Ubuntu/macOS/Windows: contract | compatible-unverified | no matching pinned tool |
 | `js-ts` | `typecheck` | `typescript-native` | `typescript` | `=5.9.3` | Ubuntu, macOS, Windows | Ubuntu/macOS/Windows: contract | certified | pin: `typescript@5.9.3` |
@@ -32,7 +32,7 @@ Status: `certified` has a matching frozen tool pin; `compatible-unverified` has 
 
 | Certification status | Derived variant count | Meaning |
 | --- | --- | --- |
-| certified | 16 | Matching frozen tool pin |
-| compatible-unverified | 6 | No matching frozen tool pin |
+| certified | 17 | Matching frozen tool pin |
+| compatible-unverified | 5 | No matching frozen tool pin |
 | not-applicable | 0 | Variant has no tool contract |
 <!-- END GENERATED: sensor-pack-support -->

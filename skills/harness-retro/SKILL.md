@@ -1,11 +1,16 @@
 ---
 name: harness-retro
-version: "2.7.0"
+version: "3.0.1"
 license: Apache-2.0
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
 
 # Harness Retro
+
+## Compact admission — BLOCKING
+
+Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
+Apply it exactly; only `admitted` for the current plan identity may continue.
 
 ## Overview
 
@@ -30,7 +35,7 @@ description: Use as the terminal learning phase of development-process — reads
 
 ## Modo de ejecución (lectura del campo)
 
-Al arrancar, localiza el plan activo (`docs/plans/*-plan.md` de la rama actual) y lee su línea `**Modo de ejecución:**`:
+Al arrancar, usa únicamente el plan activo y la identidad confirmados por admission; lee su línea `**Modo de ejecución:**` desde esos mismos bytes validados:
 
 - Ausente o `interactivo` → modo interactivo (default): comportamiento estándar de este skill.
 - `desatendido` → aplica la sección **Modo desatendido** de este skill.
@@ -278,96 +283,108 @@ Append (or create) `docs/harness-retros.md`:
 
 ### 11. Capture and close the retro
 
-Before archiving, read `minCliVersion` from `awm-registry.json` and require that `awm --version` meets it using a semver-aware comparison. If the installed CLI is too old, fail loudly and do not archive; for this release's declared floor, give this exact upgrade command:
+Use only the explicit admitted active_plan and its CLI identity; never resolve another plan by filename, mtime, marker, or checkbox scans.
+Read minCliVersion only when this project contains awm-registry.json; a CLI project without registry metadata must not invent that file or fail merely because it is absent.
+Query the current branch with `awm watch journal-status --json`; a global .awm/journal directory is never evidence of an active branch journal.
+Only a present, non-bootstrapUnused journal with cycleState COMPLETE and a passing current interlock permits cycle evidence capture.
+Missing journal skips capture explicitly with manual/native QA evidence and no fabricated cycle; it never permits missing-journal unattended dispatch.
+Corrupt, nonterminal, or mismatched journal blocks capture and archive; unused bootstrap state is administrative abandonment, never completed execution.
 
+Check the consumed registry contract through admission even when no local registry metadata
+exists. The local registry floor gate below validates numeric semver and emits a quoted
+upgrade package spec. A compatible compiled development runtime may provide explicitly
+identified prerelease source/command/contract evidence during an approved bootstrap; this is
+not a published/installed version pass and never authorizes registry publication or unattended
+dispatch without custody. Do not silently turn a failed installed floor into source acceptance.
+
+<!-- retro-compatibility-script -->
 ```bash
-npm i -g "agentic-workflow-manager@>=9.3.0"
-```
-
-Use this executable compatibility gate. It validates both versions, performs a numeric semver comparison, and quotes the package spec in the upgrade instruction so it is shell-safe:
-
-```bash
-min_cli_version="$(node -e 'const fs = require("node:fs"); const version = JSON.parse(fs.readFileSync("awm-registry.json", "utf8")).minCliVersion; if (!/^\d+\.\d+\.\d+$/.test(version)) process.exit(1); process.stdout.write(version)' 2>/dev/null)" || {
-  echo 'Cannot read a valid minCliVersion from awm-registry.json.' >&2
-  exit 1
-}
-installed_cli_version="$(awm --version)" || {
-  echo 'Cannot determine the installed agentic-workflow-manager version.' >&2
-  exit 1
-}
-if ! node - "$installed_cli_version" "$min_cli_version" <<'NODE'
-const parse = (value) => {
-  const normalized = value.replace(/^v/, '');
-  if (!/^\d+\.\d+\.\d+$/.test(normalized)) process.exit(1);
-  return normalized.split('.').map(Number);
-};
-const [installed, minimum] = process.argv.slice(2).map(parse);
-let comparison = 0;
-for (let index = 0; index < installed.length; index += 1) {
-  if (installed[index] !== minimum[index]) {
-    comparison = installed[index] > minimum[index] ? 1 : -1;
-    break;
-  }
-}
-const meets = comparison >= 0;
-process.exit(meets ? 0 : 1);
-NODE
-then
-  echo "Installed CLI ${installed_cli_version} does not meet required ${min_cli_version}." >&2
-  printf 'npm i -g %q\n' "agentic-workflow-manager@>=${min_cli_version}" >&2
-  exit 1
-fi
-```
-
-Resolve the plan this retro is closing into `active_plan`. **Do not reuse `development-process`'s SessionStart re-anchor resolver here** — that one looks for a plan with OPEN checkboxes and NO `awm-qa-complete` marker, i.e. the next plan someone should pick UP. By the time `harness-retro` runs, the plan being retro'd is the opposite: every task checkbox is `[x]` and `awm-qa-complete` is already present (this skill's own "When to use" requires it) — reusing the SessionStart resolver here silently resolves to a DIFFERENT, unrelated, still-open plan when more than one exists in `docs/plans/`, and `awm evidence capture` then runs against the wrong plan without erroring (confirmed 2026-08-24: it resolved to an unrelated older plan instead of the one this retro was closing). Resolve on the criterion this skill actually needs — qa-complete present, retro-complete absent — instead. Then run the capture command and require exit 0; a failed capture stops the retro and does not archive the ledger:
-
-```bash
-PLANS_DIR="$PWD/docs/plans"
-active_plan=""
-if [ -d "$PLANS_DIR" ]; then
-    while IFS= read -r plan_file; do
-        [ -z "$plan_file" ] && continue
-        case "$(basename "$plan_file")" in *-design.md) continue;; esac
-        grep -qE '<!--[[:space:]]*awm-qa-complete' "$plan_file" 2>/dev/null || continue
-        grep -qE '<!--[[:space:]]*awm-retro-complete' "$plan_file" 2>/dev/null && continue
-        active_plan="$plan_file"
-        break
-    done < <(ls -t "$PLANS_DIR"/*.md 2>/dev/null || true)
-fi
-test -n "$active_plan" || { echo 'No plan with awm-qa-complete (and no awm-retro-complete) found for cycle evidence capture.' >&2; exit 1; }
-```
-
-**Capture is journal-first-only — check before requiring it.** `awm evidence capture` (`cli/src/commands/evidence/index.ts:runEvidenceCapture`) reads `.awm/journal/<branch>/state.json` via `readJournal()` and treats a MISSING file identically to a CORRUPT one (`readFileSync` failure → `{state: null, corrupt: true}`, same as a parse failure) — it has no non-journal fallback. Journal-first mode is explicitly opt-in (`subagent-driven-development`'s own SKILL.md: "IF el journal NO está inicializado, THEN este modo entero NO aplica"), so on any branch that never ran `awm watch --init`, `evidence capture` cannot succeed, ever — treating it as unconditionally mandatory here would make Step 11 permanently unsatisfiable for the (default) non-journal case. Confirmed 2026-08-24: this is almost certainly why a prior cycle's archive silently didn't take effect (see the verification note below) — capture failed, and either the retro proceeded past the "stops the retro" rule anyway, or the whole step was skipped. Check first:
-
-```bash
-JOURNAL_DIR="$PWD/.awm/journal"
-if [ -d "$JOURNAL_DIR" ]; then
-  awm evidence capture --plan "$active_plan" || {
-    echo 'Cycle evidence capture failed; the ledger will not be archived.' >&2
+if [ -f awm-registry.json ]; then
+  min_cli_version="$(node -e 'const fs=require("node:fs"); const p="awm-registry.json"; if(fs.statSync(p).size>65536) process.exit(1); const v=JSON.parse(fs.readFileSync(p,"utf8")).minCliVersion; if(!/^\d+\.\d+\.\d+$/.test(v)) process.exit(1); process.stdout.write(v)' 2>/dev/null)" || {
+    echo 'Cannot read a valid minCliVersion from awm-registry.json.' >&2
     exit 1
   }
+  installed_cli_version="$(awm --version)" || exit 1
+  if ! node - "$installed_cli_version" "$min_cli_version" <<'NODE'
+const parse = value => {
+  if (!/^\d+\.\d+\.\d+$/.test(value)) process.exit(1);
+  const parts=value.split('.').map(Number);
+  if (!parts.every(Number.isSafeInteger)) process.exit(1);
+  return parts;
+};
+const [actual,minimum]=process.argv.slice(2).map(parse);
+let comparison=0;
+for(let i=0;i<3;i+=1) if(actual[i]!==minimum[i]) { comparison=actual[i]>minimum[i]?1:-1; break; }
+process.exit(comparison>=0?0:1);
+NODE
+  then
+    echo "Installed CLI ${installed_cli_version} does not meet required ${min_cli_version}." >&2
+    printf 'npm i -g %q\n' "agentic-workflow-manager@>=${min_cli_version}" >&2
+    exit 1
+  fi
 else
-  echo "No .awm/journal/ on this project (journal-first mode not initialized) — skipping cycle evidence capture, proceeding to archive." >&2
+  echo 'No local registry metadata: retain admitted consumed-contract or explicit prerelease source evidence; no fabricated registry floor.' >&2
 fi
 ```
 
-Only after successful evidence capture, run `awm ledger archive` to rotate this branch's ledger out of the active flow (it stays on disk under `.awm/ledger/archive/` for audit; the next plan starts fresh):
+Require the declared repo-relative active_plan from current admission/controller state,
+and the current branch query. The query is read-only and returns state missing/corrupt/present,
+cycleState, sanitized binding and bootstrapUnused; no additional fields may be invented.
+A missing branch journal with retained directories/archives is still missing.
+For present state, check binding against the CLI identity and require cycleState COMPLETE,
+bootstrapUnused false and `awm job gate` passing before capture. Then require exit 0:
 
 ```bash
-awm ledger archive
+test -n "$active_plan" || { echo 'Explicit current active_plan is required.' >&2; exit 1; }
+journal_status="$(awm watch journal-status --json)" || exit 1
+capture_state="$(node - "$journal_status" <<'NODE'
+const input=process.argv[2];
+if (Buffer.byteLength(input,'utf8')>10000) process.exit(1);
+const report=JSON.parse(input);
+if (!report || typeof report!=='object' || Array.isArray(report)) process.exit(1);
+if (report.state==='missing') process.stdout.write('missing');
+else if (report.state==='present' && report.cycleState==='COMPLETE' && report.bootstrapUnused===false) process.stdout.write('ready');
+else process.exit(1);
+NODE
+)" || { echo 'Corrupt/nonterminal/unused journal blocks capture and archive.' >&2; exit 1; }
+case "$capture_state" in
+  ready)
+    test -n "$active_provider" || { echo 'Native active_provider is required.' >&2; exit 1; }
+    awm plan admit "$active_plan" --provider "$active_provider" --cwd . --require-current --verify-sensors --json || exit 1
+    awm job gate || exit 1
+    awm evidence capture --plan "$active_plan" || {
+      echo 'Cycle evidence capture failed; the ledger will not be archived.' >&2
+      exit 1
+    }
+    ;;
+  missing)
+    test -n "$manual_qa_evidence" || { echo 'Durable manual/native QA evidence is required before no-journal archive.' >&2; exit 1; }
+    echo "Skipping cycle evidence capture: no current branch journal; manual/native evidence: $manual_qa_evidence. No completed journal cycle claimed." >&2
+    ;;
+  *) exit 1 ;;
+esac
 ```
 
-**Verify the archive actually took effect — do not trust exit 0 alone.** A branch-name mismatch, a stale/wrong `awm` binary, or a cwd pointing at a different repo checkout can make this command exit cleanly without clearing the active ledger, and that failure stays invisible until the NEXT cycle's harness-retro finds a ledger full of already-cured findings from a session that supposedly closed clean (confirmed 2026-08-24: an R1a→R1b handoff carried ~180 unarchived, already-resolved entries into R1b's retro because this step's success was never independently confirmed). Immediately after archiving, run:
+Do not execute the capture command in the missing state. Report the skip and name durable
+manual/native tests, sensors, distinct review and QA evidence. Administrative bootstrap
+abandonment additionally needs the verified explicit `awm watch archive-unused --plan "$active_plan"`
+receipt; it is never a completed journal cycle or future unattended admission. If evidence is
+missing, block rather than invent a cycle. Corrupt or nonterminal state requires reviewed
+recovery, not resetting/archiving active work.
 
-```bash
-awm ledger list
-```
+Only after successful terminal-cycle capture, or the explicit evidenced no-journal skip,
+run `awm ledger archive`. Then run `awm ledger list` and require an empty list (`[]`);
+exit 0 alone is not enough. Archive failure or nonempty active ledger stops the retro.
+This capture/skip-and-archive verification is mandatory in modo desatendido too.
 
-Require this to report an empty list (`[]`). If it is not empty, the archive did not take effect — stop, diagnose (wrong `awm` binary on PATH vs. the project's dev build if one exists, branch name mismatch, wrong working directory), and re-run `awm ledger archive` from the corrected state before proceeding. Do not add the `awm-retro-complete` marker while the active ledger still holds entries.
-
-This capture-and-archive sequence is mandatory in modo desatendido too; it requires no human decision.
-
-Then add the `awm-retro-complete` marker to the active plan (first line after the `#` header), so `development-process` routes to `finishing-a-development-branch`:
+Only after all retro gates, terminal capture or evidenced no-journal skip, and verified ledger archive pass, use the authorized native filesystem editor to add the standalone `awm-retro-complete` marker to the explicitly assigned active_plan only.
+There is no CLI marker-edit command; never invent a lifecycle command, fabricate COMPLETE, or change an unrelated plan.
+Validate the updated bytes with `awm plan validate "$active_plan" --cwd . --json` and retain the new CLI-derived identity.
+If a real current branch binding exists, use the existing `awm watch rebind --plan "$active_plan"` only when its actual binding/proof preconditions permit; otherwise block for reviewed recovery.
+When the current branch query is missing, do not rebind or initialize a journal: retain the evidenced no-journal skip and the admission mode's existing requirements.
+The pre-edit capture remains historical: rerun genuine affected verification when its fingerprint or current-evidence proof includes the changed plan; never relabel or re-fingerprint old PASS evidence.
+Use the existing obligation, supervisor-issued generation and declared paths/satisfies for a required rerun; unavailable custody or proof blocks, never substitutes an invented command or token.
+Re-admit the exact updated plan identity with all required currentness, sensor, journal and custody gates before the next lifecycle phase; a marker alone authorizes nothing.
 
 ```markdown
 <!-- awm-retro-complete: YYYY-MM-DD -->
