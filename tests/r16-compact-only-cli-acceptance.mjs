@@ -40,3 +40,19 @@ test('RF-1.3/1.4/2.1/2.3 canonical reference is compiled-valid and all non-valid
     }
   } finally { rmSync(sandbox, { recursive: true, force: true }); }
 });
+
+test('RF-1.5 documented read-only lifecycle commands exist on the paired compiled CLI', () => {
+  requireCompatibleRuntime(awm, root);
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), 'awm-r16-public-'));
+  try {
+    const git = spawnSync('git', ['init', '-q', sandbox], { encoding:'utf8', timeout:5000 });
+    assert.equal(git.status,0,git.stderr);
+    const status = spawnSync(awm, ['watch','journal-status','--json'], { cwd:sandbox, encoding:'utf8', timeout:15_000, maxBuffer:10_000 });
+    const report=parse(status,0,'missing');
+    assert.equal(report.bootstrapUnused,false);
+    for (const command of [['watch','archive-unused','--help'],['plan','migration-facts','--help']]) {
+      const result=invoke(command); assert.equal(result.status,0,result.stderr);
+      assert.match(result.stdout,/Usage:/);
+    }
+  } finally { rmSync(sandbox,{recursive:true,force:true}); }
+});
