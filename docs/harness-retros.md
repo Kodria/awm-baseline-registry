@@ -143,3 +143,29 @@
 - **Sensor:** `tests/r9-declared-orchestrators-contract.test.mjs` (8/8) y la suite completa (165/165). `awm sensors run` permanece `not_certified`: el manifest legacy deshabilita `lint` y `security` antes de esta rama.
 - **Recommendation:** autorizar en una tarea separada `awm sensors init --pack shell` y resolver su baseline; habilitarlo excede #37.
 - **Descartes (modo desatendido):** los clusters recurrentes son wins convergentes de revisión, no defectos. No se agrega regla documental duplicada.
+
+## 2026-09-16 — Compact-only R1: contrato instalado y cierre portable
+
+- **Class:** process / structural / logic. El ledger de rama preservó 11 entradas
+  (3 findings corregidos y 8 wins); no se inventó un ciclo journal COMPLETE.
+- **Cura persistente:** productor y consumidores usan un único contrato compact admitido;
+  headings/IDs, orden de gates y revisiones independientes tienen regresiones de mutación.
+  Los marcadores de fase usan edición nativa autorizada y revalidación; archive-unused usa
+  el comando real con `--plan`, no un flag `--json` inexistente. Templates QA usan la clase
+  de ledger `structural`, con versiones QA 2.0.1 / retro 3.0.1 y bundle dev 4.0.0 consistentes.
+- **Fixture, no rebaja de sensores:** no pedir bootstrap de todo js-ts en un consumidor
+  que solo instala npm. Seleccionar su variante original con certificación live real y
+  volver a ejecutar admission. HOME/cache del operador fuera del worktree; el control
+  negativo con caché dentro observa y bloquea una mutación real, sin mock de PASS.
+- **Diagnóstico y CI:** conservar stdout/stderr/spawn error acotados. Identidad física de
+  archivos sustituye expectativas de spelling Windows 8.3; smoke temprano y bail paran
+  el fallo antes de recorrer toda la suite, conservando seis targets y gate de publicación.
+  Un publisher exitoso no implica visibilidad inmediata npm: el guard read-only acotado
+  comprueba metadata y tarball, sin republicar ni cancelar un publisher en curso.
+- **Sensor/evidencia:** 50 contratos, cinco casos instalados y los CI reales de validación
+  y auto-tag documentados en `docs/plans/2026-09-16-compact-only-r1-published-evidence.md`.
+  Currentness no verificable bloquea y se diagnostica como acceso/transporte, no dispara
+  otro ciclo de QA. Local registry sigue `not_certified` bajo la excepción R8 de contenido;
+  eso nunca autoriza dispatch operativo.
+- **Descartes:** no nuevas reglas de AGENTS/CONSTITUTION ni recomendaciones antiguas
+  aplicadas. #148 conserva su plan y pausa; modelos/esfuerzo y ahorro facturado son R2.
