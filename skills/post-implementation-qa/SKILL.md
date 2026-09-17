@@ -1,6 +1,6 @@
 ---
 name: post-implementation-qa
-version: "2.0.1"
+version: "2.1.0"
 license: Apache-2.0
 description: Use after implementation is complete and before finishing the branch — runs two-track QA (Track A fidelity vs. the plan, Track B plan-agnostic quality lenses), drives a fix loop until clean. Also works standalone when a bug is found independently.
 ---
@@ -56,7 +56,11 @@ El modo desatendido quita pausas, no controles: los gates (sensor, ledger, recon
 
 ### Modo desatendido
 
-WHEN el modo es `desatendido`: en el Step 4 no preguntes "¿procedemos con todos?" — entra directo al fix loop y corrige TODOS los hallazgos (blockers → important → minors), sin descartes. Todo lo demás es idéntico: ledger gate del Step 4, `awm sensors run` + `verification-before-completion` por cada fix, y el completion gate del Step 6 corren igual en ambos modos.
+WHEN el modo es `desatendido`: en el Step 4 no preguntes "¿procedemos con todos?" — entra directo al fix loop y corrige TODOS los hallazgos (blockers → important → minors), sin descartes. Todo lo demás es idéntico: el ledger gate del Step 4, los gates aplicables una vez por candidato corregido y el completion gate del Step 6 corren igual en ambos modos.
+
+## Review-cycle control (R2-A)
+
+Read `../subagent-driven-development/references/review-cycle-v1.md` before review, ledger repair or fixes. Reconcile frozen reports, fix confirmed coherent groups, repair ledger-only omissions from explicit received entries, and retain Track A, applicable Track B and current independent verdicts.
 
 ## Two Entry Points
 
@@ -117,7 +121,7 @@ A quality defect (division by zero → `Infinity`, crash on invalid input) is a 
 
 **Remediation:** `systematic-debugging` → confirmed root cause → subagent fix.
 
-**Dedup:** the robustness and logic lenses may both flag the same `file:line`. Merge overlapping findings before presenting.
+**Dedup:** reconcile reports before correction. Merge only confirmed identical defects with a shared cause, affected surfaces and test boundary; `file:line` alone is never enough.
 
 > **The deterministic gate outranks every lens.** No lens may declare "clean" over a red `awm sensors run`. The panel *adds to* the sensor gate; it never overrides it. On any conflict between a lens's judgment and a sensor/test, the sensor wins — fresh context attenuates self-preference bias but does not neutralize it.
 
@@ -207,9 +211,15 @@ Each subagent returns JSON with a list of findings. It also logs each finding an
 
 ### Step 4: Collect, dedup, and present to the user
 
-Merge all subagents' findings. **Dedup** overlapping findings (same `file:line` flagged by more than one lens → one finding, note the lenses that agreed).
+Merge all reports for the frozen candidate. **Dedup** only confirmed identical defects:
+same `file:line` alone is insufficient, and distinct defects on one line remain
+separate. Reconcile every finding to a cause, related surfaces and shared test
+boundary before forming a coherent fix group.
 
-**Ledger gate (before presenting):** run `awm ledger list` and verify each finding has a corresponding entry (phase `post-qa`). If the subagents reported N findings but the ledger did not grow, the learning pipeline is broken — re-dispatch to emit the missing `awm ledger add` entries before continuing. Do not present findings whose record does not exist.
+**Ledger gate (before presenting):** run `awm ledger list` and verify each finding.
+When a received report contains its complete explicit `ledgerEntries` but its
+record is absent, repair only that administrative record and verify the list; do not re-dispatch
+code review. Incomplete entries require clarification and remain open.
 
 ```
 ## QA Findings
@@ -232,16 +242,18 @@ Each Track-B finding is tagged with the lens that raised it.
 
 **Modo desatendido:** no preguntes — entra al fix loop con TODOS los hallazgos (blockers → important → minors), sin descartes.
 
-### Step 5: Fix loop (blockers first, then important, then minors)
+### Step 5: Fix groups (blockers first, then important, then minors)
 
 **For Track A (fidelity):**
-- Dispatch subagent with exact description of the gap + relevant plan section / requirement ID
+- Dispatch one fix for the coherent group with exact gaps + relevant requirement IDs
 - No root-cause analysis — the gap is clear from the plan
-- After the fix: `awm sensors run` + `verification-before-completion`
+- After the group fix: focused RED/GREEN plus applicable current gates once for
+  the new candidate, then independent revalidation of each affected obligation
 
 **For Track B (quality):**
 - Invoke `systematic-debugging` → confirmed root cause → dispatch subagent fix
-- After the fix: `awm sensors run` + `verification-before-completion`
+- After the group fix: focused RED/GREEN plus applicable current gates once for
+  the new candidate, then independent revalidation of each affected obligation
 
 **If the same finding appears ≥2 times:** invoke `harness-retro` before continuing.
 
@@ -252,7 +264,7 @@ Each Track-B finding is tagged with the lens that raised it.
 Proceed only when ALL:
 - [ ] Findings list empty (all resolved or discarded with reason)
 - [ ] `awm sensors run` clean, or registry-content closure is eligible exclusively under the linked R8 policy
-- [ ] `verification-before-completion` passed for each fix
+- [ ] Focused RED/GREEN tests and each applicable current gate passed once for every corrected candidate
 
 ### Step 7: Mark QA complete
 
@@ -268,7 +280,7 @@ Report: "QA complete. N findings found and closed. Ready for `post-implementatio
 ```
 NO "QA COMPLETE" CLAIM WITHOUT:
 1. Clean `awm sensors run`, or the linked R8 policy's registry-content closure eligibility (no lens overrides a red sensor)
-2. verification-before-completion per each fix
+2. Focused RED/GREEN tests and each applicable current gate once for every corrected candidate
 3. Empty list or justified discards
 ```
 
@@ -284,7 +296,7 @@ NO "QA COMPLETE" CLAIM WITHOUT:
 - Skipping confirmation before the fix loop (modo interactivo — en desatendido la confirmación se omite por diseño)
 - Forgetting the `<!-- awm-qa-complete -->` marker
 - Dispatching a review with an inline prompt instead of the template → the `awm ledger add` instruction and the anti-bias header are lost
-- Presenting findings without verifying that the ledger grew (Step 4 gate)
+- Presenting a finding without verifying its received ledger entry, or explicitly recording that its fields are incomplete (Step 4 gate)
 - "UI diff with `.stitch/designs/` present, no fidelity report" → QA is incomplete — dispatch the design-fidelity lens before closing
 
 ## Connections
@@ -296,6 +308,6 @@ NO "QA COMPLETE" CLAIM WITHOUT:
 | `systematic-debugging` | For Track B findings |
 | `design-fidelity` | Conditional Track B lens for UI diffs with committed design artifacts |
 | `subagent-driven-development` | Executes the fixes |
-| `verification-before-completion` | Gate for each fix |
+| `verification-before-completion` | Applicable current gate once per corrected candidate |
 | `harness-retro` | If a finding is recurring (≥2) |
 | `post-implementation-docs` | Next phase when QA is clean |

@@ -38,6 +38,7 @@ jobs:
       - run: node tests/r11-process-lifecycle-contract.test.mjs
       - run: node tests/r12-context-footprint-contract.test.mjs
       - run: node tests/r13-role-evidence-capsule-contract.test.mjs
+      - run: node --test tests/r2a-review-cycle-contract.test.mjs
       - name: Install Context Kernel compatible CLI
         run: |
           R3A_VERSION="$(node -p "require('./awm-registry.json').minCliVersion")"
