@@ -68,6 +68,10 @@ If `.awm/sensors.json` does not exist, report `sensors: not_certified — no sen
 For a security risk, BLOCKED, NEEDS_CONTEXT, or unavoidable ambiguity, add concise prose after
 the fields; never compress an escalation.
 
+## Review-cycle control
+
+Read `references/review-cycle-v1.md`. The controller reconciles its current candidate and evidence; do not invent reviewer verdict or ledger fields.
+
 ## Evidence Capsule v1
 
 role: implementer

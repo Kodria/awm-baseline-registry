@@ -27,6 +27,7 @@ Return exactly this compact format, without prose or process narration:
     verdict: compliant | issues
     - <missing|extra|misread> — <R# or plan section> — file:line — <≤12 words>
     ledger: <N findings, M wins emitted> | skipped (awm not on PATH)
+    ledger-entries: [] | [<identity|verdict|polarity|class|signature|severity|description|reference>, ...]
 
 One `-` line per issue; omit it when compliant. Security risks or ambiguity may add concise
 prose after the contract. If evidence is insufficient, use the shared three-line
@@ -38,6 +39,10 @@ Append `--defect-class <exact-catalog-id>` only when the finding maps to an exac
 awm ledger add --phase spec-review --source-skill subagent-driven-development --polarity finding --class proceso --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>" --ref <file:line>
 awm ledger add --phase spec-review --source-skill subagent-driven-development --polarity win --class proceso --signature <short-slug> --severity info --desc "<one line>"
 ```
+
+## Review-cycle control
+
+Read `references/review-cycle-v1.md`. Emit ledger-entries with actual received fields for every finding or win, or [] when clean; a changed candidate requires your new current verdict.
 
 ## Evidence Capsule v1
 

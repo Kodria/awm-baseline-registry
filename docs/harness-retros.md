@@ -1,5 +1,14 @@
 # Harness Retros
 
+## 2026-09-17 — R2-A: recibos completos de revisión y QA
+
+- **Class:** process.
+- **Occurrences (ledger count):** 0 entradas activas; la evidencia manual del ciclo sí registró tres hallazgos corregidos (metadata de versión, carrera de limpieza del fixture instalado y contrato de aserción de consumidores). Esto repite el patrón `reviewer-report-without-ledger` documentado el 2026-08-25: los informes no entregaron todos los campos de recibo exigidos para una reparación administrativa verificable.
+- **Cura persistente:** `skills/subagent-driven-development/references/review-cycle-v1.md` define una única colección `ledger-entries` con identidad, veredicto, polaridad, clase, firma, severidad, descripción y referencia. Los prompts de review y QA deben emitirla incluso cuando está vacía; el controlador no puede inferir campos incompletos ni volver a despachar una revisión equivalente. `tests/r2a-review-cycle-contract.test.mjs` protege el contrato y sus consumidores mediante mutación.
+- **Sensor:** `npm run test:r2a`; además, los gates de candidato se ejecutan una vez por candidato corregido, no una vez por hallazgo.
+- **Sensores AWM:** cobertura estática `inconclusive` y `awm sensors run` `not_certified` por el manifest legacy con sensores deshabilitados. Se conserva la excepción R8: este estado local no es PASS ni autoriza dispatch; la certificación de publicación exige CI versionado.
+- **Descartes (modo desatendido):** no se agrega otra regla en `AGENTS.md` o `CONSTITUTION.md`: el defecto ya tiene una cura contractual y regresión mecánica en la capa responsable. No se fabrican entradas de ledger a partir de campos que los revisores no emitieron.
+
 ## 2026-08-25 — R2 Evidence Capsule: hallazgos de revisión sin ledger
 
 - **Class:** proceso.

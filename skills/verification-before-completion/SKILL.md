@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-version: "1.3.2"
+version: "1.3.3"
 license: Apache-2.0
 description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
 ---
@@ -191,6 +191,10 @@ For a timeout, first diagnose whether the process is hung or a **healthy progres
 Only evidence of healthy progress may justify a **finite timeout override**. Record that
 justification in the plan or commit, apply no unbounded override, and require a **conclusive
 rerun with `overall: pass`** before continuing.
+
+## Review-cycle control
+
+Read `../subagent-driven-development/references/review-cycle-v1.md` when verifying a reviewed fix. Candidate or fingerprint changes require current affected verdicts; environment-only failures repair their own gate.
 
 ## Registry-content closure exception (R8)
 

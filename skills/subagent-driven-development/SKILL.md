@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "2.0.0"
+version: "2.1.0"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
@@ -301,7 +301,7 @@ exactly. It is the single normative owner; do not restate the policy here.
 The per-branch ledger (`awm ledger`) is what `harness-retro` learns from. Reviewer subagents emit `awm ledger add` per finding and per win — but only if their prompt tells them to. Subagents run in isolated context and only do what their prompt says, so the gate must be enforced at two points:
 
 1. **In the reviewer prompts:** the `awm ledger add` instruction lives in `./spec-reviewer-prompt.md` and `./code-quality-reviewer-prompt.md`. Dispatch prompts MUST be constructed from these templates — read the template file and inject the task-specific context into it. An inline prompt written from memory silently drops the ledger instruction (this happened: a full SDD+QA cycle produced findings but a 0-entry ledger, and the retro had nothing to learn from).
-2. **At the controller, before marking the task complete:** if a reviewer reported findings or wins, run `awm ledger list` and confirm the ledger grew accordingly. If the reviewer's report shows issues but the ledger has no matching entries, send the reviewer back to emit them. Trust-but-verify: `awm ledger list` is cheap and authoritative.
+2. **At the controller, before marking the task complete:** if a reviewer reported findings or wins, run `awm ledger list` and confirm matching entries. When the received explicit ledger-entries are complete but absent, repair only that administrative record and verify the list; do not re-dispatch review. Missing fields require clarification and remain open.
 
 A clean review with genuinely zero findings and zero wins is the only case where no ledger growth is acceptable.
 
@@ -501,6 +501,10 @@ Your sequence — execute steps 1-2 in order, then branch by mode at step 3:
 **If subagent fails task:**
 - Dispatch fix subagent with specific instructions
 - Don't try to fix manually (context pollution)
+
+## Review-cycle control (R2-A)
+
+Read `references/review-cycle-v1.md` before review, fix, ledger repair or revalidation. It is the sole controller contract: reconcile a frozen candidate, group confirmed defects, repair a complete received ledger-entry without a re-review, and preserve distinct current specification and code-quality verdicts. Do not repeat an identical proven mechanical gate.
 
 ## Integration
 

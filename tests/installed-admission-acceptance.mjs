@@ -17,7 +17,7 @@ export async function runInstalledAdmissionAcceptance(bin, root, { negativesOnly
   let remote = 'https://github.com/Kodria/awm-baseline-registry.git';
   // npm writes cache/logs under HOME: operator state must not live in the
   // consumer worktree or read-only admission correctly rejects that mutation.
-  const env = { ...process.env, HOME: operatorHome, NPM_CONFIG_CACHE: path.join(operatorHome, '.npm'), AWM_HOME: home, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_COUNT: '0' };
+  const env = { ...process.env, HOME: operatorHome, NPM_CONFIG_CACHE: path.join(operatorHome, '.npm'), AWM_HOME: home, AWM_NO_UPDATE_CHECK: '1', GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_COUNT: '0' };
   const run = (program, args, cwd = sandbox) => spawnSync(program, args, { cwd, env, encoding: 'utf8', timeout: 30_000, maxBuffer: 30_000 });
   const ok = (program, args, cwd) => { const result = run(program, args, cwd); assert.equal(result.status, 0, `${program} ${args.join(' ')}: ${[(result.stdout ?? ''), (result.stderr ?? ''), (result.error?.message ?? '')].join('\n').slice(0, 4000)}`); return result.stdout.trim(); };
   const json = (args, status) => { const result = run(bin, args); assert.equal(result.status, status, [(result.stdout ?? ''), (result.stderr ?? ''), (result.error?.message ?? '')].join('\n').slice(0, 4000)); assert.ok(result.stdout.length < 20_000); return JSON.parse(result.stdout); };

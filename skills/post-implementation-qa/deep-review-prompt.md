@@ -28,6 +28,7 @@ Normal output is only this compact JSON (no preamble):
     "evidence": "failing test / sensor rule ID / file:line",
     "reference": "requirement ID or relevant source"
   }],
+  "ledgerEntries": ["identity|verdict|polarity|class|signature|severity|description|reference"],
   "summary": "one line"
 }
 ```
@@ -49,6 +50,10 @@ awm ledger add --phase post-qa --source-skill post-implementation-qa --polarity 
 
 Use a stable lowercase signature. If `awm` is unavailable, ledger is best-effort.
 The tests lens records findings with `class: structural`; `tests` is a lens, not a supported ledger class.
+
+## Review-cycle control
+
+Read `../subagent-driven-development/references/review-cycle-v1.md`. Return ledgerEntries for every finding or win, or [] when clean; a changed candidate requires a new current verdict.
 
 ## Track A — Fidelity subagent
 

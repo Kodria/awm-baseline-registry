@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-version: "2.0.0"
+version: "2.0.1"
 license: Apache-2.0
 description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
 ---
@@ -45,6 +45,10 @@ For each task:
 3. Run verifications as specified
 4. **Run sensors before marking complete.** If the repo has `.awm/sensors.json`, run `awm sensors run` (no flag — all sensors; `--slow` skips lint/typecheck). Continue only when `overall: pass`; `fail`, `not_certified`, and `skipped` are all non-pass verdicts. On any non-pass, invoke `systematic-debugging`, stop task progression, and do not mark the checkbox or commit as complete or advance toward review, QA, retro, or PR. <!-- AWM-INTEGRATION: executing-plans-sensor-gate -->
 5. Mark as completed
+
+## Review-cycle control
+
+Read `../subagent-driven-development/references/review-cycle-v1.md` before review or fix loops. Preserve independent roles and current gates while grouping confirmed findings; do not repeat identical proven mechanical commands.
 
 ## Registry-content closure exception (R8)
 

@@ -19,6 +19,7 @@ new findings block approval. Deterministic sensors/tests outrank judgment.
     totals: <N critical / N important / N minor>
     sensors: overall: pass | fail — <new findings, if any>
     ledger: <N findings, M wins emitted> | skipped (awm not on PATH)
+    ledger-entries: [] | [<identity|verdict|polarity|class|signature|severity|description|reference>, ...]
 
 One `-` line per issue, sorted file → line ascending; omit the list when approved. No process
 narration. If evidence is insufficient, return the exact shared three-line `NEEDS_CONTEXT`.
@@ -29,6 +30,10 @@ Append `--defect-class <exact-catalog-id>` only when the finding maps to an exac
 awm ledger add --phase code-quality-review --source-skill subagent-driven-development --polarity finding --class <structural|logica|seguridad> --signature <short-slug> --severity <blocker|important|minor> --desc "<one line>" --ref <file:line>
 awm ledger add --phase code-quality-review --source-skill subagent-driven-development --polarity win --class <appropriate-class> --signature <short-slug> --severity info --desc "<one line>"
 ```
+
+## Review-cycle control
+
+Read `references/review-cycle-v1.md`. Verify proven current mechanical evidence instead of duplicating it; absent equivalence requires execution. Emit ledger-entries for every finding or win, or [] when clean, and a new verdict after candidate change.
 
 ## Evidence Capsule v1
 
