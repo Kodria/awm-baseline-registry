@@ -1,6 +1,6 @@
 ---
 name: post-implementation-docs
-version: "2.0.0"
+version: "2.1.0"
 license: Apache-2.0
 description: Use after post-implementation-qa closes and before harness-retro — updates the user-facing documentation that this cycle's changes made stale, verifying every claim against the real binary rather than against prose. Writes the awm-docs-complete marker.
 ---

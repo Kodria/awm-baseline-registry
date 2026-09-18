@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-version: "2.0.1"
+version: "2.1.0"
 license: Apache-2.0
 description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
 ---

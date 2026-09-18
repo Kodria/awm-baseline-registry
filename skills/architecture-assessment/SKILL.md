@@ -1,6 +1,6 @@
 ---
 name: architecture-assessment
-version: "1.1.1"
+version: "1.2.0"
 license: Apache-2.0
 description: "Use when an existing architecture must be evaluated, critiqued, or diagnosed — scenario-based assessment (lightweight ATAM) producing prioritized findings with severity. Assessment only: it changes nothing."
 ---

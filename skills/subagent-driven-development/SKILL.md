@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "2.1.0"
+version: "2.2.0"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---

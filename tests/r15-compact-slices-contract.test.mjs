@@ -218,7 +218,7 @@ test('S2 semantic mutation rejects reusing the spec reviewer as the quality revi
 });
 
 const S3_FIXTURE = 'tests/fixtures/compact-slices-v1/valid-plan.md';
-const R4A_VERSION = '9.8.0';
+const R4A_VERSION = '9.9.0';
 
 function compactManifest(text) {
   const match = text.match(/<!-- AWM:COMPACT-SLICES:START v1 -->\s*([\s\S]*?)\s*<!-- AWM:COMPACT-SLICES:END v1 -->/);
@@ -269,14 +269,14 @@ test('S3 pins the observed R4a release and keeps bundle/catalog delivery metadat
   const bundle = JSON.parse(read('bundles/dev/bundle.json'));
   const catalog = JSON.parse(read('catalog.json'));
   assert.equal(registry.minCliVersion, R4A_VERSION, 'minCliVersion must be the observed published R4a release');
-  assert.equal(bundle.version, '4.1.0');
+  assert.equal(bundle.version, '4.2.0');
   assert.equal(catalog.bundles.find(entry => entry.name === 'dev')?.version, bundle.version, 'catalog and bundle must agree');
   for (const [file, version] of [
-    ['skills/development-process/SKILL.md', '2.0.0'], ['skills/writing-plans/SKILL.md', '2.0.0'],
-    ['skills/subagent-driven-development/SKILL.md', '2.1.0'], ['skills/executing-plans/SKILL.md', '2.0.1'],
-    ['skills/requesting-code-review/SKILL.md', '1.2.0'], ['skills/post-implementation-qa/SKILL.md', '2.1.0'],
-    ['skills/harness-retro/SKILL.md', '3.0.1'],
-    ['skills/verification-before-completion/SKILL.md', '1.3.3'], ['skills/setup-sensors/SKILL.md', '1.1.2'],
+    ['skills/development-process/SKILL.md', '2.1.0'], ['skills/writing-plans/SKILL.md', '2.1.0'],
+    ['skills/subagent-driven-development/SKILL.md', '2.2.0'], ['skills/executing-plans/SKILL.md', '2.1.0'],
+    ['skills/requesting-code-review/SKILL.md', '1.2.0'], ['skills/post-implementation-qa/SKILL.md', '2.2.0'],
+    ['skills/harness-retro/SKILL.md', '3.1.0'],
+    ['skills/verification-before-completion/SKILL.md', '1.4.0'], ['skills/setup-sensors/SKILL.md', '1.1.2'],
   ]) assert.match(read(file), new RegExp(`^version: \"${version.replaceAll('.', '\\.')}\"$`, 'm'), `${file} must have its one approved version`);
 });
 

@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "2.0.0"
+version: "2.1.0"
 license: Apache-2.0
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---

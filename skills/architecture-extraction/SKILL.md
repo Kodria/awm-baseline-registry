@@ -1,6 +1,6 @@
 ---
 name: architecture-extraction
-version: "1.0.2"
+version: "1.1.0"
 license: Apache-2.0
 description: "Use when the current architecture of an existing system must be extracted, documented, or prepared for extension — reverse-engineering from code into a portable architecture document (arc42-lite + C4 views). Brownfield rule: document before touching."
 ---

@@ -507,11 +507,22 @@ job before tag push. Compatible candidate CLI source can prove prepublication
 only; real published CLI/tag/package must be observed before public registry
 floor and release closure. No skip-on-missing-binary path.
 - [ ] Bump additive feature metadata: dev bundle/catalog 4.1.0 -> 4.2.0;
+product bundle/catalog 1.3.1 -> 1.4.0;
 writing-plans 2.0.0 -> 2.1.0; SDD 2.1.0 -> 2.2.0;
 executing-plans 2.0.1 -> 2.1.0; development-process 2.0.0 -> 2.1.0;
 QA 2.1.0 -> 2.2.0; verification 1.3.3 -> 1.4.0;
 docs 2.0.0 -> 2.1.0; retro 3.0.1 -> 3.1.0;
-finishing 2.0.0 -> 2.1.0. Update each pinned test expectation in the same group.
+finishing 2.0.0 -> 2.1.0;
+architecture-advisor 1.0.2 -> 1.1.0; architecture-assessment 1.1.1 -> 1.2.0;
+architecture-extraction 1.0.2 -> 1.1.0.
+Update each pinned test expectation in the same group.
+Amendment 2026-09-18 (visible deviation): the original list omitted the three
+architecture consumers and the product bundle. B2 added `## Routed custody` to
+architecture-advisor/assessment/extraction, and the product bundle carries
+architecture-assessment and architecture-extraction, so
+`./scripts/check-skill-version-bumps.sh origin/main` requires all four. They are
+additive capability, bumped minor exactly like the other ten in this batch. The
+authoritative set is every entry that gate reports, never this prose list alone.
 - [ ] Set minCliVersion to the observed first published release supporting
 routing-protocol/v1 and v2, numeric exact version from actual CLI output;
 expected semantic feature is 9.9.0, but publisher output is authoritative.

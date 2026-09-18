@@ -63,3 +63,24 @@ test('B2 native consumers preserve the sole routing reference and role custody',
     assert.throws(() => assert.doesNotMatch(`${implementer}\n${injected}`, /gpt-5\.6-sol|claude-opus|(?:codex|claude-code)=/), `consumer must reject concrete routing injection: ${injected}`);
   }
 });
+
+test('B3 both CI surfaces run the routing contract and paired installed acceptance, tag-producing job before the tag', () => {
+  const validate = read('.github/workflows/validate.yml');
+  const autoTag = read('.github/workflows/auto-tag.yml');
+  const CONTRACT = 'tests/r2b-routing-consumer-contract.test.mjs';
+  const INSTALLED = 'tests/r2b-routing-cli-acceptance.mjs';
+  for (const [name, workflow] of [['validate.yml', validate], ['auto-tag.yml', autoTag]]) {
+    for (const command of [CONTRACT, INSTALLED]) {
+      assert.ok(workflow.includes(command), `${name} must run ${command}`);
+      // Scoped mutation: deleting either invocation from either surface must fail.
+      assert.throws(() => assert.ok(workflow.replaceAll(command, '').includes(command)), `${name} without ${command} must be rejected`);
+    }
+    // Declared immutable provenance, never derived at run time.
+    assert.match(workflow, /AWM_R2B_CLI_SHA[:=]\s*"?[a-f0-9]{40}"?/, `${name} must pin the exact published candidate SHA`);
+    assert.match(workflow, /AWM_R2B_PROTOCOL_DIGEST[:=]\s*"?[a-f0-9]{64}"?/, `${name} must pin the immutable protocol digest`);
+    assert.ok(workflow.includes('AWM_R2B_OLD_CLI_BIN'), `${name} must exercise the unmodified published negative control`);
+    // No skip-on-missing-binary path may guard either invocation.
+    assert.doesNotMatch(workflow, /if:.*AWM_R2B|continue-on-error:\s*true/, `${name} must not make routing acceptance conditional`);
+  }
+  assert.ok(autoTag.indexOf(INSTALLED) < autoTag.indexOf('Compute and push next tag'), 'paired acceptance must run before the tag is pushed');
+});
