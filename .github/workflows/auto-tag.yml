@@ -48,6 +48,22 @@ jobs:
           R3A_VERSION="$(node -p "require('./awm-registry.json').minCliVersion")"
           npm install --global "agentic-workflow-manager@$R3A_VERSION"
 
+      - name: Checkout paired R2B CLI candidate
+        uses: actions/checkout@v4
+        with:
+          repository: Kodria/agentic-workflow
+          ref: main
+          path: r2b-cli
+
+      - name: Build and verify paired R2B CLI candidate
+        run: |
+          npm --prefix "$GITHUB_WORKSPACE/r2b-cli/cli" ci
+          npm --prefix "$GITHUB_WORKSPACE/r2b-cli/cli" run build
+          AWM_R2B_CLI_BIN="$GITHUB_WORKSPACE/r2b-cli/cli/dist/src/index.js" \
+          AWM_R2B_CLI_SOURCE="$GITHUB_WORKSPACE/r2b-cli" \
+          AWM_R2B_CLI_SHA="$(git -C "$GITHUB_WORKSPACE/r2b-cli" rev-parse HEAD)" \
+          node --test tests/r2b-routing-cli-acceptance.mjs
+
       # The tag is what `awm update` delivers, so it must never be cut over a
       # red gate. validate.yml runs on the same push, but as a separate
       # workflow it cannot block this job — re-running the checks here is what
@@ -74,6 +90,7 @@ jobs:
           node tests/r12-context-footprint-contract.test.mjs
           node tests/r13-role-evidence-capsule-contract.test.mjs
           node --test tests/r2a-review-cycle-contract.test.mjs
+          node --test tests/r2b-routing-consumer-contract.test.mjs
           node tests/r15-compact-slices-contract.test.mjs
           node tests/r15-compact-slices-cli-acceptance.mjs
           node tests/r16-compact-only-contract.test.mjs

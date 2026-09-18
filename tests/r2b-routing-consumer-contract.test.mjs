@@ -21,6 +21,14 @@ test('B1 v2 producer is semantic and preserves v1 fallback', () => {
   assert.doesNotMatch(sdd, /Do not add semantic profiles/i, 'loaded SDD must not retain the obsolete v2 prohibition');
   assert.throws(() => assert.match(sdd.replace('references/model-routing-v1.md', ''), /references\/model-routing-v1\.md/), 'removing the loaded reference must fail');
   assert.throws(() => assert.match(consumer.replace(/policy.*capability.*otherwise.*zero dispatch/is, ''), /policy.*capability.*otherwise.*zero dispatch/is), 'removing the readiness consequence must fail');
+  for (const workflow of ['.github/workflows/validate.yml', '.github/workflows/auto-tag.yml']) {
+    const body = read(workflow);
+    assert.match(body, /Checkout paired R2B CLI candidate/, `${workflow} must build an explicit paired CLI`);
+    assert.match(body, /repository: Kodria\/agentic-workflow/, `${workflow} must identify the CLI source`);
+    assert.match(body, /AWM_R2B_CLI_BIN=.*dist\/src\/index\.js/, `${workflow} must pass the compiled candidate binary`);
+    assert.match(body, /AWM_R2B_CLI_SHA=.*rev-parse HEAD/, `${workflow} must attest candidate provenance`);
+    assert.throws(() => assert.match(body.replace('Checkout paired R2B CLI candidate', ''), /Checkout paired R2B CLI candidate/), `${workflow} must reject a missing paired candidate step`);
+  }
   for (const profile of ['mechanical', 'integration', 'judgment']) assert.match(fixture, new RegExp(`"implementerProfile":"${profile}"`));
   assert.throws(() => assert.match(v2.replaceAll('integration', 'vendor-x'), /\bintegration\b/));
 });
