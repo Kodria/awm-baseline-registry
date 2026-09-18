@@ -8,5 +8,6 @@
     "test:compact-cli": "node --test tests/r15-compact-slices-cli-acceptance.mjs tests/r16-compact-only-cli-acceptance.mjs",
     "test:release": "node --test tests/release-skill-version-gate.test.mjs",
     "test:r2a": "node --test tests/r2a-review-cycle-contract.test.mjs"
+    ,"test:r2b": "node --test tests/r2b-routing-consumer-contract.test.mjs"
   }
 }
