@@ -155,3 +155,10 @@ Your only final step is:
 1. Report the result (summary of architecture decisions made).
 2. Indicate the next step according to the invocation context.
 3. Wait for confirmation. Do not proceed automatically.
+
+## Routed custody
+
+For a routed architecture obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. Use the
+controller-supplied full architecture envelope; no local model/provider choice
+is allowed, and mismatch or unknown custody blocks the advisory obligation.

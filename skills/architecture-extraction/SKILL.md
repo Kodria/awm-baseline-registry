@@ -283,3 +283,10 @@ Open Decisions / Inferred Items Ledger.
   `architecture-assessment`'s own interface isn't assumed here.
 - Never chain silently and never chain to both in parallel — per R2.1, one
   explicit handoff at a time, named to the user, not inferred by them.
+
+## Routed custody
+
+For a routed architecture obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. Use the
+controller-supplied full architecture envelope; no local model/provider choice
+is allowed, and mismatch or unknown custody blocks the extraction obligation.

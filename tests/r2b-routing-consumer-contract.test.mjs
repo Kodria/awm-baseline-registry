@@ -30,6 +30,9 @@ test('B2 native consumers preserve the sole routing reference and role custody',
     ['skills/subagent-driven-development/implementer-prompt.md', 'routed implementer obligation'],
     ['skills/subagent-driven-development/spec-reviewer-prompt.md', 'routed specification-reviewer obligation'],
     ['skills/subagent-driven-development/code-quality-reviewer-prompt.md', 'routed code-quality-reviewer obligation'],
+    ['skills/architecture-advisor/SKILL.md', 'routed architecture obligation'],
+    ['skills/architecture-assessment/SKILL.md', 'routed architecture obligation'],
+    ['skills/architecture-extraction/SKILL.md', 'routed architecture obligation'],
     ['skills/executing-plans/SKILL.md', 'routed controller obligation'],
     ['skills/development-process/SKILL.md', 'routed controller obligation'],
     ['skills/post-implementation-qa/SKILL.md', 'routed track-a-qa obligation'],
@@ -46,9 +49,12 @@ test('B2 native consumers preserve the sole routing reference and role custody',
     assert.throws(() => assert.match(body.replace('references/model-routing-v1.md', ''), /references\/model-routing-v1\.md/), `${file} must reject a missing routing reference`);
   }
   const reference = read('skills/subagent-driven-development/references/model-routing-v1.md');
-  for (const clause of ['current CLI resolution', 'applied ack', 'mismatch blocks', 'unknown dispatch outcome requires custody reconciliation', 'Emission receipts are not applied acks']) assert.match(reference, new RegExp(clause), `reference must retain ${clause}`);
+  for (const clause of ['current CLI resolution', 'applied ack', 'mismatch blocks', 'unknown dispatch outcome requires custody reconciliation', 'Emission receipts are not applied acks', 'Generation and plan identity never reset', 'omitted effort blocks', 'Unverified capability never satisfies routing', 'R2-A ledger/review', 'QA, documentation, retro, and finishing']) assert.match(reference, new RegExp(clause), `reference must retain ${clause}`);
   for (const role of ['specification-reviewer', 'code-quality-reviewer', 'final-reviewer', 'architecture', 'track-a-qa', 'track-b-qa', 'controller']) assert.match(reference, new RegExp(`\`${role}\``), `reference must retain full role ${role}`);
   for (const target of ['claude-code', 'codex', 'opencode', 'cursor', 'copilot', 'antigravity']) assert.match(reference, new RegExp(`\`${target}\``), `reference must retain target ${target}`);
   assert.match(reference, /documented native control is not native acceptance/i);
   assert.doesNotMatch(reference, /vendor-specific|provider fork/i, 'routing reference must not create provider forks');
+  for (const clause of ['applied ack', 'mismatch blocks', 'unknown dispatch outcome requires custody reconciliation', 'Generation and plan identity never reset', 'omitted effort blocks', 'Unverified capability never satisfies routing']) assert.throws(() => assert.match(reference.replaceAll(clause, ''), new RegExp(clause)), `removing ${clause} must fail`);
+  const fixture = read('tests/fixtures/compact-slices-v2/reference-example.md');
+  for (const field of ['model', 'vendor', 'provider', 'selector']) assert.throws(() => assert.doesNotMatch(fixture.replace('"implementerProfile":"mechanical"', `"implementerProfile":"mechanical","${field}":"forbidden"`), new RegExp(`"${field}"`)), `semantic v2 must reject ${field} configuration`);
 });

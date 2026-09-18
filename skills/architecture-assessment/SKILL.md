@@ -260,3 +260,10 @@ does not enter `open_decisions` at all.
   something to build is an open question until the findings say so.
 - Never chain automatically and never chain to more than one skill at a
   time.
+
+## Routed custody
+
+For a routed architecture obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. Use the
+controller-supplied full architecture envelope; no local model/provider choice
+is allowed, and mismatch or unknown custody blocks the assessment obligation.

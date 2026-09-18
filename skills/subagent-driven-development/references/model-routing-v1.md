@@ -36,6 +36,11 @@ Environment, currentness, persistence, and administrative failures repeat only
 their affected gate. Preserve R2-A ledger collection, frozen-report
 reconciliation, distinct QA lenses, and coherent group correction.
 
+Generation and plan identity never reset an implementation budget. A resolved
+selection includes its approved effort; omitted effort blocks rather than
+silently defaulting. Unverified capability never satisfies routing readiness.
+R2-A ledger/review evidence remains current after every correction, and QA, documentation, retro, and finishing keep their distinct role obligations.
+
 The six portable targets are `claude-code`, `codex`, `opencode`, `cursor`,
 `copilot`, and `antigravity`. Documented native control is not native acceptance:
 an unsupported target blocks, or follows only a current CLI-resolved approved
