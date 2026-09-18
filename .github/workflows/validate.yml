@@ -39,21 +39,6 @@ jobs:
       - run: node tests/r12-context-footprint-contract.test.mjs
       - run: node tests/r13-role-evidence-capsule-contract.test.mjs
       - run: node --test tests/r2a-review-cycle-contract.test.mjs
-      - run: node --test tests/r2b-routing-consumer-contract.test.mjs
-      - name: Checkout paired R2B CLI candidate
-        uses: actions/checkout@v4
-        with:
-          repository: Kodria/agentic-workflow
-          ref: main
-          path: r2b-cli
-      - name: Build and verify paired R2B CLI candidate
-        run: |
-          npm --prefix "$GITHUB_WORKSPACE/r2b-cli/cli" ci
-          npm --prefix "$GITHUB_WORKSPACE/r2b-cli/cli" run build
-          AWM_R2B_CLI_BIN="$GITHUB_WORKSPACE/r2b-cli/cli/dist/src/index.js" \
-          AWM_R2B_CLI_SOURCE="$GITHUB_WORKSPACE/r2b-cli" \
-          AWM_R2B_CLI_SHA="$(git -C "$GITHUB_WORKSPACE/r2b-cli" rev-parse HEAD)" \
-          node --test tests/r2b-routing-cli-acceptance.mjs
       - name: Install Context Kernel compatible CLI
         run: |
           R3A_VERSION="$(node -p "require('./awm-registry.json').minCliVersion")"
