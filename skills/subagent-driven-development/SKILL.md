@@ -42,7 +42,7 @@ the sole normative contract for retrieval.
 
 ## Compact sliced execution (R4-CS)
 
-Use this protocol only for a plan validated as `compact-slices/v1`. Select exactly one complete dependency-ready slice: every declared dependency is complete, its requirement owner is unique,
+Use this protocol only for a plan validated as `compact-slices/v1` or `compact-slices/v2`. Read `references/model-routing-v1.md` before any routed v2 obligation; it is the sole consumer contract and the CLI remains the routing authority. Select exactly one complete dependency-ready slice: every declared dependency is complete, its requirement owner is unique,
 and its declared sources, requirements, and commands are sufficient and inert. Dispatch only
 that slice and only declared sources, requirements, and commands. Do not ask an implementer to
 inspect or discover the plan, branch history, or unrelated files. Invalid or unsupported compact
@@ -247,9 +247,7 @@ digraph process {
 
 ## R1 provider capabilities
 
-Validated v1 remains serial and uses the provider's native full-capability behavior.
-Do not add semantic profiles, concrete model defaults, policy approval, or cost-routing claims;
-those belong to separately approved R2. Review and QA roles retain full capability and distinct
+Validated v1 remains serial and uses the provider's native full-capability behavior. Validated v2 consumes the CLI resolution/routing reference; never add a vendor fork, concrete model default, policy parser, or cost-routing claim. Review and QA roles retain full capability and distinct
 identities. Unsupported/unverified required execution or custody capability blocks visibly.
 Native capability never authorizes reduced quality gates or same-identity self-review.
 

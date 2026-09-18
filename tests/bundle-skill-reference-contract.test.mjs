@@ -39,8 +39,8 @@ test('dev bundle uses the canonical ordered 24-string skill membership at 4.1.0'
   const catalog = readJson('catalog.json');
   const catalogDev = catalog.bundles.find(entry => entry.name === 'dev');
 
-  assert.equal(bundle.version, '4.2.0');
-  assert.equal(catalogDev?.version, '4.2.0');
+  assert.equal(bundle.version, '4.1.0');
+  assert.equal(catalogDev?.version, '4.1.0');
   assert.ok(bundle.skills.every(skill => typeof skill === 'string' && skill.length > 0),
     'every dev skill entry must be a non-empty string');
   assert.deepEqual(bundle.skills, expected);
