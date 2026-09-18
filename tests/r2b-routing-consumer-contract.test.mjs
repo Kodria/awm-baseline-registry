@@ -57,4 +57,9 @@ test('B2 native consumers preserve the sole routing reference and role custody',
   for (const clause of ['applied ack', 'mismatch blocks', 'unknown dispatch outcome requires custody reconciliation', 'Generation and plan identity never reset', 'omitted effort blocks', 'Unverified capability never satisfies routing']) assert.throws(() => assert.match(reference.replaceAll(clause, ''), new RegExp(clause)), `removing ${clause} must fail`);
   const fixture = read('tests/fixtures/compact-slices-v2/reference-example.md');
   for (const field of ['model', 'vendor', 'provider', 'selector']) assert.throws(() => assert.doesNotMatch(fixture.replace('"implementerProfile":"mechanical"', `"implementerProfile":"mechanical","${field}":"forbidden"`), new RegExp(`"${field}"`)), `semantic v2 must reject ${field} configuration`);
+  const implementer = read('skills/subagent-driven-development/implementer-prompt.md');
+  for (const injected of ['gpt-5.6-sol', 'claude-opus', 'codex=gpt-5.6-sol', 'claude-code=claude-opus']) {
+    assert.throws(() => assert.doesNotMatch(`${reference}\n${injected}`, /gpt-5\.6-sol|claude-opus|(?:codex|claude-code)=/), `reference must reject concrete routing injection: ${injected}`);
+    assert.throws(() => assert.doesNotMatch(`${implementer}\n${injected}`, /gpt-5\.6-sol|claude-opus|(?:codex|claude-code)=/), `consumer must reject concrete routing injection: ${injected}`);
+  }
 });
