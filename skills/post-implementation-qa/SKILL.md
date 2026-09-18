@@ -12,6 +12,13 @@ description: Use after implementation is complete and before finishing the branc
 Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
 Apply it exactly; only `admitted` for the current plan identity may continue.
 
+## Routed custody
+
+For a routed track-a-qa obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. Keep the
+Track A envelope identity distinct, require applied acknowledgement and observed
+selection, and block mismatch or unknown custody without weakening Track B.
+
 **Announce at start:** "I'm using the post-implementation-qa skill to review what was built vs. what was planned."
 
 ## Overview

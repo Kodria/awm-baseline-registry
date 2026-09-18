@@ -12,6 +12,13 @@ description: Use when starting, resuming, or routing a development task
 Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
 Apply it exactly; only `admitted` for the current plan identity may continue.
 
+## Routed custody
+
+For a routed controller obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. Route only a
+current CLI envelope through supervisor reservation and applied ack; missing
+native attestation, mismatch, or unknown custody blocks the affected obligation.
+
 Invoke the `development-process` skill. You do NOT write code directly: read state, decide the phase, and invoke the next skill.
 
 ## Harness Preflight (advisory at entry)

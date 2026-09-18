@@ -74,6 +74,11 @@ evidence: <branch diff, tests, sensors>
 retrieval history: <none or ordered ID | source | reason | result>
 fallback: <selective or full-context: exact-trigger>
 
+For a routed track-b-qa obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. Use only the
+controller-supplied full-role envelope; a mismatch or unknown observation blocks
+this lens and never substitutes another provider or self-review.
+
 ## Track B — Robustness / Security lens subagent
 
 Ignore whether the plan mentioned these: the robustness floor is never out of scope. Look for

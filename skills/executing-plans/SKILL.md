@@ -12,6 +12,14 @@ description: Use when you have a written implementation plan to execute in a sep
 Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
 Apply it exactly; only `admitted` for the current plan identity may continue.
 
+## Routed custody
+
+For a routed controller obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. Request the
+current CLI resolution, reserve its frozen envelope, and wait for applied ack
+before native dispatch; unknown or mismatch remains blocked, never retried by
+changing the plan or provider.
+
 ## Overview
 
 Load the admitted plan, review critically and execute one serial compact slice at a time.

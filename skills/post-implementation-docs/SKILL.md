@@ -12,6 +12,13 @@ description: Use after post-implementation-qa closes and before harness-retro â€
 Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
 Apply it exactly; only `admitted` for the current plan identity may continue.
 
+## Routed custody
+
+For a routed documentation obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. The current
+controller supplies a registered full selection and distinct role receipt; do
+not fabricate a child dispatch, model choice, or routing savings claim.
+
 **Announce at start:** "I'm using the post-implementation-docs skill to bring the user-facing documentation in line with what this cycle shipped."
 
 ## Overview

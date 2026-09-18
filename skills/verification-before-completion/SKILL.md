@@ -11,6 +11,11 @@ description: Use when about to claim work is complete, fixed, or passing, before
 
 Claiming work is complete without verification is dishonesty, not efficiency.
 
+For a routed final-reviewer obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. Verify the
+current full-role envelope, applied acknowledgement, and bounded observation;
+missing, mismatched, or unknown custody blocks completion.
+
 **Core principle:** Evidence before claims, always.
 
 **Violating the letter of this rule is violating the spirit of this rule.**

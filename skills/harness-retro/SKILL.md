@@ -12,6 +12,14 @@ description: Use as the terminal learning phase of development-process — reads
 Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
 Apply it exactly; only `admitted` for the current plan identity may continue.
 
+## Routed custody
+
+For a routed retro obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. Use the
+controller's registered full selection and distinct role receipt; unknown or
+mismatched routing evidence blocks the retro obligation rather than creating a
+new dispatch.
+
 ## Overview
 
 `harness-retro` is the terminal learning phase of `development-process`. It reads the branch ledger accumulated during the session (populated by SDD reviewers, post-qa, post-implementation-docs, sensors, and debugging phases), presents every item to the user interactively, and cures the approved ones into the remediation tree or existing delivered docs.
