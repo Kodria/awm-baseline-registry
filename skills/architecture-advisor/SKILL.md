@@ -1,6 +1,6 @@
 ---
 name: architecture-advisor
-version: "1.0.2"
+version: "1.1.0"
 license: Apache-2.0
 description: "Specialist in software architecture design. Use this skill when you need to define, review, or design the architecture of a system — from understanding the requirement to the full definition of components, patterns, technologies, integrations, and trade-offs. Activate on phrases like: 'design the architecture', 'which pattern should I use', 'system architecture', 'define components', 'review the architecture', 'architecture proposal', 'what risks does this integration have'."
 ---
@@ -155,3 +155,10 @@ Your only final step is:
 1. Report the result (summary of architecture decisions made).
 2. Indicate the next step according to the invocation context.
 3. Wait for confirmation. Do not proceed automatically.
+
+## Routed custody
+
+For a routed architecture obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. Use the
+controller-supplied full architecture envelope; no local model/provider choice
+is allowed, and mismatch or unknown custody blocks the advisory obligation.

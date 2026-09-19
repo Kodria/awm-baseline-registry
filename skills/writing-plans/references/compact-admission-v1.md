@@ -1,5 +1,11 @@
 # Compact lifecycle admission v1
 
+Both `compact-slices/v1` and `compact-slices/v2` are supported only through the
+CLI's current contract. V2 adds a semantic `implementerProfile` per slice; a
+missing/unsupported routing contract or policy readiness blocks v2 and falls
+back visibly to valid v1. The currentness, sensors, journal and custody order
+below remains unchanged.
+
 The CLI is the sole mechanical parser, validator, digester and admission authority. This
 reference is the single normative lifecycle admission consumer contract. Consumers load it
 before work; they must not reproduce a second parser or select plans by filename/checkboxes.

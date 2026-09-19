@@ -1,6 +1,6 @@
 ---
 name: post-implementation-docs
-version: "2.0.0"
+version: "2.1.0"
 license: Apache-2.0
 description: Use after post-implementation-qa closes and before harness-retro â€” updates the user-facing documentation that this cycle's changes made stale, verifying every claim against the real binary rather than against prose. Writes the awm-docs-complete marker.
 ---
@@ -11,6 +11,13 @@ description: Use after post-implementation-qa closes and before harness-retro â€
 
 Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
 Apply it exactly; only `admitted` for the current plan identity may continue.
+
+## Routed custody
+
+For a routed documentation obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. The current
+controller supplies a registered full selection and distinct role receipt; do
+not fabricate a child dispatch, model choice, or routing savings claim.
 
 **Announce at start:** "I'm using the post-implementation-docs skill to bring the user-facing documentation in line with what this cycle shipped."
 

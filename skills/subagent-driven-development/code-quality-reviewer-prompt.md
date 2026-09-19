@@ -51,3 +51,10 @@ tests, sensors, and public/robustness constraints; never receive a full plan or 
 chain-of-thought. A risk requires full relevant context and verification from the controller, not
 a downgraded review. Findings stay open until the same implementer fixes them and this fresh role
 returns `approved`.
+
+## Routed custody
+
+For a routed code-quality-reviewer obligation, read
+`references/model-routing-v1.md`. Use the reviewer envelope identity supplied
+by the controller; do not select native model/effort, and block a mismatched or
+unknown observation before approving quality.

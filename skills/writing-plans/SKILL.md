@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "2.0.0"
+version: "2.1.0"
 license: Apache-2.0
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
@@ -57,7 +57,7 @@ Preserve canonical requirement IDs such as `RF-1.1`, `RNF-T.1`, and safe hyphena
 Group adjacent requirements only when behavior, surfaces, dependencies, and verification boundaries justify one cohesive slice; state that rationale and one owner per requirement.
 Unmarked historical plans are readable migration inputs, never executable; there is no Task/Tracks or legacy execution option.
 
-Read `references/compact-slices-v1.md` completely. Emit exactly its v1 manifest and
+Read `references/compact-slices-v1.md` completely. Query the installed CLI routing contract and policy status before authoring routing-enabled compact v2. Emit one mechanical, integration or judgment implementerProfile per slice, never a concrete model or vendor. Mechanical requires closed local behavior and excludes security/admission/root recovery; integration requires known interfaces; judgment owns public/cross-cutting policy and custody. Missing design decisions remain planning-required. If v2 or approved policy readiness is unavailable, author valid compact v1, report routing unavailable, and never claim profile savings. For the current R2-B bootstrap keep v1 even after feature support becomes available. Read `references/compact-slices-v2.md` only for routing-enabled v2; otherwise emit exactly its v1 manifest and
 five canonical `####` subsections per serial slice. Inline necessary facts when their
 source is insufficient, unavailable, unstable, unsafe, inaccessible or ambiguous.
 The executor receives complete behavior, surfaces, interfaces, sequence, edge cases,

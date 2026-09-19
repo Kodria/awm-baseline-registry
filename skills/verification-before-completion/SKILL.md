@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-version: "1.3.3"
+version: "1.4.0"
 license: Apache-2.0
 description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
 ---
@@ -10,6 +10,11 @@ description: Use when about to claim work is complete, fixed, or passing, before
 ## Overview
 
 Claiming work is complete without verification is dishonesty, not efficiency.
+
+For a routed final-reviewer obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. Verify the
+current full-role envelope, applied acknowledgement, and bounded observation;
+missing, mismatched, or unknown custody blocks completion.
 
 **Core principle:** Evidence before claims, always.
 

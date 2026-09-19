@@ -1,6 +1,6 @@
 ---
 name: architecture-extraction
-version: "1.0.2"
+version: "1.1.0"
 license: Apache-2.0
 description: "Use when the current architecture of an existing system must be extracted, documented, or prepared for extension — reverse-engineering from code into a portable architecture document (arc42-lite + C4 views). Brownfield rule: document before touching."
 ---
@@ -283,3 +283,10 @@ Open Decisions / Inferred Items Ledger.
   `architecture-assessment`'s own interface isn't assumed here.
 - Never chain silently and never chain to both in parallel — per R2.1, one
   explicit handoff at a time, named to the user, not inferred by them.
+
+## Routed custody
+
+For a routed architecture obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. Use the
+controller-supplied full architecture envelope; no local model/provider choice
+is allowed, and mismatch or unknown custody blocks the extraction obligation.

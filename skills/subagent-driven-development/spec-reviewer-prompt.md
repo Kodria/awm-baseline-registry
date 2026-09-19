@@ -60,3 +60,10 @@ the capsule. You are a fresh specification reviewer: do not reuse the implemente
 never receive a full plan or implementer chain-of-thought, or infer omitted requirements. Report an omission, new requirement, or
 incorrect boundary as `amendment-required`; the controller must amend and revalidate before any
 further implementation.
+
+## Routed custody
+
+For a routed specification-reviewer obligation, read
+`references/model-routing-v1.md`. Use the reviewer envelope identity supplied
+by the controller; do not select native model/effort, and block a mismatched or
+unknown observation before emitting a verdict.

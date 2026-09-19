@@ -88,3 +88,10 @@ declared sources, requirements, and commands; report `NEEDS_CONTEXT` rather than
 history or plan content. An omission, new requirement, incorrect boundary, or risk is not a code
 fix: stop for amendment-required so the controller can create a durable amendment, revalidate,
 and record the deviation.
+
+## Routed custody
+
+For a routed implementer obligation, read `references/model-routing-v1.md`.
+Carry only the immutable CLI envelope identity; wait for applied acknowledgement
+before native dispatch, observe afterward, and block on mismatch or unknown
+custody. Never choose a model, effort, or provider mapping in this prompt.

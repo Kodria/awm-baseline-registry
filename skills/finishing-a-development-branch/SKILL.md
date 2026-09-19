@@ -1,6 +1,6 @@
 ---
 name: finishing-a-development-branch
-version: "2.0.0"
+version: "2.1.0"
 license: Apache-2.0
 description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR/MR, or cleanup
 ---
@@ -11,6 +11,13 @@ description: Use when implementation is complete, all tests pass, and you need t
 
 Read `../writing-plans/references/compact-admission-v1.md` before any plan execution, role dispatch, resume, or lifecycle transition.
 Apply it exactly; only `admitted` for the current plan identity may continue.
+
+## Routed custody
+
+For a routed finishing obligation, read
+`../subagent-driven-development/references/model-routing-v1.md`. Use the
+controller's registered full selection and distinct role receipt; never invent
+a native child dispatch, and block a mismatched or unknown routing observation.
 
 ## Overview
 
