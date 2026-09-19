@@ -2,6 +2,36 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 4.3.0 / product 1.4.0 — 2026-09-19 (R2-B approval paths reachable)
+
+### Changed
+- `minCliVersion` raised to **9.10.0**. On 9.9.0 neither approval path could be
+  completed from outside the CLI's own test suite: `--expected-digest` was
+  mandatory and no command disclosed the canonical digest, and
+  `model-policy capabilities approve` was mis-registered so `--file` was
+  undefined on every invocation and it could never approve anything. 9.10.0 adds
+  the read-only `model-policy digest` and repairs that wiring.
+- `docs/acceptance/r2b-native-routing.md`, "Operating the acceptance": the
+  procedure now reads the digest before approving, for the policy and for the
+  capability receipt, and records that attestation is renewable rather than
+  one-off.
+
+### Added
+- `CMD-INSTALLED` covers the **positive** approval path, previously unreachable
+  from this repository. The digest comes from the candidate binary, so the
+  registry still never computes one and the forbidden second parser stays
+  unwritten. It proves, against the real published binary: digest → approve for
+  both schemas → `status` reporting approved/current → `plan resolve` returning
+  a routed envelope per semantic profile → approved effort degradation that
+  keeps its routed model → withdrawal through `--replace-digest`. The case is
+  falsifiable: against published 9.9.0 it fails with `unknown command 'digest'`.
+
+### Unchanged
+- Native runtime acceptance stays **UNTESTED**. The receipts the new case
+  approves are authored by the test, so their capability claims are fixture
+  input, not attestation. A routed run still requires the supervisor's applied
+  acknowledgement, which no hand-issued command sequence can stand in for.
+
 ## dev 4.2.0 / product 1.4.0 — 2026-09-18 (R2-B provider-neutral routing)
 
 ### Added

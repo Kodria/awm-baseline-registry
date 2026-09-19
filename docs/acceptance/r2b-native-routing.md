@@ -34,11 +34,37 @@ zero-dispatch `blocked` with actionable diagnostics, that absent policy/receipt
 stays visibly not ready, that no journal is created by these read-only negatives,
 and that the older published control is never misrepresented as v2-compatible.
 
+`CMD-INSTALLED` now also exercises the **positive** approval path, which was
+previously unreachable from here. `model-policy digest` discloses the canonical
+digest the candidate itself computes, so the registry obtains it without ever
+calculating one — the second parser stays forbidden and unwritten. The added
+case proves, against the real binary: policy digest → `approve` accepted →
+capability receipt digest → `capabilities approve` accepted → `status` reporting
+`approved` / `current` → `plan resolve` returning a routed envelope per semantic
+profile, with the full role resolving to the approved full capability; then
+approved effort degradation keeping its routed model and naming
+`effortOverride`; then withdrawal through `--replace-digest` recording its
+predecessor and the withdrawn mapping ceasing to resolve. A mismatched digest is
+still refused on both paths and leaves nothing behind, and no dispatch custody
+exists at any point, because resolving is not dispatching.
+
+The capability receipts in that case are **authored by the test**. Their
+capability claims are fixture input, not attestation: this level proves the CLI
+mechanism, never runtime behaviour. Nothing here may be read as evidence for
+level 5.
+
 Observed locally on 2026-09-18 with candidate `agentic-workflow-manager` 9.9.0
 (tag `v9.9.0`, commit `0e0dea21aef31895c34954dca65b80ef2da44f90`, protocol digest
 `aecfd11414878b19b3456775a576ac2423f04e67a9b2aab0c4075c7c12fbe07a`) against the
-unmodified published 9.8.0 control: **PASS**. Local observation is not the
-publication gate below.
+unmodified published 9.8.0 control: **PASS**. Re-observed on 2026-09-19 with
+candidate 9.10.0 (tag `v9.10.0`, commit
+`9bbb5bd8a693e8830386f382154a4ae999d24733`, same protocol digest) against the
+same 9.8.0 control, including the new positive-path case: **PASS**. The added
+case is falsifiable rather than merely green — run against published 9.9.0 it
+fails with `unknown command 'digest'`, because that release cannot complete the
+path at all. Note 9.9.0 is not a valid negative control for v2: it was the first
+release to advertise `compact-slices/v2`, so the control stays 9.8.0. Local
+observation is not the publication gate below.
 
 ## 4. Public tag
 
@@ -74,26 +100,48 @@ and an unverified capability never satisfies routing.
 ## Operating the acceptance
 
 Approve a routing policy explicitly — the installer never creates, approves or
-replaces one, and the CLI never reveals the canonical digest, so the operator
-must supply it:
+replaces one. Requiring `--expected-digest` keeps approval an operator act, and
+since CLI 9.10.0 the operator can observe the digest first instead of guessing
+it. Read it, decide, then approve:
 
 ```
+awm model-policy digest --file <policy.json> --cwd <repo> --json
 awm model-policy approve --file <policy.json> --scope user \
   --expected-digest <sha256> --cwd <repo> --json
+
+awm model-policy digest --file <receipt.json> --cwd <repo> --json
+awm model-policy capabilities approve --file <receipt.json> \
+  --expected-digest <sha256> --cwd <repo> --json
+
 awm model-policy status --provider codex --runtime-kind native \
   --runtime-version <v> --account-scope-digest <sha256> --cwd <repo> --json
 ```
 
-`CMD-INSTALLED` exercises `approve` on the real published binary only along its
-fail-closed path: a mismatched `--expected-digest` is rejected, no approved
-policy is left behind, and no dispatch custody is created. Proving the positive
-path from this repository would require reimplementing the CLI's canonical
-digest here, which is the second parser the admission contract forbids.
+`digest` is read-only: it dispatches on the declared `schema`, so one command
+serves both `model-policy/v1` and `routing-capabilities/v1`, and it approves
+nothing. It never consults the clock, so receipt freshness stays the approval
+path's business. This is why the registry floor is 9.10.0: on 9.9.0 neither
+approval path could be completed by anyone outside the CLI's own test suite, and
+`capabilities approve` could not be completed at all.
+
+Capability attestation carries `expiresAt` and is therefore renewable, not
+permanent — expect to re-digest and re-approve a receipt routinely rather than
+once.
+
+`CMD-INSTALLED` now exercises **both** paths on the real published binary: the
+fail-closed one (a mismatched `--expected-digest` rejected, nothing left behind,
+no dispatch custody created) and the positive one described in level 3.
 
 A small routed run — one `mechanical` slice and one `integration` slice carried
 through implementer, specification review, code-quality review and global QA —
 remains the acceptance that has NOT been performed, because it requires the
-native runtime acceptance below.
+native runtime acceptance below. Note what that run needs and why no sequence of
+hand-typed commands substitutes for it: the protocol is
+`plan resolve` → `job routing-reserve` → **supervisor applied acknowledgement** →
+native invocation → `job routing-observe`. The applied ack comes from the
+supervisor's own generation, so an operator issuing those commands by hand is
+simulating the component under test. That is the shape of evidence this document
+refuses everywhere else, and it is refused here too.
 
 **Rollback.** Registry content is delivered by immutable tag, so rollback is
 pinning the previous tag: consumers move back with `awm update` against the
