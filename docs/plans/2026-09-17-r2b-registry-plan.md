@@ -1,4 +1,5 @@
 # R2-B registry routing implementation plan
+<!-- awm-qa-complete: 2026-09-18 -->
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `subagent-driven-development`
 > or `executing-plans` to implement one admitted serial compact slice at a time.
