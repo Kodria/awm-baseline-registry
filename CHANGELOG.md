@@ -2,6 +2,37 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 4.2.0 / product 1.4.0 — 2026-09-18 (R2-B provider-neutral routing)
+
+### Added
+- Compact v2 authoring with semantic `implementerProfile` values (`mechanical`,
+  `integration`, `judgment`). Plans never name a concrete model or vendor; the CLI owns
+  resolution, policy and custody. Compact v1 keeps working, with routing visibly
+  unavailable rather than silently skipped.
+- One shared consumer reference, `subagent-driven-development/references/model-routing-v1.md`:
+  resolution, frozen envelope, generation reservation, applied ack, native invocation,
+  observation and recovery. Mismatch blocks; an unknown dispatch outcome requires custody
+  reconciliation; an emission receipt is not an applied ack.
+- Routed custody sections in the architecture consumers (`architecture-advisor`,
+  `architecture-assessment`, `architecture-extraction`).
+- `docs/acceptance/r2b-native-routing.md`, which keeps five evidence levels separate:
+  structural, compiled, installed, public tag and native runtime.
+
+### Changed
+- `minCliVersion` is now `9.9.0`, the first published release advertising
+  `compact-slices/v2`, taken from actual publisher output.
+- Validation CI and the tag-producing job both run the routing contract, the paired
+  installed acceptance against the real published binary plus an unmodified older negative
+  control, and the release gate that ties the floor to the observed published CLI — all
+  before a tag is pushed.
+
+### Rollout boundary
+Requires `agentic-workflow-manager` 9.9.0. Installed acceptance passed against the real
+published 9.9.0 with a 9.8.0 negative control. Real native routing on Codex and on Claude
+remains UNTESTED: fixture evidence is never native certification, and an unverified
+capability never satisfies routing. Local registry sensors are all deliberately disabled,
+so the local verdict stays `not_certified` under R8 and is never relabelled `pass`.
+
 ## dev 4.0.0 — 2026-09-16 (R1 source; publication pending)
 
 ### Changed
