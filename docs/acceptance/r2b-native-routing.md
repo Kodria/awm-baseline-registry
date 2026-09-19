@@ -76,13 +76,26 @@ ways it was previously evaded: a commented-out invocation, a step-level `if:`,
 that merely `needs:` the tag job. An earlier revision of this document claimed a
 mutation guard that could not fail; that claim was false and the guard was
 rewritten to make it true. The registry floor `minCliVersion`
-is `9.9.0`, the first published release advertising `compact-slices/v2`, taken
-from actual publisher output rather than an expected number.
+is `9.10.0`, the first published release whose approval paths can both be
+completed from outside the CLI's own test suite, taken from actual publisher
+output rather than an expected number.
 
-**This level has not happened yet.** No registry candidate has been published for
-R2-B, so the public-tag evidence is BLOCKED, never a simulated PASS. A local
-fixture tag is not public proof: the exact published tag SHA must equal the
-candidate checkout.
+**This level has now happened: PASS.** Registry tag **`v4.3.0`** was pushed at
+commit `e17f5e303d2ea5ef060e830ca61abae1f0f867b3`, by the tag-producing job and
+only after `CMD-R2B`, `CMD-INSTALLED` and
+`scripts/r2b-release-gate.mjs --mode published` all ran green against the
+published candidate. The gate reported `floorUpdateRequired: false`, so the
+declared floor equals the observed published CLI rather than an expectation.
+
+The proof is that the published tag SHA equals the candidate checkout, which is
+what a local fixture tag can never establish: `git rev-list -n1 v4.3.0` is
+`e17f5e30…`, and `awm-registry.json` at that tag declares `minCliVersion`
+`9.10.0`. This level is bound to that exact pair; a later tag is a different
+claim and must record its own.
+
+Note what this level does and does not carry. It says the registry published
+under a gate that actually ran. It says nothing about native runtime behaviour —
+level 5 below remains untested, and no amount of public-tag evidence moves it.
 
 ## 5. Native runtime
 

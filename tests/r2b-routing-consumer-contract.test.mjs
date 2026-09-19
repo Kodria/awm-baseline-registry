@@ -168,7 +168,14 @@ test('B3 acceptance document keeps its honesty labels and cannot be silently rel
   const publicTag = doc.split('## 4. Public tag')[1]?.split('## 5.')[0] ?? '';
   assert.match(native, /\*\*UNTESTED\.\*\*/, 'native runtime level must stay labelled UNTESTED');
   assert.match(native, /fixture evidence is never native certification/i, 'native level must refuse fixture evidence as certification');
-  assert.match(publicTag, /BLOCKED, never a simulated PASS/, 'public-tag level must stay BLOCKED until a registry tag exists');
+  // The condition this guard named has been met: registry tag v4.3.0 exists at
+  // e17f5e30, pushed by the tag-producing job after the acceptances ran. So the
+  // BLOCKED assertion is replaced by the invariant that outlives it — a PASS at
+  // this level must rest on an exact immutable pair, never a bare claim, which
+  // is precisely what a local fixture tag could never supply.
+  assert.match(publicTag, /`v\d+\.\d+\.\d+`/, 'public-tag PASS must name the exact published registry tag');
+  assert.match(publicTag, /[a-f0-9]{40}/, 'public-tag PASS must name the exact published commit SHA');
+  assert.match(publicTag, /level 5 below remains untested/i, 'public-tag level must refuse to carry native-runtime evidence');
   assert.doesNotMatch(native, /\bPASS\b/, 'native runtime level must never claim PASS');
 
   // The five levels must stay separate and named.
@@ -181,5 +188,8 @@ test('B3 acceptance document keeps its honesty labels and cannot be silently rel
 
   // Mutation proofs: relabelling either level must be rejected.
   assert.throws(() => assert.match(native.replace('**UNTESTED.**', '**PASS.**'), /\*\*UNTESTED\.\*\*/), 'flipping UNTESTED to PASS must fail');
-  assert.throws(() => assert.match(publicTag.replace('BLOCKED, never a simulated PASS', 'PASS'), /BLOCKED, never a simulated PASS/), 'flipping BLOCKED to PASS must fail');
+  // A PASS stripped of its commit SHA is exactly the bare claim this level
+  // refuses, so removing the provenance must be rejected.
+  assert.throws(() => assert.match(publicTag.replace(/[a-f0-9]{40}/, 'somewhere'), /[a-f0-9]{40}/), 'a public-tag PASS without its exact commit must fail');
+  assert.throws(() => assert.match(publicTag.replace(/`v\d+\.\d+\.\d+`/, '`latest`'), /`v\d+\.\d+\.\d+`/), 'a public-tag PASS resting on a mutable ref must fail');
 });
