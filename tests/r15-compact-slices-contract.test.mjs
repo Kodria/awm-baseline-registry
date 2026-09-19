@@ -218,7 +218,7 @@ test('S2 semantic mutation rejects reusing the spec reviewer as the quality revi
 });
 
 const S3_FIXTURE = 'tests/fixtures/compact-slices-v1/valid-plan.md';
-const R4A_VERSION = '9.10.0';
+const R4A_VERSION = '9.10.1';
 
 function compactManifest(text) {
   const match = text.match(/<!-- AWM:COMPACT-SLICES:START v1 -->\s*([\s\S]*?)\s*<!-- AWM:COMPACT-SLICES:END v1 -->/);

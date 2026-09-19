@@ -76,9 +76,12 @@ ways it was previously evaded: a commented-out invocation, a step-level `if:`,
 that merely `needs:` the tag job. An earlier revision of this document claimed a
 mutation guard that could not fail; that claim was false and the guard was
 rewritten to make it true. The registry floor `minCliVersion`
-is `9.10.0`, the first published release whose approval paths can both be
-completed from outside the CLI's own test suite, taken from actual publisher
-output rather than an expected number.
+is `9.10.1`, taken from actual publisher output rather than an expected
+number. The floor tracks the published CLI rather than the release that first
+mattered: `9.10.0` is where both approval paths became completable from outside
+the CLI's own test suite, and the floor has moved past it because consumed
+contract currentness compares the installed CLI against what is actually
+published, so a floor left behind reports the consumer as stale.
 
 **This level has now happened: PASS.** Registry tag **`v4.3.0`** was pushed at
 commit `e17f5e303d2ea5ef060e830ca61abae1f0f867b3`, by the tag-producing job and
@@ -133,7 +136,7 @@ awm model-policy status --provider codex --runtime-kind native \
 `digest` is read-only: it dispatches on the declared `schema`, so one command
 serves both `model-policy/v1` and `routing-capabilities/v1`, and it approves
 nothing. It never consults the clock, so receipt freshness stays the approval
-path's business. This is why the registry floor is 9.10.0: on 9.9.0 neither
+path's business. This is why the registry floor is at least 9.10.0: on 9.9.0 neither
 approval path could be completed by anyone outside the CLI's own test suite, and
 `capabilities approve` could not be completed at all.
 
