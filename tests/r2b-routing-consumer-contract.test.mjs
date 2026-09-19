@@ -56,31 +56,130 @@ test('B2 native consumers preserve the sole routing reference and role custody',
   assert.doesNotMatch(reference, /vendor-specific|provider fork/i, 'routing reference must not create provider forks');
   for (const clause of ['applied ack', 'mismatch blocks', 'unknown dispatch outcome requires custody reconciliation', 'Generation and plan identity never reset', 'omitted effort blocks', 'Unverified capability never satisfies routing']) assert.throws(() => assert.match(reference.replaceAll(clause, ''), new RegExp(clause)), `removing ${clause} must fail`);
   const fixture = read('tests/fixtures/compact-slices-v2/reference-example.md');
-  for (const field of ['model', 'vendor', 'provider', 'selector']) assert.throws(() => assert.doesNotMatch(fixture.replace('"implementerProfile":"mechanical"', `"implementerProfile":"mechanical","${field}":"forbidden"`), new RegExp(`"${field}"`)), `semantic v2 must reject ${field} configuration`);
+  // Assert the real document, then self-test the detector. The previous form injected a
+  // field into a copy and asserted it was there, which proves String.replace, not the fixture.
+  const concreteField = /"(model|vendor|provider|selector)"\s*:/;
+  assert.doesNotMatch(fixture, concreteField, 'semantic v2 fixture must not configure a concrete model/vendor/provider/selector');
+  for (const field of ['model', 'vendor', 'provider', 'selector']) {
+    const mutated = fixture.replace('"implementerProfile":"mechanical"', `"implementerProfile":"mechanical","${field}":"forbidden"`);
+    assert.notEqual(mutated, fixture, `mutation fixture for ${field} must actually apply`);
+    assert.match(mutated, concreteField, `detector must catch an injected ${field} field`);
+  }
   const implementer = read('skills/subagent-driven-development/implementer-prompt.md');
+  const concreteRouting = /gpt-5\.6-sol|claude-opus|(?:codex|claude-code)=/;
+  // Same correction: the documents themselves must be clean — appending a string to a copy
+  // and finding it again asserted nothing about what ships.
+  assert.doesNotMatch(reference, concreteRouting, 'routing reference must not name a concrete model or map a target to one');
+  assert.doesNotMatch(implementer, concreteRouting, 'implementer prompt must not name a concrete model or map a target to one');
   for (const injected of ['gpt-5.6-sol', 'claude-opus', 'codex=gpt-5.6-sol', 'claude-code=claude-opus']) {
-    assert.throws(() => assert.doesNotMatch(`${reference}\n${injected}`, /gpt-5\.6-sol|claude-opus|(?:codex|claude-code)=/), `reference must reject concrete routing injection: ${injected}`);
-    assert.throws(() => assert.doesNotMatch(`${implementer}\n${injected}`, /gpt-5\.6-sol|claude-opus|(?:codex|claude-code)=/), `consumer must reject concrete routing injection: ${injected}`);
+    assert.match(`${reference}\n${injected}`, concreteRouting, `detector must catch injected routing: ${injected}`);
   }
 });
+
+// Textual `includes` accepted a commented-out invocation, `indexOf` ordering accepted a
+// step moved into another job, and the no-skip regex only caught conditions that happened
+// to name AWM_R2B. These helpers answer the real question — does this command run
+// unconditionally, in this job, before the tag — and each is proven by mutation below.
+
+/** Lines that actually invoke `command`: a commented-out line is not an invocation. */
+function invocations(workflow, command) {
+  return workflow.split('\n')
+    .map((line, index) => ({ line, index }))
+    .filter(entry => entry.line.includes(command) && !/^\s*#/.test(entry.line));
+}
+
+/** The `  jobName:` header governing a line, so ordering is compared within one job. */
+function jobOf(workflow, index) {
+  const lines = workflow.split('\n');
+  for (let i = index; i >= 0; i -= 1) {
+    const header = /^ {2}([A-Za-z0-9_-]+):\s*$/.exec(lines[i]);
+    if (header) return header[1];
+  }
+  return null;
+}
+
+/** Any conditional or failure-swallowing key between this line and its job header.
+ *  Catches step-level and job-level `if:` / `continue-on-error:` in every spelling. */
+function guardedBy(workflow, index) {
+  const lines = workflow.split('\n');
+  const found = [];
+  for (let i = index; i >= 0; i -= 1) {
+    if (/^ {2}[A-Za-z0-9_-]+:\s*$/.test(lines[i])) break;
+    if (/^\s*#/.test(lines[i])) continue;
+    if (/^\s*if:/.test(lines[i])) found.push(lines[i].trim());
+    if (/^\s*continue-on-error:/.test(lines[i])) found.push(lines[i].trim());
+  }
+  return found;
+}
+
+function runsUnconditionally(workflow, command) {
+  const hits = invocations(workflow, command);
+  return hits.length > 0 && hits.every(hit => guardedBy(workflow, hit.index).length === 0);
+}
 
 test('B3 both CI surfaces run the routing contract and paired installed acceptance, tag-producing job before the tag', () => {
   const validate = read('.github/workflows/validate.yml');
   const autoTag = read('.github/workflows/auto-tag.yml');
   const CONTRACT = 'tests/r2b-routing-consumer-contract.test.mjs';
   const INSTALLED = 'tests/r2b-routing-cli-acceptance.mjs';
+  const GATE = 'scripts/r2b-release-gate.mjs';
+
   for (const [name, workflow] of [['validate.yml', validate], ['auto-tag.yml', autoTag]]) {
-    for (const command of [CONTRACT, INSTALLED]) {
-      assert.ok(workflow.includes(command), `${name} must run ${command}`);
-      // Scoped mutation: deleting either invocation from either surface must fail.
-      assert.throws(() => assert.ok(workflow.replaceAll(command, '').includes(command)), `${name} without ${command} must be rejected`);
+    for (const command of [CONTRACT, INSTALLED, GATE]) {
+      assert.ok(runsUnconditionally(workflow, command), `${name} must run ${command} unconditionally`);
     }
-    // Declared immutable provenance, never derived at run time.
     assert.match(workflow, /AWM_R2B_CLI_SHA[:=]\s*"?[a-f0-9]{40}"?/, `${name} must pin the exact published candidate SHA`);
     assert.match(workflow, /AWM_R2B_PROTOCOL_DIGEST[:=]\s*"?[a-f0-9]{64}"?/, `${name} must pin the immutable protocol digest`);
     assert.ok(workflow.includes('AWM_R2B_OLD_CLI_BIN'), `${name} must exercise the unmodified published negative control`);
-    // No skip-on-missing-binary path may guard either invocation.
-    assert.doesNotMatch(workflow, /if:.*AWM_R2B|continue-on-error:\s*true/, `${name} must not make routing acceptance conditional`);
   }
-  assert.ok(autoTag.indexOf(INSTALLED) < autoTag.indexOf('Compute and push next tag'), 'paired acceptance must run before the tag is pushed');
+
+  // The tag job must run the acceptance before pushing, and in that same job.
+  const push = autoTag.split('\n').findIndex(line => line.includes('Compute and push next tag'));
+  const gateLine = invocations(autoTag, INSTALLED)[0];
+  assert.ok(gateLine.index < push, 'paired acceptance must run before the tag is pushed');
+  assert.equal(jobOf(autoTag, gateLine.index), jobOf(autoTag, push), 'paired acceptance must live in the tag-producing job itself');
+
+  // Mutation proofs: each realistic way of defeating the gate must be rejected.
+  const commentedOut = autoTag.replace(`          node --test ${INSTALLED}`, `          # node --test ${INSTALLED}`);
+  assert.equal(runsUnconditionally(commentedOut, INSTALLED), false, 'a commented-out invocation must not count as running');
+
+  const acceptanceStep = '      - name: Paired published CLI routing acceptance (candidate + unmodified negative control)';
+  assert.ok(validate.includes(acceptanceStep), 'mutation fixtures must track the real step name');
+  const conditioned = validate.replace(acceptanceStep, `${acceptanceStep}\n        if: github.event_name == 'schedule'`);
+  assert.equal(runsUnconditionally(conditioned, INSTALLED), false, 'a conditional step must not count as running');
+
+  const tolerated = validate.replace('        run: |\n          set -euo pipefail', "        continue-on-error: 'true'\n        run: |\n          set -euo pipefail");
+  assert.equal(runsUnconditionally(tolerated, INSTALLED), false, 'a failure-swallowing step must not count as running');
+
+  const movedAway = autoTag.replace(`          node --test ${INSTALLED}\n`, '') +
+    `\n  r2b-late:\n    needs: tag\n    steps:\n      - run: node --test ${INSTALLED}\n`;
+  const moved = invocations(movedAway, INSTALLED)[0];
+  assert.notEqual(jobOf(movedAway, moved.index), jobOf(movedAway, push), 'an acceptance moved into another job must not satisfy the ordering check');
+
+  const removed = validate.replaceAll(`node --test ${CONTRACT}`, '');
+  assert.equal(runsUnconditionally(removed, CONTRACT), false, 'removing the invocation must be rejected');
+});
+
+test('B3 acceptance document keeps its honesty labels and cannot be silently relabelled', () => {
+  const doc = read('docs/acceptance/r2b-native-routing.md');
+  // Nothing read this document before, so UNTESTED/BLOCKED could have been flipped to
+  // PASS with the whole suite still green. These labels are the honesty contract of R2B-B7.
+  const native = doc.split('## 5. Native runtime')[1] ?? '';
+  const publicTag = doc.split('## 4. Public tag')[1]?.split('## 5.')[0] ?? '';
+  assert.match(native, /\*\*UNTESTED\.\*\*/, 'native runtime level must stay labelled UNTESTED');
+  assert.match(native, /fixture evidence is never native certification/i, 'native level must refuse fixture evidence as certification');
+  assert.match(publicTag, /BLOCKED, never a simulated PASS/, 'public-tag level must stay BLOCKED until a registry tag exists');
+  assert.doesNotMatch(native, /\bPASS\b/, 'native runtime level must never claim PASS');
+
+  // The five levels must stay separate and named.
+  for (const level of ['## 1. Structural', '## 2. Compiled', '## 3. Installed', '## 4. Public tag', '## 5. Native runtime']) {
+    assert.ok(doc.includes(level), `acceptance doc must keep the ${level} level`);
+  }
+  // R8: the local verdict is preserved, never relabelled.
+  assert.match(doc, /not_certified/, 'acceptance doc must record the preserved not_certified verdict');
+  assert.doesNotMatch(doc, /sensors?[^.\n]{0,40}\bpass\b/i, 'acceptance doc must never relabel the sensor verdict as pass');
+
+  // Mutation proofs: relabelling either level must be rejected.
+  assert.throws(() => assert.match(native.replace('**UNTESTED.**', '**PASS.**'), /\*\*UNTESTED\.\*\*/), 'flipping UNTESTED to PASS must fail');
+  assert.throws(() => assert.match(publicTag.replace('BLOCKED, never a simulated PASS', 'PASS'), /BLOCKED, never a simulated PASS/), 'flipping BLOCKED to PASS must fail');
 });

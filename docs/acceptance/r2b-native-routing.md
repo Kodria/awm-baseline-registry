@@ -42,9 +42,14 @@ publication gate below.
 
 ## 4. Public tag
 
-Both `validate.yml` and the tag-producing job in `auto-tag.yml` run `CMD-R2B` and
-`CMD-INSTALLED` before a registry tag is pushed; removing either invocation from
-either surface fails a scoped mutation test. The registry floor `minCliVersion`
+Both `validate.yml` and the tag-producing job in `auto-tag.yml` run `CMD-R2B`,
+`CMD-INSTALLED` and `scripts/r2b-release-gate.mjs --mode published` before a
+registry tag is pushed. The wiring guard is proven by mutation against the four
+ways it was previously evaded: a commented-out invocation, a step-level `if:`,
+`continue-on-error` in any spelling, and moving the acceptance into another job
+that merely `needs:` the tag job. An earlier revision of this document claimed a
+mutation guard that could not fail; that claim was false and the guard was
+rewritten to make it true. The registry floor `minCliVersion`
 is `9.9.0`, the first published release advertising `compact-slices/v2`, taken
 from actual publisher output rather than an expected number.
 
@@ -65,6 +70,37 @@ on 9.9.0 resolves `claude-code` capabilities with `modelOverride`,
 `unverified`, while only `interactiveExecution`, `unattendedController` and
 `durableResume` are `supported`. Fixture evidence is never native certification,
 and an unverified capability never satisfies routing.
+
+## Operating the acceptance
+
+Approve a routing policy explicitly — the installer never creates, approves or
+replaces one, and the CLI never reveals the canonical digest, so the operator
+must supply it:
+
+```
+awm model-policy approve --file <policy.json> --scope user \
+  --expected-digest <sha256> --cwd <repo> --json
+awm model-policy status --provider codex --runtime-kind native \
+  --runtime-version <v> --account-scope-digest <sha256> --cwd <repo> --json
+```
+
+`CMD-INSTALLED` exercises `approve` on the real published binary only along its
+fail-closed path: a mismatched `--expected-digest` is rejected, no approved
+policy is left behind, and no dispatch custody is created. Proving the positive
+path from this repository would require reimplementing the CLI's canonical
+digest here, which is the second parser the admission contract forbids.
+
+A small routed run — one `mechanical` slice and one `integration` slice carried
+through implementer, specification review, code-quality review and global QA —
+remains the acceptance that has NOT been performed, because it requires the
+native runtime acceptance below.
+
+**Rollback.** Registry content is delivered by immutable tag, so rollback is
+pinning the previous tag: consumers move back with `awm update` against the
+prior `vX.Y.Z`, and `minCliVersion` returns to the floor that tag declared. No
+published tag is ever mutated or deleted to undo a release, and a routing policy
+is withdrawn by the operator replacing it with `--replace-digest`, never by the
+installer.
 
 ## R8 sensor closure
 

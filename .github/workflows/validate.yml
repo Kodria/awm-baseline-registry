@@ -66,6 +66,11 @@ jobs:
           # registry floor, and the clone must land on the exact published tag SHA above.
           # A tag that stops pointing at it fails closed. There is no skip-on-missing-binary.
           AWM_R2B_CLI_VERSION="$(node -p "require('./awm-registry.json').minCliVersion")"
+          # minCliVersion is repo-controlled and feeds `npm install`, which accepts full
+          # specs (alias:, git+, file:) that would fetch and run foreign code. Require a
+          # bare semver before it is ever used as an install target or a tag name.
+          printf '%s' "$AWM_R2B_CLI_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
+            || { echo "::error::minCliVersion must be a bare semver, got: $AWM_R2B_CLI_VERSION"; exit 1; }
           npm install --prefix "$RUNNER_TEMP/r2b-candidate" "agentic-workflow-manager@$AWM_R2B_CLI_VERSION"
           npm install --prefix "$RUNNER_TEMP/r2b-old-cli" "agentic-workflow-manager@$AWM_R2B_OLD_CLI_VERSION"
           git clone --depth 1 --branch "v$AWM_R2B_CLI_VERSION" https://github.com/Kodria/agentic-workflow.git "$RUNNER_TEMP/r2b-cli-source"
@@ -74,6 +79,13 @@ jobs:
           AWM_R2B_CLI_SOURCE="$RUNNER_TEMP/r2b-cli-source" \
           AWM_R2B_OLD_CLI_BIN="$RUNNER_TEMP/r2b-old-cli/node_modules/.bin/awm" \
           node --test tests/r2b-routing-cli-acceptance.mjs
+          # Ties the registry floor to the observed published CLI: --mode published
+          # requires minCliVersion to equal the candidate version and the tag to match.
+          AWM_R2B_CLI_VERSION="$AWM_R2B_CLI_VERSION" \
+          AWM_R2B_CLI_BIN="$RUNNER_TEMP/r2b-candidate/node_modules/.bin/awm" \
+          AWM_R2B_CLI_SOURCE="$RUNNER_TEMP/r2b-cli-source" \
+          AWM_R2B_CLI_TAG="v$AWM_R2B_CLI_VERSION" \
+          node scripts/r2b-release-gate.mjs --mode published
       - run: node tests/r14-context-kernel-contract.test.mjs
       - run: node tests/r14-context-kernel-cli-acceptance.mjs
       - run: node tests/release-skill-version-gate.test.mjs

@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { assertNoDispatchCustody } from './installed-admission-acceptance.mjs';
 
 const root = path.resolve(new URL('..', import.meta.url).pathname);
 
@@ -64,14 +65,36 @@ test('B3 paired candidate preserves v1, blocks unready v2, and is immutable', ()
     const blocked = JSON.parse(v2.stdout);
     assert.equal(blocked.state, 'blocked', 'v2 without current approval/receipt must be zero-dispatch blocked');
     assert.ok(Array.isArray(blocked.diagnostics) && blocked.diagnostics.length > 0, 'v2 block must retain actionable diagnostics');
-    assert.equal(existsSync(path.join(home, 'awm', 'journal.json')), false, 'read-only policy/resolve negatives must not create dispatch custody');
+    // Dispatch custody lives at <repoRoot>/.awm/journal, never at $AWM_HOME/journal.json.
+    // The previous path was one the CLI never writes, so this assertion could not fail.
+    // assertNoDispatchCustody owns that location; --cwd above is `root`.
+    assertNoDispatchCustody(root);
+    // Exercise `model-policy approve` on the real binary. Only the fail-closed path is
+    // provable from here: --expected-digest is mandatory and the CLI never reveals the
+    // canonical digest, so approving for real would mean duplicating the CLI's digest
+    // algorithm in the registry — the second parser the contract forbids.
+    const policy = path.join(home, 'candidate-policy.json');
+    writeFileSync(policy, JSON.stringify({ schema: 'model-policy/v1', mappings: [], implementationBudget: { maxAttempts: 3, escalation: ['mechanical', 'integration', 'judgment'], judgmentEfforts: ['medium', 'high'] } }));
+    const approve = spawnSync(bin, ['model-policy', 'approve', '--file', policy, '--scope', 'user', '--expected-digest', 'a'.repeat(64), '--cwd', root, '--json'], { cwd: root, encoding: 'utf8', env });
+    assert.equal(approve.error, undefined, 'approve must actually execute on the candidate');
+    assert.match(`${approve.stdout}${approve.stderr}`, /digest/i, 'approve must reject a mismatched expected digest by naming the digest boundary');
+    const afterApprove = spawnSync(bin, ['model-policy', 'status', '--provider', 'codex', '--runtime-kind', 'native', '--runtime-version', '1.0.0', '--account-scope-digest', 'a'.repeat(64), '--cwd', root, '--json'], { cwd: root, encoding: 'utf8', env });
+    assert.deepEqual(JSON.parse(afterApprove.stdout), { policy: { state: 'absent' }, capability: { state: 'absent' } }, 'a rejected approve must leave no approved policy behind');
+    assertNoDispatchCustody(root);
+
     assert.equal(candidate(oldBin, ['--version'], env).trim(), oldVersion, 'old negative-control binary must retain its declared published version');
     const oldContract = spawnSync(oldBin, ['model-policy', 'contract', '--json'], { cwd: root, encoding: 'utf8', env });
+    // Both outcomes must assert something falsifiable. The previous `else` re-stated
+    // its own branch condition, so the only path CI reaches proved nothing.
+    assert.equal(oldContract.error, undefined, 'old published CLI must actually execute, not fail to spawn');
     if (oldContract.status === 0) {
       const legacy = JSON.parse(oldContract.stdout);
       assert.ok(!Array.isArray(legacy.supportedPlanSchemas) || !legacy.supportedPlanSchemas.includes('compact-slices/v2'), 'old published CLI must not be misrepresented as v2-compatible');
     } else {
-      assert.notEqual(oldContract.status, 0, 'old published CLI must reject the routing contract command');
+      // It rejected the command: prove it is a real rejection of an unknown verb and
+      // that it never advertised v2 anywhere in its output.
+      assert.doesNotMatch(`${oldContract.stdout}${oldContract.stderr}`, /compact-slices\/v2/, 'old published CLI must never advertise v2');
+      assert.match(`${oldContract.stdout}${oldContract.stderr}`, /model-policy/, 'rejection must name the unsupported routing command');
     }
     assert.ok(compareSemver(expectedVersion, oldVersion) > 0, 'the B3 candidate must be newer than the published CLI that lacks compact v2');
   } finally { rmSync(home, { recursive: true, force: true }); }
