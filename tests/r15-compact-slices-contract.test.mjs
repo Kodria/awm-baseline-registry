@@ -242,7 +242,7 @@ function assertR4EvidenceLedger(text) {
 }
 
 function assertR15ReleaseWorkflow(workflow) {
-  const install = workflow.indexOf('Install Context Kernel compatible CLI');
+  const install = workflow.indexOf('Install the published CLI under test');
   const verify = workflow.indexOf('Verify registry before tagging');
   const tag = workflow.indexOf('Compute and push next tag');
   assert.ok(install >= 0 && verify > install && tag > verify, 'release workflow must install, verify, then compute its tag');
@@ -286,9 +286,12 @@ test('S3 records bounded structural evidence and honest unavailable-provider cla
 
 test('S3 validation and release workflows run both R15 gates before a release tag (R4-EVID-4)', () => {
   const validation = read('.github/workflows/validate.yml');
-  const install = validation.indexOf('Install Context Kernel compatible CLI');
+  const install = validation.indexOf('Install the published CLI under test');
+  // A missing step yields -1, which would make every `> install` comparison below
+  // trivially true. Assert the step exists before ordering anything against it.
+  assert.ok(install >= 0, 'validate workflow must name the published CLI install step');
   for (const command of ['node tests/r15-compact-slices-contract.test.mjs', 'node tests/r15-compact-slices-cli-acceptance.mjs']) {
-    assert.ok(validation.indexOf(command) > install, `validate workflow must run ${command} after compatible CLI install`);
+    assert.ok(validation.indexOf(command) > install, `validate workflow must run ${command} after the published CLI install`);
   }
   assertR15ReleaseWorkflow(read('.github/workflows/auto-tag.yml'));
 });

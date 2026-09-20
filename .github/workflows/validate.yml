@@ -39,10 +39,31 @@ jobs:
       - run: node tests/r12-context-footprint-contract.test.mjs
       - run: node tests/r13-role-evidence-capsule-contract.test.mjs
       - run: node --test tests/r2a-review-cycle-contract.test.mjs
-      - name: Install Context Kernel compatible CLI
+      # These two gate the floor/provenance split itself, and need no CLI, so they
+      # run before anything is installed.
+      - run: node --test tests/cli-floor-decoupling.test.mjs
+      - run: node --test tests/r2b-release-prepublication.test.mjs
+      # Every declared CLI pin lives in cli-certification.json and is validated
+      # there before it reaches the environment, so nothing downstream re-reads
+      # or restates it. See Kodria/agentic-workflow#164.
+      - name: Declare CLI provenance pins
+        run: node scripts/cli-certification.mjs --env >> "$GITHUB_ENV"
+      - name: Install the published CLI under test
         run: |
-          R3A_VERSION="$(node -p "require('./awm-registry.json').minCliVersion")"
-          npm install --global "agentic-workflow-manager@$R3A_VERSION"
+          set -euo pipefail
+          # minCliVersion is a FLOOR, not the version this job must run. Installing
+          # at the floor makes the CLI report ITSELF stale the moment a newer one
+          # publishes, so admission blocks with ADMISSION_CURRENTNESS_BLOCKED before
+          # anything this suite asserts can happen. Install what a user installing
+          # today actually gets, and prove it satisfies the floor.
+          LATEST="$(npm view agentic-workflow-manager version)"
+          printf '%s' "$LATEST" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
+            || { echo "::error::npm reported a non-semver latest CLI: $LATEST"; exit 1; }
+          node scripts/cli-certification.mjs --assert-floor "$LATEST"
+          npm install --global "agentic-workflow-manager@$LATEST"
+          # The acceptance asserts the CLI it exercises is exactly this published
+          # version: a locally compiled binary can never match it.
+          echo "AWM_INSTALLED_CLI_VERSION=$LATEST" >> "$GITHUB_ENV"
       - run: node tests/r11-process-lifecycle-cli-acceptance.mjs
       - run: node tests/r15-compact-slices-contract.test.mjs
       - run: node tests/r15-compact-slices-cli-acceptance.mjs
@@ -52,39 +73,46 @@ jobs:
           AWM_R16_INSTALLED_ACCEPTANCE: "1"
         run: |
           npm install --global npm@10.8.3
-          npm install --prefix "$RUNNER_TEMP/r16-old-cli" agentic-workflow-manager@9.7.1
+          npm install --prefix "$RUNNER_TEMP/r16-old-cli" "agentic-workflow-manager@$AWM_R16_OLD_CLI_VERSION"
           AWM_R16_OLD_CLI_BIN="$RUNNER_TEMP/r16-old-cli/node_modules/.bin/awm" node tests/r16-compact-only-cli-acceptance.mjs
       - run: node --test tests/r2b-routing-consumer-contract.test.mjs
-      - name: Paired published CLI routing acceptance (candidate + unmodified negative control)
-        env:
-          AWM_R2B_CLI_SHA: "2563401845bc69850c10fc575ba4b3e54d7f12a2"
-          AWM_R2B_PROTOCOL_DIGEST: "aecfd11414878b19b3456775a576ac2423f04e67a9b2aab0c4075c7c12fbe07a"
-          AWM_R2B_OLD_CLI_VERSION: "9.8.0"
+      - name: Paired certified CLI routing acceptance (declared pair + unmodified negative control)
         run: |
           set -euo pipefail
-          # Provenance is declared, never derived here: the candidate version comes from the
-          # registry floor, and the clone must land on the exact published tag SHA above.
-          # A tag that stops pointing at it fails closed. There is no skip-on-missing-binary.
-          AWM_R2B_CLI_VERSION="$(node -p "require('./awm-registry.json').minCliVersion")"
-          # minCliVersion is repo-controlled and feeds `npm install`, which accepts full
-          # specs (alias:, git+, file:) that would fetch and run foreign code. Require a
-          # bare semver before it is ever used as an install target or a tag name.
-          printf '%s' "$AWM_R2B_CLI_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
-            || { echo "::error::minCliVersion must be a bare semver, got: $AWM_R2B_CLI_VERSION"; exit 1; }
-          npm install --prefix "$RUNNER_TEMP/r2b-candidate" "agentic-workflow-manager@$AWM_R2B_CLI_VERSION"
+          # Provenance is declared, never derived here: the candidate version, its
+          # public commit SHA and its protocol digest all come from
+          # cli-certification.json. That record is the pair this registry's routing
+          # evidence rests on, so it moves on re-certification and NOT on every CLI
+          # patch release. A tag that stops pointing at the declared commit fails
+          # closed. There is no skip-on-missing-binary.
+          # Both install targets are repo-controlled and feed `npm install`, which
+          # accepts full specs (alias:, git+, file:) that would fetch and run foreign
+          # code. cli-certification.mjs already rejects anything but a bare semver;
+          # re-check at the boundary where the spec is actually used.
+          for spec in "$AWM_CERTIFIED_CLI_VERSION" "$AWM_R2B_OLD_CLI_VERSION"; do
+            printf '%s' "$spec" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
+              || { echo "::error::declared CLI pin must be a bare semver, got: $spec"; exit 1; }
+          done
+          npm install --prefix "$RUNNER_TEMP/r2b-candidate" "agentic-workflow-manager@$AWM_CERTIFIED_CLI_VERSION"
           npm install --prefix "$RUNNER_TEMP/r2b-old-cli" "agentic-workflow-manager@$AWM_R2B_OLD_CLI_VERSION"
-          git clone --depth 1 --branch "v$AWM_R2B_CLI_VERSION" https://github.com/Kodria/agentic-workflow.git "$RUNNER_TEMP/r2b-cli-source"
-          AWM_R2B_CLI_VERSION="$AWM_R2B_CLI_VERSION" \
+          git clone --depth 1 --branch "v$AWM_CERTIFIED_CLI_VERSION" https://github.com/Kodria/agentic-workflow.git "$RUNNER_TEMP/r2b-cli-source"
+          AWM_R2B_CLI_VERSION="$AWM_CERTIFIED_CLI_VERSION" \
+          AWM_R2B_CLI_SHA="$AWM_CERTIFIED_CLI_SHA" \
+          AWM_R2B_PROTOCOL_DIGEST="$AWM_CERTIFIED_CLI_PROTOCOL_DIGEST" \
           AWM_R2B_CLI_BIN="$RUNNER_TEMP/r2b-candidate/node_modules/.bin/awm" \
           AWM_R2B_CLI_SOURCE="$RUNNER_TEMP/r2b-cli-source" \
           AWM_R2B_OLD_CLI_BIN="$RUNNER_TEMP/r2b-old-cli/node_modules/.bin/awm" \
           node --test tests/r2b-routing-cli-acceptance.mjs
-          # Ties the registry floor to the observed published CLI: --mode published
-          # requires minCliVersion to equal the candidate version and the tag to match.
-          AWM_R2B_CLI_VERSION="$AWM_R2B_CLI_VERSION" \
+          # --mode published proves the declared tag still resolves to the declared
+          # commit and that the certified CLI satisfies the registry floor. It no
+          # longer demands the floor EQUAL it: that equality is what forced a hand
+          # bump of minCliVersion on every CLI patch release.
+          AWM_R2B_CLI_VERSION="$AWM_CERTIFIED_CLI_VERSION" \
+          AWM_R2B_CLI_SHA="$AWM_CERTIFIED_CLI_SHA" \
+          AWM_R2B_PROTOCOL_DIGEST="$AWM_CERTIFIED_CLI_PROTOCOL_DIGEST" \
           AWM_R2B_CLI_BIN="$RUNNER_TEMP/r2b-candidate/node_modules/.bin/awm" \
           AWM_R2B_CLI_SOURCE="$RUNNER_TEMP/r2b-cli-source" \
-          AWM_R2B_CLI_TAG="v$AWM_R2B_CLI_VERSION" \
+          AWM_R2B_CLI_TAG="v$AWM_CERTIFIED_CLI_VERSION" \
           node scripts/r2b-release-gate.mjs --mode published
       - run: node tests/r14-context-kernel-contract.test.mjs
       - run: node tests/r14-context-kernel-cli-acceptance.mjs

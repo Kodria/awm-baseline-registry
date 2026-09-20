@@ -75,20 +75,43 @@ ways it was previously evaded: a commented-out invocation, a step-level `if:`,
 `continue-on-error` in any spelling, and moving the acceptance into another job
 that merely `needs:` the tag job. An earlier revision of this document claimed a
 mutation guard that could not fail; that claim was false and the guard was
-rewritten to make it true. The registry floor `minCliVersion`
-is `9.10.2`, taken from actual publisher output rather than an expected
-number. The floor tracks the published CLI rather than the release that first
-mattered: `9.10.0` is where both approval paths became completable from outside
-the CLI's own test suite, and the floor has moved past it because consumed
-contract currentness compares the installed CLI against what is actually
-published, so a floor left behind reports the consumer as stale.
+rewritten to make it true.
+
+The registry floor `minCliVersion` is `9.10.2`, and as of
+Kodria/agentic-workflow#164 it is a **floor and nothing else**: the oldest CLI
+that can consume this content. It no longer tracks the published CLI. Three
+separate facts used to be carried by that one number, and the conflation made
+every CLI patch release turn this repository's CI red until two values were
+bumped by hand:
+
+- **The floor** (`minCliVersion` in `awm-registry.json`) — the compatibility
+  minimum. Moves only when the content starts requiring something an older CLI
+  cannot do.
+- **The certified pair** (`cli-certification.json`) — the exact published
+  version, its public commit SHA and its observed protocol digest, which
+  `CMD-R2B` and the release gate rest on. Declared, never derived at run time.
+  Moves only on re-certification.
+- **The version under test** — resolved from npm at run time and installed by
+  both CI surfaces. Not declared anywhere, because it is not a claim: it is
+  whatever a user installing today gets. It must satisfy the floor, and CI
+  proves that with `cli-certification.mjs --assert-floor` before installing it.
+
+Installing at the floor is what broke: consumed contract currentness compares
+the installed CLI against what is actually published, so a CLI installed at the
+floor reported *itself* stale the moment a newer one existed, and admission
+blocked with `ADMISSION_CURRENTNESS_BLOCKED` before any diagnostic these
+acceptances assert could appear.
 
 **This level has now happened: PASS.** Registry tag **`v4.3.0`** was pushed at
 commit `e17f5e303d2ea5ef060e830ca61abae1f0f867b3`, by the tag-producing job and
 only after `CMD-R2B`, `CMD-INSTALLED` and
 `scripts/r2b-release-gate.mjs --mode published` all ran green against the
-published candidate. The gate reported `floorUpdateRequired: false`, so the
-declared floor equals the observed published CLI rather than an expectation.
+published candidate. The gate reported `floorUpdateRequired: false` — the field
+was named that at the time, and reported that the declared floor equalled the
+observed published CLI. That equality is no longer required, and the field is
+now `floorSatisfied`: the observed published CLI must clear the floor, not match
+it. The level-4 claim below is bound to the pair actually observed then and is
+not restated by the rename.
 
 The proof is that the published tag SHA equals the candidate checkout, which is
 what a local fixture tag can never establish: `git rev-list -n1 v4.3.0` is

@@ -2,6 +2,47 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 4.5.0 / product 1.4.0 — 2026-09-20 (CLI floor decoupled from currentness)
+
+### Changed
+- `minCliVersion` is now a **compatibility floor and nothing else**. It stopped
+  doubling as "the exact CLI version CI must install", which is what turned this
+  repository's CI red on every CLI patch release —
+  Kodria/agentic-workflow#164. Reproduced before the change in the
+  CI-equivalent environment (`AWM_R16_INSTALLED_ACCEPTANCE=1`, the 9.7.1
+  control, npm 10.8.3) with 9.11.2 published and the floor at 9.10.2: the CLI
+  installed at the floor reported *itself* stale and admission blocked on
+  `ADMISSION_CURRENTNESS_BLOCKED` (3 pass / 1 fail), while a CLI above the floor
+  was rejected outright by the runtime guard (0 pass / 4 fail). After the change
+  the same environment is 4 pass / 0 fail with the CLI at 9.11.2 and the floor
+  left at 9.10.2.
+- New `cli-certification.json` holds the declared immutable pair the routing
+  evidence rests on — certified version, its public commit SHA, its protocol
+  digest, and the two negative-control versions. Provenance stays **declared,
+  never derived at run time**; it simply no longer lives inline in two
+  workflows, and it moves on re-certification rather than on every CLI release.
+  `scripts/cli-certification.mjs` validates it, proves the certified CLI clears
+  the floor and each negative control sits below it, and emits the pins as
+  `KEY=value` lines for `$GITHUB_ENV`.
+- Both CI surfaces now install the version resolved from npm at run time — what
+  a user installing today actually gets — after proving it satisfies the floor
+  with `--assert-floor`. The acceptance's "prerelease is not a PASS" claim is
+  kept by making CI declare the exact version it installed
+  (`AWM_INSTALLED_CLI_VERSION`) instead of demanding the CLI equal the floor.
+- `scripts/r2b-release-gate.mjs --mode published` requires the observed CLI to
+  **clear** the floor rather than equal it; `floorUpdateRequired` is replaced by
+  `floorSatisfied`. The declared tag must still resolve to the declared commit.
+- `tests/r2b-release-prepublication.test.mjs` and the new
+  `tests/cli-floor-decoupling.test.mjs` are wired into both CI surfaces. The
+  release-gate test had never been run by any workflow.
+- The r15 validate-workflow ordering gate asserted `indexOf(command) > install`
+  without first proving the install step existed, so a missing step yielded
+  `-1` and made every comparison trivially true. It now fails closed.
+
+### Unchanged
+- The floor value itself stays **9.10.2**, and level 5 native runtime stays
+  **UNTESTED**.
+
 ## dev 4.4.0 / product 1.4.0 — 2026-09-19 (public-tag level closed)
 
 ### Changed

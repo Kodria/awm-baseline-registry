@@ -10,7 +10,6 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fixture = path.join(root, 'tests/fixtures/compact-slices-v1/valid-plan.md');
 const awm = process.env.AWM_R4A_BIN || 'awm';
-const expectedVersion = JSON.parse(readFileSync(path.join(root, 'awm-registry.json'), 'utf8')).minCliVersion;
 
 function validate(planPath) {
   return spawnSync(awm, ['plan', 'validate', planPath, '--cwd', root, '--json'], { cwd: root, encoding: 'utf8' });

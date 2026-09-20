@@ -117,6 +117,18 @@ function runsUnconditionally(workflow, command) {
   return hits.length > 0 && hits.every(hit => guardedBy(workflow, hit.index).length === 0);
 }
 
+/** Kodria/agentic-workflow#164: the immutable pins moved out of the workflow body
+ *  into cli-certification.json, the single record that validates them. They are
+ *  still DECLARED, never derived at run time — a job may only pass the declared
+ *  values through, and deriving the candidate from the floor is what coupled the
+ *  floor to every CLI patch release in the first place. */
+function assertDeclaredPins(name, workflow) {
+  assert.ok(runsUnconditionally(workflow, 'scripts/cli-certification.mjs --env'), `${name} must declare its CLI pins from the single validated record`);
+  assert.match(workflow, /AWM_R2B_CLI_SHA="\$AWM_CERTIFIED_CLI_SHA"/, `${name} must pass the declared certified SHA through, not a value derived in the job`);
+  assert.match(workflow, /AWM_R2B_PROTOCOL_DIGEST="\$AWM_CERTIFIED_CLI_PROTOCOL_DIGEST"/, `${name} must pass the declared protocol digest through, not a value derived in the job`);
+  assert.doesNotMatch(workflow, /AWM_R2B_CLI_VERSION="\$\(/, `${name} must not derive the candidate version at run time`);
+}
+
 test('B3 both CI surfaces run the routing contract and paired installed acceptance, tag-producing job before the tag', () => {
   const validate = read('.github/workflows/validate.yml');
   const autoTag = read('.github/workflows/auto-tag.yml');
@@ -128,10 +140,12 @@ test('B3 both CI surfaces run the routing contract and paired installed acceptan
     for (const command of [CONTRACT, INSTALLED, GATE]) {
       assert.ok(runsUnconditionally(workflow, command), `${name} must run ${command} unconditionally`);
     }
-    assert.match(workflow, /AWM_R2B_CLI_SHA[:=]\s*"?[a-f0-9]{40}"?/, `${name} must pin the exact published candidate SHA`);
-    assert.match(workflow, /AWM_R2B_PROTOCOL_DIGEST[:=]\s*"?[a-f0-9]{64}"?/, `${name} must pin the immutable protocol digest`);
+    assertDeclaredPins(name, workflow);
     assert.ok(workflow.includes('AWM_R2B_OLD_CLI_BIN'), `${name} must exercise the unmodified published negative control`);
   }
+  const certification = JSON.parse(read('cli-certification.json'));
+  assert.match(certification.certifiedCli.sourceSha, /^[a-f0-9]{40}$/, 'the declared record must carry the exact published candidate SHA');
+  assert.match(certification.certifiedCli.protocolDigest, /^[a-f0-9]{64}$/, 'the declared record must carry the immutable protocol digest');
 
   // The tag job must run the acceptance before pushing, and in that same job.
   const push = autoTag.split('\n').findIndex(line => line.includes('Compute and push next tag'));
@@ -143,7 +157,7 @@ test('B3 both CI surfaces run the routing contract and paired installed acceptan
   const commentedOut = autoTag.replace(`          node --test ${INSTALLED}`, `          # node --test ${INSTALLED}`);
   assert.equal(runsUnconditionally(commentedOut, INSTALLED), false, 'a commented-out invocation must not count as running');
 
-  const acceptanceStep = '      - name: Paired published CLI routing acceptance (candidate + unmodified negative control)';
+  const acceptanceStep = '      - name: Paired certified CLI routing acceptance (declared pair + unmodified negative control)';
   assert.ok(validate.includes(acceptanceStep), 'mutation fixtures must track the real step name');
   const conditioned = validate.replace(acceptanceStep, `${acceptanceStep}\n        if: github.event_name == 'schedule'`);
   assert.equal(runsUnconditionally(conditioned, INSTALLED), false, 'a conditional step must not count as running');
@@ -158,6 +172,20 @@ test('B3 both CI surfaces run the routing contract and paired installed acceptan
 
   const removed = validate.replaceAll(`node --test ${CONTRACT}`, '');
   assert.equal(runsUnconditionally(removed, CONTRACT), false, 'removing the invocation must be rejected');
+
+  // A workflow that stops declaring its pins, or goes back to deriving the
+  // candidate from the floor, must be rejected rather than quietly re-coupling.
+  const undeclared = validate.replaceAll('node scripts/cli-certification.mjs --env >> "$GITHUB_ENV"', 'true');
+  assert.notEqual(undeclared, validate, 'the mutation must actually drop the declared pin step');
+  assert.throws(() => assertDeclaredPins('validate.yml', undeclared), /must declare its CLI pins/, 'dropping the declared pin step must be rejected');
+
+  const rederived = validate.replace('AWM_R2B_CLI_VERSION="$AWM_CERTIFIED_CLI_VERSION"', 'AWM_R2B_CLI_VERSION="$(node -p \'require("./awm-registry.json").minCliVersion\')"');
+  assert.notEqual(rederived, validate, 'the mutation must actually reintroduce a run-time derivation');
+  assert.throws(() => assertDeclaredPins('validate.yml', rederived), /must not derive the candidate version at run time/, 'deriving the candidate from the floor must be rejected');
+
+  const unpinnedSha = validate.replaceAll('AWM_R2B_CLI_SHA="$AWM_CERTIFIED_CLI_SHA"', 'AWM_R2B_CLI_SHA="$(git -C "$RUNNER_TEMP/r2b-cli-source" rev-parse HEAD)"');
+  assert.notEqual(unpinnedSha, validate, 'the mutation must actually replace the declared SHA');
+  assert.throws(() => assertDeclaredPins('validate.yml', unpinnedSha), /must pass the declared certified SHA through/, 'a SHA read back off the clone is not declared provenance');
 });
 
 test('B3 acceptance document keeps its honesty labels and cannot be silently relabelled', () => {

@@ -58,22 +58,15 @@ test('B3 prepublication gate proves paired provenance and leaves the current flo
       sourceSha: fixture.env.AWM_R2B_CLI_SHA,
       protocolDigest,
       registryFloor: '9.8.0',
-      floorUpdateRequired: true,
+      floorSatisfied: true,
     });
     assert.equal(readFileSync(path.join(fixture.registry, 'awm-registry.json'), 'utf8'), before, 'prepublication verification must not edit minCliVersion');
   } finally { rmSync(fixture.sandbox, { recursive: true, force: true }); }
 });
 
-test('B3 published gate rejects a guessed floor or mutable provenance before a registry release', () => {
+test('B3 published gate rejects mutable provenance or a mismatched tag before a registry release', () => {
   const fixture = makeFixture();
   try {
-    const published = spawnSync(process.execPath, [gate, '--mode', 'published'], {
-      cwd: root,
-      encoding: 'utf8',
-      env: { ...fixture.env, AWM_R2B_CLI_TAG: 'v9.9.0' },
-    });
-    assert.notEqual(published.status, 0);
-    assert.match(published.stderr, /minCliVersion.*observed published CLI version/i);
     const badProvenance = spawnSync(process.execPath, [gate, '--mode', 'prepublication'], {
       cwd: root,
       encoding: 'utf8',
@@ -81,5 +74,45 @@ test('B3 published gate rejects a guessed floor or mutable provenance before a r
     });
     assert.notEqual(badProvenance.status, 0);
     assert.match(badProvenance.stderr, /source SHA/i);
+    const wrongTag = spawnSync(process.execPath, [gate, '--mode', 'published'], {
+      cwd: root,
+      encoding: 'utf8',
+      env: { ...fixture.env, AWM_R2B_CLI_TAG: 'v9.8.0' },
+    });
+    assert.notEqual(wrongTag.status, 0);
+    assert.match(wrongTag.stderr, /AWM_R2B_CLI_TAG must exactly match/i);
+  } finally { rmSync(fixture.sandbox, { recursive: true, force: true }); }
+});
+
+// Kodria/agentic-workflow#164: the gate used to demand minCliVersion === the
+// observed published CLI, so every CLI patch release forced a hand edit of the
+// floor and left registry CI red until it landed. A candidate ABOVE the floor
+// must now pass; only one BELOW it is a release blocker.
+test('B3 published gate admits a candidate above the floor and still rejects one below it', () => {
+  const fixture = makeFixture();
+  try {
+    const above = spawnSync(process.execPath, [gate, '--mode', 'published'], {
+      cwd: root,
+      encoding: 'utf8',
+      env: { ...fixture.env, AWM_R2B_CLI_TAG: 'v9.9.0' },
+    });
+    assert.equal(above.status, 0, above.stderr);
+    assert.deepEqual(JSON.parse(above.stdout), {
+      mode: 'published',
+      cliVersion: '9.9.0',
+      sourceSha: fixture.env.AWM_R2B_CLI_SHA,
+      protocolDigest,
+      registryFloor: '9.8.0',
+      floorSatisfied: true,
+    });
+
+    writeFileSync(path.join(fixture.registry, 'awm-registry.json'), JSON.stringify({ minCliVersion: '9.9.1', projectContextSchema: 1 }));
+    const below = spawnSync(process.execPath, [gate, '--mode', 'published'], {
+      cwd: root,
+      encoding: 'utf8',
+      env: { ...fixture.env, AWM_R2B_CLI_TAG: 'v9.9.0' },
+    });
+    assert.notEqual(below.status, 0);
+    assert.match(below.stderr, /below the registry floor 9\.9\.1/i);
   } finally { rmSync(fixture.sandbox, { recursive: true, force: true }); }
 });
