@@ -76,7 +76,7 @@ ways it was previously evaded: a commented-out invocation, a step-level `if:`,
 that merely `needs:` the tag job. An earlier revision of this document claimed a
 mutation guard that could not fail; that claim was false and the guard was
 rewritten to make it true. The registry floor `minCliVersion`
-is `9.10.1`, taken from actual publisher output rather than an expected
+is `9.10.2`, taken from actual publisher output rather than an expected
 number. The floor tracks the published CLI rather than the release that first
 mattered: `9.10.0` is where both approval paths became completable from outside
 the CLI's own test suite, and the floor has moved past it because consumed

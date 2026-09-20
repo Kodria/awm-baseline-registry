@@ -11,7 +11,7 @@ Newest entry on top; append new releases directly below this line.
   exists") has been met, so it is replaced by the invariant that outlives it —
   a PASS must rest on an exact tag plus a 40-character commit, and must keep
   refusing to carry native-runtime evidence.
-- `minCliVersion` raised to **9.10.1**, and the pinned candidate SHA in both
+- `minCliVersion` raised to **9.10.2**, and the pinned candidate SHA in both
   workflows with it. The floor tracks the published CLI because consumed
   contract currentness compares the installed CLI against what is actually
   published: a floor left behind makes CI install a CLI that then reports

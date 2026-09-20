@@ -166,7 +166,7 @@ test('RF-1.4 canonical standalone example has exact v1 headings and real verific
   assert.doesNotMatch(reference, /awm plan analyze|stays on the legacy|No marker or schema signal is legacy/);
 });
 test('RF-2.5 release metadata and actual tag-producing job require compatible CLI and contract gates', () => {
-  assert.equal(JSON.parse(read('awm-registry.json')).minCliVersion, '9.10.1');
+  assert.equal(JSON.parse(read('awm-registry.json')).minCliVersion, '9.10.2');
   const bundle = JSON.parse(read('bundles/dev/bundle.json'));
   assert.equal(bundle.version, '4.2.0');
   assert.equal(JSON.parse(read('catalog.json')).bundles.find(entry => entry.name === 'dev').version, bundle.version);
