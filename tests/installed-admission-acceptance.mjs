@@ -80,7 +80,7 @@ export async function runInstalledAdmissionAcceptance(bin, root, { negativesOnly
       const compatibility = report.checks.find(check => check.id === 'compatibility');
       assert.ok(compatibility, JSON.stringify(report));
       assert.equal(compatibility.ok, false);
-      assert.match(compatibility.detail, /baseline requires CLI >= 9\.10\.0/);
+      assert.match(compatibility.detail, /baseline requires CLI >= 9\.10\.2/);
       assertNoDispatchCustody(sandbox);
     }
     const assertIncompatible = (minimum, expectedActual) => {

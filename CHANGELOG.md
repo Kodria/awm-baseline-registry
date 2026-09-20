@@ -2,6 +2,26 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 4.4.0 / product 1.4.0 — 2026-09-19 (public-tag level closed)
+
+### Changed
+- `docs/acceptance/r2b-native-routing.md` level 4 closes as **PASS**, bound to
+  tag `v4.3.0` at `e17f5e303d2ea5ef060e830ca61abae1f0f867b3`. Its guard changes
+  rather than disappears: the condition it named ("BLOCKED until a registry tag
+  exists") has been met, so it is replaced by the invariant that outlives it —
+  a PASS must rest on an exact tag plus a 40-character commit, and must keep
+  refusing to carry native-runtime evidence.
+- `minCliVersion` raised to **9.10.2**, and the pinned candidate SHA in both
+  workflows with it. The floor tracks the published CLI because consumed
+  contract currentness compares the installed CLI against what is actually
+  published: a floor left behind makes CI install a CLI that then reports
+  itself stale, and admission blocks on `ADMISSION_CURRENTNESS_BLOCKED` before
+  the diagnostic the acceptance is asserting can appear.
+
+### Unchanged
+- Level 5 native runtime stays **UNTESTED**. Public-tag evidence never moves it,
+  and the section now says so explicitly so the two cannot be read together.
+
 ## dev 4.3.0 / product 1.4.0 — 2026-09-19 (R2-B approval paths reachable)
 
 ### Changed

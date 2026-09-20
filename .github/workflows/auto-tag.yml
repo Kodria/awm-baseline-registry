@@ -104,7 +104,7 @@ jobs:
           git clone --depth 1 --branch "v$R2B_VERSION" https://github.com/Kodria/agentic-workflow.git "$RUNNER_TEMP/r2b-cli-source"
           AWM_R2B_CLI_BIN="$RUNNER_TEMP/r2b-candidate/node_modules/.bin/awm" \
           AWM_R2B_CLI_SOURCE="$RUNNER_TEMP/r2b-cli-source" \
-          AWM_R2B_CLI_SHA="9bbb5bd8a693e8830386f382154a4ae999d24733" \
+          AWM_R2B_CLI_SHA="2563401845bc69850c10fc575ba4b3e54d7f12a2" \
           AWM_R2B_CLI_VERSION="$R2B_VERSION" \
           AWM_R2B_PROTOCOL_DIGEST="aecfd11414878b19b3456775a576ac2423f04e67a9b2aab0c4075c7c12fbe07a" \
           AWM_R2B_OLD_CLI_BIN="$RUNNER_TEMP/r2b-old-cli/node_modules/.bin/awm" \
@@ -113,7 +113,7 @@ jobs:
           # The floor must equal the observed published CLI before a tag is created.
           AWM_R2B_CLI_BIN="$RUNNER_TEMP/r2b-candidate/node_modules/.bin/awm" \
           AWM_R2B_CLI_SOURCE="$RUNNER_TEMP/r2b-cli-source" \
-          AWM_R2B_CLI_SHA="9bbb5bd8a693e8830386f382154a4ae999d24733" \
+          AWM_R2B_CLI_SHA="2563401845bc69850c10fc575ba4b3e54d7f12a2" \
           AWM_R2B_CLI_VERSION="$R2B_VERSION" \
           AWM_R2B_PROTOCOL_DIGEST="aecfd11414878b19b3456775a576ac2423f04e67a9b2aab0c4075c7c12fbe07a" \
           AWM_R2B_CLI_TAG="v$R2B_VERSION" \
