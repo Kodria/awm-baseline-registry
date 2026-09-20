@@ -1,0 +1,12 @@
+{
+  "schema": "cli-certification/v1",
+  "certifiedCli": {
+    "version": "9.10.2",
+    "sourceSha": "2563401845bc69850c10fc575ba4b3e54d7f12a2",
+    "protocolDigest": "aecfd11414878b19b3456775a576ac2423f04e67a9b2aab0c4075c7c12fbe07a"
+  },
+  "negativeControls": {
+    "routingCli": "9.8.0",
+    "admissionCli": "9.7.1"
+  }
+}

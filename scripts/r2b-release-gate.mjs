@@ -2,6 +2,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { compareSemver } from './semver.mjs';
 
 const semver = /^\d+\.\d+\.\d+$/;
 const sha = /^[a-f0-9]{40}$/;
@@ -49,7 +50,14 @@ export function verifyR2bReleaseGate({ mode, env = process.env, cwd = process.cw
     const tag = env.AWM_R2B_CLI_TAG;
     if (!tag || tag !== `v${cliVersion}`) throw new Error('AWM_R2B_CLI_TAG must exactly match the observed published CLI version');
     if (output('git', ['-C', source, 'rev-parse', `${tag}^{commit}`], cwd, env) !== sourceSha) throw new Error('observed CLI tag must resolve to the immutable source SHA');
-    if (manifest.minCliVersion !== cliVersion) throw new Error('registry minCliVersion must equal the observed published CLI version');
+    // `minCliVersion` is a compatibility FLOOR, not the exact version observed.
+    // Demanding equality here is what forced a hand edit of the floor on every
+    // CLI patch release and turned registry CI red in between — see
+    // Kodria/agentic-workflow#164. What must hold is that the observed
+    // published CLI is not one this registry declares too old to consume it.
+    if (compareSemver(cliVersion, manifest.minCliVersion, 'AWM_R2B_CLI_VERSION', 'minCliVersion') < 0) {
+      throw new Error(`observed published CLI ${cliVersion} is below the registry floor ${manifest.minCliVersion}: the candidate cannot be one this registry declares too old to consume it`);
+    }
   }
   return {
     mode,
@@ -57,7 +65,7 @@ export function verifyR2bReleaseGate({ mode, env = process.env, cwd = process.cw
     sourceSha,
     protocolDigest,
     registryFloor: manifest.minCliVersion,
-    floorUpdateRequired: manifest.minCliVersion !== cliVersion,
+    floorSatisfied: compareSemver(cliVersion, manifest.minCliVersion, 'AWM_R2B_CLI_VERSION', 'minCliVersion') >= 0,
   };
 }
 

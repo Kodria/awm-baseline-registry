@@ -33,9 +33,9 @@ function assertTogether(text, terms, windowSize, message) {
 function assertCliAcceptanceWiring(source, workflow) {
   const lines = source.split(/\r?\n/);
   const installStep = lines.findIndex(line =>
-    /^\s*-\s+name:\s+Install Context Kernel compatible CLI\s*$/.test(line));
+    /^\s*-\s+name:\s+Install the published CLI under test\s*$/.test(line));
   const installCommand = lines.findIndex(line =>
-    /^\s*npm install --global "agentic-workflow-manager@\$R3A_VERSION"\s*$/.test(line));
+    /^\s*npm install --global "agentic-workflow-manager@\$LATEST"\s*$/.test(line));
   const acceptance = lines.findIndex(line =>
     /^\s*(?:-\s+run:\s*)?node tests\/r11-process-lifecycle-cli-acceptance\.mjs\s*$/.test(line));
   assert.ok(installStep >= 0, `${workflow} must name the compatible published CLI install step`);
@@ -350,8 +350,8 @@ test('el gate de workflow rechaza una instalación del CLI presente solo como co
   for (const workflow of ['.github/workflows/validate.yml', '.github/workflows/auto-tag.yml']) {
     const source = read(workflow);
     const commented = source.replace(
-      /^(\s*)npm install --global "agentic-workflow-manager@\$R3A_VERSION"\s*$/m,
-      '$1# npm install --global "agentic-workflow-manager@$R3A_VERSION"',
+      /^(\s*)npm install --global "agentic-workflow-manager@\$LATEST"\s*$/m,
+      '$1# npm install --global "agentic-workflow-manager@$LATEST"',
     );
     assert.notEqual(commented, source, `the mutation must comment out the executable CLI install in ${workflow}`);
     assert.throws(() => assertCliAcceptanceWiring(commented, workflow),
