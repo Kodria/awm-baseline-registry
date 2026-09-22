@@ -1,0 +1,269 @@
+{
+  "schema": 1,
+  "kernelFiles": [
+    "AGENTS.md",
+    "CONSTITUTION.md"
+  ],
+  "maxFixedBytes": 65536,
+  "entries": [
+    {
+      "id": "CTX-AGENTS-001",
+      "tier": "kernel",
+      "path": "AGENTS.md",
+      "anchor": "awm-context:CTX-AGENTS-001",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-AGENTS-002",
+      "tier": "kernel",
+      "path": "AGENTS.md",
+      "anchor": "awm-context:CTX-AGENTS-002",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-AGENTS-003",
+      "tier": "kernel",
+      "path": "AGENTS.md",
+      "anchor": "awm-context:CTX-AGENTS-003",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-AGENTS-004",
+      "tier": "kernel",
+      "path": "AGENTS.md",
+      "anchor": "awm-context:CTX-AGENTS-004",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-AGENTS-005",
+      "tier": "kernel",
+      "path": "AGENTS.md",
+      "anchor": "awm-context:CTX-AGENTS-005",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-AGENTS-006",
+      "tier": "kernel",
+      "path": "AGENTS.md",
+      "anchor": "awm-context:CTX-AGENTS-006",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-AGENTS-007",
+      "tier": "kernel",
+      "path": "AGENTS.md",
+      "anchor": "awm-context:CTX-AGENTS-007",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-AGENTS-008",
+      "tier": "kernel",
+      "path": "AGENTS.md",
+      "anchor": "awm-context:CTX-AGENTS-008",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-AGENTS-009",
+      "tier": "kernel",
+      "path": "AGENTS.md",
+      "anchor": "awm-context:CTX-AGENTS-009",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-AGENTS-010",
+      "tier": "kernel",
+      "path": "AGENTS.md",
+      "anchor": "awm-context:CTX-AGENTS-010",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-AGENTS-011",
+      "tier": "kernel",
+      "path": "AGENTS.md",
+      "anchor": "awm-context:CTX-AGENTS-011",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-001",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-001",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-002",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-002",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-003",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-003",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-004",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-004",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-005",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-005",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-006",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-006",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-007",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-007",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-008",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-008",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-009",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-009",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-010",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-010",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-011",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-011",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-012",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-012",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-013",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-013",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-014",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-014",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-015",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-015",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-016",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-016",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-017",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-017",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-018",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-018",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-019",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-019",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-020",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-020",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-021",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-021",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-022",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-022",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-023",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-023",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-024",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-024",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-025",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-025",
+      "when": "always: retained owner-authored repository context"
+    },
+    {
+      "id": "CTX-CONSTITUTION-026",
+      "tier": "kernel",
+      "path": "CONSTITUTION.md",
+      "anchor": "awm-context:CTX-CONSTITUTION-026",
+      "when": "always: retained owner-authored repository context"
+    }
+  ]
+}

@@ -1,13 +1,5 @@
 {
-  "pack": "shell",
-  "sensors": {
-    "lint": {
-      "cmd": "shellcheck --format json {files}",
-      "enabled": false
-    },
-    "security": {
-      "cmd": "semgrep .",
-      "enabled": false
-    }
-  }
+  "schemaVersion": 3,
+  "mode": "opt-out",
+  "reason": "content-only registry; release proof is enforced by validate and auto-tag workflows"
 }
