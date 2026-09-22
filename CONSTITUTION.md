@@ -1,59 +1,87 @@
+<!-- AWM:CONTEXT-KERNEL:START v1 -->
+<!-- awm-context:CTX-CONSTITUTION-001 -->
 # AWM Baseline Registry — Constitution
 
+<!-- awm-context:CTX-CONSTITUTION-002 -->
 Reglas de proceso para el desarrollo del contenido de este registry (skills, bundles, prompt templates). Todo agente que trabaje en este repo debe leerlas y aplicarlas.
 
+<!-- awm-context:CTX-CONSTITUTION-003 -->
 ---
 
+<!-- awm-context:CTX-CONSTITUTION-004 -->
 ## Release de contenido — bump de bundle + tag son obligatorios al cerrar contra `main`
 
+<!-- awm-context:CTX-CONSTITUTION-005 -->
 Cambiar el contenido de un bundle (una skill, un prompt template, un sensor-pack) **no está terminado hasta que el bundle sube de versión y se corta un tag** `vX.Y.Z`. Las skills instaladas en las máquinas de los usuarios son symlinks hacia el registry **taggeado** (`~/.awm/registries/<name>/`), y `awm update` solo trae el último tag — un cambio mergeado a `main` sin bump de bundle + tag **no llega a ningún consumidor**: queda invisible pese a estar en `main`.
 
+<!-- awm-context:CTX-CONSTITUTION-006 -->
 **Dos versiones independientes — no las confundas:**
 
+<!-- awm-context:CTX-CONSTITUTION-007 -->
 - **El tag `vX.Y.Z` es la versión del REGISTRY** y es lo ÚNICO que el CLI consume para entregar: `awm update`/`awm pin` resuelven `pin declarado > último tag semver > HEAD` (ver `cli/src/core/versioning.ts`). El tag es un contador de release del registry entero, **independiente de las versiones de los bundles**.
 - **Las `version` de bundle** (en `catalog.json` y `bundles/<x>/bundle.json`) son metadata por-bundle (las muestra `awm doctor`/`awm list`, sirven para `dependsOn`); **no participan en la entrega**. Prueba: en el tag `v1.4.0`, `dev`=1.4.0 pero `frontend`=2.0.0 — ejes distintos. El número del tag NO "sigue" la versión de ningún bundle (sería ambiguo con bundles divergentes).
 
+<!-- awm-context:CTX-CONSTITUTION-008 -->
 **Cómo aplicar, al cerrar cualquier rama que modifique contenido de un bundle contra `main`:**
 
+<!-- awm-context:CTX-CONSTITUTION-009 -->
 1. Identificá qué bundle(s) toca el cambio (mirá qué `bundles/<x>/bundle.json` lista las skills/artefactos modificados).
 2. Bumpeá la `version` de ese bundle **en los dos lugares que la duplican y deben coincidir**: `catalog.json` Y `bundles/<x>/bundle.json` (semver: feature aditiva → minor; fix → patch; ruptura de contrato → major). El propio `SKILL.md` editado también lleva su `version` en el frontmatter — subilo en la misma tanda. Esto es metadata del bundle; NO determina el número del tag. **Esta regla se olvida en la práctica incluso estando escrita** (harness-retro 2026-07-23: 5+ ocurrencias en una sola sesión pese a esta misma regla ya existir) — por eso `.github/workflows/skill-version-check.yml` (vía `scripts/check-skill-version-bumps.sh`) la aplica mecánicamente en cada PR que toque `skills/*/SKILL.md`: si el contenido cambió y el frontmatter `version` no, el check falla. No confíes solo en recordarlo — el CI es quien realmente lo garantiza.
 3. **El tag de release lo corta automáticamente `.github/workflows/auto-tag.yml`** al mergear a `main` (bumpea el último tag `vX.Y.Z` según conventional commits del merge). No hace falta cortarlo a mano. Fallback manual (si CI no está disponible o el push de tags está bloqueado en tu entorno): `git tag vX.Y.Z && git push origin vX.Y.Z` sobre el merge commit, eligiendo el próximo `vX.Y.Z` = último tag + bump correspondiente. **El workflow lee el *subject* del commit de merge en `main`, no los commits individuales de la rama** — si el PR se integra por squash-merge (el default de este repo), ese subject ES el título del PR tal cual. **Titulá el PR como conventional commit** (`feat: ...`, `fix: ...`, `feat!: ...`/con `BREAKING CHANGE` en el body si hay ruptura) o el bump cae en `patch` por defecto sin importar qué tan grande sea el cambio real. Ocurrió en el PR #13 (harness-retro 2026-07-23): un título descriptivo sin prefijo, pese a incluir el retiro de `cicd-proposal-builder` (ruptura de contrato, bump major de bundle), produjo un tag `patch` (`v1.5.1`) — no rompe la entrega (el tag es un eje independiente de la versión de bundle, ver arriba), pero subestima la severidad del release en la historia de tags.
 4. Recién con el tag publicado el cambio es entregable vía `awm update`.
 
+<!-- awm-context:CTX-CONSTITUTION-010 -->
 **Todo gate que deba condicionar el release tiene que correr DENTRO del job que publica.** `auto-tag.yml` y `validate.yml` se disparan sobre el mismo push a `main`, pero son workflows separados: GitHub no le da a uno poder de bloqueo sobre el otro, así que durante un tiempo un validador rojo igual cortaba un tag que `awm update` entrega a todas las máquinas (harness-retro 2026-07-25). El fix fue re-correr las verificaciones como paso previo dentro de `auto-tag.yml`. **Cómo aplicar:** antes de dar por protegido un artefacto de release, preguntá *qué job lo produce* y confirmá que el gate corre en ESE job — "existe un workflow que valida" no es lo mismo que "el release está condicionado a la validación".
 
+<!-- awm-context:CTX-CONSTITUTION-011 -->
 Esto aplica a TODA rama que modifique contenido de un bundle — no es opcional ni "se hace después cuando me acuerde". Un PR de contenido sin el bump de `catalog.json` + `bundle.json` está incompleto (aunque el tag lo ponga la CI, el bump de metadata del bundle sigue siendo tu responsabilidad).
 
+<!-- awm-context:CTX-CONSTITUTION-012 -->
 ## Gates ejecutables — un gate no está terminado hasta que una mutación lo hace fallar
 
+<!-- awm-context:CTX-CONSTITUTION-013 -->
 **Cuando escribas o amplíes un chequeo automático (validador, regla de lint, aserción de CI, test estructural), el paso final NO es verlo pasar: es romper deliberadamente lo que dice cuidar y confirmar que falla, con el mensaje correcto.** Un gate verde tiene dos causas posibles — el repo está sano, o el gate no está mirando — y son indistinguibles desde afuera. En esta sesión (harness-retro 2026-07-25) la segunda causa apareció cinco veces en un mismo validador que imprimía `portable: 37 skills validated`:
 
+<!-- awm-context:CTX-CONSTITUTION-014 -->
 - la regla que prohibía nombrar herramientas de un provider no veía la forma `Task tool (general-purpose):`, la cadena exacta que existía en los cinco templates de dispatch — y sobrevivió a un port completo de esos mismos archivos;
 - el scanner recorría solo `skills/`, así que `agents/` y `references/` quedaban exentos (y `references/gemini-tools.md` ya violaba la regla, en verde);
 - un symlink no es `isFile()`, así que bastaba un enlace para saltear el escaneo entero;
 - la prohibición de forks por provider era un conteo de directorios, que un fork mantiene estable retirando otra skill;
 - el chequeo de versiones corría catálogo→bundle solamente, sin ver una entrada borrada del catálogo ni una skill inexistente listada por un bundle.
 
+<!-- awm-context:CTX-CONSTITUTION-015 -->
 **Cómo aplicar:** por cada regla nueva, escribí el caso que debería rechazar, corré el gate y exigí exit≠0 con el mensaje esperado; recién después revertí. En este repo eso está institucionalizado en `tests/validate-portability.test.mjs`, que aplica 15 mutaciones sobre una copia descartable y falla si alguna sobrevive — **toda regla nueva de `scripts/validate-portability.mjs` suma su mutación ahí en la misma tanda**. Vale también para el alcance: si el gate recorre un árbol, mutá un archivo de cada raíz que decís cubrir.
 
+<!-- awm-context:CTX-CONSTITUTION-016 -->
 ## Portar un comportamiento a una segunda implementación exige fijar la equivalencia con un test
 
+<!-- awm-context:CTX-CONSTITUTION-017 -->
 **Cuando exista una segunda implementación de un comportamiento ya existente (otro provider, otro lenguaje, otro runtime), la paridad se prueba ejecutando ambas contra el mismo input — nunca leyendo una y "reflejándola" en la otra.** Un comentario que dice *mirroring `hooks/session-start`* no es un mecanismo: no falla cuando la copia diverge. El port de `hooks/session-start` (bash) a `hooks/codex-session-start` (Node) divergió en cuatro puntos pese a estar escrito con el original a la vista (harness-retro 2026-07-25): el filtro de design docs comparaba la ruta completa de un lado y el basename del otro (cualquier repo bajo un directorio llamado `design-system` perdía la recuperación entera), `-design` como substring se tragaba `-redesign-*-plan.md`, el marcador de completitud sin anclar daba por terminado cualquier plan cuyos propios pasos lo mencionaran, y el regex del goal anclado con `^` caía al H1 cuando el goal venía en blockquote — que es como `writing-plans` lo emite.
 
+<!-- awm-context:CTX-CONSTITUTION-018 -->
 **Cómo aplicar:** el test de paridad corre las dos implementaciones sobre el mismo proyecto de fixture y compara la salida que importa (`tests/session-start.test.mjs` compara la línea `Active plan:` de ambos hooks). Construí el fixture con los casos adversariales, no con el caso feliz: el bug vivía en el nombre del directorio contenedor, no en el contenido del plan. Y cuando encuentres la divergencia, arreglá **el lado que está mal**, aunque sea el original — mantener el bug por "compatibilidad" propaga el defecto al provider nuevo.
 
+<!-- awm-context:CTX-CONSTITUTION-019 -->
 ## Un hook de sesión degrada, nunca tira
 
+<!-- awm-context:CTX-CONSTITUTION-020 -->
 **La invariante global de AWM —"toda función pública valida sus entradas y falla ruidosamente"— se invierte en un hook `SessionStart`: ahí fallar ruidosamente significa matar el contexto de la sesión entera.** El hook corre antes que nada y su stdout ES el contexto; si tira, el agente arranca sin constitución, sin plan y sin ledger, y nada se lo avisa al usuario. La validación de entrada sigue siendo obligatoria — lo que cambia es el destino del camino de error: degradar a la sección omitida y seguir emitiendo JSON válido, no abortar. Dos crashes reales (harness-retro 2026-07-25): `null` y `"text"` son JSON **válido**, así que el payload parseado se dereferenciaba fuera de todo guard; y `process.cwd()` se leía antes del `cwd` recibido, de modo que un directorio de lanzamiento borrado abortaba la corrida aunque el payload trajera uno perfectamente válido.
 
+<!-- awm-context:CTX-CONSTITUTION-021 -->
 **Cómo aplicar:** todo hook nuevo lleva en su test la batería de payloads hostiles (`null`, `"text"`, `[]`, `''`, JSON malformado, campos con el tipo equivocado) exigiendo exit 0 y contexto mínimo válido; y todo recurso externo que lea (archivo de proyecto, subproceso, directorio) va acotado — tamaño máximo, `maxBuffer` explícito, timeout — porque un archivo gigante o un binario colgado degradan cada sesión del repo, no solo una.
 
+<!-- awm-context:CTX-CONSTITUTION-022 -->
 ## Revisión de código
 
+<!-- awm-context:CTX-CONSTITUTION-023 -->
 - **Cuando una tarea especifica contenido verbatim (texto exacto a copiar desde un plan/spec) en un archivo, el spec-reviewer DEBE comparar el resultado carácter por carácter contra el texto exacto requerido — no basta con confirmar que aparecen palabras clave, que el conteo de líneas coincide, o una lectura general de "se ve bien".** Un subagente implementador truncó silenciosamente la última oración de un párrafo largo al copiarlo desde el plan (`implementer-prompt.md`, la oración "Never compress an escalation — the controller needs the full picture to decide."), y el primer spec-reviewer reportó "compliant" sin detectarlo — solo lo atrapó una revisión de calidad de código independiente, en un ángulo de revisión distinto. Un review que solo verifica presencia aproximada de contenido no cumple su propósito de gate cuando la tarea es "copiar este texto exacto". **Cómo aplicar:** al revisar una tarea de tipo "reemplazar/insertar EXACTAMENTE este bloque", el spec-reviewer debe leer cada oración del bloque requerido contra el archivo real, prestando atención especial a la ÚLTIMA oración de cada párrafo (el punto más fácil de truncar silenciosamente al copiar un bloque largo).
 
+<!-- awm-context:CTX-CONSTITUTION-024 -->
 - **Cuando una tarea referencia o hereda de un artefacto compartido y mutable (un contrato entre skills, otro `SKILL.md` ya construido, un conteo/lista que otra tarea puede haber cambiado), el implementador y el reviewer DEBEN releer ese artefacto en su estado ACTUAL antes de finalizar una afirmación sobre él — nunca confiar en una lectura previa, en el resumen del propio plan, o en lo que "debería" decir.** Confirmado repetidamente en una sesión de 12 tareas construyendo una capa nueva sobre un contrato compartido (`brief-contract.md`): el contrato se amendó dos veces en medio de la ejecución (Tasks 2 y 5, para cerrar criterios `G2`/`G5` y luego `G4` sin sección de origen), y cada vez, tareas posteriores que ya habían sido escritas contra la versión anterior quedaron con conteos ("11 secciones") o afirmaciones de alcance ("todo mode se re-verifica") desactualizadas — detectadas recién en una revisión final de sistema completo, no en las revisiones por-tarea individuales (que solo comparan contra el plan, no contra el estado vivo de otros archivos). **Cómo aplicar:** (a) cuando el diff de una tarea toca o referencia un archivo que otra tarea de la misma sesión ya construyó o pudo haber modificado, releerlo con `Read`/`grep` en el momento de la revisión, no asumir su forma por el plan; (b) tras cualquier fix que amende un contrato compartido, barrer el resto del repo (`grep` del conteo/afirmación vieja) por referencias que quedaron stale; (c) una revisión final de "recorrido end-to-end" (trazar el journey completo, no task por task) es la que efectivamente atrapa este patrón — no lo reemplaza la suma de revisiones individuales, por más rigurosas que sean.
 
+<!-- awm-context:CTX-CONSTITUTION-025 -->
 - **Cuando un `SKILL.md` afirma que otra skill nombrada lo invoca ("invoked by X", una fila de tabla de invocadores, un "used by"), esa afirmación es sobre el comportamiento REAL de X, no una decisión unilateral del archivo que la escribe — el reviewer DEBE abrir el `SKILL.md` de X y confirmar con `grep`/lectura que X efectivamente lo invoca, no aceptar la lista tal cual está escrita.** Ocurrió dos veces en la misma sesión (harness-retro 2026-07-23): `technology-evaluator` citaba `architecture-assessment` como invocador cuando en la práctica solo `architecture-advisor` lo invoca; luego, en la misma sesión, `mermaid-diagrams` listaba `brainstorming` como invocador cuando `brainstorming` nunca lo menciona. Cada caso es la misma clase de error que el punto anterior (afirmación sobre un artefacto ajeno sin releerlo), pero con una forma distinta: no es que el otro archivo cambiara después — la lista nunca fue verificada contra el archivo real al escribirla. **Cómo aplicar:** cualquier prosa de la forma "invoked by A, B, C" o una tabla de invocadores es una lista de afirmaciones verificables, no decorativas — antes de aprobar el review, `grep` el nombre de la skill actual dentro de cada supuesto invocador listado; si no aparece, es un hallazgo, no un detalle menor.
 
+<!-- awm-context:CTX-CONSTITUTION-026 -->
 - **Una aserción adversarial (mutation test, guard de "esto no puede pasar", negativo de inyección) DEBE probarse contra el artefacto REAL y ser falsable — construir una copia mutada en memoria y encontrar en ella lo que uno mismo acaba de escribir no prueba nada sobre lo que se publica.** QA global de R2-B (2026-09-18) encontró cuatro guards de esta clase en la misma rama, todos verdes y todos vacíos: `assert.throws(() => assert.ok(wf.replaceAll(cmd,'').includes(cmd)))` pasa contra un workflow vacío; `assert.throws(() => assert.doesNotMatch(ref + '\ngpt-5.6-sol', /gpt-5\.6-sol/))` prueba la concatenación, no el documento; una aserción de cero-custodia miraba `$AWM_HOME/journal.json`, ruta que el CLI nunca escribe; y un negativo reafirmaba en su `else` la condición de su propio `if`. El documento de aceptación llegó a afirmar por escrito una garantía que ninguno de ellos daba. **Cómo aplicar:** (a) el positivo se asserta sobre el archivo publicado (`assert.doesNotMatch(documentoReal, patrón)`), y la copia mutada sirve solo como self-test del detector, declarado como tal; (b) todo guard nuevo se acompaña de la mutación concreta que debe rechazar, ejecutada — si no podés escribir la mutación que lo pone en rojo, el guard no existe; (c) antes de afirmar en prosa que "X está protegido por un test", correr la mutación que lo probaría y verla fallar; (d) una aserción sobre una ruta o un campo del sistema bajo prueba se verifica contra la fuente de ese sistema, no contra lo que uno supone que escribe.
+<!-- AWM:CONTEXT-KERNEL:END v1 -->
