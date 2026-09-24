@@ -76,6 +76,20 @@ test('B2 native consumers preserve the sole routing reference and role custody',
   }
 });
 
+test('machine enrollment and Claude native agent custody are explicit, not daily implicit probes', () => {
+  const reference = read('skills/subagent-driven-development/references/model-routing-v1.md');
+  const setup = reference.split('## Machine enrollment')[1]?.split('## Routed dispatch and recovery')[0] ?? '';
+  const dispatch = reference.split('## Routed dispatch and recovery')[1] ?? '';
+  assert.match(setup, /awm model-policy setup --provider/);
+  assert.match(setup, /doctor.*preflight/is);
+  assert.match(setup, /no.*24.hour.*renewal/is);
+  assert.match(setup, /no.*paid.*probe/is);
+  assert.match(dispatch, /envelope\.nativeAgentType.*Claude/is);
+  assert.match(dispatch, /verified full.capability.*fallback/is);
+  assert.match(dispatch, /reason.code.*durable.*report/is);
+  assert.throws(() => assert.match(dispatch.replace(/envelope\.nativeAgentType.*Claude/i, ''), /envelope\.nativeAgentType.*Claude/i));
+});
+
 // Textual `includes` accepted a commented-out invocation, `indexOf` ordering accepted a
 // step moved into another job, and the no-skip regex only caught conditions that happened
 // to name AWM_R2B. These helpers answer the real question — does this command run
