@@ -2,6 +2,20 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## Model-routing lifecycle compatibility — 2026-09-24
+
+- The dev bundle adds one-time Codex and Claude machine enrollment guidance,
+  native child-event custody, explicit full-capability fallback, and durable
+  unattended routing diagnostics. A receipt remains current while the relevant
+  runtime, account, configuration, and approved selection remain unchanged;
+  ordinary work does not renew it on a 24-hour timer.
+- The registry now requires published AWM 9.12.0. The certified CLI is tag
+  `v9.12.0` at `b3e940f823a6167eab710034c1189e51acaba371`; its routing
+  protocol digest is unchanged. Machine-specific native acceptance remains
+  UNTESTED until a real local child dispatch produces the required receipt.
+- Historical release tests retain their original minimum boundaries without
+  freezing the registry's current floor or dev bundle version forever.
+
 ## dev 4.5.0 / product 1.4.0 — 2026-09-20 (CLI floor decoupled from currentness)
 
 ### Changed

@@ -4,6 +4,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { compareSemver } from '../scripts/semver.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const legacyRoot = path.join(root, 'tests/fixtures/context-kernel-v1/legacy');
@@ -67,7 +68,9 @@ function assertFrozenCorpus(base = legacyRoot) {
 }
 
 function assertManifest(manifest) {
-  assert.deepEqual(manifest, expectedManifest, 'registry manifest must be the exact published Context Kernel declaration');
+  assert.deepEqual(Object.keys(manifest).sort(), Object.keys(expectedManifest).sort(), 'registry manifest must retain the published Context Kernel fields');
+  assert.equal(manifest.projectContextSchema, expectedManifest.projectContextSchema, 'registry manifest must retain the published Context Kernel schema');
+  assert.ok(compareSemver(manifest.minCliVersion, expectedManifest.minCliVersion) >= 0, 'registry floor must not predate the published Context Kernel contract');
 }
 
 function readInventory() {
@@ -195,7 +198,7 @@ function assertBoundedRoleConsumer(source, name) {
 test('R3.1: registry manifest declares only the published Context Kernel v1 contract', () => {
   const manifest = JSON.parse(readFileSync(path.join(root, 'awm-registry.json'), 'utf8'));
   assertManifest(manifest);
-  assert.throws(() => assertManifest({ ...expectedManifest, projectContextSchema: 2 }), /exact published Context Kernel declaration/);
+  assert.throws(() => assertManifest({ ...expectedManifest, projectContextSchema: 2 }), /published Context Kernel schema/);
 });
 
 test('R3.5/R3.14: frozen corpus is exact and inventory covers every non-empty block', () => {

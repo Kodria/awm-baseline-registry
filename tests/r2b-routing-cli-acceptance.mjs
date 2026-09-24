@@ -46,6 +46,11 @@ test('B3 paired candidate preserves v1, blocks unready v2, and is immutable', ()
     assert.ok(Array.isArray(contract.roles) && contract.roles.includes('implementer'), 'candidate must expose routing roles');
     assert.deepEqual(contract.implementerProfiles, ['mechanical', 'integration', 'judgment'], 'candidate must expose semantic profiles only');
     assert.ok(!Object.hasOwn(contract, 'profiles'), 'candidate must not expose the obsolete ambiguous profile field');
+    for (const provider of ['codex', 'claude-code']) {
+      const setup = spawnSync(bin, ['model-policy', 'setup', '--provider', provider, '--cwd', root, '--json'], { cwd: root, encoding: 'utf8', env });
+      assert.equal(setup.status, 2, `${provider} setup must report absent approval without starting a model: ${setup.stderr}`);
+      assert.deepEqual(JSON.parse(setup.stdout), { state: 'policy-absent', provider, inferenceDispatched: false, tokenUsage: 'unknown', remedy: 'Approve a model-policy/v1 candidate before machine enrollment.' });
+    }
     for (const [fixture, schema] of [
       ['tests/fixtures/compact-slices-v1/reference-example.md', 'compact-slices/v1'],
       ['tests/fixtures/compact-slices-v2/reference-example.md', 'compact-slices/v2'],

@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { compareSemver } from '../scripts/semver.mjs';
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+test('native model enrollment requires the first published lifecycle CLI', () => {
+  const floor = JSON.parse(read('awm-registry.json')).minCliVersion;
+  const certified = JSON.parse(read('cli-certification.json')).certifiedCli.version;
+  assert.ok(compareSemver(floor, '9.12.0') >= 0, 'machine enrollment needs CLI 9.12.0 or newer');
+  assert.ok(compareSemver(certified, floor) >= 0, 'certified CLI must satisfy the published registry floor');
+});
 test('B1 v2 producer is semantic and preserves v1 fallback', () => {
   const skill = read('skills/writing-plans/SKILL.md');
   const v2 = read('skills/writing-plans/references/compact-slices-v2.md');

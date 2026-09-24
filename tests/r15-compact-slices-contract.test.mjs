@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { compareSemver } from '../scripts/semver.mjs';
 
 const root = new URL('..', import.meta.url);
 const read = relative => readFileSync(new URL(relative, root), 'utf8');
@@ -264,12 +265,12 @@ test('S3 fixture is portable and declares complete compact-plan traceability (R4
   assert.ok(manifest.slices.every(slice => slice.greenCommands.every(command => manifest.commands.some(candidate => candidate.id === command))), 'every green command must resolve');
 });
 
-test('S3 pins the observed R4a release and keeps bundle/catalog delivery metadata consistent (R4-EVID-4)', () => {
+test('S3 retains the observed R4a minimum and keeps bundle/catalog delivery metadata consistent (R4-EVID-4)', () => {
   const registry = JSON.parse(read('awm-registry.json'));
   const bundle = JSON.parse(read('bundles/dev/bundle.json'));
   const catalog = JSON.parse(read('catalog.json'));
-  assert.equal(registry.minCliVersion, R4A_VERSION, 'minCliVersion must be the observed published R4a release');
-  assert.equal(bundle.version, '4.2.0');
+  assert.ok(compareSemver(registry.minCliVersion, R4A_VERSION) >= 0, 'minCliVersion must not predate the published R4a release');
+  assert.ok(compareSemver(bundle.version, '4.2.0') >= 0, 'dev bundle must not predate R4a');
   assert.equal(catalog.bundles.find(entry => entry.name === 'dev')?.version, bundle.version, 'catalog and bundle must agree');
   for (const [file, version] of [
     ['skills/development-process/SKILL.md', '2.1.0'], ['skills/writing-plans/SKILL.md', '2.1.0'],

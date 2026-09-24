@@ -43,7 +43,7 @@ test('the registry never declares a CLI floor below the R3 contract', () => {
 });
 
 function assertCurrentCliCompatibilityMetadata(registry, changelog) {
-    assert.equal(registry.minCliVersion, '9.10.2');
+    assert.ok(gte(registry.minCliVersion, '9.10.2'), 'new registry features may raise, but never lower, the historical CLI floor');
     assert.match(changelog, /^## dev 3\.9\.0 — 2026-08-27$/m);
     const currentEntry = changelog.split(/^## dev 3\.9\.0 — 2026-08-27$/m)[1]
         .split(/^## /m)[0];
@@ -73,7 +73,7 @@ test('RED mutation: downgrading the current CLI boundary is rejected', () => {
     const downgraded = { ...readJson('awm-registry.json'), minCliVersion: '8.1.4' };
     assert.throws(
         () => assertCurrentCliCompatibilityMetadata(downgraded, read('CHANGELOG.md')),
-        /9\.10\.2/,
+        /historical CLI floor/,
     );
 });
 
