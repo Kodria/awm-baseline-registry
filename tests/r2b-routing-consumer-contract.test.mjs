@@ -215,6 +215,7 @@ test('B3 acceptance document keeps its honesty labels and cannot be silently rel
   // PASS with the whole suite still green. These labels are the honesty contract of R2B-B7.
   const native = doc.split('## 5. Native runtime')[1] ?? '';
   const publicTag = doc.split('## 4. Public tag')[1]?.split('## 5.')[0] ?? '';
+  const publishedClaim = publicTag.split('**This level has now happened: PASS.**')[1]?.split('The proof is')[0] ?? '';
   assert.match(native, /\*\*UNTESTED\.\*\*/, 'native runtime level must stay labelled UNTESTED');
   assert.match(native, /fixture evidence is never native certification/i, 'native level must refuse fixture evidence as certification');
   // The condition this guard named has been met: registry tag v4.3.0 exists at
@@ -222,8 +223,8 @@ test('B3 acceptance document keeps its honesty labels and cannot be silently rel
   // BLOCKED assertion is replaced by the invariant that outlives it — a PASS at
   // this level must rest on an exact immutable pair, never a bare claim, which
   // is precisely what a local fixture tag could never supply.
-  assert.match(publicTag, /`v\d+\.\d+\.\d+`/, 'public-tag PASS must name the exact published registry tag');
-  assert.match(publicTag, /[a-f0-9]{40}/, 'public-tag PASS must name the exact published commit SHA');
+  assert.match(publishedClaim, /`v\d+\.\d+\.\d+`/, 'public-tag PASS must name the exact published registry tag');
+  assert.match(publishedClaim, /[a-f0-9]{40}/, 'public-tag PASS must name the exact published commit SHA');
   assert.match(publicTag, /level 5 below remains untested/i, 'public-tag level must refuse to carry native-runtime evidence');
   assert.doesNotMatch(native, /\bPASS\b/, 'native runtime level must never claim PASS');
 
@@ -239,6 +240,16 @@ test('B3 acceptance document keeps its honesty labels and cannot be silently rel
   assert.throws(() => assert.match(native.replace('**UNTESTED.**', '**PASS.**'), /\*\*UNTESTED\.\*\*/), 'flipping UNTESTED to PASS must fail');
   // A PASS stripped of its commit SHA is exactly the bare claim this level
   // refuses, so removing the provenance must be rejected.
-  assert.throws(() => assert.match(publicTag.replace(/[a-f0-9]{40}/, 'somewhere'), /[a-f0-9]{40}/), 'a public-tag PASS without its exact commit must fail');
-  assert.throws(() => assert.match(publicTag.replace(/`v\d+\.\d+\.\d+`/, '`latest`'), /`v\d+\.\d+\.\d+`/), 'a public-tag PASS resting on a mutable ref must fail');
+  assert.throws(() => assert.match(publishedClaim.replace(/[a-f0-9]{40}/, 'somewhere'), /[a-f0-9]{40}/), 'a public-tag PASS without its exact commit must fail');
+  assert.throws(() => assert.match(publishedClaim.replace(/`v\d+\.\d+\.\d+`/, '`latest`'), /`v\d+\.\d+\.\d+`/), 'a public-tag PASS resting on a mutable ref must fail');
+});
+
+test('operating guidance separates expiring v1 approval from drift-bound v2 enrollment', () => {
+  const doc = read('docs/acceptance/r2b-native-routing.md');
+  const v2 = doc.split('## V2 machine enrollment')[1]?.split(/^## /m)[0] ?? '';
+  assert.match(v2, /awm model-policy setup --provider codex/);
+  assert.match(v2, /awm model-policy setup --provider claude-code/);
+  assert.match(v2, /no 24-hour renewal/);
+  assert.match(v2, /v1.*expiresAt/s);
+  assert.match(v2, /native.*UNTESTED/s);
 });
