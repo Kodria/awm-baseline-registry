@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { compareSemver } from '../scripts/semver.mjs';
 
 const root = new URL('..', import.meta.url);
 const readJson = relative => JSON.parse(readFileSync(new URL(relative, root), 'utf8'));
@@ -34,13 +35,13 @@ function assertNoOnSignal(value, manifestPath) {
   }
 }
 
-test('dev bundle uses the canonical ordered 24-string skill membership at 4.2.0', () => {
+test('dev bundle retains canonical ordered membership and the 4.2.0 minimum', () => {
   const bundle = readJson('bundles/dev/bundle.json');
   const catalog = readJson('catalog.json');
   const catalogDev = catalog.bundles.find(entry => entry.name === 'dev');
 
-  assert.equal(bundle.version, '4.2.0');
-  assert.equal(catalogDev?.version, '4.2.0');
+  assert.ok(compareSemver(bundle.version, '4.2.0') >= 0, 'dev bundle cannot predate canonical membership');
+  assert.equal(catalogDev?.version, bundle.version, 'catalog and bundle must declare the same release');
   assert.ok(bundle.skills.every(skill => typeof skill === 'string' && skill.length > 0),
     'every dev skill entry must be a non-empty string');
   assert.deepEqual(bundle.skills, expected);

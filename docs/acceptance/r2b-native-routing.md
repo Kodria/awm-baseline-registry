@@ -53,6 +53,11 @@ capability claims are fixture input, not attestation: this level proves the CLI
 mechanism, never runtime behaviour. Nothing here may be read as evidence for
 level 5.
 
+The installed acceptance also invokes `model-policy setup` for both Codex and
+Claude Code without an approved policy. It requires explicit `policy-absent`,
+no inference and no token-usage claim. This proves the enrollment entrypoint
+exists in the paired published CLI, not that native dispatch works.
+
 Observed locally on 2026-09-18 with candidate `agentic-workflow-manager` 9.9.0
 (tag `v9.9.0`, commit `0e0dea21aef31895c34954dca65b80ef2da44f90`, protocol digest
 `aecfd11414878b19b3456775a576ac2423f04e67a9b2aab0c4075c7c12fbe07a`) against the
@@ -77,7 +82,9 @@ that merely `needs:` the tag job. An earlier revision of this document claimed a
 mutation guard that could not fail; that claim was false and the guard was
 rewritten to make it true.
 
-The registry floor `minCliVersion` is `9.10.2`, and as of
+The current registry floor `minCliVersion` is `9.12.0`, required by the native
+machine-enrollment guidance and paired with certified tag `v9.12.0` at
+`b3e940f823a6167eab710034c1189e51acaba371`. As of
 Kodria/agentic-workflow#164 it is a **floor and nothing else**: the oldest CLI
 that can consume this content. It no longer tracks the published CLI. Three
 separate facts used to be carried by that one number, and the conflation made
@@ -111,7 +118,8 @@ was named that at the time, and reported that the declared floor equalled the
 observed published CLI. That equality is no longer required, and the field is
 now `floorSatisfied`: the observed published CLI must clear the floor, not match
 it. The level-4 claim below is bound to the pair actually observed then and is
-not restated by the rename.
+not restated by the rename. The current candidate requires its own release tag
+and green release job before a new level-4 PASS can be claimed.
 
 The proof is that the published tag SHA equals the candidate checkout, which is
 what a local fixture tag can never establish: `git rev-list -n1 v4.3.0` is
@@ -125,7 +133,8 @@ level 5 below remains untested, and no amount of public-tag evidence moves it.
 
 ## 5. Native runtime
 
-**UNTESTED.** No real native dispatch has been executed on Codex or on Claude.
+**UNTESTED.** No real native dispatch has been recorded in this registry
+acceptance for Codex or Claude.
 Every verdict above comes from contract text, fixtures and CLI-level negatives;
 none of it certifies that a native runtime actually honoured a routed envelope.
 
@@ -163,9 +172,40 @@ path's business. This is why the registry floor is at least 9.10.0: on 9.9.0 nei
 approval path could be completed by anyone outside the CLI's own test suite, and
 `capabilities approve` could not be completed at all.
 
-Capability attestation carries `expiresAt` and is therefore renewable, not
-permanent — expect to re-digest and re-approve a receipt routinely rather than
-once.
+The commands above exercise the legacy v1 path only. A v1 capability
+attestation carries `expiresAt` and therefore needs re-digesting and
+re-approval when it expires; it is not the new machine-enrollment procedure.
+
+## V2 machine enrollment
+
+For CLI 9.12.0 and newer, approve the policy once, then inspect each
+machine/provider deliberately:
+
+```
+awm model-policy setup --provider codex --cwd <repo> --json
+awm model-policy setup --provider claude-code --cwd <repo> --json
+```
+
+Setup reports missing selections and machine/account/config state. It does not
+dispatch inference or invent a receipt. Codex needs a real completed parent/child
+turn followed by `awm model-policy capture --provider codex --runtime-kind native
+--parent-thread-id <id> --child-thread-id <id> --cwd <repo> --json`. Claude Code
+needs installed SubagentStart/Stop hooks and a named `awm-*` agent with an
+explicit model ID; its real Stop event supplies the observation. Follow the
+remedy returned by setup, then check setup again. `doctor` and `preflight` may
+point to setup but do not run paid probes in normal daily work.
+
+Unlike v1 `expiresAt`, a v2 native receipt has **no 24-hour renewal**. It is
+rechecked against runtime binary/version, account, model configuration and the
+approved selection; relevant drift invalidates only the affected evidence.
+Unverified full capability stays visibly blocked for that obligation. An
+unattended run records fallback, `PROVENANCE_MISSING` and unknown acceptance in
+`awm job routing-report --json`; it does not claim token savings without usage
+evidence. The native acceptance here remains **UNTESTED** until real provider
+dispatches on the target machines are observed. A fixture or JSON approval
+cannot change that label.
+
+## Legacy installed acceptance
 
 `CMD-INSTALLED` now exercises **both** paths on the real published binary: the
 fail-closed one (a mismatched `--expected-digest` rejected, nothing left behind,
