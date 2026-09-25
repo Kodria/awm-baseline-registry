@@ -11,8 +11,10 @@ blocked result means zero dispatch. Send its frozen envelope to
 `awm job routing-reserve`, wait for the supervisor applied acknowledgement,
 then invoke the native runtime. Record the native observation through
 `awm job routing-observe`; unknown outcomes require custody recovery. Use
-`awm job routing-report --json` read-only. V1 remains unrouted unless explicitly
-opted in and never claims routing savings.
+`awm job routing-report --json` read-only. A v1 plan declaring
+`proveedor-nativo` dispatches natively without `awm plan resolve`; passing `--opt-in-v1` for it is blocked with `ROUTING_DISPATCH_MODE` and zero dispatch, so never pass it; historical
+v1 plans without a dispatch header retain their old opt-in behavior and never
+claim routed profile savings by default.
 
 ## Machine enrollment
 

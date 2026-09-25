@@ -273,7 +273,7 @@ test('S3 retains the observed R4a minimum and keeps bundle/catalog delivery meta
   assert.ok(compareSemver(bundle.version, '4.2.0') >= 0, 'dev bundle must not predate R4a');
   assert.equal(catalog.bundles.find(entry => entry.name === 'dev')?.version, bundle.version, 'catalog and bundle must agree');
   for (const [file, version] of [
-    ['skills/development-process/SKILL.md', '2.1.0'], ['skills/writing-plans/SKILL.md', '2.1.0'],
+    ['skills/development-process/SKILL.md', '2.1.0'], ['skills/writing-plans/SKILL.md', '2.2.0'],
     ['skills/subagent-driven-development/SKILL.md', '2.2.0'], ['skills/executing-plans/SKILL.md', '2.1.0'],
     ['skills/requesting-code-review/SKILL.md', '1.2.0'], ['skills/post-implementation-qa/SKILL.md', '2.2.0'],
     ['skills/harness-retro/SKILL.md', '3.1.0'],

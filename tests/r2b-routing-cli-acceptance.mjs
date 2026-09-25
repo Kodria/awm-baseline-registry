@@ -51,13 +51,18 @@ test('B3 paired candidate preserves v1, blocks unready v2, and is immutable', ()
       assert.equal(setup.status, 2, `${provider} setup must report absent approval without starting a model: ${setup.stderr}`);
       assert.deepEqual(JSON.parse(setup.stdout), { state: 'policy-absent', provider, inferenceDispatched: false, tokenUsage: 'unknown', remedy: 'Approve a model-policy/v1 candidate before machine enrollment.' });
     }
-    for (const [fixture, schema] of [
-      ['tests/fixtures/compact-slices-v1/reference-example.md', 'compact-slices/v1'],
-      ['tests/fixtures/compact-slices-v2/reference-example.md', 'compact-slices/v2'],
+    for (const [fixture, schema, dispatchMode] of [
+      ['tests/fixtures/compact-slices-v1/reference-example.md', 'compact-slices/v1', 'proveedor-nativo'],
+      ['tests/fixtures/compact-slices-v2/reference-example.md', 'compact-slices/v2', 'awm-routed'],
     ]) {
       const report = JSON.parse(candidate(bin, ['plan', 'validate', fixture, '--cwd', root, '--json'], env));
       assert.equal(report.state, 'valid', `${fixture} must validate with the candidate`);
       assert.equal(report.schema, schema);
+      // writing-plans runs exactly this command before admission, so each canonical
+      // example must survive it and bind the dispatch mode its schema implies.
+      const strict = spawnSync(bin, ['plan', 'validate', fixture, '--cwd', root, '--require-dispatch-mode', '--json'], { cwd: root, encoding: 'utf8', env });
+      assert.equal(strict.status, 0, `${fixture} must pass the new-plan validation writing-plans requires: ${strict.stdout}${strict.stderr}`);
+      assert.equal(JSON.parse(strict.stdout).dispatchMode, dispatchMode, `${fixture} must declare the dispatch mode of ${schema}`);
     }
     const status = spawnSync(bin, ['model-policy', 'status', '--provider', 'codex', '--runtime-kind', 'native', '--runtime-version', '1.0.0', '--account-scope-digest', 'a'.repeat(64), '--cwd', root, '--json'], { cwd: root, encoding: 'utf8', env: { ...process.env, HOME: home, AWM_HOME: path.join(home, 'awm'), AWM_NO_UPDATE_CHECK: '1' } });
     assert.equal(status.status, 2, 'missing policy/receipt must remain visibly not ready');
@@ -65,6 +70,10 @@ test('B3 paired candidate preserves v1, blocks unready v2, and is immutable', ()
     const v1 = spawnSync(bin, ['plan', 'resolve', 'tests/fixtures/compact-slices-v1/reference-example.md', '--provider', 'codex', '--runtime-kind', 'native', '--runtime-version', '1.0.0', '--account-scope-digest', 'a'.repeat(64), '--role', 'final-reviewer', '--cwd', root, '--json'], { cwd: root, encoding: 'utf8', env });
     assert.equal(v1.status, 0, v1.stderr);
     assert.deepEqual(JSON.parse(v1.stdout), { state: 'not-required', reason: 'v1-without-opt-in' }, 'v1 must preserve the un-routed fallback');
+    // A plan that declared provider-native dispatch refuses the historical v1 routing opt-in.
+    const nativeOptIn = spawnSync(bin, ['plan', 'resolve', 'tests/fixtures/compact-slices-v1/reference-example.md', '--provider', 'codex', '--runtime-kind', 'native', '--runtime-version', '1.0.0', '--account-scope-digest', 'a'.repeat(64), '--role', 'implementer', '--slice', 'S1', '--opt-in-v1', '--cwd', root, '--json'], { cwd: root, encoding: 'utf8', env });
+    assert.equal(nativeOptIn.status, 2, `native plan must refuse --opt-in-v1: ${nativeOptIn.stdout}${nativeOptIn.stderr}`);
+    assert.deepEqual(JSON.parse(nativeOptIn.stdout).diagnostics.map(entry => entry.code), ['ROUTING_DISPATCH_MODE']);
     const v2 = spawnSync(bin, ['plan', 'resolve', 'tests/fixtures/compact-slices-v2/reference-example.md', '--provider', 'codex', '--runtime-kind', 'native', '--runtime-version', '1.0.0', '--account-scope-digest', 'a'.repeat(64), '--role', 'implementer', '--slice', 'S1', '--cwd', root, '--json'], { cwd: root, encoding: 'utf8', env });
     assert.equal(v2.status, 2, v2.stderr);
     const blocked = JSON.parse(v2.stdout);
