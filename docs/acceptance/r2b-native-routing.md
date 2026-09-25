@@ -82,9 +82,11 @@ that merely `needs:` the tag job. An earlier revision of this document claimed a
 mutation guard that could not fail; that claim was false and the guard was
 rewritten to make it true.
 
-The current registry floor `minCliVersion` is `9.12.0`, required by the native
-machine-enrollment guidance and paired with certified tag `v9.12.0` at
-`b3e940f823a6167eab710034c1189e51acaba371`. As of
+The current registry floor `minCliVersion` is `9.13.0`, required by the
+explicit dispatch-mode guidance in `writing-plans` (`awm plan validate
+--require-dispatch-mode` first shipped in 9.13.0) and paired with certified tag
+`v9.13.0` at `d39807b1044731a19f056905bea7e940fa8d325e`. The previous floor,
+`9.12.0`, was required by the native machine-enrollment guidance. As of
 Kodria/agentic-workflow#164 it is a **floor and nothing else**: the oldest CLI
 that can consume this content. It no longer tracks the published CLI. Three
 separate facts used to be carried by that one number, and the conflation made

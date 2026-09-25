@@ -41,6 +41,8 @@ test('new plans require an explicit dispatch choice without converting blocked v
   assert.match(skill, /journal.*v2.*(?:no|nunca).*autom[aá]tic/is);
   assert.match(skill, /PLAN_DISPATCH_MODE/);
   assert.match(skill, /awm plan validate PLAN_PATH --cwd \. --require-dispatch-mode --json/);
+  const floor = JSON.parse(read('awm-registry.json')).minCliVersion;
+  assert.ok(compareSemver(floor, '9.13.0') >= 0, '--require-dispatch-mode first shipped in CLI 9.13.0; an older floor would install a skill whose validate command the CLI rejects');
 });
 
 test('B2 native consumers preserve the sole routing reference and role custody', () => {
