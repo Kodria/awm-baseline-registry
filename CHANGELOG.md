@@ -2,6 +2,26 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 4.6.0 — 2026-09-25 (explicit dispatch mode)
+
+- `writing-plans` 2.2.0: every new plan declares `**Modo de despacho:**`
+  `proveedor-nativo` (compact-slices/v1, the default when the owner has not
+  explicitly chosen AWM routing) or `awm-routed` (compact-slices/v2), and is
+  validated with `awm plan validate --require-dispatch-mode`. An `awm-routed`
+  plan whose routing readiness is unavailable stops and reports the blocker; it
+  is never silently rewritten as v1. A blocked v2 journal is never converted or
+  resumed under another mode: native continuation goes through a separate,
+  accepted v1 continuation plan (`compact-migration-v1.md`).
+- The routing consumer reference states the CLI's real behaviour: a
+  `proveedor-nativo` plan dispatches natively and `--opt-in-v1` on it is blocked
+  with `ROUTING_DISPATCH_MODE`.
+- The registry now requires published AWM 9.13.0, the first release with
+  `--require-dispatch-mode`. The certified CLI is tag `v9.13.0` at
+  `d39807b1044731a19f056905bea7e940fa8d325e`; its routing protocol digest is
+  unchanged. Native acceptance (level 5) remains UNTESTED.
+- The dev bundle skips to 4.6.0 because this changelog already used the 4.4.0
+  and 4.5.0 headings for releases whose bundle metadata never carried them.
+
 ## Model-routing lifecycle compatibility — 2026-09-24
 
 - The dev bundle adds one-time Codex and Claude machine enrollment guidance,

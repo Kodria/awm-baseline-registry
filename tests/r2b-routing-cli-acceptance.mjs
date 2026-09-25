@@ -70,6 +70,10 @@ test('B3 paired candidate preserves v1, blocks unready v2, and is immutable', ()
     const v1 = spawnSync(bin, ['plan', 'resolve', 'tests/fixtures/compact-slices-v1/reference-example.md', '--provider', 'codex', '--runtime-kind', 'native', '--runtime-version', '1.0.0', '--account-scope-digest', 'a'.repeat(64), '--role', 'final-reviewer', '--cwd', root, '--json'], { cwd: root, encoding: 'utf8', env });
     assert.equal(v1.status, 0, v1.stderr);
     assert.deepEqual(JSON.parse(v1.stdout), { state: 'not-required', reason: 'v1-without-opt-in' }, 'v1 must preserve the un-routed fallback');
+    // A plan that declared provider-native dispatch refuses the historical v1 routing opt-in.
+    const nativeOptIn = spawnSync(bin, ['plan', 'resolve', 'tests/fixtures/compact-slices-v1/reference-example.md', '--provider', 'codex', '--runtime-kind', 'native', '--runtime-version', '1.0.0', '--account-scope-digest', 'a'.repeat(64), '--role', 'implementer', '--slice', 'S1', '--opt-in-v1', '--cwd', root, '--json'], { cwd: root, encoding: 'utf8', env });
+    assert.equal(nativeOptIn.status, 2, `native plan must refuse --opt-in-v1: ${nativeOptIn.stdout}${nativeOptIn.stderr}`);
+    assert.deepEqual(JSON.parse(nativeOptIn.stdout).diagnostics.map(entry => entry.code), ['ROUTING_DISPATCH_MODE']);
     const v2 = spawnSync(bin, ['plan', 'resolve', 'tests/fixtures/compact-slices-v2/reference-example.md', '--provider', 'codex', '--runtime-kind', 'native', '--runtime-version', '1.0.0', '--account-scope-digest', 'a'.repeat(64), '--role', 'implementer', '--slice', 'S1', '--cwd', root, '--json'], { cwd: root, encoding: 'utf8', env });
     assert.equal(v2.status, 2, v2.stderr);
     const blocked = JSON.parse(v2.stdout);

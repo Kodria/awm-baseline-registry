@@ -34,13 +34,32 @@ test('B1 v2 producer is semantic and keeps v1 as the explicit native choice', ()
 
 test('new plans require an explicit dispatch choice without converting blocked v2 journals', () => {
   const skill = read('skills/writing-plans/SKILL.md');
-  assert.match(skill, /\*\*Modo de despacho:\*\* proveedor-nativo/);
-  assert.match(skill, /proveedor-nativo.*compact-slices\/v1/s);
-  assert.match(skill, /awm-routed.*compact-slices\/v2/s);
-  assert.match(skill, /--opt-in-v1/);
-  assert.match(skill, /journal.*v2.*(?:no|nunca).*autom[aá]tic/is);
-  assert.match(skill, /PLAN_DISPATCH_MODE/);
+  const consumer = read('skills/subagent-driven-development/references/model-routing-v1.md');
+  const migration = read('skills/writing-plans/references/compact-migration-v1.md');
+  // Scope every assertion to the text that carries the rule. Whole-file dotall
+  // regexes stayed green when the header lost its line, the mappings swapped or
+  // the prohibitions were inverted; each scoped assertion below was mutation-checked.
+  const section = skill.slice(skill.indexOf('### Modo de despacho'), skill.indexOf('## Slice Structure'));
+  const headerTemplate = skill.slice(skill.indexOf('**Modo de ejecución:** interactivo'), skill.indexOf('---', skill.indexOf('**Modo de ejecución:** interactivo')));
+  const authoring = skill.split('\n').find(line => line.startsWith('Read `references/compact-slices-v1.md` completely.'));
+  assert.ok(section.length > 0 && headerTemplate.length > 0 && authoring, 'the dispatch rule must live in its own section, header template and authoring paragraph');
+  assert.match(headerTemplate, /^\*\*Modo de despacho:\*\* proveedor-nativo$/m, 'the header template must carry the native default');
+  assert.match(authoring, /`proveedor-nativo` maps to `compact-slices\/v1`; `awm-routed` maps to `compact-slices\/v2`/);
+  assert.match(section, /`proveedor-nativo` usa `compact-slices\/v1`/);
+  assert.match(section, /`awm-routed` usa `compact-slices\/v2`/);
+  assert.match(section, /no uses `--opt-in-v1`/);
+  assert.match(section, /no se convierte automáticamente a v1 ni se reanuda con otro modo/);
+  assert.match(section, /PLAN_DISPATCH_MODE/);
+  assert.match(authoring, /never silently change the plan to v1/);
+  // An explicit awm-routed choice must not be overridden by a standing "keep v1" rule.
+  assert.doesNotMatch(authoring, /keep v1 even after feature support becomes available/, 'a blanket v1 bootstrap rule contradicts an explicit awm-routed choice');
   assert.match(skill, /awm plan validate PLAN_PATH --cwd \. --require-dispatch-mode --json/);
+  // The CLI blocks --opt-in-v1 on a native plan (ROUTING_DISPATCH_MODE); a consumer told
+  // it "remains unrouted" would pass the flag and stop with zero dispatch.
+  assert.match(consumer, /`proveedor-nativo`[^.]*`--opt-in-v1`[^.]*`ROUTING_DISPATCH_MODE`/);
+  assert.doesNotMatch(consumer, /remains unrouted even if `--opt-in-v1`/);
+  // A continuation back to native dispatch is a new plan and must pass the strict validation.
+  assert.match(migration, /awm plan validate CONTINUATION --cwd \. --require-dispatch-mode --json/);
   const floor = JSON.parse(read('awm-registry.json')).minCliVersion;
   assert.ok(compareSemver(floor, '9.13.0') >= 0, '--require-dispatch-mode first shipped in CLI 9.13.0; an older floor would install a skill whose validate command the CLI rejects');
 });

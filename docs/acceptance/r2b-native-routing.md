@@ -7,7 +7,8 @@ stronger label is never inferred from a weaker one.
 
 `CMD-R2B`, `CMD-COMPACT`, `CMD-CAPSULE`, `CMD-R2A` and `CMD-PORTABLE` read the
 shipped contract text: one semantic `implementerProfile` per v2 slice with no
-concrete model or vendor, visible fail-closed v1 fallback, the single
+concrete model or vendor, an explicit dispatch-mode choice (native v1 by
+default, never a silent downgrade of an `awm-routed` plan), the single
 `references/model-routing-v1.md` consumer, applied-ack-before-dispatch, mismatch
 and unknown-outcome custody, and the six targets consuming one protocol. Adversarial
 cases reject injected `gpt-5.6-sol` / `claude-opus` strings and any `target=model`

@@ -25,7 +25,9 @@ writing-plans owns semantic boundaries. Preserve original branch, hashes and dur
 4. Present proposed continuation and original hash comparison for explicit owner acceptance.
    Write the separate accepted compact artifact and trace original path/hash to new CLI
    identity. Do not overwrite source or hand-write journal schema metadata.
-5. Run `awm plan validate CONTINUATION --cwd . --json`; only valid proceeds to admission.
+5. The continuation is a new plan: declare `**Modo de despacho:**` (`proveedor-nativo` when
+   returning from a blocked v2 journal to native dispatch) and run
+   `awm plan validate CONTINUATION --cwd . --require-dispatch-mode --json`; only valid proceeds to admission.
    Amendments revalidate and visibly invalidate stale obligations. Binding/recovery is explicit.
 6. Read-only dry run selects the next durable obligation, #148 Task 2 quality re-review, not
    Task 1 redispatch. Dry runs never dispatch or certify missing work. Execution needs admission.
