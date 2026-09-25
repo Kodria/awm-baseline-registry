@@ -9,7 +9,7 @@ test('native model enrollment requires the first published lifecycle CLI', () =>
   assert.ok(compareSemver(floor, '9.12.0') >= 0, 'machine enrollment needs CLI 9.12.0 or newer');
   assert.ok(compareSemver(certified, floor) >= 0, 'certified CLI must satisfy the published registry floor');
 });
-test('B1 v2 producer is semantic and preserves v1 fallback', () => {
+test('B1 v2 producer is semantic and keeps v1 as the explicit native choice', () => {
   const skill = read('skills/writing-plans/SKILL.md');
   const v2 = read('skills/writing-plans/references/compact-slices-v2.md');
   const consumer = read('skills/subagent-driven-development/references/model-routing-v1.md');
@@ -17,7 +17,7 @@ test('B1 v2 producer is semantic and preserves v1 fallback', () => {
   const fixture = read('tests/fixtures/compact-slices-v2/reference-example.md');
   for (const profile of ['mechanical', 'integration', 'judgment']) assert.match(v2, new RegExp(`\\b${profile}\\b`));
   assert.match(skill, /never a concrete model or vendor/i);
-  assert.match(skill, /author valid compact v1.*routing unavailable/i);
+  assert.match(skill, /If the owner has not explicitly chosen AWM routing, use `proveedor-nativo`/i);
   assert.match(consumer, /blocked result means zero dispatch/i);
   assert.match(consumer, /applied acknowledgement/i);
   assert.match(consumer, /awm job routing-report --json/, 'consumer must invoke the public aggregate report contract');
@@ -30,6 +30,17 @@ test('B1 v2 producer is semantic and preserves v1 fallback', () => {
   assert.throws(() => assert.match(consumer.replace(/policy.*capability.*otherwise.*zero dispatch/is, ''), /policy.*capability.*otherwise.*zero dispatch/is), 'removing the readiness consequence must fail');
   for (const profile of ['mechanical', 'integration', 'judgment']) assert.match(fixture, new RegExp(`"implementerProfile":"${profile}"`));
   assert.throws(() => assert.match(v2.replaceAll('integration', 'vendor-x'), /\bintegration\b/));
+});
+
+test('new plans require an explicit dispatch choice without converting blocked v2 journals', () => {
+  const skill = read('skills/writing-plans/SKILL.md');
+  assert.match(skill, /\*\*Modo de despacho:\*\* proveedor-nativo/);
+  assert.match(skill, /proveedor-nativo.*compact-slices\/v1/s);
+  assert.match(skill, /awm-routed.*compact-slices\/v2/s);
+  assert.match(skill, /--opt-in-v1/);
+  assert.match(skill, /journal.*v2.*(?:no|nunca).*autom[aá]tic/is);
+  assert.match(skill, /PLAN_DISPATCH_MODE/);
+  assert.match(skill, /awm plan validate PLAN_PATH --cwd \. --require-dispatch-mode --json/);
 });
 
 test('B2 native consumers preserve the sole routing reference and role custody', () => {

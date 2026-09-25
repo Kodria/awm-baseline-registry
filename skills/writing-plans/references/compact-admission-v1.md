@@ -2,8 +2,9 @@
 
 Both `compact-slices/v1` and `compact-slices/v2` are supported only through the
 CLI's current contract. V2 adds a semantic `implementerProfile` per slice; a
-missing/unsupported routing contract or policy readiness blocks v2 and falls
-back visibly to valid v1. The currentness, sensors, journal and custody order
+missing/unsupported routing contract or policy readiness blocks v2; it never
+changes an explicitly selected `awm-routed` plan to v1. A new `proveedor-nativo`
+plan uses v1 and needs no matrix. The currentness, sensors, journal and custody order
 below remains unchanged.
 
 The CLI is the sole mechanical parser, validator, digester and admission authority. This

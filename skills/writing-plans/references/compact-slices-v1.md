@@ -41,7 +41,7 @@ destructive scope or shell syntax. Use real verified repository commands; never 
 `git --version` for a test. Generic shell/interpreter launchers are rejected; npm scripts
 run the actual named verification. Mechanical validity is not evidence that tests passed.
 
-Self-review bidirectional coverage, then run `awm plan validate PLAN_PATH --cwd . --json`.
+Self-review bidirectional coverage, then run `awm plan validate PLAN_PATH --cwd . --require-dispatch-mode --json` for a newly authored plan.
 Only valid proceeds to admission; migration-required, invalid and unsupported block.
 An unmarked plan requires separate migration, never another executable route. Coverage is
 a planning self-review, not a fabricated CLI command. Revalidate every amendment, retain
@@ -59,6 +59,7 @@ never persist prompt payload/source or response bodies as telemetry.
 ```markdown
 # Example compact plan
 **Modo de ejecución:** interactivo
+**Modo de despacho:** proveedor-nativo
 <!-- AWM:COMPACT-SLICES:START v1 -->
 {"schema":"compact-slices/v1","planId":"reference-example","requirements":["RF-1.4"],"sources":[{"id":"SRC-ONE","path":"skills/writing-plans/SKILL.md","locator":"## Bite-Sized Task Granularity","fact":"Steps are bite-sized with real RED/GREEN evidence."}],"commands":[{"id":"CMD-TEST","program":"npm","args":["run","test:compact-only"],"covers":["RF-1.4"]}],"slices":[{"id":"S1","title":"Example","requirements":["RF-1.4"],"dependsOn":[],"sectionAnchor":"slice-s1","sources":["SRC-ONE"],"redCommands":["CMD-TEST"],"greenCommands":["CMD-TEST"],"reviewEvidence":["specification","code-quality"],"risk":"full-context","fallback":["public-contract"]}],"closureCommands":["CMD-TEST"]}
 <!-- AWM:COMPACT-SLICES:END v1 -->
