@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "2.2.0"
+version: "2.3.0"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
@@ -128,7 +128,15 @@ Con journal inicializado:
    RECIBIRSE el reporte del revisor — nunca antes.
 3. **Heartbeat:** emitir `awm job controller-heartbeat --generation <token>` al
    completar cada paso del protocolo (despacho enviado, reporte recibido, task
-   marcada). Importante: el silencio de heartbeat + inactividad de proceso
+   marcada) y justo antes de cada espera por un subagente. Nunca esperar a un
+   subagente con una espera sin límite: usar el timeout de la espera nativa en
+   tramos de como máximo 2 minutos y emitir un heartbeat entre tramos hasta
+   recibir el reporte. Un tramo vencido sin reporte no es un fallo del subagente
+   ni autoriza redespacharlo: solo se vuelve a esperar. Si la plataforma solo
+   ofrece una espera bloqueante sin límite, emitir el heartbeat antes de entrar,
+   declarar la limitación y pedir que `awm watch` se lance con
+   `--heartbeat-timeout` y `--activity-window` que cubran la corrida más larga
+   esperada de un subagente. Importante: el silencio de heartbeat + inactividad de proceso
    NUNCA autorizan el relevo por si solos — el supervisor solo releva cuando
    además su adapter emite la señal POSITIVA `safeToReplace`; sin esa señal el
    ciclo queda BLOCKED en custodia, sin matar nada.

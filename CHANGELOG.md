@@ -2,6 +2,21 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 4.7.0 — 2026-09-26 (controller heartbeat during subagent waits)
+
+- `subagent-driven-development` 2.3.0: the unattended controller emits
+  `awm job controller-heartbeat` right before every wait on a subagent and never
+  waits without a bound — it waits in slices of at most 2 minutes with a
+  heartbeat between them. An expired slice is not a subagent failure and never
+  authorizes a redispatch. A platform with only an unbounded blocking wait must
+  say so and have `awm watch` launched with timeouts that cover the longest
+  expected subagent run.
+- Why: in the first real unattended v1 smoke (Kodria/agentic-workflow#196), a
+  Codex controller blocked in a native wait for the specification reviewer sent
+  no heartbeat for more than 5 minutes, its own process looked idle, and the
+  supervisor entered a false R4.2b custody. Nothing was killed, but the cycle
+  stopped. The CLI side (descendant-tree activity) ships separately.
+
 ## dev 4.6.0 — 2026-09-25 (explicit dispatch mode)
 
 - `writing-plans` 2.2.0: every new plan declares `**Modo de despacho:**`

@@ -274,7 +274,7 @@ test('S3 retains the observed R4a minimum and keeps bundle/catalog delivery meta
   assert.equal(catalog.bundles.find(entry => entry.name === 'dev')?.version, bundle.version, 'catalog and bundle must agree');
   for (const [file, version] of [
     ['skills/development-process/SKILL.md', '2.1.0'], ['skills/writing-plans/SKILL.md', '2.2.0'],
-    ['skills/subagent-driven-development/SKILL.md', '2.2.0'], ['skills/executing-plans/SKILL.md', '2.1.0'],
+    ['skills/subagent-driven-development/SKILL.md', '2.3.0'], ['skills/executing-plans/SKILL.md', '2.1.0'],
     ['skills/requesting-code-review/SKILL.md', '1.2.0'], ['skills/post-implementation-qa/SKILL.md', '2.2.0'],
     ['skills/harness-retro/SKILL.md', '3.1.0'],
     ['skills/verification-before-completion/SKILL.md', '1.4.0'], ['skills/setup-sensors/SKILL.md', '1.1.2'],
@@ -302,4 +302,23 @@ test('S3 RED mutations reject weakened evidence, metadata, and release gates', (
   assert.throws(() => compactManifest(fixture.replace('"schema": "compact-slices/v1"', '"schema": "compact-slices/v2"')), /fixture schema must remain exact/);
   assert.throws(() => assertR4EvidenceLedger(read('docs/plans/2026-08-26-r4b-compact-sliced-execution-plan.md').replaceAll('unobservable', 'estimated')), /unobservable/);
   assert.throws(() => assertR15ReleaseWorkflow(read('.github/workflows/auto-tag.yml').replace('node tests/r15-compact-slices-cli-acceptance.mjs', '# acceptance removed')), /release gate must run/);
+});
+
+// v1 smoke 2026-09-26 (Kodria/agentic-workflow#196): a Codex controller blocked in an
+// unbounded wait on a native subagent emitted no heartbeat for >5 min, its own process
+// looked idle, and the supervisor entered a false R4.2b custody. The heartbeat is the
+// controller's proof of life, so the controller must never wait without emitting it.
+test('the unattended controller keeps its heartbeat alive while waiting on a subagent', () => {
+  const sdd = read(S2_SDD);
+  const start = sdd.indexOf('3. **Heartbeat:**');
+  const end = sdd.indexOf('4. **Verificaciones mecánicas:**');
+  assert.ok(start >= 0 && end > start, 'the heartbeat rule must stay its own numbered step');
+  const heartbeat = sdd.slice(start, end).replace(/\s+/g, ' ');   // Markdown wraps lines
+  assert.match(heartbeat, /y justo antes de cada espera por un subagente/);
+  assert.match(heartbeat, /Nunca esperar a un subagente con una espera sin límite/);
+  assert.match(heartbeat, /tramos de como máximo 2 minutos/);
+  assert.match(heartbeat, /emitir un heartbeat entre tramos/);
+  assert.match(heartbeat, /Un tramo vencido sin reporte no es un fallo del subagente ni autoriza redespacharlo/);
+  assert.match(heartbeat, /--heartbeat-timeout.*--activity-window/s);
+  assert.match(heartbeat, /safeToReplace/, 'the custody rule must survive next to the new wait rule');
 });
