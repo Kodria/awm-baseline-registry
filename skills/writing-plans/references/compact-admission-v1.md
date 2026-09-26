@@ -19,8 +19,9 @@ assignment; ambiguity blocks instead of picking the newest file.
 - Only exit 0 with `state: admitted` and the current `planDigest` permits work; every other result blocks with zero dispatch.
 - `migration-required`, `invalid`, and `unsupported` never select a historical, Task/Tracks, batch, or legacy execution route.
 - Missing command/strict support, stale or unverifiable consumed CLI/registry contracts, or non-pass sensor evidence blocks; show named components and actionable diagnostics, never bypass.
-- Interactive execution requires compact admission but not a journal; unattended execution requires a healthy schema-2 journal bound to the current plan identity before dispatch.
-- A missing, corrupt, or stale unattended journal blocks; initialization is an explicit separately authorized `awm watch --init --plan PLAN_PATH`, only when absent, never an admission side effect.
+- Interactive execution requires compact admission but not a journal. Unattended `proveedor-nativo` execution with no journal on its branch is admitted with `journal: not-required` and runs as one native provider session; a journal is the explicit opt-in to durable custody. Unattended `awm-routed` execution always requires a healthy schema-2 journal bound to the current plan identity before dispatch.
+- Once a journal exists, a corrupt or stale journal blocks; initialization is an explicit separately authorized `awm watch --init --plan PLAN_PATH`, only when absent, never an admission side effect.
+- Unattended admission also requires the controller posture: add `--controller-autonomy approval-free` when the provider session runs without approval prompts.
 - Before selecting resumed work reconcile current plan, journal, Git HEAD/diff, active jobs, tests, sensors, and independent verdict obligations; durable current evidence wins over chat or checkboxes.
 - After any plan change revalidate and re-admit under the new CLI-derived plan identity; old-digest verdicts cannot satisfy current obligations.
 - Full relevant-context fallback for security/robustness, root-configuration, public-contract, or uncertain cross-cutting impact retains the compact state machine and every quality gate.

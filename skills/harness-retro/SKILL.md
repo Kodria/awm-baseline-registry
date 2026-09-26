@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "3.1.0"
+version: "3.2.0"
 license: Apache-2.0
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
@@ -295,7 +295,7 @@ Use only the explicit admitted active_plan and its CLI identity; never resolve a
 Read minCliVersion only when this project contains awm-registry.json; a CLI project without registry metadata must not invent that file or fail merely because it is absent.
 Query the current branch with `awm watch journal-status --json`; a global .awm/journal directory is never evidence of an active branch journal.
 Only a present, non-bootstrapUnused journal with cycleState COMPLETE and a passing current interlock permits cycle evidence capture.
-Missing journal skips capture explicitly with manual/native QA evidence and no fabricated cycle; it never permits missing-journal unattended dispatch.
+Missing journal skips capture explicitly with manual/native QA evidence and no fabricated cycle; an unattended native session without durable custody legitimately has no journal, and awm-routed work never dispatches without one.
 Corrupt, nonterminal, or mismatched journal blocks capture and archive; unused bootstrap state is administrative abandonment, never completed execution.
 
 Check the consumed registry contract through admission even when no local registry metadata

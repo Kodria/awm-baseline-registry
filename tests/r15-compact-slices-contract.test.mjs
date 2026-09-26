@@ -274,9 +274,9 @@ test('S3 retains the observed R4a minimum and keeps bundle/catalog delivery meta
   assert.equal(catalog.bundles.find(entry => entry.name === 'dev')?.version, bundle.version, 'catalog and bundle must agree');
   for (const [file, version] of [
     ['skills/development-process/SKILL.md', '2.1.0'], ['skills/writing-plans/SKILL.md', '2.2.0'],
-    ['skills/subagent-driven-development/SKILL.md', '2.4.0'], ['skills/executing-plans/SKILL.md', '2.1.0'],
+    ['skills/subagent-driven-development/SKILL.md', '2.5.0'], ['skills/executing-plans/SKILL.md', '2.1.0'],
     ['skills/requesting-code-review/SKILL.md', '1.2.0'], ['skills/post-implementation-qa/SKILL.md', '2.2.0'],
-    ['skills/harness-retro/SKILL.md', '3.1.0'],
+    ['skills/harness-retro/SKILL.md', '3.2.0'],
     ['skills/verification-before-completion/SKILL.md', '1.4.0'], ['skills/setup-sensors/SKILL.md', '1.1.2'],
   ]) assert.match(read(file), new RegExp(`^version: \"${version.replaceAll('.', '\\.')}\"$`, 'm'), `${file} must have its one approved version`);
 });

@@ -48,8 +48,8 @@ const admission = [
   'Only exit 0 with `state: admitted` and the current `planDigest` permits work; every other result blocks with zero dispatch.',
   '`migration-required`, `invalid`, and `unsupported` never select a historical, Task/Tracks, batch, or legacy execution route.',
   'Missing command/strict support, stale or unverifiable consumed CLI/registry contracts, or non-pass sensor evidence blocks; show named components and actionable diagnostics, never bypass.',
-  'Interactive execution requires compact admission but not a journal; unattended execution requires a healthy schema-2 journal bound to the current plan identity before dispatch.',
-  'A missing, corrupt, or stale unattended journal blocks; initialization is an explicit separately authorized `awm watch --init --plan PLAN_PATH`, only when absent, never an admission side effect.',
+  'Interactive execution requires compact admission but not a journal. Unattended `proveedor-nativo` execution with no journal on its branch is admitted with `journal: not-required` and runs as one native provider session; a journal is the explicit opt-in to durable custody. Unattended `awm-routed` execution always requires a healthy schema-2 journal bound to the current plan identity before dispatch.',
+  'Once a journal exists, a corrupt or stale journal blocks; initialization is an explicit separately authorized `awm watch --init --plan PLAN_PATH`, only when absent, never an admission side effect.',
   'Before selecting resumed work reconcile current plan, journal, Git HEAD/diff, active jobs, tests, sensors, and independent verdict obligations; durable current evidence wins over chat or checkboxes.',
   'After any plan change revalidate and re-admit under the new CLI-derived plan identity; old-digest verdicts cannot satisfy current obligations.',
   'Full relevant-context fallback for security/robustness, root-configuration, public-contract, or uncertain cross-cutting impact retains the compact state machine and every quality gate.',
@@ -144,15 +144,24 @@ test('RF-3.3/3.4/3.5 RNF-T.4 migration is bounded and checkpoint-preserving', ()
   requireClauses(read(migrationPath), '## Normative migration protocol', migration);
   assert.ok(section(read('skills/writing-plans/SKILL.md'), '## Historical migration — BLOCKING').includes('references/compact-migration-v1.md'));
 });
-test('RF-3.1/3.2 session custody is mandatory and initialized empty journals cannot dispatch', () => {
+// Durable custody (journal + awm watch + jobs) is opt-in again, as before CLI 9.8.0:
+// an unattended native v1 session without a journal is a supported route, while an
+// opted-in journal keeps every custody rule. awm-routed v2 always requires it.
+const JOURNAL_SECTION = '## Modo journal-first (opcional; custodia durable)';
+test('RF-3.1/3.2 durable custody is opt-in and initialized empty journals cannot dispatch', () => {
   const text = read('skills/subagent-driven-development/SKILL.md');
   const clauses = [
     'Journal initialization binds the plan only; an empty bootstrap journal is not an execution bridge or permission to dispatch.',
-    'Before unattended dispatch require the actual supervisor-issued generation token, observable session custody, registered cycle-plan/tasks/ReviewObligations, and durable verification requests using the existing public job commands.',
+    'Before unattended dispatch under durable custody require the actual supervisor-issued generation token, observable session custody, registered cycle-plan/tasks/ReviewObligations, and durable verification requests using the existing public job commands.',
     'If that native session bridge or generation/custody evidence is unavailable, return BLOCKED before dispatch; provider capability declarations alone never establish session custody.',
+    'Desatendido `proveedor-nativo` sin journal en la rama: la admisión devuelve `journal: not-required` y el ciclo corre en una sola sesión nativa del proveedor',
+    'El journal es el opt-in explícito a la custodia durable: si existe, debe estar vigente; corrupto o stale bloquea y nunca cae al flujo sin journal.',
+    '`awm-routed` (compact v2) siempre exige journal.',
   ];
-  requireClauses(text, '## Modo journal-first (obligatorio desatendido; opcional interactivo)', clauses);
-  for (const clause of clauses) assert.throws(() => requireClauses(text.replace(clause, ''), '## Modo journal-first (obligatorio desatendido; opcional interactivo)', clauses), /missing normative clause/);
+  requireClauses(text, JOURNAL_SECTION, clauses);
+  for (const clause of clauses) assert.throws(() => requireClauses(text.replace(clause, ''), JOURNAL_SECTION, clauses), /missing normative clause/);
+  assert.doesNotMatch(text, /obligatorio desatendido/, 'the journal must no longer be declared mandatory for unattended work');
+  assert.doesNotMatch(text, /admission exige un journal schema-2 sano enlazado al plan\s+actual antes de cualquier despacho/, 'the old unconditional requirement must be gone');
 });
 test('RF-1.4 canonical standalone example has exact v1 headings and real verification commands', () => {
   const reference = read('skills/writing-plans/references/compact-slices-v1.md');

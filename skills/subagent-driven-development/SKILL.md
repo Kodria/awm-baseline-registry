@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "2.4.0"
+version: "2.5.0"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
@@ -90,12 +90,16 @@ El modo desatendido quita pausas, no controles: los gates (sensor, ledger, recon
 
 La ejecución continua entre tareas es el comportamiento default en AMBOS modos (no cambia). WHEN el modo es `desatendido`, lo único que cambia es la TERMINATION_PHASE: no preguntes al usuario si continuar con el cierre — devuelve el control al orquestador, que rutea la fase siguiente automáticamente. IF un subagente reporta BLOCKED irresoluble o hay ambigüedad que impide el progreso, THEN detente y escala al usuario igual que en modo interactivo — BLOCKED nunca se salta.
 
-## Modo journal-first (obligatorio desatendido; opcional interactivo)
+## Modo journal-first (opcional; custodia durable)
 
 <!-- AWM-INTEGRATION: subagent-journal-gate -->
 
+Desatendido `proveedor-nativo` sin journal en la rama: la admisión devuelve `journal: not-required` y el ciclo corre en una sola sesión nativa del proveedor, como antes de CLI 9.8.0. El controlador despacha sus subagentes nativos, corre él mismo tests y sensores y cumple TDD, revisiones, QA y cierre; no usa supervisor, `awm job` ni `awm job gate`, y no presenta ese ciclo como evidencia de journal.
+El journal es el opt-in explícito a la custodia durable: si existe, debe estar vigente; corrupto o stale bloquea y nunca cae al flujo sin journal.
+`awm-routed` (compact v2) siempre exige journal.
+
 Journal initialization binds the plan only; an empty bootstrap journal is not an execution bridge or permission to dispatch.
-Before unattended dispatch require the actual supervisor-issued generation token, observable session custody, registered cycle-plan/tasks/ReviewObligations, and durable verification requests using the existing public job commands.
+Before unattended dispatch under durable custody require the actual supervisor-issued generation token, observable session custody, registered cycle-plan/tasks/ReviewObligations, and durable verification requests using the existing public job commands.
 If that native session bridge or generation/custody evidence is unavailable, return BLOCKED before dispatch; provider capability declarations alone never establish session custody.
 
 Use the existing `awm watch` supervisor/controller launch flow; do not invent a native adapter,
@@ -108,10 +112,10 @@ When that bridge cannot be established, show the missing custody/registration bo
 require a supported supervisor-controlled launch before unattended work; never execute native
 agents directly and later portray the empty journal as evidence of their work.
 
-WHEN el modo es desatendido, admission exige un journal schema-2 sano enlazado al plan
-actual antes de cualquier despacho. Ausente, corrupto o stale bloquea; nunca cae al flujo
-sin journal. La inicialización `awm watch --init --plan PLAN_PATH` es explícita y no
-sobrescribe uno existente. En interactivo el journal es opcional; si no existe, se conserva
+WHEN hay custodia durable (journal en la rama, o `awm-routed`), admission exige un journal
+schema-2 sano enlazado al plan actual antes de cualquier despacho. La inicialización
+`awm watch --init --plan PLAN_PATH` es explícita y no sobrescribe uno existente. Sin
+journal (interactivo, o desatendido `proveedor-nativo`), se conserva
 el flujo compacto admitido con todas sus revisiones y gates, nunca ejecución histórica.
 En cada apertura/reanudación reconciliá plan, journal, Git, jobs, tests, sensors y verdicts.
 
