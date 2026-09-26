@@ -2,6 +2,20 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 4.8.0 — 2026-09-26 (close the cycle in the same generation)
+
+- `subagent-driven-development` 2.4.0: after the last task the unattended
+  controller does not end its turn. In the same generation it requests every
+  pending CycleVerificationPlan item with `awm job request --generation <token>
+  --satisfies <itemId>`, waits with the step-3 heartbeats and runs
+  `awm job gate`. A replacement generation that finds every task done goes
+  straight to closure and never redispatches a task.
+- Why: in the second real unattended v1 smoke (Kodria/agentic-workflow#196), S1
+  finished with one attempt and both reviews passed, but the Codex controller
+  ended its turn before requesting the cycle-level verifications it had
+  planned, so the cycle could not close. The CLI side (relaunching the
+  controller for a pending closure instead of custody) ships separately.
+
 ## dev 4.7.0 — 2026-09-26 (controller heartbeat during subagent waits)
 
 - `subagent-driven-development` 2.3.0: the unattended controller emits
