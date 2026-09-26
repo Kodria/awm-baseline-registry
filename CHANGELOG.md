@@ -2,6 +2,21 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## dev 4.9.0 — 2026-09-26 (durable custody is opt-in again)
+
+- Unattended execution works again as it did before CLI 9.8.0: a
+  `proveedor-nativo` (compact v1) plan with no journal on its branch is admitted
+  with `journal: not-required` and runs as one native provider session that
+  dispatches its own subagents and runs its own verification, with every
+  process gate (admission, sensors, TDD, reviews, QA) intact.
+- The journal, `awm watch` supervisor and verification jobs become the explicit
+  opt-in to durable custody (`awm watch --init --plan`). Once a journal exists it
+  must be current; `awm-routed` (compact v2) always requires it.
+- `subagent-driven-development` 2.5.0, `harness-retro` 3.2.0, and the
+  `writing-plans` admission reference and plan reviewer prompt state the opt-in.
+- Requires the CLI release that admits journal-less native v1 unattended plans;
+  the floor moves with it.
+
 ## dev 4.8.0 — 2026-09-26 (close the cycle in the same generation)
 
 - `subagent-driven-development` 2.4.0: after the last task the unattended

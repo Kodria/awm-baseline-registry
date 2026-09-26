@@ -17,7 +17,7 @@ const required = [
   'Read minCliVersion only when this project contains awm-registry.json; a CLI project without registry metadata must not invent that file or fail merely because it is absent.',
   'Query the current branch with `awm watch journal-status --json`; a global .awm/journal directory is never evidence of an active branch journal.',
   'Only a present, non-bootstrapUnused journal with cycleState COMPLETE and a passing current interlock permits cycle evidence capture.',
-  'Missing journal skips capture explicitly with manual/native QA evidence and no fabricated cycle; it never permits missing-journal unattended dispatch.',
+  'Missing journal skips capture explicitly with manual/native QA evidence and no fabricated cycle; an unattended native session without durable custody legitimately has no journal, and awm-routed work never dispatches without one.',
   'Corrupt, nonterminal, or mismatched journal blocks capture and archive; unused bootstrap state is administrative abandonment, never completed execution.',
 ];
 function assertClosure(skill) {
