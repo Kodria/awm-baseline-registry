@@ -274,7 +274,7 @@ test('S3 retains the observed R4a minimum and keeps bundle/catalog delivery meta
   assert.equal(catalog.bundles.find(entry => entry.name === 'dev')?.version, bundle.version, 'catalog and bundle must agree');
   for (const [file, version] of [
     ['skills/development-process/SKILL.md', '2.1.0'], ['skills/writing-plans/SKILL.md', '2.2.0'],
-    ['skills/subagent-driven-development/SKILL.md', '2.3.0'], ['skills/executing-plans/SKILL.md', '2.1.0'],
+    ['skills/subagent-driven-development/SKILL.md', '2.4.0'], ['skills/executing-plans/SKILL.md', '2.1.0'],
     ['skills/requesting-code-review/SKILL.md', '1.2.0'], ['skills/post-implementation-qa/SKILL.md', '2.2.0'],
     ['skills/harness-retro/SKILL.md', '3.1.0'],
     ['skills/verification-before-completion/SKILL.md', '1.4.0'], ['skills/setup-sensors/SKILL.md', '1.1.2'],
@@ -321,4 +321,20 @@ test('the unattended controller keeps its heartbeat alive while waiting on a sub
   assert.match(heartbeat, /Un tramo vencido sin reporte no es un fallo del subagente ni autoriza redespacharlo/);
   assert.match(heartbeat, /--heartbeat-timeout.*--activity-window/s);
   assert.match(heartbeat, /safeToReplace/, 'the custody rule must survive next to the new wait rule');
+});
+
+// v1 smoke 2026-09-26 (Kodria/agentic-workflow#196): the Codex controller ended its turn
+// after the last review, before requesting the cycle-level verifications it had planned,
+// so the cycle could not close in that generation.
+test('the unattended controller closes the cycle in the same generation after the last task', () => {
+  const sdd = read(S2_SDD);
+  const start = sdd.indexOf('5. **Cierre:**');
+  const end = sdd.indexOf('## Historical track state');
+  assert.ok(start >= 0 && end > start, 'the closure rule must stay its own numbered step');
+  const closure = sdd.slice(start, end).replace(/\s+/g, ' ');   // Markdown wraps lines
+  assert.match(closure, /Después de la última task, no terminar el turno/);
+  assert.match(closure, /en la misma generación solicitar cada item pendiente del CycleVerificationPlan con `awm job request --generation <token> --satisfies <itemId>`/);
+  assert.match(closure, /esperar sus resultados con los heartbeats del paso 3 y correr `awm job gate`/);
+  assert.match(closure, /Si una generación de reemplazo encuentra todas las tasks terminadas, ir directo al cierre: no redespachar ninguna task/);
+  assert.match(closure, /Solo con gate verde se declara COMPLETE/, 'the gate rule must survive next to the new closure rule');
 });

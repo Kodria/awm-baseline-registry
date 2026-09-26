@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "2.3.0"
+version: "2.4.0"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
@@ -145,7 +145,12 @@ Con journal inicializado:
    NUNCA ejecutarlas inline en providers donde el proceso muere con el turno.
    El supervisor las corre vía exec-wrapper (claim durable) y el resultado
    aparece en el journal (`awm job ps`).
-5. **Cierre:** `awm job gate` es el interlock — exit != 0 significa que hay
+5. **Cierre:** Después de la última task, no terminar el turno: en la misma
+   generación solicitar cada item pendiente del CycleVerificationPlan con
+   `awm job request --generation <token> --satisfies <itemId>`, esperar sus
+   resultados con los heartbeats del paso 3 y correr `awm job gate`. Si una
+   generación de reemplazo encuentra todas las tasks terminadas, ir directo al
+   cierre: no redespachar ninguna task. `awm job gate` es el interlock — exit != 0 significa que hay
    trabajo pendiente, obligaciones sin verdict `pass`, evidencia con
    fingerprint no vigente, fixes abiertos o corrupción: NO se cierra el ciclo.
    Solo con gate verde se declara COMPLETE.
