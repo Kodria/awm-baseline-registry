@@ -2,6 +2,15 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## Registry floor 9.14.0 — 2026-09-26
+
+- `minCliVersion` 9.13.0 -> 9.14.0, the first CLI that admits a journal-less
+  `proveedor-nativo` unattended plan, which dev 4.9.0 describes. Certified tag
+  `v9.14.0` at `b3f791fd6bab2d6e4f5a44b0c7eeadc9edeba916`; routing protocol
+  digest unchanged. Dev 4.9.0 shipped in v4.8.0 with the 9.13.0 floor; with an
+  older CLI that admission blocks with ADMISSION_JOURNAL_BINDING_REQUIRED
+  instead of admitting.
+
 ## dev 4.9.0 — 2026-09-26 (durable custody is opt-in again)
 
 - Unattended execution works again as it did before CLI 9.8.0: a

@@ -161,6 +161,9 @@ test('RF-3.1/3.2 durable custody is opt-in and initialized empty journals cannot
   requireClauses(text, JOURNAL_SECTION, clauses);
   for (const clause of clauses) assert.throws(() => requireClauses(text.replace(clause, ''), JOURNAL_SECTION, clauses), /missing normative clause/);
   assert.doesNotMatch(text, /obligatorio desatendido/, 'the journal must no longer be declared mandatory for unattended work');
+  // CLI 9.14.0 is the first release that admits a journal-less proveedor-nativo unattended
+  // plan; an older floor would install skills describing an admission the CLI refuses.
+  assert.ok(compareSemver(JSON.parse(read('awm-registry.json')).minCliVersion, '9.14.0') >= 0, 'opt-in durable custody needs CLI 9.14.0 or newer');
   assert.doesNotMatch(text, /admission exige un journal schema-2 sano enlazado al plan\s+actual antes de cualquier despacho/, 'the old unconditional requirement must be gone');
 });
 test('RF-1.4 canonical standalone example has exact v1 headings and real verification commands', () => {
