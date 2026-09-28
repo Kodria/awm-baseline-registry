@@ -33,6 +33,17 @@ function writeJson(relativePath, value) {
     fs.writeFileSync(path.join(copy, relativePath), `${JSON.stringify(value, null, 2)}\n`);
 }
 
+// Renames the `compact-` marker prefix on code lines only; `//` comment lines
+// keep it, so a concept that comments alone satisfy lets the mutant survive.
+function stripMarkerLogic(relativePath) {
+    const file = path.join(copy, relativePath);
+    const before = fs.readFileSync(file, 'utf8');
+    fs.writeFileSync(file, before.split('\n')
+        .map((line) => (/^\s*\/\//.test(line) ? line : line.replaceAll('compact-', 'marker-')))
+        .join('\n'));
+    return () => fs.writeFileSync(file, before);
+}
+
 // Every mutation is applied to a pristine copy and reverted afterwards, so a
 // failure in one case cannot mask or cause another.
 function mutation(name, expected, apply) {
@@ -243,6 +254,19 @@ const mutations = [
             );
             return () => fs.writeFileSync(file, before);
         },
+    ),
+    // The marker logic, not a comment describing it, must satisfy the gate:
+    // both hooks also mention `compact-` in comments, so these mutants rename
+    // the marker prefix on code lines only and keep every comment intact.
+    mutation(
+        'the Cursor pre-compact hook losing its compact- marker logic behind intact comments',
+        /hooks\/cursor-pre-compact: missing required concept "`compact-\$\{"/,
+        () => stripMarkerLogic('hooks/cursor-pre-compact'),
+    ),
+    mutation(
+        'the Cursor post-tool-use hook losing its compact- marker logic behind intact comments',
+        /(?=[\s\S]*hooks\/cursor-post-tool-use: missing required concept "`compact-\$\{")(?=[\s\S]*hooks\/cursor-post-tool-use: missing required concept "startsWith\('compact-'\)")/,
+        () => stripMarkerLogic('hooks/cursor-post-tool-use'),
     ),
     // Provenance is the field that survives `awm export`, where the repository
     // LICENSE does not travel. A skill added without it ships terms-less.

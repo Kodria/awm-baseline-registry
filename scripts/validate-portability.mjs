@@ -99,8 +99,8 @@ const requiredCodexHookConcepts = [
 // The Cursor hooks are what the CLI installs under <AWM_HOME>/hooks/cursor/.
 const requiredCursorHookConcepts = {
   'hooks/cursor-session-start': ['CURSOR_PROJECT_DIR', 'additional_context', 'heartbeat.json', '--reanchor', 'CONSTITUTION.md', 'docs/plans'],
-  'hooks/cursor-pre-compact': ['compaction-reanchor', 'state', 'conversation_id'],
-  'hooks/cursor-post-tool-use': ['--reanchor', 'additional_context', 'state'],
+  'hooks/cursor-pre-compact': ['compaction-reanchor', '`compact-${', 'conversation_id'],
+  'hooks/cursor-post-tool-use': ['--reanchor', 'additional_context', '`compact-${', "startsWith('compact-')"],
 };
 // Every skill that resolves another skill on disk must search the shared global
 // root too — Claude-only roots make the lookup fail under OpenCode and Codex.
