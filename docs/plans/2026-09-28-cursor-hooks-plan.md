@@ -33,7 +33,7 @@ Facts inlined from the approved design and the Cursor hooks documentation (not c
 - **Cursor hook I/O:** each hook receives JSON on stdin, with common fields `conversation_id`, `hook_event_name`, `workspace_roots` (array of absolute paths) and `cursor_version`. There is **no `cwd`**. The project root comes from the env var `CURSOR_PROJECT_DIR`. `sessionStart` fires only for new conversations and may return `{"additional_context": "..."}`. `preCompact` is observational (it can only return `user_message`). `postToolUse` may return `{"additional_context": "..."}`.
 - **Budgets (R5):** the session-start payload is at most 24 KiB and the re-anchor payload at most 4 KiB. Anything over the budget is truncated with a visible marker, never silently dropped.
 - **Test isolation:** every test runs in `fs.mkdtempSync` workspaces, with `awm` stubbed on `PATH` and `HOME`/`AWM_HOME` pointing at tmp dirs. No test may touch the real `~/.awm`.
-- **Test entry points added in S1 (`package.json` scripts):** `"test:cursor-hooks": "node tests/cursor-hooks.test.mjs"`, `"bench:cursor-hooks": "node scripts/bench-cursor-post-tool-use.mjs"`, `"test:session-start": "node tests/session-start.test.mjs"`.
+- **Test entry points (`package.json` scripts):** S1 adds `"test:cursor-hooks": "node tests/cursor-hooks.test.mjs"` and `"test:session-start": "node tests/session-start.test.mjs"`; S2 adds `"bench:cursor-hooks": "node scripts/bench-cursor-post-tool-use.mjs"` together with the script it runs (amendment A1).
 
 <a id="slice-s1"></a>
 ### Slice S1: Cursor session-start hook
@@ -57,7 +57,7 @@ Interface:
 
    Write every S1 assertion from Edge cases, then run CMD-CURSOR-HOOKS. It must fail because `hooks/cursor-session-start` is missing.
 2. Create `hooks/cursor-session-start` by copying `hooks/codex-session-start` verbatim, then:
-   - Keep unchanged: `AWM_DIRECTIVE`, `installedScriptPath`, `MAX_CONSTITUTION_BYTES`, `MAX_LINE_CHARS`, `MAX_LEDGER_BYTES`, `AWM_TIMEOUT_MS`, `truncate`, `readStdin`, `readInput`, `readIfPresent`, `PLAN_COMPLETE`, `DESIGN_DOC`, `activePlan`, `ledgerItems` and `writeHeartbeat`. The heartbeat field names are the CLI contract.
+   - Keep unchanged: `AWM_DIRECTIVE`, `installedScriptPath`, `MAX_CONSTITUTION_BYTES`, `MAX_LINE_CHARS`, `MAX_LEDGER_BYTES`, `AWM_TIMEOUT_MS`, `truncate`, `readStdin`, `readInput`, `readIfPresent`, `PLAN_COMPLETE`, `DESIGN_DOC`, `activePlan` and `writeHeartbeat`. The heartbeat field names are the CLI contract. `ledgerItems` is copied and then corrected per amendment A1.
    - Delete `recordCompactionRecovery`, `resolveCwd`, `buildContext` and `main`. Cursor fires sessionStart only for new conversations; recording compactions moves to `pre-compact` in S2.
    - Update the header comment so it describes the Cursor hook.
    - Append:
@@ -208,6 +208,14 @@ Public-contract risk: the installed names, the `using-awm.md` location and the h
 - If the Cursor stdin or env facts above prove wrong in the real binary (Plan B playbook), amend this plan and the design together, revalidate, and re-release. Do not patch installed copies under `~/.awm`.
 - If the byte-accurate truncation needs a helper, keep it local to this script.
 - If a character-based cap is kept by mistake, R5 has to be amended explicitly. Never loosen the assertion instead.
+
+#### Amendment A1 (2026-09-28, S1 code-quality review)
+Deviation record: the S1 code-quality review found four defects that the verbatim S1 text produced. The plan is amended here before the fix; the corrected clauses govern S1.
+
+- **Ledger rendering (R14.1, R5).** `awm ledger list` (CLI 9.14.1: "print the current branch ledger as JSON") prints a pretty-printed JSON array of entries `{ts, branch, phase, source_skill, polarity, class, signature, severity, desc, ref?}`. The verbatim `ledgerItems` split that output by line and rendered JSON fragments (and wins). In `hooks/cursor-session-start`, `ledgerItems` keeps its `execFileSync` call, timeout, `maxBuffer` and fail-open, but parses the output as JSON, keeps only entries with `polarity === "finding"`, renders each as `- [<severity>] <signature>: <desc>` truncated to `MAX_LINE_CHARS`, and returns at most 8. Non-JSON or non-array output yields no section. The dead `awmReachable` bookkeeping (its only reader was the deleted Codex audit write) is removed. The ledger test stub prints the real JSON array shape (findings plus at least one win) and the test asserts the win is absent, the finding `desc` is present, and no line is a bare `[`/`{`. The same pre-existing defect in `hooks/codex-session-start` and `hooks/session-start` is out of this plan's scope and is tracked as a follow-up issue.
+- **Budget order (R5).** The plan snapshot must survive the 24 KiB cap. `buildContext` computes the snapshot first and truncates the constitution (with the `[truncated by AWM` marker) to the bytes left after the guide, the snapshot and the separators, so the snapshot heading is present whenever the project has an active plan. Test: a 100 KiB constitution plus a 16 KiB `using-awm.md` plus an open plan keeps `Plan snapshot (taken at session start)` and stays at most 24 KiB.
+- **Heartbeat version (R17).** The heartbeat test also asserts `version === 1`.
+- **Bench script entry.** `bench:cursor-hooks` moves from S1 to S2 (see shared contract), so no `package.json` entry points at a missing file.
 
 <a id="slice-s2"></a>
 ### Slice S2: Deferred compaction re-anchor
