@@ -12,6 +12,7 @@
     "test:r2b-cli": "node --test tests/r2b-routing-cli-acceptance.mjs",
     "test:r2b-prepublication": "node --test tests/r2b-release-prepublication.test.mjs",
     "test:cursor-hooks": "node tests/cursor-hooks.test.mjs",
-    "test:session-start": "node tests/session-start.test.mjs"
+    "test:session-start": "node tests/session-start.test.mjs",
+    "bench:cursor-hooks": "node scripts/bench-cursor-post-tool-use.mjs"
   }
 }

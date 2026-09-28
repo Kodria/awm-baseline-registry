@@ -491,3 +491,333 @@ test('parity: the Active plan line matches hooks/codex-session-start', () => {
     assert.equal(cursorLine, 'Active plan: 2026-07-24-redesign-checkout-plan.md');
     assert.equal(cursorLine, codexLine);
 });
+
+// --- S2: deferred compaction re-anchor (R16, R16.1) ---
+//
+// pre-compact writes state/compact-<conversation_id>; the next post-tool-use
+// for the SAME conversation consumes it and injects `session-start --reanchor`.
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function hookOf(hooks, name) {
+    assert.ok(hooks[name], `hooks/cursor-${name} is missing from the registry`);
+    return hooks[name];
+}
+
+function stateDir(hooks) {
+    return path.join(hooks.dir, 'state');
+}
+
+function writeMarker(hooks, name, mtimeMs = Date.now()) {
+    fs.mkdirSync(stateDir(hooks), { recursive: true });
+    const file = path.join(stateDir(hooks), name);
+    fs.writeFileSync(file, `${new Date(mtimeMs).toISOString()}\n`);
+    const seconds = mtimeMs / 1000;
+    fs.utimesSync(file, seconds, seconds);
+    return file;
+}
+
+// An `awm` that records every invocation (physical cwd, then one argv entry
+// per line) to a file the test reads back, and exits with `code`.
+function recordingStub(code = 0) {
+    const dir = tmpDir('stub-bin');
+    const log = path.join(dir, 'calls.log');
+    fs.writeFileSync(
+        path.join(dir, 'awm'),
+        '#!/usr/bin/env bash\n'
+        + `{ echo "CWD $(pwd -P)"; printf 'ARG %s\\n' "$@"; echo END; } >> ${JSON.stringify(log)}\n`
+        + `exit ${code}\n`,
+        { mode: 0o755 },
+    );
+    return { dir, calls: () => (fs.existsSync(log) ? fs.readFileSync(log, 'utf8') : '') };
+}
+
+// Replace the installed session-start sibling with a stand-in Node script.
+function fakeSessionStart(hooks, body) {
+    fs.writeFileSync(hooks.sessionStart, `'use strict';\n${body}\n`, { mode: 0o755 });
+}
+
+function reanchorOf(result) {
+    return contextOf(result);
+}
+
+test('R16.1: post-tool-use hot path is silent and touches nothing without a marker', () => {
+    const cwd = tmpDir('bare');
+    const hooks = installHooks(tmpDir('install'));
+    const postToolUse = hookOf(hooks, 'post-tool-use');
+
+    // No state/ dir at all: silent, and it is not created.
+    let result = runHook(postToolUse, { conversation_id: 'c1' }, { cwd });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, '');
+    assert.ok(!fs.existsSync(stateDir(hooks)), 'the hot path must not create state/');
+
+    // Empty state/.
+    fs.mkdirSync(stateDir(hooks));
+    result = runHook(postToolUse, { conversation_id: 'c1' }, { cwd });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, '');
+
+    // Only non-marker files, one of them old: silent, and never deleted —
+    // stale cleanup applies to compact-* markers only.
+    const other = path.join(stateDir(hooks), 'notes');
+    fs.writeFileSync(other, 'x');
+    const old = (Date.now() - 2 * DAY_MS) / 1000;
+    fs.utimesSync(other, old, old);
+    for (const input of [{ conversation_id: 'c1' }, {}]) {
+        result = runHook(postToolUse, input, { cwd });
+        assert.equal(result.status, 0, result.stderr);
+        assert.equal(result.stdout, '');
+    }
+    assert.ok(fs.existsSync(other), 'a non-marker file in state/ must survive');
+});
+
+test('R16: pre-compact queues a marker that the next post-tool-use consumes once', () => {
+    const project = makeProject('compact');
+    const hooks = installHooks(tmpDir('install'));
+    const preCompact = hookOf(hooks, 'pre-compact');
+    const postToolUse = hookOf(hooks, 'post-tool-use');
+    const awm = recordingStub(0);
+    const baseline = baseEnv();
+    const env = { CURSOR_PROJECT_DIR: project, HOME: baseline.HOME, AWM_HOME: baseline.AWM_HOME };
+    const cwd = tmpDir('launch');
+    const projectBefore = listTree(project);
+
+    const pre = runHook(preCompact, { conversation_id: 'c1', hook_event_name: 'preCompact' }, { env, cwd, stub: awm.dir });
+    assert.equal(pre.status, 0, pre.stderr);
+    assert.equal(pre.stdout, '{}\n');
+    const marker = path.join(stateDir(hooks), 'compact-c1');
+    assert.ok(fs.existsSync(marker), 'state/compact-c1 must exist');
+
+    // The audit trail: one `awm ledger add ... --signature compaction-reanchor`, run in the project.
+    const calls = awm.calls().split('END\n').filter(Boolean);
+    assert.equal(calls.length, 1, awm.calls());
+    const lines = calls[0].trim().split('\n');
+    assert.equal(lines[0], `CWD ${fs.realpathSync(project)}`);
+    const argv = lines.slice(1).map((line) => line.replace(/^ARG /, ''));
+    assert.deepEqual(argv.slice(0, 2), ['ledger', 'add']);
+    assert.equal(argv[argv.indexOf('--signature') + 1], 'compaction-reanchor');
+
+    // The pre-compact hook writes nowhere but its own state/.
+    assert.deepEqual(listTree(project), projectBefore, 'pre-compact must not write into the project');
+    assert.deepEqual(fs.readdirSync(baseline.HOME), [], 'pre-compact must not write into HOME');
+    assert.deepEqual(fs.readdirSync(baseline.AWM_HOME), [], 'pre-compact must not write into AWM_HOME');
+
+    const first = reanchorOf(runHook(postToolUse, { conversation_id: 'c1', hook_event_name: 'postToolUse' }, { env, cwd }));
+    assert.ok(first.includes('Re-anchor (post-compaction)'));
+    assert.equal(activePlanLine(first), 'Active plan: 2026-07-24-demo-plan.md');
+    assert.ok(!fs.existsSync(marker), 'the marker is consumed');
+
+    const second = runHook(postToolUse, { conversation_id: 'c1' }, { env, cwd });
+    assert.equal(second.status, 0, second.stderr);
+    assert.equal(second.stdout, '', 'a consumed marker re-anchors only once');
+});
+
+test('R16: post-tool-use forwards its input so session-start resolves workspace_roots', () => {
+    const project = makeProject('roots-forward', { plan: 'forwarded' });
+    const hooks = installHooks(tmpDir('install'));
+    writeMarker(hooks, 'compact-c1');
+    const context = reanchorOf(runHook(hookOf(hooks, 'post-tool-use'), {
+        conversation_id: 'c1', workspace_roots: [project],
+    }, { cwd: tmpDir('launch') }));
+    assert.equal(activePlanLine(context), 'Active plan: 2026-07-24-forwarded-plan.md');
+});
+
+test('R16: markers are isolated per conversation', () => {
+    const project = makeProject('isolation');
+    const hooks = installHooks(tmpDir('install'));
+    const postToolUse = hookOf(hooks, 'post-tool-use');
+    const env = { CURSOR_PROJECT_DIR: project };
+    const cwd = tmpDir('launch');
+    const marker = writeMarker(hooks, 'compact-c1');
+
+    const other = runHook(postToolUse, { conversation_id: 'c2' }, { env, cwd });
+    assert.equal(other.status, 0, other.stderr);
+    assert.equal(other.stdout, '', 'c2 must not consume the c1 re-anchor');
+    assert.ok(fs.existsSync(marker), 'compact-c1 must survive a c2 tool call');
+    // No conversation id is its own conversation too.
+    const anonymous = runHook(postToolUse, {}, { env, cwd });
+    assert.equal(anonymous.stdout, '');
+    assert.ok(fs.existsSync(marker));
+
+    // Control: the owning conversation still gets it.
+    assert.ok(reanchorOf(runHook(postToolUse, { conversation_id: 'c1' }, { env, cwd })).includes('Re-anchor (post-compaction)'));
+});
+
+test('R16 security: conversation_id is sanitised into a single state/ file name', () => {
+    const project = makeProject('sanitise');
+    const cwd = tmpDir('launch');
+    const env = { CURSOR_PROJECT_DIR: project };
+    const cases = [
+        ['../../x', 'compact-x'],
+        ['a/b\\c d', 'compact-abcd'],
+        ['../..', 'compact-default'],
+        [42, 'compact-default'],
+        [undefined, 'compact-default'],
+        ['k'.repeat(300), `compact-${'k'.repeat(128)}`],
+    ];
+    for (const [id, expected] of cases) {
+        const root = tmpDir('sandbox');
+        const hooks = installHooks(path.join(root, 'install'));
+        const input = id === undefined ? {} : { conversation_id: id };
+        const pre = runHook(hookOf(hooks, 'pre-compact'), input, { env, cwd });
+        assert.equal(pre.status, 0, pre.stderr);
+        assert.deepEqual(fs.readdirSync(stateDir(hooks)), [expected], `conversation_id ${JSON.stringify(id)}`);
+        assert.deepEqual(fs.readdirSync(root), ['install'], `nothing may be written beside the install dir for ${JSON.stringify(id)}`);
+
+        // post-tool-use applies the same name, so the marker it wrote is the one consumed.
+        const context = reanchorOf(runHook(hookOf(hooks, 'post-tool-use'), input, { env, cwd }));
+        assert.ok(context.includes('Re-anchor (post-compaction)'), `conversation_id ${JSON.stringify(id)}`);
+        assert.deepEqual(fs.readdirSync(stateDir(hooks)), []);
+    }
+});
+
+test('R16: a marker older than 24 h is deleted and never re-anchors', () => {
+    const project = makeProject('stale');
+    const hooks = installHooks(tmpDir('install'));
+    const env = { CURSOR_PROJECT_DIR: project };
+    const stale = writeMarker(hooks, 'compact-c1', Date.now() - 2 * DAY_MS);
+    const staleOther = writeMarker(hooks, 'compact-c9', Date.now() - 2 * DAY_MS);
+    const fresh = writeMarker(hooks, 'compact-c2', Date.now() - 60 * 1000);
+
+    const result = runHook(hookOf(hooks, 'post-tool-use'), { conversation_id: 'c1' }, { env, cwd: tmpDir('launch') });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, '', 'a stale marker must not re-anchor');
+    assert.ok(!fs.existsSync(stale));
+    assert.ok(!fs.existsSync(staleOther), 'stale markers of other conversations are swept too');
+    assert.ok(fs.existsSync(fresh), 'a fresh marker of another conversation survives');
+});
+
+test('R16: the marker is unlinked BEFORE the re-anchor is computed', () => {
+    const hooks = installHooks(tmpDir('install'));
+    writeMarker(hooks, 'compact-c1');
+    // Stand-in sibling reports whether the marker still exists while it runs,
+    // and echoes the conversation it was handed on stdin.
+    fakeSessionStart(hooks, [
+        "const fs = require('node:fs');",
+        "const path = require('node:path');",
+        "const marker = path.join(path.dirname(process.argv[1]), 'state', 'compact-c1');",
+        "const input = JSON.parse(fs.readFileSync(0, 'utf8'));",
+        "process.stdout.write(`${fs.existsSync(marker) ? 'MARKER-PRESENT' : 'MARKER-GONE'} ${process.argv.slice(2).join(' ')} ${input.conversation_id}`);",
+    ].join('\n'));
+    const context = reanchorOf(runHook(hookOf(hooks, 'post-tool-use'), { conversation_id: 'c1' }, { cwd: tmpDir('launch') }));
+    assert.equal(context, 'MARKER-GONE --reanchor c1');
+});
+
+// TODO(amendment-required): the plan's unlink-before-inject claim does not hold
+// on macOS APFS, where concurrent unlink() of one path can succeed in several
+// processes at once (observed 126/200 rounds; a rename-to-unique-name claim
+// double-succeeded 0/200). Kept as a todo so the gap stays visible until the
+// design is amended; the ordering itself is pinned by the test above.
+test('R16: concurrent tool calls re-anchor exactly once', {
+    todo: 'amendment-required: unlink() is not an exclusive claim on APFS',
+}, async () => {
+    const hooks = installHooks(tmpDir('install'));
+    writeMarker(hooks, 'compact-c1');
+    // A slow sibling widens the race window: both calls are in flight at once.
+    fakeSessionStart(hooks, "const t = Date.now(); while (Date.now() - t < 400) {} process.stdout.write('REANCHOR');");
+    const { spawn } = await import('node:child_process');
+    const run = () => new Promise((resolve) => {
+        const child = spawn(process.execPath, [hooks['post-tool-use']], { env: baseEnv(), cwd: tmpDir('launch') });
+        let stdout = '';
+        child.stdout.on('data', (chunk) => { stdout += chunk; });
+        child.on('close', (status) => resolve({ status, stdout }));
+        child.stdin.end(JSON.stringify({ conversation_id: 'c1' }));
+    });
+    const results = await Promise.all(Array.from({ length: 4 }, run));
+    for (const result of results) assert.equal(result.status, 0);
+    assert.equal(results.filter((result) => result.stdout.includes('REANCHOR')).length, 1, JSON.stringify(results));
+});
+
+test('R16 fail-open: a failing awm still exits 0, prints {} and writes the marker', () => {
+    const project = makeProject('awm-fails');
+    const hooks = installHooks(tmpDir('install'));
+    const failing = recordingStub(1);
+    const result = runHook(hookOf(hooks, 'pre-compact'), { conversation_id: 'c1' }, {
+        env: { CURSOR_PROJECT_DIR: project }, cwd: tmpDir('launch'), stub: failing.dir,
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, '{}\n');
+    assert.ok(failing.calls().includes('ARG compaction-reanchor'), 'the stub must actually have been called');
+    assert.ok(fs.existsSync(path.join(stateDir(hooks), 'compact-c1')));
+});
+
+test('R16 fail-open: a hung awm is cut off and the marker is still written', () => {
+    const project = makeProject('awm-hung');
+    const hooks = installHooks(tmpDir('install'));
+    const started = Date.now();
+    const result = runHook(hookOf(hooks, 'pre-compact'), { conversation_id: 'c1' }, {
+        env: { CURSOR_PROJECT_DIR: project }, cwd: tmpDir('launch'), stub: awmStub('exec sleep 5'),
+    });
+    const elapsed = Date.now() - started;
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(elapsed < 4000, `pre-compact took ${elapsed} ms`);
+    assert.equal(result.stdout, '{}\n');
+    assert.ok(fs.existsSync(path.join(stateDir(hooks), 'compact-c1')));
+});
+
+test('R16 fail-open: a missing or hung session-start sibling leaves post-tool-use silent', () => {
+    const project = makeProject('no-sibling');
+    const env = { CURSOR_PROJECT_DIR: project };
+
+    const missing = installHooks(tmpDir('install'));
+    writeMarker(missing, 'compact-c1');
+    fs.unlinkSync(missing.sessionStart);
+    let result = runHook(hookOf(missing, 'post-tool-use'), { conversation_id: 'c1' }, { env, cwd: tmpDir('launch') });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, '');
+
+    const hung = installHooks(tmpDir('install'));
+    writeMarker(hung, 'compact-c1');
+    fakeSessionStart(hung, 'setTimeout(() => {}, 10000);');
+    const started = Date.now();
+    result = runHook(hookOf(hung, 'post-tool-use'), { conversation_id: 'c1' }, { env, cwd: tmpDir('launch') });
+    const elapsed = Date.now() - started;
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, '');
+    assert.ok(elapsed < 6000, `post-tool-use took ${elapsed} ms`);
+});
+
+test('R16 fail-open: a read-only install dir still lets pre-compact exit 0', { skip: process.getuid?.() === 0 || process.platform === 'win32' }, () => {
+    const project = makeProject('readonly-compact');
+    const hooks = installHooks(tmpDir('install'));
+    fs.chmodSync(hooks.dir, 0o555);
+    try {
+        const result = runHook(hookOf(hooks, 'pre-compact'), { conversation_id: 'c1' }, {
+            env: { CURSOR_PROJECT_DIR: project }, cwd: tmpDir('launch'),
+        });
+        assert.equal(result.status, 0, result.stderr);
+        assert.equal(result.stdout, '{}\n');
+        assert.ok(!fs.existsSync(stateDir(hooks)));
+    } finally {
+        fs.chmodSync(hooks.dir, 0o755);
+    }
+});
+
+test('R16 fail-open: hostile stdin still queues and consumes the default marker', () => {
+    const project = makeProject('hostile-compact');
+    const env = { CURSOR_PROJECT_DIR: project };
+    for (const payload of ['null', '"text"', '[]', 'not json', '', '{"conversation_id":{"a":1},"workspace_roots":"x"}']) {
+        const hooks = installHooks(tmpDir('install'));
+        const pre = runHook(hookOf(hooks, 'pre-compact'), payload, { env, cwd: tmpDir('launch') });
+        assert.equal(pre.status, 0, `payload ${JSON.stringify(payload)}: ${pre.stderr}`);
+        assert.equal(pre.stdout, '{}\n', `payload ${JSON.stringify(payload)}`);
+        assert.deepEqual(fs.readdirSync(stateDir(hooks)), ['compact-default'], `payload ${JSON.stringify(payload)}`);
+        const context = reanchorOf(runHook(hookOf(hooks, 'post-tool-use'), payload, { env, cwd: tmpDir('launch') }));
+        assert.equal(activePlanLine(context), 'Active plan: 2026-07-24-demo-plan.md', `payload ${JSON.stringify(payload)}`);
+    }
+});
+
+test('R5/R16: the injected re-anchor is at most 4096 bytes end-to-end', () => {
+    const items = Array.from({ length: 8 }, (_, i) => `- [ ] item ${i} ${'é'.repeat(500)}`).join('\n');
+    const project = makeProject('reanchor-budget', { planBody: `# Big Plan\n\n> **Goal:** stay small\n\n${items}\n` });
+    const ledger = ledgerStub(Array.from({ length: 50 }, (_, i) => ledgerEntry({ signature: `finding-${i}`, desc: 'x'.repeat(400) })));
+    const hooks = installHooks(tmpDir('install'));
+    writeMarker(hooks, 'compact-c1');
+    const context = reanchorOf(runHook(hookOf(hooks, 'post-tool-use'), { conversation_id: 'c1' }, {
+        env: { CURSOR_PROJECT_DIR: project }, cwd: tmpDir('launch'), stub: ledger,
+    }));
+    assert.ok(Buffer.byteLength(context, 'utf8') <= 4096, `got ${Buffer.byteLength(context, 'utf8')} bytes`);
+    assert.ok(context.includes('Re-anchor (post-compaction)'));
+    assert.ok(context.includes('[truncated by AWM'));
+});
