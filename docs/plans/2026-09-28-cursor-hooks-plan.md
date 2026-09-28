@@ -362,6 +362,12 @@ Delivery of `postToolUse.additional_context` to the model and the real latency a
 - If CMD-BENCH shows p95 over 50 ms, record it. Plan B then applies R16.2 (it removes the `preCompact`/`postToolUse` entries and marks compaction re-anchor as unsupported). Do not add a shell fast path here without amending the design, because it breaks Windows parity.
 - If Cursor turns out to omit `conversation_id`, the `compact-default` path keeps working for single-conversation use. Amend and revalidate before claiming multi-conversation isolation.
 
+#### Amendment A2 (2026-09-28, S2 implementation)
+Deviation record: the S2 implementer found that the verbatim `unlinkSync(marker)` claim does not give R16 its "two concurrent tool calls must not both re-anchor" guarantee. On macOS APFS, several processes that unlink one path at the same moment can all receive success. The controller reproduced this: 4 concurrent unlinks double-succeeded in 60 of 60 rounds, while a rename to a per-process name double-succeeded in 0 of 60. The plan is amended before the fix; the corrected clause governs S2.
+
+- **Atomic claim (R16).** `hooks/cursor-post-tool-use` claims the marker by `fs.renameSync(marker, `${marker}.claim-${process.pid}-${random}`)`, where `random` comes from `crypto.randomBytes` (`node:crypto` is allowed). Only the process whose rename succeeds re-anchors; it unlinks its claim file best-effort before injecting. A failed rename returns silently as before. Claim files never match the next scan's marker name. The stale sweep also removes `compact-*` claim files older than 24 h.
+- **Test.** The concurrency case is a real test, not `todo`. N concurrent `post-tool-use` calls on one marker produce exactly one non-empty output, repeated over enough rounds that the unlink variant fails it on APFS. The deterministic ordering test (claim before inject) stays.
+
 <a id="slice-s3"></a>
 ### Slice S3: Claude suppression guard, CI wiring and release
 #### Surfaces
