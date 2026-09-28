@@ -135,31 +135,33 @@ function activePlan(cwd) {
     return candidates[0] || null;
 }
 
-// Open findings for the current branch, via `awm ledger list`. Absent CLI or
-// absent ledger yields no section rather than an error.
+// Open findings for the current branch, via `awm ledger list`, which prints
+// the branch ledger as a pretty-printed JSON array of entries
+// {ts, branch, phase, source_skill, polarity, class, signature, severity,
+// desc, ref?}. Only findings are open items (wins are not), rendered one line
+// each. Absent CLI, absent ledger, non-JSON or non-array output yields no
+// section rather than an error.
 // `maxBuffer` is explicit: on the 1 MB default a large ledger throws ENOBUFS,
 // which is indistinguishable here from "no ledger" and would drop the section
-// silently. `awmReachable` is kept verbatim from the Codex hook (it guards the
-// Codex compaction audit write, which this hook does not perform).
-let awmReachable = true;
-
+// silently.
 function ledgerItems(cwd) {
+    let entries;
     try {
-        return execFileSync('awm', ['ledger', 'list'], {
+        entries = JSON.parse(execFileSync('awm', ['ledger', 'list'], {
             cwd,
             encoding: 'utf8',
             stdio: ['ignore', 'pipe', 'ignore'],
             timeout: AWM_TIMEOUT_MS,
             maxBuffer: MAX_LEDGER_BYTES,
-        })
-            .split(/\r?\n/)
-            .filter(Boolean)
-            .slice(0, 8)
-            .map((line) => truncate(line, MAX_LINE_CHARS, '[truncated]'));
-    } catch (error) {
-        if (error.code === 'ETIMEDOUT' || error.signal === 'SIGTERM') awmReachable = false;
+        }));
+    } catch {
         return [];
     }
+    if (!Array.isArray(entries)) return [];
+    return entries
+        .filter((entry) => entry !== null && typeof entry === 'object' && entry.polarity === 'finding')
+        .slice(0, 8)
+        .map((entry) => truncate(`- [${entry.severity}] ${entry.signature}: ${entry.desc}`, MAX_LINE_CHARS, '[truncated]'));
 }
 
 function writeHeartbeat(scriptPath, event) {
@@ -272,17 +274,36 @@ function reanchorSection(cwd, heading) {
     ].join('\n'), MAX_REANCHOR_BYTES, '[truncated by AWM — re-read the plan]');
 }
 
+const SECTION_SEPARATOR = '\n\n';
+const CONSTITUTION_HEADING = '## Project Constitution\n\n';
+const CONSTITUTION_MARKER = '[truncated by AWM — read CONSTITUTION.md for the rest]';
+
+// The budget is spent on the constitution last: the guide and the plan
+// snapshot (itself capped at 4 KiB) are computed first, and the constitution
+// is cut to the bytes they leave, so an oversized constitution can never push
+// the snapshot out. The final whole-payload cap stays as a safety net.
 function buildContext(scriptPath, cwd) {
-    const sections = [];
     const guide = usingAwm(scriptPath, cwd);
-    if (guide) sections.push(guide);
+    let constitution = '';
+    let snapshot = '';
     if (cwd !== null) {
-        const constitution = safe(() => readIfPresent(path.join(cwd, 'CONSTITUTION.md'), MAX_CONSTITUTION_BYTES)).trim();
-        if (constitution) sections.push(`## Project Constitution\n\n${constitution}`);
-        const snapshot = safe(() => reanchorSection(cwd, SNAPSHOT_HEADING));
-        if (snapshot) sections.push(snapshot);
+        constitution = safe(() => readIfPresent(path.join(cwd, 'CONSTITUTION.md'), MAX_CONSTITUTION_BYTES)).trim();
+        snapshot = safe(() => reanchorSection(cwd, SNAPSHOT_HEADING));
     }
-    return truncateBytes(sections.join('\n\n'), MAX_SESSION_BYTES, '[truncated by AWM — read the files for the rest]');
+    const fixed = [guide, snapshot].filter(Boolean);
+    let constitutionSection = '';
+    if (constitution) {
+        const used = fixed.reduce((total, section) => total + Buffer.byteLength(section, 'utf8'), 0)
+            + Buffer.byteLength(SECTION_SEPARATOR, 'utf8') * fixed.length
+            + Buffer.byteLength(CONSTITUTION_HEADING, 'utf8');
+        const room = MAX_SESSION_BYTES - used;
+        // Only worth a section if more than the marker itself fits.
+        if (room > Buffer.byteLength(`\n${CONSTITUTION_MARKER}`, 'utf8')) {
+            constitutionSection = `${CONSTITUTION_HEADING}${truncateBytes(constitution, room, CONSTITUTION_MARKER)}`;
+        }
+    }
+    const sections = [guide, constitutionSection, snapshot].filter(Boolean);
+    return truncateBytes(sections.join(SECTION_SEPARATOR), MAX_SESSION_BYTES, '[truncated by AWM — read the files for the rest]');
 }
 
 function main() {

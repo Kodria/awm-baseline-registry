@@ -56,6 +56,50 @@ function awmStub(script) {
     return dir;
 }
 
+// An `awm` whose `ledger list` prints `entries` the way the real CLI does:
+// a pretty-printed JSON array of ledger entries.
+function ledgerStub(entries) {
+    const dir = tmpDir('stub-bin');
+    const data = path.join(dir, 'ledger.json');
+    fs.writeFileSync(data, `${JSON.stringify(entries, null, 2)}\n`);
+    fs.writeFileSync(
+        path.join(dir, 'awm'),
+        '#!/usr/bin/env bash\n'
+        + `if [ "$1" = "ledger" ] && [ "$2" = "list" ]; then cat ${JSON.stringify(data)}; fi\n`
+        + 'exit 0\n',
+        { mode: 0o755 },
+    );
+    return dir;
+}
+
+// An `awm` whose `ledger list` prints `text` verbatim.
+function rawLedgerStub(text) {
+    const dir = tmpDir('stub-bin');
+    const data = path.join(dir, 'ledger.txt');
+    fs.writeFileSync(data, text);
+    fs.writeFileSync(
+        path.join(dir, 'awm'),
+        `#!/usr/bin/env bash\nif [ "$1" = "ledger" ]; then cat ${JSON.stringify(data)}; fi\nexit 0\n`,
+        { mode: 0o755 },
+    );
+    return dir;
+}
+
+function ledgerEntry(fields) {
+    return {
+        ts: '2026-09-28T00:00:00.000Z',
+        branch: 'feat/demo',
+        phase: 'implementation',
+        source_skill: 'post-implementation-qa',
+        polarity: 'finding',
+        class: 'codigo',
+        signature: 'sig',
+        severity: 'medium',
+        desc: 'desc',
+        ...fields,
+    };
+}
+
 // Default: an `awm` that fails, so the ledger section is deterministic and the
 // real CLI (and the real ledger) is never reached.
 const failingAwm = awmStub('exit 1');
@@ -225,7 +269,11 @@ test('R5: session-start payload is at most 24 KiB with a visible marker', () => 
     const context = contextOf(runHook(hooks.sessionStart, {}, { env: { CURSOR_PROJECT_DIR: project } }));
     assert.ok(Buffer.byteLength(context, 'utf8') <= 24 * 1024, `got ${Buffer.byteLength(context, 'utf8')} bytes`);
     assert.ok(context.includes('[truncated by AWM'));
-    assert.ok(!context.includes('�'), 'truncation must not split a UTF-8 character');
+    assert.ok(!context.includes('\uFFFD'), 'truncation must not split a UTF-8 character');
+    // The budget is spent on the constitution last: the plan snapshot survives.
+    assert.ok(context.includes('## Project Constitution'));
+    assert.ok(context.includes('Plan snapshot (taken at session start)'));
+    assert.equal(activePlanLine(context), 'Active plan: 2026-07-24-demo-plan.md');
 });
 
 test('R5: --reanchor output is at most 4096 bytes with a visible marker', () => {
@@ -233,11 +281,9 @@ test('R5: --reanchor output is at most 4096 bytes with a visible marker', () => 
     const project = makeProject('reanchor-big', {
         planBody: `# Big Plan\n\n> **Goal:** stay small\n\n${items}\n`,
     });
-    const ledger = awmStub(
-        'if [ "$1" = "ledger" ] && [ "$2" = "list" ]; then\n'
-        + `  for i in $(seq 1 50); do echo "finding $i: ${'x'.repeat(400)}"; done\n`
-        + 'fi\nexit 0',
-    );
+    const ledger = ledgerStub(Array.from({ length: 50 }, (_, i) => ledgerEntry({
+        signature: `finding-${i}`, desc: 'x'.repeat(400),
+    })));
     const hooks = installHooks(tmpDir('install'));
     const result = runHook(hooks.sessionStart, {}, {
         args: ['--reanchor'], env: { CURSOR_PROJECT_DIR: project }, stub: ledger,
@@ -272,14 +318,54 @@ test('R14.3: CONSTITUTION.md as a directory drops only that section', () => {
     assert.equal(activePlanLine(context), 'Active plan: 2026-07-24-demo-plan.md');
 });
 
-test('R14.3: ledger section present with a working awm, absent when awm exits 1', () => {
+test('R14.1: ledger JSON renders open findings only, one line each', () => {
     const project = makeProject('ledger');
     const hooks = installHooks(tmpDir('install'));
-    const working = awmStub('if [ "$1" = "ledger" ] && [ "$2" = "list" ]; then echo "finding: stub ledger line"; fi\nexit 0');
+    const working = ledgerStub([
+        ledgerEntry({ severity: 'high', signature: 'split-infinity', desc: 'splitBill returns Infinity' }),
+        ledgerEntry({ polarity: 'win', signature: 'tdd-caught', desc: 'WIN-DESC-MUST-NOT-APPEAR' }),
+        ledgerEntry({ severity: 'low', signature: 'input-validation', desc: 'missing input validation', ref: 'src/a.ts:1' }),
+    ]);
 
-    const withLedger = contextOf(runHook(hooks.sessionStart, {}, { env: { CURSOR_PROJECT_DIR: project }, stub: working }));
-    assert.ok(withLedger.includes('Open ledger items:'));
-    assert.ok(withLedger.includes('finding: stub ledger line'));
+    const context = contextOf(runHook(hooks.sessionStart, {}, { env: { CURSOR_PROJECT_DIR: project }, stub: working }));
+    const lines = context.split('\n');
+    const start = lines.indexOf('Open ledger items:');
+    assert.ok(start !== -1, 'ledger section missing');
+    assert.deepEqual(lines.slice(start + 1), [
+        '- [high] split-infinity: splitBill returns Infinity',
+        '- [low] input-validation: missing input validation',
+    ]);
+    assert.ok(!context.includes('WIN-DESC-MUST-NOT-APPEAR'), 'wins are not open items');
+    for (const line of lines) {
+        assert.ok(!/^\s*[[\]{}],?\s*$/.test(line), `bare JSON fragment line: ${JSON.stringify(line)}`);
+    }
+});
+
+test('R14.1: at most 8 ledger findings are rendered', () => {
+    const project = makeProject('ledger-many');
+    const hooks = installHooks(tmpDir('install'));
+    const many = ledgerStub(Array.from({ length: 12 }, (_, i) => ledgerEntry({ signature: `f${i}`, desc: `d${i}` })));
+    const context = contextOf(runHook(hooks.sessionStart, {}, { env: { CURSOR_PROJECT_DIR: project }, stub: many }));
+    const rendered = context.split('\n').filter((line) => /^- \[medium\] f\d+: d\d+$/.test(line));
+    assert.equal(rendered.length, 8);
+    assert.equal(rendered[0], '- [medium] f0: d0');
+});
+
+test('R14.1: non-JSON or non-array ledger output yields no ledger section', () => {
+    const project = makeProject('ledger-bad');
+    const hooks = installHooks(tmpDir('install'));
+    for (const output of ['finding: plain text line\n', '{\n  "polarity": "finding",\n  "desc": "obj"\n}\n']) {
+        const context = contextOf(runHook(hooks.sessionStart, {}, {
+            env: { CURSOR_PROJECT_DIR: project }, stub: rawLedgerStub(output),
+        }));
+        assert.ok(!context.includes('Open ledger items:'), `output ${JSON.stringify(output)} must not render a section`);
+        assert.equal(activePlanLine(context), 'Active plan: 2026-07-24-demo-plan.md');
+    }
+});
+
+test('R14.3: ledger section absent when awm exits 1', () => {
+    const project = makeProject('ledger-fail');
+    const hooks = installHooks(tmpDir('install'));
 
     const failing = contextOf(runHook(hooks.sessionStart, {}, { env: { CURSOR_PROJECT_DIR: project } }));
     assert.ok(!failing.includes('Open ledger items:'));
@@ -309,6 +395,7 @@ test('R17: heartbeat lands next to the installed path with the CLI contract fiel
     assert.equal(heartbeat.hash, crypto.createHash('sha256').update(fs.readFileSync(hooks.sessionStart)).digest('hex'));
     assert.ok(!Number.isNaN(Date.parse(heartbeat.ts)), `ts ${heartbeat.ts}`);
     assert.equal(heartbeat.event, 'sessionStart');
+    assert.equal(heartbeat.version, 1);
 });
 
 test('R17: a symlinked install writes the heartbeat beside the link, not the registry source', () => {
