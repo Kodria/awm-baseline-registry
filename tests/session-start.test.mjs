@@ -124,7 +124,7 @@ try {
     fs.mkdirSync(path.join(cursorHome, '.awm/hooks/cursor'), { recursive: true });
     fs.mkdirSync(cursorHookDir, { recursive: true });
 
-    const runInCursorEnv = (overrides, hookPath = bashHook) => {
+    const runInCursorEnv = (overrides, hookPath = bashHook, args = []) => {
         const env = { ...process.env, AWM_HOOKS_ROOT: hooksRoot, PATH: neutralPath };
         // Never inherit these from the machine running the suite.
         delete env.CURSOR_VERSION;
@@ -133,7 +133,7 @@ try {
             if (value === undefined) delete env[key];
             else env[key] = value;
         }
-        return spawnSync('bash', [hookPath], {
+        return spawnSync('bash', [hookPath, ...args], {
             cwd: bare,
             input: JSON.stringify({ source: 'startup' }),
             encoding: 'utf8',
@@ -204,6 +204,26 @@ try {
     const sibling = runInCursorEnv({ HOME: elsewhereHome, CURSOR_VERSION: '2026.09.26' }, installedClaudeHook);
     assert.equal(sibling.status, 0, sibling.stderr);
     assert.equal(sibling.stdout, '', 'a Cursor hook installed next to this hook must suppress it');
+
+    // The default install is a symlink into the registry, usually run through
+    // run-hook.cmd. It works only because $0 stays the symlink path: resolving
+    // it would look for hooks/cursor/ inside the registry instead.
+    const linkedAwm = path.join(workspace, 'linked-awm');
+    fs.mkdirSync(path.join(linkedAwm, 'hooks/cursor'), { recursive: true });
+    const linkedClaudeHook = path.join(linkedAwm, 'hooks/session-start');
+    const linkedRunHook = path.join(linkedAwm, 'hooks/run-hook.cmd');
+    fs.symlinkSync(bashHook, linkedClaudeHook);
+    fs.symlinkSync(path.join(repoRoot, 'hooks/run-hook.cmd'), linkedRunHook);
+    fs.writeFileSync(path.join(linkedAwm, 'hooks/cursor/session-start'), '#!/usr/bin/env bash\n', { mode: 0o755 });
+    const linkedEnv = { HOME: elsewhereHome, CURSOR_VERSION: '2026.09.26' };
+
+    const linkedDirect = runInCursorEnv(linkedEnv, linkedClaudeHook);
+    assert.equal(linkedDirect.status, 0, linkedDirect.stderr);
+    assert.equal(linkedDirect.stdout, '', 'a symlinked Claude hook must see the Cursor hook next to its link');
+
+    const linkedWrapped = runInCursorEnv(linkedEnv, linkedRunHook, ['session-start']);
+    assert.equal(linkedWrapped.status, 0, linkedWrapped.stderr);
+    assert.equal(linkedWrapped.stdout, '', 'run-hook.cmd through symlinks must keep the link directory');
 
     // No HOME and no AWM_HOME under `set -u`: the guard must not abort the hook.
     // The env is built from scratch (env -i style) so nothing leaks in from the
