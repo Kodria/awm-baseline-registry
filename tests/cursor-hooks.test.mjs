@@ -688,45 +688,68 @@ test('R16: a marker older than 24 h is deleted and never re-anchors', () => {
     assert.ok(fs.existsSync(fresh), 'a fresh marker of another conversation survives');
 });
 
-test('R16: the marker is unlinked BEFORE the re-anchor is computed', () => {
+test('R16: the marker is claimed, and the claim removed, BEFORE the re-anchor is computed', () => {
     const hooks = installHooks(tmpDir('install'));
     writeMarker(hooks, 'compact-c1');
-    // Stand-in sibling reports whether the marker still exists while it runs,
-    // and echoes the conversation it was handed on stdin.
+    // Stand-in sibling reports what is left in state/ while it runs (neither
+    // the marker nor the claim file may remain), and echoes the conversation
+    // it was handed on stdin.
     fakeSessionStart(hooks, [
         "const fs = require('node:fs');",
         "const path = require('node:path');",
-        "const marker = path.join(path.dirname(process.argv[1]), 'state', 'compact-c1');",
+        "const state = path.join(path.dirname(process.argv[1]), 'state');",
         "const input = JSON.parse(fs.readFileSync(0, 'utf8'));",
-        "process.stdout.write(`${fs.existsSync(marker) ? 'MARKER-PRESENT' : 'MARKER-GONE'} ${process.argv.slice(2).join(' ')} ${input.conversation_id}`);",
+        "process.stdout.write(`STATE=${JSON.stringify(fs.readdirSync(state))} ${process.argv.slice(2).join(' ')} ${input.conversation_id}`);",
     ].join('\n'));
     const context = reanchorOf(runHook(hookOf(hooks, 'post-tool-use'), { conversation_id: 'c1' }, { cwd: tmpDir('launch') }));
-    assert.equal(context, 'MARKER-GONE --reanchor c1');
+    assert.equal(context, 'STATE=[] --reanchor c1');
 });
 
-// TODO(amendment-required): the plan's unlink-before-inject claim does not hold
-// on macOS APFS, where concurrent unlink() of one path can succeed in several
-// processes at once (observed 126/200 rounds; a rename-to-unique-name claim
-// double-succeeded 0/200). Kept as a todo so the gap stays visible until the
-// design is amended; the ordering itself is pinned by the test above.
-test('R16: concurrent tool calls re-anchor exactly once', {
-    todo: 'amendment-required: unlink() is not an exclusive claim on APFS',
-}, async () => {
-    const hooks = installHooks(tmpDir('install'));
-    writeMarker(hooks, 'compact-c1');
-    // A slow sibling widens the race window: both calls are in flight at once.
-    fakeSessionStart(hooks, "const t = Date.now(); while (Date.now() - t < 400) {} process.stdout.write('REANCHOR');");
+// Amendment A2: concurrent unlink() of one path can succeed in several
+// processes at once on macOS APFS, so the claim must be an exclusive rename.
+// One round rarely exposes the race; many rounds make an unlink claim fail
+// this reliably.
+test('R16: concurrent tool calls re-anchor exactly once', async () => {
     const { spawn } = await import('node:child_process');
-    const run = () => new Promise((resolve) => {
-        const child = spawn(process.execPath, [hooks['post-tool-use']], { env: baseEnv(), cwd: tmpDir('launch') });
+    const ROUNDS = 25;
+    const CALLS = 4;
+    const run = (hooks) => new Promise((resolve) => {
+        const child = spawn(process.execPath, [hooks['post-tool-use']], { env: baseEnv(), cwd: workspace });
         let stdout = '';
         child.stdout.on('data', (chunk) => { stdout += chunk; });
         child.on('close', (status) => resolve({ status, stdout }));
         child.stdin.end(JSON.stringify({ conversation_id: 'c1' }));
     });
-    const results = await Promise.all(Array.from({ length: 4 }, run));
-    for (const result of results) assert.equal(result.status, 0);
-    assert.equal(results.filter((result) => result.stdout.includes('REANCHOR')).length, 1, JSON.stringify(results));
+    const doubled = [];
+    for (let round = 0; round < ROUNDS; round += 1) {
+        const hooks = installHooks(tmpDir('install'));
+        hookOf(hooks, 'post-tool-use');
+        writeMarker(hooks, 'compact-c1');
+        // A slow sibling keeps every call in flight at once.
+        fakeSessionStart(hooks, "const t = Date.now(); while (Date.now() - t < 100) {} process.stdout.write('REANCHOR');");
+        const results = await Promise.all(Array.from({ length: CALLS }, () => run(hooks)));
+        for (const result of results) assert.equal(result.status, 0);
+        const reanchored = results.filter((result) => result.stdout.includes('REANCHOR')).length;
+        if (reanchored !== 1) doubled.push({ round, reanchored });
+        assert.deepEqual(fs.readdirSync(stateDir(hooks)), [], `round ${round}: no marker or claim may be left behind`);
+    }
+    assert.deepEqual(doubled, [], `rounds that did not re-anchor exactly once: ${JSON.stringify(doubled)}`);
+});
+
+test('R16: claim files are never consumed as markers and are swept after 24 h', () => {
+    const project = makeProject('claims');
+    const hooks = installHooks(tmpDir('install'));
+    const env = { CURSOR_PROJECT_DIR: project };
+    const staleClaim = writeMarker(hooks, 'compact-c1.claim-123-deadbeef', Date.now() - 2 * DAY_MS);
+    const freshClaim = writeMarker(hooks, 'compact-c2.claim-456-cafef00d', Date.now() - 60 * 1000);
+
+    for (const id of ['c1', 'c2']) {
+        const result = runHook(hookOf(hooks, 'post-tool-use'), { conversation_id: id }, { env, cwd: tmpDir('launch') });
+        assert.equal(result.status, 0, result.stderr);
+        assert.equal(result.stdout, '', `a claim file must not re-anchor ${id}`);
+    }
+    assert.ok(!fs.existsSync(staleClaim), 'a claim file older than 24 h is swept');
+    assert.ok(fs.existsSync(freshClaim), 'a fresh claim file is left alone');
 });
 
 test('R16 fail-open: a failing awm still exits 0, prints {} and writes the marker', () => {
