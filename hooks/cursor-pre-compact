@@ -38,7 +38,8 @@ function readStdin() {
         } catch (error) {
             if (error.code !== 'EAGAIN') return '';
             try {
-                // Block briefly without a timer: sleep via a 0-byte read retry.
+                // Back off ~10 ms by running a short-lived Node child (one
+                // spawn per retry, up to 20), then retry the read.
                 execFileSync(process.execPath, ['-e', 'setTimeout(()=>{},10)'], { stdio: 'ignore' });
             } catch {
                 return '';

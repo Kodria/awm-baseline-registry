@@ -40,7 +40,8 @@ function readStdin() {
         } catch (error) {
             if (error.code !== 'EAGAIN') return '';
             try {
-                // Block briefly without a timer: sleep via a 0-byte read retry.
+                // Back off ~10 ms by running a short-lived Node child (one
+                // spawn per retry, up to 20), then retry the read.
                 execFileSync(process.execPath, ['-e', 'setTimeout(()=>{},10)'], { stdio: 'ignore' });
             } catch {
                 return '';
@@ -84,17 +85,26 @@ function main() {
     } catch {
         return;
     }
-    // Hot path on every tool call: no marker, no stdin read, no output.
-    if (names.length === 0) return;
-
+    // Sweep markers and claim files older than 24 h. With no compact-* entry
+    // this loop is empty, so the no-state/empty-state hot path stays one readdir.
+    const live = [];
     for (const name of names) {
         const file = path.join(state, name);
         try {
             if (Date.now() - fs.statSync(file).mtimeMs > STALE_MS) fs.unlinkSync(file);
+            else live.push(name);
         } catch {
             // Already consumed by a concurrent call.
         }
     }
+    // Hot path on every tool call: no marker, no stdin read, no output. Claim
+    // files (compact-<id>.claim-...) are not markers — marker names never
+    // contain a dot — so a leftover claim does not knock calls off this path.
+    // A pending marker of ANOTHER conversation does: only stdin says which
+    // conversation this call belongs to, so every tool call pays one stdin
+    // read until that marker is consumed or swept as stale.
+    if (!live.some((name) => !name.includes('.'))) return;
+
     const input = readInput();
     const marker = path.join(state, markerName(input));
     // Claim BEFORE injecting: two concurrent tool calls must not both re-anchor.

@@ -572,6 +572,62 @@ test('R16.1: post-tool-use hot path is silent and touches nothing without a mark
     assert.ok(fs.existsSync(other), 'a non-marker file in state/ must survive');
 });
 
+// spawnSync always closes stdin, so it cannot tell a hook that skips stdin
+// from one that reads it, and timing cannot either: readInput() touches
+// process.stdin, which makes fd 0 non-blocking, so an open-but-silent stdin
+// costs readStdin ~20 EAGAIN retries (under a second) and then reads as ''.
+// What does tell them apart is CONSUMPTION: stdin is a FIFO the test keeps
+// open (never at EOF) holding a sentinel; after the hook exits, the sentinel
+// must still be unread in the FIFO.
+test('R16.1: the hot path never reads stdin (stdin left open)', { skip: process.platform === 'win32' }, async () => {
+    const { spawn } = await import('node:child_process');
+    const DEADLINE_MS = 2000;
+    const SENTINEL = '{"conversation_id":"c1"'; // partial JSON, never ended
+    const runWithOpenStdin = (installed) => new Promise((resolve) => {
+        const fifo = path.join(tmpDir('fifo'), 'stdin');
+        const made = spawnSync('mkfifo', [fifo]);
+        assert.equal(made.status, 0, String(made.stderr));
+        const writer = fs.openSync(fifo, 'r+'); // keeps a writer open: no EOF
+        fs.writeSync(writer, SENTINEL);
+        const child = spawn(process.execPath, [installed], { env: baseEnv(), cwd: workspace, stdio: [writer, 'pipe', 'pipe'] });
+        let stdout = '';
+        let timedOut = false;
+        const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, DEADLINE_MS);
+        child.stdout.on('data', (chunk) => { stdout += chunk; });
+        child.on('close', (status) => {
+            clearTimeout(timer);
+            // Non-blocking reader: EAGAIN means the hook drained the FIFO.
+            const reader = fs.openSync(fifo, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK);
+            let unread = '';
+            try {
+                const buffer = Buffer.alloc(1024);
+                unread = buffer.subarray(0, fs.readSync(reader, buffer)).toString('utf8');
+            } catch (error) {
+                if (error.code !== 'EAGAIN') throw error;
+            } finally {
+                fs.closeSync(reader);
+                fs.closeSync(writer);
+            }
+            resolve({ status, stdout, timedOut, unread });
+        });
+    });
+
+    const cases = {
+        'no state/': () => {},
+        'empty state/': (hooks) => fs.mkdirSync(stateDir(hooks)),
+        'only a fresh claim file': (hooks) => writeMarker(hooks, 'compact-c1.claim-123-deadbeef'),
+    };
+    for (const [label, setup] of Object.entries(cases)) {
+        const hooks = installHooks(tmpDir('install'));
+        setup(hooks);
+        const result = await runWithOpenStdin(hookOf(hooks, 'post-tool-use'));
+        assert.equal(result.timedOut, false, `${label}: post-tool-use did not exit within ${DEADLINE_MS} ms`);
+        assert.equal(result.status, 0, label);
+        assert.equal(result.stdout, '', label);
+        assert.equal(result.unread, SENTINEL, `${label}: the hot path must not read stdin`);
+    }
+});
+
 test('R16: pre-compact queues a marker that the next post-tool-use consumes once', () => {
     const project = makeProject('compact');
     const hooks = installHooks(tmpDir('install'));
@@ -742,6 +798,9 @@ test('R16: claim files are never consumed as markers and are swept after 24 h', 
     const env = { CURSOR_PROJECT_DIR: project };
     const staleClaim = writeMarker(hooks, 'compact-c1.claim-123-deadbeef', Date.now() - 2 * DAY_MS);
     const freshClaim = writeMarker(hooks, 'compact-c2.claim-456-cafef00d', Date.now() - 60 * 1000);
+    // A pending marker of another conversation takes every call off the hot
+    // path, so the marker lookup itself runs against the claim files.
+    const pending = writeMarker(hooks, 'compact-c3');
 
     for (const id of ['c1', 'c2']) {
         const result = runHook(hookOf(hooks, 'post-tool-use'), { conversation_id: id }, { env, cwd: tmpDir('launch') });
@@ -750,6 +809,7 @@ test('R16: claim files are never consumed as markers and are swept after 24 h', 
     }
     assert.ok(!fs.existsSync(staleClaim), 'a claim file older than 24 h is swept');
     assert.ok(fs.existsSync(freshClaim), 'a fresh claim file is left alone');
+    assert.ok(fs.existsSync(pending), 'the c3 marker belongs to another conversation');
 });
 
 test('R16 fail-open: a failing awm still exits 0, prints {} and writes the marker', () => {
