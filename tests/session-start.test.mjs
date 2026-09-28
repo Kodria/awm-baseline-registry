@@ -22,6 +22,21 @@ const bashHook = path.join(repoRoot, 'hooks/session-start');
 const codexHook = path.join(repoRoot, 'hooks/codex-session-start');
 const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'awm-session-start-'));
 
+// The Codex hook writes heartbeat.json next to the script it runs as. Run from
+// the checkout it rewrites the gitignored hooks/heartbeat.json, which the Codex
+// and Cursor suites also snapshot, so concurrent runs flaked. This suite must
+// leave that file exactly as it found it (or absent).
+const checkoutHeartbeat = path.join(repoRoot, 'hooks/heartbeat.json');
+function heartbeatSnapshot() {
+    try {
+        const details = fs.statSync(checkoutHeartbeat);
+        return `${details.mtimeMs} ${details.ino} ${fs.readFileSync(checkoutHeartbeat, 'utf8')}`;
+    } catch {
+        return 'absent';
+    }
+}
+const heartbeatBefore = heartbeatSnapshot();
+
 // `awm` is stubbed to fail rather than removed from PATH: the hooks need
 // node on PATH to run at all, and a real `awm` would make the ledger section
 // non-deterministic — and would write a compaction entry into the real ledger.
@@ -103,7 +118,12 @@ try {
     assert.match(contextOf(runBashHook(bare, 'startup', emptyRoot)), /You have AWM\./);
 
     // --- Cross-provider parity: same project, same plan. ---
-    const codex = spawnSync(codexHook, [], {
+    const codexInstall = path.join(workspace, 'codex-install');
+    fs.mkdirSync(codexInstall, { recursive: true });
+    const installedCodexHook = path.join(codexInstall, 'codex-session-start');
+    fs.copyFileSync(codexHook, installedCodexHook);
+    fs.chmodSync(installedCodexHook, 0o755);
+    const codex = spawnSync(installedCodexHook, [], {
         input: JSON.stringify({ source: 'compact', cwd: project }),
         encoding: 'utf8',
         env: { ...process.env, PATH: neutralPath },
@@ -237,6 +257,33 @@ try {
     });
     assert.equal(homeless.status, 0, homeless.stderr);
     assert.equal(homeless.stdout, reference.stdout, 'no HOME must still emit the normal context');
+
+    // --- Equal-mtime plans tie-break in byte order under any locale. ---
+    // Under en_US.UTF-8, `ls -t` collates `a-plan.md` before `B-plan.md`; the
+    // Node hooks use byte order, where `B` (0x42) sorts before `a` (0x61).
+    const tieProject = path.join(workspace, 'tie-break');
+    const tiePlans = path.join(tieProject, 'docs/plans');
+    fs.mkdirSync(tiePlans, { recursive: true });
+    for (const name of ['a-plan.md', 'B-plan.md']) {
+        const file = path.join(tiePlans, name);
+        fs.writeFileSync(file, `# ${name}\n\n- [ ] open step\n`);
+        fs.utimesSync(file, 5_000, 5_000);
+    }
+    const tie = spawnSync('bash', [bashHook], {
+        cwd: tieProject,
+        input: JSON.stringify({ source: 'compact' }),
+        encoding: 'utf8',
+        env: {
+            ...process.env,
+            AWM_HOOKS_ROOT: hooksRoot,
+            PATH: neutralPath,
+            LANG: 'en_US.UTF-8',
+            LC_ALL: 'en_US.UTF-8',
+        },
+    });
+    assert.equal(activePlanLine(contextOf(tie)), 'Active plan: B-plan.md');
+
+    assert.equal(heartbeatSnapshot(), heartbeatBefore, 'the suite must not rewrite hooks/heartbeat.json in the checkout');
 
     process.stdout.write('claude session hook: ok\n');
 } finally {

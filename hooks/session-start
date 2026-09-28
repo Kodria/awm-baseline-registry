@@ -95,7 +95,9 @@ if [ -d "$PLANS_DIR" ]; then
         if grep -qE '<!--[[:space:]]*awm-(plan|qa)-complete' "$plan_file" 2>/dev/null; then continue; fi
         active_plan="$plan_file"
         break
-    done < <(ls -t "$PLANS_DIR"/*.md 2>/dev/null || true)
+    # LC_ALL=C: equal-mtime ties follow byte order on every platform and locale,
+    # the same tie-break as the Node hooks (A8).
+    done < <(LC_ALL=C ls -t "$PLANS_DIR"/*.md 2>/dev/null || true)
 
     if [ -n "$active_plan" ]; then
         goal_line=$(grep -m1 '\*\*Goal:\*\*' "$active_plan" 2>/dev/null || true)
