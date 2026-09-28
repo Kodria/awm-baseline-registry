@@ -278,6 +278,29 @@ try {
         parseContext(runHook(installed, { source: 'startup', cwd: tie })),
         /^Active plan: B-plan\.md$/m,
     );
+    // fs.readdirSync (libuv scandir) already returns byte order on macOS and
+    // Linux, so the case above passes even without the tie-breaker. Reversing
+    // readdirSync through a preload hands the hook `a-plan.md` first: only the
+    // byte-order tie-breaker can still pick `B-plan.md`.
+    const preload = path.join(workspace, 'reverse-readdir.cjs');
+    fs.writeFileSync(
+        preload,
+        "const fs = require('node:fs');\n"
+        + 'const readdirSync = fs.readdirSync;\n'
+        + 'fs.readdirSync = function reversed(...args) {\n'
+        + '    const entries = readdirSync.apply(this, args);\n'
+        + '    return Array.isArray(entries) ? entries.slice().reverse() : entries;\n'
+        + '};\n',
+    );
+    const reversedEnv = { ...process.env, NODE_OPTIONS: `--require ${preload}` };
+    const seen = spawnSync(process.execPath, ['-e', 'console.log(require("node:fs").readdirSync(process.argv[1])[0])', path.join(tie, 'docs/plans')], {
+        encoding: 'utf8', env: reversedEnv,
+    });
+    assert.equal(seen.stdout.trim(), 'a-plan.md', 'the preload must hand the hook the byte-later plan first');
+    assert.match(
+        parseContext(runHook(installed, { source: 'startup', cwd: tie }, { env: reversedEnv })),
+        /^Active plan: B-plan\.md$/m,
+    );
 
     process.stdout.write('codex session hook: ok\n');
 } finally {

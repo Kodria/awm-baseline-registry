@@ -520,31 +520,94 @@ test('parity: the Active plan line matches hooks/codex-session-start', () => {
     assert.equal(cursorLine, codexLine);
 });
 
-test('parity (A7): equal-mtime plans tie-break in byte order in both hooks', () => {
-    // `hooks/session-start` orders by `ls -t`, which breaks ties in byte order:
-    // uppercase `B` (0x42) sorts before lowercase `a` (0x61). localeCompare
-    // would pick `a-plan.md` instead.
-    const project = tmpDir('tie-break');
-    const plans = path.join(project, 'docs/plans');
-    fs.mkdirSync(plans, { recursive: true });
-    for (const name of ['a-plan.md', 'B-plan.md']) {
-        const file = path.join(plans, name);
-        fs.writeFileSync(file, `# ${name}\n\n- [ ] open item\n`);
-        fs.utimesSync(file, 5_000, 5_000);
-    }
-    assert.equal(fs.statSync(path.join(plans, 'a-plan.md')).mtimeMs, fs.statSync(path.join(plans, 'B-plan.md')).mtimeMs);
+// Node's fs.readdirSync goes through libuv's scandir, which sorts entries with
+// strcmp: on macOS and Linux the hooks ALWAYS receive plans in byte order, so
+// on an equal mtime the stable sort alone already yields byte order and a
+// deleted tie-breaker is invisible (the raw APFS order is not byte order; the
+// sorting is libuv's). This preload reverses readdirSync, standing in for a
+// platform whose readdir is unsorted, so the tie-breaker is the ONLY thing
+// that can still produce the byte-order answer.
+function reversedReaddirPreload() {
+    const file = path.join(tmpDir('preload'), 'reverse-readdir.cjs');
+    fs.writeFileSync(file, [
+        "const fs = require('node:fs');",
+        'const readdirSync = fs.readdirSync;',
+        'fs.readdirSync = function reversed(...args) {',
+        '    const entries = readdirSync.apply(this, args);',
+        '    return Array.isArray(entries) ? entries.slice().reverse() : entries;',
+        '};',
+        '',
+    ].join('\n'));
+    return file;
+}
+
+test('parity (A7/A8): equal-mtime plans tie-break in byte order in all three hooks', () => {
+    // Byte order vs locale collation disagree on every pair below:
+    // `B` (0x42) < `a` (0x61), and `f` (0x66) < `é` (0xC3 0xA9).
+    const pairs = [
+        ['a-plan.md', 'B-plan.md'],
+        ['plan-é.md', 'plan-f.md'],
+    ];
+    const preload = reversedReaddirPreload();
+    const reversed = { NODE_OPTIONS: `--require ${preload}` };
 
     const hooks = installHooks(tmpDir('install'));
-    const cursorLine = activePlanLine(contextOf(runHook(hooks.sessionStart, {}, { env: { CURSOR_PROJECT_DIR: project } })));
-
     const codex = path.join(tmpDir('install-codex'), 'session-start');
     fs.copyFileSync(path.join(hooksSource, 'codex-session-start'), codex);
-    const codexResult = runHook(codex, { cwd: project });
-    assert.equal(codexResult.status, 0, codexResult.stderr);
-    const codexLine = activePlanLine(JSON.parse(codexResult.stdout).hookSpecificOutput.additionalContext);
+    // The bash hook runs from a tmp copy too, so nothing executes out of the checkout.
+    const bashRoot = tmpDir('install-claude');
+    const bashHook = path.join(bashRoot, 'session-start');
+    fs.copyFileSync(path.join(hooksSource, 'session-start'), bashHook);
+    fs.writeFileSync(path.join(bashRoot, 'using-awm.md'), USING_AWM_BODY);
 
-    assert.equal(cursorLine, 'Active plan: B-plan.md');
-    assert.equal(codexLine, 'Active plan: B-plan.md');
+    const checkout = () => listTree(hooksSource).map((name) => [name, fs.readFileSync(path.join(hooksSource, name), 'utf8')]);
+    const checkoutBefore = checkout();
+
+    for (const pair of pairs) {
+        const project = tmpDir('tie-break');
+        const plans = path.join(project, 'docs/plans');
+        fs.mkdirSync(plans, { recursive: true });
+        for (const name of pair) {
+            const file = path.join(plans, name);
+            fs.writeFileSync(file, `# ${name}\n\n- [ ] open item\n`);
+            fs.utimesSync(file, 5_000, 5_000);
+        }
+        const [first, second] = pair.map((name) => fs.statSync(path.join(plans, name)).mtimeMs);
+        assert.equal(first, second, `${pair}: mtimes must tie`);
+        const byteFirst = [...pair].sort()[0];
+        const expected = `Active plan: ${byteFirst}`;
+
+        // Self-test of the fixture: under the preload the hooks see the
+        // byte-LATER plan first, so only the tie-breaker can pick byteFirst.
+        const seen = spawnSync(process.execPath, ['-e', 'console.log(require("node:fs").readdirSync(process.argv[1])[0])', plans], {
+            encoding: 'utf8', env: { ...process.env, ...reversed },
+        });
+        assert.equal(seen.stdout.trim(), pair.find((name) => name !== byteFirst), `${pair}: preload must reverse readdir`);
+
+        const lines = {};
+        for (const [mode, env] of [['readdir', {}], ['reversed-readdir', reversed]]) {
+            lines[`cursor/${mode}`] = activePlanLine(contextOf(runHook(hooks.sessionStart, {}, {
+                env: { CURSOR_PROJECT_DIR: project, ...env },
+            })));
+            const codexResult = runHook(codex, { cwd: project }, { env });
+            assert.equal(codexResult.status, 0, codexResult.stderr);
+            lines[`codex/${mode}`] = activePlanLine(JSON.parse(codexResult.stdout).hookSpecificOutput.additionalContext);
+        }
+
+        const bashEnv = { ...baseEnv(), AWM_HOOKS_ROOT: bashRoot, LANG: 'en_US.UTF-8', LC_ALL: 'en_US.UTF-8' };
+        delete bashEnv.CURSOR_VERSION;
+        const bash = spawnSync('bash', [bashHook], {
+            cwd: project, input: JSON.stringify({ source: 'compact' }), encoding: 'utf8', env: bashEnv,
+        });
+        assert.equal(bash.status, 0, bash.stderr);
+        lines['bash/en_US.UTF-8'] = activePlanLine(JSON.parse(bash.stdout).hookSpecificOutput.additionalContext);
+
+        for (const [hook, line] of Object.entries(lines)) {
+            assert.equal(line, expected, `${pair.join(' vs ')}: ${hook} picked ${line}`);
+        }
+    }
+
+    assert.deepEqual(checkout(), checkoutBefore, 'the parity run must not write into the checkout hooks/');
 });
 
 // --- S2: deferred compaction re-anchor (R16, R16.1) ---
