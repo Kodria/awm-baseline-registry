@@ -251,7 +251,14 @@ function agentsBlockHasUsingAwm(cwd) {
 
 function usingAwm(scriptPath, cwd) {
     if (cwd !== null && safe(() => agentsBlockHasUsingAwm(cwd))) return '';
-    const body = safe(() => readIfPresent(path.join(path.dirname(scriptPath), 'using-awm.md'), MAX_USING_AWM_BYTES)).trim();
+    // readIfPresent caps characters; a multibyte guide could still weigh up to
+    // ~3x MAX_USING_AWM_BYTES and starve the constitution and the plan snapshot
+    // of the session budget, so the guide is capped again in UTF-8 bytes.
+    const body = safe(() => truncateBytes(
+        readIfPresent(path.join(path.dirname(scriptPath), 'using-awm.md'), MAX_USING_AWM_BYTES).trim(),
+        MAX_USING_AWM_BYTES,
+        '[truncated by AWM — read the using-awm skill for the rest]',
+    ));
     return body || AWM_DIRECTIVE;
 }
 

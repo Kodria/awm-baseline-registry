@@ -276,6 +276,20 @@ test('R5: session-start payload is at most 24 KiB with a visible marker', () => 
     assert.equal(activePlanLine(context), 'Active plan: 2026-07-24-demo-plan.md');
 });
 
+test('R5: a multibyte using-awm.md over 16 KiB cannot push the plan snapshot out', () => {
+    const project = makeProject('guide-multibyte');
+    // 9000 three-byte characters: under the 16 Ki character cap, ~26 KiB of bytes.
+    const hooks = installHooks(tmpDir('install'), { usingAwm: `# Using AWM\n\n${'—'.repeat(9000)}` });
+    assert.ok(fs.statSync(path.join(hooks.dir, 'using-awm.md')).size > 16 * 1024);
+
+    const context = contextOf(runHook(hooks.sessionStart, {}, { env: { CURSOR_PROJECT_DIR: project } }));
+    assert.ok(Buffer.byteLength(context, 'utf8') <= 24 * 1024, `got ${Buffer.byteLength(context, 'utf8')} bytes`);
+    assert.ok(context.includes('# Using AWM'));
+    assert.ok(context.includes('[truncated by AWM'));
+    assert.ok(context.includes('Plan snapshot (taken at session start)'));
+    assert.equal(activePlanLine(context), 'Active plan: 2026-07-24-demo-plan.md');
+});
+
 test('R5: --reanchor output is at most 4096 bytes with a visible marker', () => {
     const items = Array.from({ length: 8 }, (_, i) => `- [ ] item ${i} ${'é'.repeat(500)}`).join('\n');
     const project = makeProject('reanchor-big', {
