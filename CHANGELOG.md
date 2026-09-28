@@ -2,6 +2,31 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## Cursor native hooks — 2026-09-28
+
+- Three native Cursor hooks, installed by the CLI under
+  `<AWM_HOME>/hooks/cursor/`: `hooks/cursor-session-start` as `session-start`
+  (`sessionStart`: using-awm, `CONSTITUTION.md` and the re-anchor block as
+  `additional_context`, plus a `heartbeat.json` next to the installed script),
+  `hooks/cursor-pre-compact` as `pre-compact` (`preCompact`: marks the
+  conversation for re-anchoring in `<AWM_HOME>/hooks/cursor/state/`) and
+  `hooks/cursor-post-tool-use` as `post-tool-use` (`postToolUse`: claims that
+  marker once and injects the re-anchor block after a compaction).
+- `using-awm.md` location contract: the Cursor hook reads the composed payload
+  from `<AWM_HOME>/hooks/cursor/using-awm.md`, which the Cursor CLI adapter
+  writes. It never reads `<AWM_HOME>/hooks/using-awm.md`, the Claude adapter's
+  file, so Cursor works without Claude installed.
+- The Cursor hook renders only the `finding` entries of the `awm ledger list`
+  JSON output as open ledger items; wins are not open items. The Claude and
+  Codex hooks still carry the same pre-existing defect, tracked in issue #70.
+- Claude guard: Cursor also runs `~/.claude/settings.json` hooks, so
+  `hooks/session-start` now exits silently when `CURSOR_VERSION` is set and
+  `${AWM_HOME:-$HOME/.awm}/hooks/cursor/session-start` exists. Outside Cursor its
+  output is byte-identical.
+- CI: `validate-portability.mjs` gates each Cursor hook (present, executable,
+  required concepts) and `validate.yml` runs `npm run test:cursor-hooks`.
+- CLI Plan B (the Cursor adapter) requires this registry tag as its minimum.
+
 ## Registry floor 9.14.0 — 2026-09-26
 
 - `minCliVersion` 9.13.0 -> 9.14.0, the first CLI that admits a journal-less

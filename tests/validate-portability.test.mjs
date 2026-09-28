@@ -208,6 +208,42 @@ const mutations = [
             return () => fs.writeFileSync(file, before, { mode: 0o755 });
         },
     ),
+    // The Cursor hooks are what `awm init --agent cursor` installs; they ship
+    // under the same exists / executable / concept gate as the Codex hook.
+    mutation(
+        'a Cursor hook losing its executable bit',
+        /hooks\/cursor-post-tool-use: is not executable/,
+        () => {
+            const file = path.join(copy, 'hooks/cursor-post-tool-use');
+            fs.chmodSync(file, 0o644);
+            return () => fs.chmodSync(file, 0o755);
+        },
+    ),
+    mutation(
+        'a Cursor hook deleted entirely',
+        /hooks\/cursor-pre-compact: missing Cursor hook/,
+        () => {
+            const file = path.join(copy, 'hooks/cursor-pre-compact');
+            const before = fs.readFileSync(file);
+            fs.rmSync(file);
+            return () => fs.writeFileSync(file, before, { mode: 0o755 });
+        },
+    ),
+    // Both concepts must be reported: a validator that stops at the first
+    // missing concept hides the second one until the next CI round.
+    mutation(
+        'a Cursor hook losing two required concepts',
+        /(?=[\s\S]*hooks\/cursor-session-start: missing required concept "CURSOR_PROJECT_DIR")(?=[\s\S]*hooks\/cursor-session-start: missing required concept "docs\/plans")/,
+        () => {
+            const file = path.join(copy, 'hooks/cursor-session-start');
+            const before = fs.readFileSync(file, 'utf8');
+            fs.writeFileSync(
+                file,
+                before.replaceAll('CURSOR_PROJECT_DIR', 'SOME_PROJECT_DIR').replaceAll('docs/plans', 'docs/other'),
+            );
+            return () => fs.writeFileSync(file, before);
+        },
+    ),
     // Provenance is the field that survives `awm export`, where the repository
     // LICENSE does not travel. A skill added without it ships terms-less.
     mutation(

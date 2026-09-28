@@ -114,6 +114,61 @@ try {
         'the Claude and Codex hooks must re-anchor on the same plan',
     );
 
+    // --- R15: inside Cursor, the native Cursor hook is the only carrier. ---
+    // Cursor also runs ~/.claude/settings.json hooks, so with AWM's Cursor hook
+    // installed this hook must stay silent; everywhere else its output must be
+    // byte-identical to a run with no Cursor environment at all.
+    const cursorHome = path.join(workspace, 'cursor-home');
+    const cursorAwm = path.join(workspace, 'cursor-awm');
+    const cursorHookDir = path.join(cursorAwm, 'hooks/cursor');
+    fs.mkdirSync(path.join(cursorHome, '.awm/hooks/cursor'), { recursive: true });
+    fs.mkdirSync(cursorHookDir, { recursive: true });
+
+    const runInCursorEnv = (overrides) => {
+        const env = { ...process.env, AWM_HOOKS_ROOT: hooksRoot, PATH: neutralPath };
+        // Never inherit these from the machine running the suite.
+        delete env.CURSOR_VERSION;
+        delete env.AWM_HOME;
+        for (const [key, value] of Object.entries(overrides)) {
+            if (value === undefined) delete env[key];
+            else env[key] = value;
+        }
+        return spawnSync('bash', [bashHook], {
+            cwd: bare,
+            input: JSON.stringify({ source: 'startup' }),
+            encoding: 'utf8',
+            env,
+        });
+    };
+    const cursorEnv = { HOME: cursorHome, AWM_HOME: cursorAwm };
+
+    // Reference output: no Cursor variable, no Cursor hook installed.
+    const reference = runInCursorEnv(cursorEnv);
+    assert.match(contextOf(reference), /You have AWM\./);
+
+    // Cursor running and its native hook installed: silent, successful exit.
+    fs.writeFileSync(path.join(cursorHookDir, 'session-start'), '#!/usr/bin/env bash\n', { mode: 0o755 });
+    const suppressed = runInCursorEnv({ ...cursorEnv, CURSOR_VERSION: '2026.09.26' });
+    assert.equal(suppressed.status, 0, suppressed.stderr);
+    assert.equal(suppressed.stdout, '', 'the Claude hook must not duplicate the Cursor hook context');
+
+    // Hook installed but not running inside Cursor: byte-identical output.
+    const outsideCursor = runInCursorEnv(cursorEnv);
+    assert.equal(outsideCursor.status, 0, outsideCursor.stderr);
+    assert.equal(outsideCursor.stdout, reference.stdout);
+
+    // Inside Cursor but its hook not installed: byte-identical output.
+    fs.rmSync(path.join(cursorHookDir, 'session-start'));
+    const notInstalled = runInCursorEnv({ ...cursorEnv, CURSOR_VERSION: '2026.09.26' });
+    assert.equal(notInstalled.status, 0, notInstalled.stderr);
+    assert.equal(notInstalled.stdout, reference.stdout);
+
+    // AWM_HOME unset falls back to $HOME/.awm, where the hook is installed.
+    fs.writeFileSync(path.join(cursorHome, '.awm/hooks/cursor/session-start'), '#!/usr/bin/env bash\n', { mode: 0o755 });
+    const fallback = runInCursorEnv({ HOME: cursorHome, CURSOR_VERSION: '2026.09.26' });
+    assert.equal(fallback.status, 0, fallback.stderr);
+    assert.equal(fallback.stdout, '', 'AWM_HOME unset must fall back to $HOME/.awm');
+
     process.stdout.write('claude session hook: ok\n');
 } finally {
     fs.rmSync(workspace, { recursive: true, force: true });

@@ -96,6 +96,12 @@ const requiredCodexHookConcepts = [
   'heartbeat.json',
   'additionalContext',
 ];
+// The Cursor hooks are what the CLI installs under <AWM_HOME>/hooks/cursor/.
+const requiredCursorHookConcepts = {
+  'hooks/cursor-session-start': ['CURSOR_PROJECT_DIR', 'additional_context', 'heartbeat.json', '--reanchor', 'CONSTITUTION.md', 'docs/plans'],
+  'hooks/cursor-pre-compact': ['compaction-reanchor', 'state', 'conversation_id'],
+  'hooks/cursor-post-tool-use': ['--reanchor', 'additional_context', 'state'],
+};
 // Every skill that resolves another skill on disk must search the shared global
 // root too — Claude-only roots make the lookup fail under OpenCode and Codex.
 const skillDiscoveryFiles = [
@@ -425,6 +431,34 @@ async function validateCodexSessionHook(errors) {
   }
 }
 
+async function validateCursorHooks(errors) {
+  for (const [relativePath, concepts] of Object.entries(requiredCursorHookConcepts)) {
+    const hookPath = path.join(repoRoot, relativePath);
+
+    let details;
+    try {
+      details = await stat(hookPath);
+    } catch {
+      errors.push(`${relativePath}: missing Cursor hook`);
+      continue;
+    }
+    if (!details.isFile()) {
+      errors.push(`${relativePath}: is not a file`);
+      continue;
+    }
+    if ((details.mode & 0o111) === 0) {
+      errors.push(`${relativePath}: is not executable`);
+    }
+
+    const source = await readFile(hookPath, 'utf8');
+    for (const concept of concepts) {
+      if (!source.includes(concept)) {
+        errors.push(`${relativePath}: missing required concept ${JSON.stringify(concept)}`);
+      }
+    }
+  }
+}
+
 // `catalog.json` and each `bundles/<name>/bundle.json` duplicate the bundle
 // version and must agree — CONSTITUTION.md, "Release de contenido". A bump
 // applied to only one of the two ships metadata that contradicts itself.
@@ -525,6 +559,7 @@ async function main() {
   await validateConstitutionDelivery(errors);
   await validateSkillDiscoveryRoots(errors);
   await validateCodexSessionHook(errors);
+  await validateCursorHooks(errors);
   await validateBundleVersions(errors);
 
   const developmentProcessPath = path.join(repoRoot, 'agents', 'development-process.md');
