@@ -433,3 +433,10 @@ const requiredCursorHookConcepts = {
 
 #### Amendment A3 (2026-09-28, S3 specification review)
 Deviation record: S3 step 1 and its Evidence clause required CMD-PORTABILITY (`npm run test:portability`) to be RED. That command validates the real repository, where the S1/S2 hooks already exist and are valid, so it cannot fail before the change. The negative case that step 1 itself prescribes lives in `tests/validate-portability.test.mjs`, which is run by the new command CMD-PORTABILITY-SELFTEST (`npm run test:portability-selftest`). S3 adds the `package.json` script `"test:portability-selftest": "node tests/validate-portability.test.mjs"`, the same invocation CI already runs as its own step. S3 is RED on CMD-SESSION-START and CMD-PORTABILITY-SELFTEST, and GREEN on CMD-SESSION-START, CMD-PORTABILITY, CMD-PORTABILITY-SELFTEST and CMD-CURSOR-HOOKS. The CHANGELOG heading date is the merge date. If the merge is not on 2026-09-28, the date is corrected in the release step.
+
+#### Amendment A4 (2026-09-28, S3 code-quality review)
+Deviation record. The code-quality review found that the verbatim guard in S3 step 2 expands `$HOME` under `set -u`. With `CURSOR_VERSION` set and both `AWM_HOME` and `HOME` unset, the Claude hook now exits 1 with `HOME: unbound variable`, where it used to emit its context. That breaks the edge case "`set -u` safety comes from `${VAR:-}`". The corrected clauses govern S3:
+
+- **Guard.** The path expression is `${AWM_HOME:-${HOME:-}/.awm}/hooks/cursor/session-start`. Test: with `env -i`-style env (no `HOME`, no `AWM_HOME`) and `CURSOR_VERSION` set, the hook exits 0 and emits its normal JSON.
+- **Dangling symlink.** A dangling symlink at the Cursor hook path counts as not installed. This is now tested: the hook emits its normal JSON with `CURSOR_VERSION` set.
+- **Validator.** `validateCursorHooks` and `validateCodexSessionHook` share one helper for the exists / is-file / executable / concept checks. The existing messages stay byte-identical, including `hooks/codex-session-start` and the Cursor `missing Cursor hook` text. `npm run test:portability-selftest` stays green without changes to its expectations.
