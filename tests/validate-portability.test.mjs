@@ -33,15 +33,20 @@ function writeJson(relativePath, value) {
     fs.writeFileSync(path.join(copy, relativePath), `${JSON.stringify(value, null, 2)}\n`);
 }
 
-// Renames the `compact-` marker prefix on code lines only; `//` comment lines
-// keep it, so a concept that comments alone satisfy lets the mutant survive.
-function stripMarkerLogic(relativePath) {
+// Replaces `token` on code lines only; whole-line comments (first non-blank
+// characters `//`, `/*` or `*`) keep it, so a concept that a comment alone
+// satisfies lets the mutant survive.
+function stripFromCode(relativePath, token, replacement = 'REMOVED') {
     const file = path.join(copy, relativePath);
     const before = fs.readFileSync(file, 'utf8');
     fs.writeFileSync(file, before.split('\n')
-        .map((line) => (/^\s*\/\//.test(line) ? line : line.replaceAll('compact-', 'marker-')))
+        .map((line) => (/^\s*(?:\/\/|\/\*|\*)/.test(line) ? line : line.replaceAll(token, replacement)))
         .join('\n'));
     return () => fs.writeFileSync(file, before);
+}
+
+function stripMarkerLogic(relativePath) {
+    return stripFromCode(relativePath, 'compact-', 'marker-');
 }
 
 // Every mutation is applied to a pristine copy and reverted afterwards, so a
@@ -267,6 +272,34 @@ const mutations = [
         'the Cursor post-tool-use hook losing its compact- marker logic behind intact comments',
         /(?=[\s\S]*hooks\/cursor-post-tool-use: missing required concept "`compact-\$\{")(?=[\s\S]*hooks\/cursor-post-tool-use: missing required concept "startsWith\('compact-'\)")/,
         () => stripMarkerLogic('hooks/cursor-post-tool-use'),
+    ),
+    // One comment-preserving mutant per concept family: each removes a concept
+    // from code lines only. Every one of these tokens also appears in a
+    // comment of the same hook, so only code-only matching catches them.
+    mutation(
+        'the Cursor post-tool-use hook losing --reanchor from code behind intact comments',
+        /hooks\/cursor-post-tool-use: missing required concept "--reanchor"/,
+        () => stripFromCode('hooks/cursor-post-tool-use', '--reanchor'),
+    ),
+    mutation(
+        'the Cursor post-tool-use hook losing additional_context from code behind intact comments',
+        /hooks\/cursor-post-tool-use: missing required concept "additional_context"/,
+        () => stripFromCode('hooks/cursor-post-tool-use', 'additional_context'),
+    ),
+    mutation(
+        'the Cursor pre-compact hook losing conversation_id from code behind intact comments',
+        /hooks\/cursor-pre-compact: missing required concept "conversation_id"/,
+        () => stripFromCode('hooks/cursor-pre-compact', 'conversation_id'),
+    ),
+    mutation(
+        'the Cursor session-start hook losing CURSOR_PROJECT_DIR from code behind intact comments',
+        /hooks\/cursor-session-start: missing required concept "CURSOR_PROJECT_DIR"/,
+        () => stripFromCode('hooks/cursor-session-start', 'CURSOR_PROJECT_DIR'),
+    ),
+    mutation(
+        'the Cursor session-start hook losing heartbeat.json from code behind intact comments',
+        /hooks\/cursor-session-start: missing required concept "heartbeat\.json"/,
+        () => stripFromCode('hooks/cursor-session-start', 'heartbeat.json'),
     ),
     // Provenance is the field that survives `awm export`, where the repository
     // LICENSE does not travel. A skill added without it ships terms-less.

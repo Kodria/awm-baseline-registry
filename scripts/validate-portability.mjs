@@ -404,10 +404,20 @@ async function validateSkillDiscoveryRoots(errors) {
   }
 }
 
+// Drops whole-line comments (first non-blank characters `//`, `/*` or `*`) so a
+// concept can only be satisfied by code, not by a comment describing it.
+function withoutCommentLines(source) {
+  return source
+    .split('\n')
+    .filter((line) => !/^\s*(?:\/\/|\/\*|\*)/.test(line))
+    .join('\n');
+}
+
 // Shared gate for an installable hook script: it must exist, be a regular
 // executable file, and contain every required concept. Each missing concept is
-// reported on its own line so one CI round shows them all.
-async function validateHookScript(errors, relativePath, missingMessage, concepts) {
+// reported on its own line so one CI round shows them all. With `codeOnly`,
+// concepts are matched against the script with whole-line comments removed.
+async function validateHookScript(errors, relativePath, missingMessage, concepts, { codeOnly = false } = {}) {
   const hookPath = path.join(repoRoot, relativePath);
 
   let details;
@@ -425,7 +435,8 @@ async function validateHookScript(errors, relativePath, missingMessage, concepts
     errors.push(`${relativePath}: is not executable`);
   }
 
-  const source = await readFile(hookPath, 'utf8');
+  const text = await readFile(hookPath, 'utf8');
+  const source = codeOnly ? withoutCommentLines(text) : text;
   for (const concept of concepts) {
     if (!source.includes(concept)) {
       errors.push(`${relativePath}: missing required concept ${JSON.stringify(concept)}`);
@@ -444,7 +455,7 @@ async function validateCodexSessionHook(errors) {
 
 async function validateCursorHooks(errors) {
   for (const [relativePath, concepts] of Object.entries(requiredCursorHookConcepts)) {
-    await validateHookScript(errors, relativePath, 'missing Cursor hook', concepts);
+    await validateHookScript(errors, relativePath, 'missing Cursor hook', concepts, { codeOnly: true });
   }
 }
 
