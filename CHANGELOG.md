@@ -21,8 +21,10 @@ Newest entry on top; append new releases directly below this line.
   Codex hooks still carry the same pre-existing defect, tracked in issue #70.
 - Claude guard: Cursor also runs `~/.claude/settings.json` hooks, so
   `hooks/session-start` now exits silently when `CURSOR_VERSION` is set and
-  `${AWM_HOME:-${HOME:-}/.awm}/hooks/cursor/session-start` exists. Outside Cursor its
-  output is byte-identical.
+  either `${AWM_HOME:-${HOME:-}/.awm}/hooks/cursor/session-start` or its own
+  sibling `$(dirname "$0")/cursor/session-start` exists (the latter covers a
+  custom `AWM_HOME` that Cursor does not export). A dangling symlink counts as
+  not installed. Outside Cursor its output is byte-identical.
 - CI: `validate-portability.mjs` gates each Cursor hook (present, executable,
   required concepts) and `validate.yml` runs `npm run test:cursor-hooks`.
 - CLI Plan B (the Cursor adapter) requires this registry tag as its minimum.

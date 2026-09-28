@@ -124,7 +124,7 @@ try {
     fs.mkdirSync(path.join(cursorHome, '.awm/hooks/cursor'), { recursive: true });
     fs.mkdirSync(cursorHookDir, { recursive: true });
 
-    const runInCursorEnv = (overrides) => {
+    const runInCursorEnv = (overrides, hookPath = bashHook) => {
         const env = { ...process.env, AWM_HOOKS_ROOT: hooksRoot, PATH: neutralPath };
         // Never inherit these from the machine running the suite.
         delete env.CURSOR_VERSION;
@@ -133,7 +133,7 @@ try {
             if (value === undefined) delete env[key];
             else env[key] = value;
         }
-        return spawnSync('bash', [bashHook], {
+        return spawnSync('bash', [hookPath], {
             cwd: bare,
             input: JSON.stringify({ source: 'startup' }),
             encoding: 'utf8',
@@ -180,6 +180,30 @@ try {
     const dangling = runInCursorEnv({ HOME: cursorHome, AWM_HOME: danglingAwm, CURSOR_VERSION: '2026.09.26' });
     assert.equal(dangling.status, 0, dangling.stderr);
     assert.equal(dangling.stdout, reference.stdout, 'a dangling symlink must not suppress the context');
+
+    // Installed layout: the Claude hook lives in <AWM_HOME>/hooks/, the parent of
+    // hooks/cursor/. Under a custom AWM_HOME that Cursor does not export, the
+    // sibling is the only way to see the Cursor hook is installed.
+    const siblingAwm = path.join(workspace, 'sibling-awm');
+    const elsewhereHome = path.join(workspace, 'elsewhere-home');
+    fs.mkdirSync(path.join(siblingAwm, 'hooks/cursor'), { recursive: true });
+    fs.mkdirSync(elsewhereHome, { recursive: true });
+    const installedClaudeHook = path.join(siblingAwm, 'hooks/session-start');
+    fs.copyFileSync(bashHook, installedClaudeHook);
+    fs.chmodSync(installedClaudeHook, 0o755);
+    const siblingCursorHook = path.join(siblingAwm, 'hooks/cursor/session-start');
+
+    // A dangling sibling symlink is not an installed hook either.
+    fs.symlinkSync(path.join(workspace, 'no-such-sibling-hook'), siblingCursorHook);
+    const siblingDangling = runInCursorEnv({ HOME: elsewhereHome, CURSOR_VERSION: '2026.09.26' }, installedClaudeHook);
+    assert.equal(siblingDangling.status, 0, siblingDangling.stderr);
+    assert.equal(siblingDangling.stdout, reference.stdout, 'a dangling sibling symlink must not suppress the context');
+
+    fs.rmSync(siblingCursorHook);
+    fs.writeFileSync(siblingCursorHook, '#!/usr/bin/env bash\n', { mode: 0o755 });
+    const sibling = runInCursorEnv({ HOME: elsewhereHome, CURSOR_VERSION: '2026.09.26' }, installedClaudeHook);
+    assert.equal(sibling.status, 0, sibling.stderr);
+    assert.equal(sibling.stdout, '', 'a Cursor hook installed next to this hook must suppress it');
 
     // No HOME and no AWM_HOME under `set -u`: the guard must not abort the hook.
     // The env is built from scratch (env -i style) so nothing leaks in from the

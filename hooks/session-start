@@ -12,8 +12,13 @@ set -euo pipefail
 
 # Cursor also runs ~/.claude/settings.json hooks. When AWM's native Cursor hook
 # is installed it is the only carrier of this context; emitting here too would
-# pay for using-awm twice in every Cursor session.
-if [ -n "${CURSOR_VERSION:-}" ] && [ -e "${AWM_HOME:-${HOME:-}/.awm}/hooks/cursor/session-start" ]; then
+# pay for using-awm twice in every Cursor session. The sibling check covers a
+# custom AWM_HOME that Cursor does not export: this hook is installed in
+# <AWM_HOME>/hooks/, the parent of hooks/cursor/.
+if [ -n "${CURSOR_VERSION:-}" ] && {
+    [ -e "${AWM_HOME:-${HOME:-}/.awm}/hooks/cursor/session-start" ] ||
+    [ -e "$(dirname "$0")/cursor/session-start" ]
+}; then
     exit 0
 fi
 
