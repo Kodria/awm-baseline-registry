@@ -404,15 +404,17 @@ async function validateSkillDiscoveryRoots(errors) {
   }
 }
 
-async function validateCodexSessionHook(errors) {
-  const relativePath = 'hooks/codex-session-start';
+// Shared gate for an installable hook script: it must exist, be a regular
+// executable file, and contain every required concept. Each missing concept is
+// reported on its own line so one CI round shows them all.
+async function validateHookScript(errors, relativePath, missingMessage, concepts) {
   const hookPath = path.join(repoRoot, relativePath);
 
   let details;
   try {
     details = await stat(hookPath);
   } catch {
-    errors.push(`${relativePath}: missing Codex session recovery adapter`);
+    errors.push(`${relativePath}: ${missingMessage}`);
     return;
   }
   if (!details.isFile()) {
@@ -424,38 +426,25 @@ async function validateCodexSessionHook(errors) {
   }
 
   const source = await readFile(hookPath, 'utf8');
-  for (const concept of requiredCodexHookConcepts) {
+  for (const concept of concepts) {
     if (!source.includes(concept)) {
       errors.push(`${relativePath}: missing required concept ${JSON.stringify(concept)}`);
     }
   }
 }
 
+async function validateCodexSessionHook(errors) {
+  await validateHookScript(
+    errors,
+    'hooks/codex-session-start',
+    'missing Codex session recovery adapter',
+    requiredCodexHookConcepts,
+  );
+}
+
 async function validateCursorHooks(errors) {
   for (const [relativePath, concepts] of Object.entries(requiredCursorHookConcepts)) {
-    const hookPath = path.join(repoRoot, relativePath);
-
-    let details;
-    try {
-      details = await stat(hookPath);
-    } catch {
-      errors.push(`${relativePath}: missing Cursor hook`);
-      continue;
-    }
-    if (!details.isFile()) {
-      errors.push(`${relativePath}: is not a file`);
-      continue;
-    }
-    if ((details.mode & 0o111) === 0) {
-      errors.push(`${relativePath}: is not executable`);
-    }
-
-    const source = await readFile(hookPath, 'utf8');
-    for (const concept of concepts) {
-      if (!source.includes(concept)) {
-        errors.push(`${relativePath}: missing required concept ${JSON.stringify(concept)}`);
-      }
-    }
+    await validateHookScript(errors, relativePath, 'missing Cursor hook', concepts);
   }
 }
 
