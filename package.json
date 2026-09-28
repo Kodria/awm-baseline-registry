@@ -5,6 +5,7 @@
     "test:compact-regression": "node --test tests/r15-compact-slices-contract.test.mjs",
     "test:capsule": "node --test tests/r13-role-evidence-capsule-contract.test.mjs",
     "test:portability": "node scripts/validate-portability.mjs",
+    "test:portability-selftest": "node tests/validate-portability.test.mjs",
     "test:compact-cli": "node --test tests/r15-compact-slices-cli-acceptance.mjs tests/r16-compact-only-cli-acceptance.mjs",
     "test:release": "node --test tests/release-skill-version-gate.test.mjs",
     "test:r2a": "node --test tests/r2a-review-cycle-contract.test.mjs",
