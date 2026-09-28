@@ -616,15 +616,22 @@ test('R16.1: the hot path never reads stdin (stdin left open)', { skip: process.
         'no state/': () => {},
         'empty state/': (hooks) => fs.mkdirSync(stateDir(hooks)),
         'only a fresh claim file': (hooks) => writeMarker(hooks, 'compact-c1.claim-123-deadbeef'),
+        // The sweep runs before the hot-path return: a stale claim is removed
+        // even when no marker would take the call off the hot path.
+        'only a stale claim file': (hooks) => {
+            const claim = writeMarker(hooks, 'compact-c1.claim-789-0badf00d', Date.now() - 2 * DAY_MS);
+            return () => assert.ok(!fs.existsSync(claim), 'only a stale claim file: the claim must be swept');
+        },
     };
     for (const [label, setup] of Object.entries(cases)) {
         const hooks = installHooks(tmpDir('install'));
-        setup(hooks);
+        const check = setup(hooks);
         const result = await runWithOpenStdin(hookOf(hooks, 'post-tool-use'));
         assert.equal(result.timedOut, false, `${label}: post-tool-use did not exit within ${DEADLINE_MS} ms`);
         assert.equal(result.status, 0, label);
         assert.equal(result.stdout, '', label);
         assert.equal(result.unread, SENTINEL, `${label}: the hot path must not read stdin`);
+        if (typeof check === 'function') check();
     }
 });
 
