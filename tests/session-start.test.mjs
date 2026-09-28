@@ -169,6 +169,31 @@ try {
     assert.equal(fallback.status, 0, fallback.stderr);
     assert.equal(fallback.stdout, '', 'AWM_HOME unset must fall back to $HOME/.awm');
 
+    // A dangling symlink at the Cursor hook path is not an installed hook:
+    // losing the context would be worse than paying for it twice.
+    const danglingAwm = path.join(workspace, 'dangling-awm');
+    fs.mkdirSync(path.join(danglingAwm, 'hooks/cursor'), { recursive: true });
+    fs.symlinkSync(
+        path.join(workspace, 'no-such-cursor-hook'),
+        path.join(danglingAwm, 'hooks/cursor/session-start'),
+    );
+    const dangling = runInCursorEnv({ HOME: cursorHome, AWM_HOME: danglingAwm, CURSOR_VERSION: '2026.09.26' });
+    assert.equal(dangling.status, 0, dangling.stderr);
+    assert.equal(dangling.stdout, reference.stdout, 'a dangling symlink must not suppress the context');
+
+    // No HOME and no AWM_HOME under `set -u`: the guard must not abort the hook.
+    // The env is built from scratch (env -i style) so nothing leaks in from the
+    // suite's own HOME; the guard then probes /.awm, which must not exist here.
+    assert.equal(fs.existsSync('/.awm'), false, 'precondition: /.awm must not exist on this machine');
+    const homeless = spawnSync('bash', [bashHook], {
+        cwd: bare,
+        input: JSON.stringify({ source: 'startup' }),
+        encoding: 'utf8',
+        env: { PATH: neutralPath, AWM_HOOKS_ROOT: hooksRoot, CURSOR_VERSION: '2026.09.26' },
+    });
+    assert.equal(homeless.status, 0, homeless.stderr);
+    assert.equal(homeless.stdout, reference.stdout, 'no HOME must still emit the normal context');
+
     process.stdout.write('claude session hook: ok\n');
 } finally {
     fs.rmSync(workspace, { recursive: true, force: true });
