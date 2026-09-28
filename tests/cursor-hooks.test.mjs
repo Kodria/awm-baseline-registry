@@ -345,9 +345,10 @@ test('R14.1: ledger JSON renders open findings only, one line each', () => {
     const lines = context.split('\n');
     const start = lines.indexOf('Open ledger items:');
     assert.ok(start !== -1, 'ledger section missing');
+    // Newest first (A7): the CLI lists oldest first.
     assert.deepEqual(lines.slice(start + 1), [
-        '- [high] split-infinity: splitBill returns Infinity',
         '- [low] input-validation: missing input validation',
+        '- [high] split-infinity: splitBill returns Infinity',
     ]);
     assert.ok(!context.includes('WIN-DESC-MUST-NOT-APPEAR'), 'wins are not open items');
     for (const line of lines) {
@@ -355,14 +356,41 @@ test('R14.1: ledger JSON renders open findings only, one line each', () => {
     }
 });
 
-test('R14.1: at most 8 ledger findings are rendered', () => {
+test('R14.1: at most 8 ledger findings are rendered, newest first', () => {
     const project = makeProject('ledger-many');
     const hooks = installHooks(tmpDir('install'));
     const many = ledgerStub(Array.from({ length: 12 }, (_, i) => ledgerEntry({ signature: `f${i}`, desc: `d${i}` })));
     const context = contextOf(runHook(hooks.sessionStart, {}, { env: { CURSOR_PROJECT_DIR: project }, stub: many }));
     const rendered = context.split('\n').filter((line) => /^- \[medium\] f\d+: d\d+$/.test(line));
-    assert.equal(rendered.length, 8);
-    assert.equal(rendered[0], '- [medium] f0: d0');
+    // The CLI lists oldest first; the newest 8 (f11..f4) are the open items.
+    assert.deepEqual(rendered, [11, 10, 9, 8, 7, 6, 5, 4].map((i) => `- [medium] f${i}: d${i}`));
+});
+
+test('R14.1 (A7): compaction-reanchor audit entries never crowd out a real finding', () => {
+    const project = makeProject('ledger-audit');
+    const hooks = installHooks(tmpDir('install'));
+    // What 8 compactions leave behind, followed by one real blocker.
+    const stub = ledgerStub([
+        ...Array.from({ length: 8 }, () => ledgerEntry({
+            phase: 'compaction-recovery',
+            source_skill: 'context-compaction-recovery',
+            class: 'proceso',
+            signature: 'compaction-reanchor',
+            severity: 'info',
+            desc: 're-anchored active plan + open items after compaction',
+        })),
+        ledgerEntry({ severity: 'blocker', signature: 'real-blocker', desc: 'payments double-charge' }),
+    ]);
+    for (const args of [[], ['--reanchor']]) {
+        const result = runHook(hooks.sessionStart, {}, { args, env: { CURSOR_PROJECT_DIR: project }, stub });
+        assert.equal(result.status, 0, result.stderr);
+        const text = args.length ? result.stdout : contextOf(result);
+        const lines = text.split('\n');
+        const start = lines.indexOf('Open ledger items:');
+        assert.ok(start !== -1, `${args.join(' ') || 'sessionStart'}: ledger section missing`);
+        assert.deepEqual(lines.slice(start + 1), ['- [blocker] real-blocker: payments double-charge']);
+        assert.ok(!text.includes('compaction-reanchor'), `${args.join(' ') || 'sessionStart'}: audit entries leaked`);
+    }
 });
 
 test('R14.1: non-JSON or non-array ledger output yields no ledger section', () => {
@@ -490,6 +518,33 @@ test('parity: the Active plan line matches hooks/codex-session-start', () => {
 
     assert.equal(cursorLine, 'Active plan: 2026-07-24-redesign-checkout-plan.md');
     assert.equal(cursorLine, codexLine);
+});
+
+test('parity (A7): equal-mtime plans tie-break in byte order in both hooks', () => {
+    // `hooks/session-start` orders by `ls -t`, which breaks ties in byte order:
+    // uppercase `B` (0x42) sorts before lowercase `a` (0x61). localeCompare
+    // would pick `a-plan.md` instead.
+    const project = tmpDir('tie-break');
+    const plans = path.join(project, 'docs/plans');
+    fs.mkdirSync(plans, { recursive: true });
+    for (const name of ['a-plan.md', 'B-plan.md']) {
+        const file = path.join(plans, name);
+        fs.writeFileSync(file, `# ${name}\n\n- [ ] open item\n`);
+        fs.utimesSync(file, 5_000, 5_000);
+    }
+    assert.equal(fs.statSync(path.join(plans, 'a-plan.md')).mtimeMs, fs.statSync(path.join(plans, 'B-plan.md')).mtimeMs);
+
+    const hooks = installHooks(tmpDir('install'));
+    const cursorLine = activePlanLine(contextOf(runHook(hooks.sessionStart, {}, { env: { CURSOR_PROJECT_DIR: project } })));
+
+    const codex = path.join(tmpDir('install-codex'), 'session-start');
+    fs.copyFileSync(path.join(hooksSource, 'codex-session-start'), codex);
+    const codexResult = runHook(codex, { cwd: project });
+    assert.equal(codexResult.status, 0, codexResult.stderr);
+    const codexLine = activePlanLine(JSON.parse(codexResult.stdout).hookSpecificOutput.additionalContext);
+
+    assert.equal(cursorLine, 'Active plan: B-plan.md');
+    assert.equal(codexLine, 'Active plan: B-plan.md');
 });
 
 // --- S2: deferred compaction re-anchor (R16, R16.1) ---

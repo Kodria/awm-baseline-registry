@@ -264,6 +264,21 @@ try {
         'startup',
     );
 
+    // Equal mtimes tie-break in byte order, as `ls -t` does in the Claude
+    // hook: `B-plan.md` (0x42) beats `a-plan.md` (0x61). localeCompare would
+    // pick `a-plan.md` and re-anchor on a different plan than Claude.
+    const tie = path.join(workspace, 'tie-break');
+    fs.mkdirSync(path.join(tie, 'docs/plans'), { recursive: true });
+    for (const name of ['a-plan.md', 'B-plan.md']) {
+        const file = path.join(tie, 'docs/plans', name);
+        fs.writeFileSync(file, `# ${name}\n\n- [ ] open item\n`);
+        fs.utimesSync(file, 5_000, 5_000);
+    }
+    assert.match(
+        parseContext(runHook(installed, { source: 'startup', cwd: tie })),
+        /^Active plan: B-plan\.md$/m,
+    );
+
     process.stdout.write('codex session hook: ok\n');
 } finally {
     fs.rmSync(workspace, { recursive: true, force: true });

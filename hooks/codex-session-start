@@ -126,7 +126,9 @@ function activePlan(cwd) {
         }
     }
 
-    candidates.sort((a, b) => b.mtime - a.mtime || a.file.localeCompare(b.file));
+    // Ties break in byte order, as `ls -t` does in hooks/session-start;
+    // localeCompare would disagree on case (`B-plan.md` vs `a-plan.md`).
+    candidates.sort((a, b) => b.mtime - a.mtime || (a.file < b.file ? -1 : a.file > b.file ? 1 : 0));
     return candidates[0] || null;
 }
 

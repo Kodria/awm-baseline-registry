@@ -131,19 +131,26 @@ function activePlan(cwd) {
         }
     }
 
-    candidates.sort((a, b) => b.mtime - a.mtime || a.file.localeCompare(b.file));
+    // Ties break in byte order, as `ls -t` does in hooks/session-start;
+    // localeCompare would disagree on case (`B-plan.md` vs `a-plan.md`).
+    candidates.sort((a, b) => b.mtime - a.mtime || (a.file < b.file ? -1 : a.file > b.file ? 1 : 0));
     return candidates[0] || null;
 }
 
 // Open findings for the current branch, via `awm ledger list`, which prints
 // the branch ledger as a pretty-printed JSON array of entries
 // {ts, branch, phase, source_skill, polarity, class, signature, severity,
-// desc, ref?}. Only findings are open items (wins are not), rendered one line
-// each. Absent CLI, absent ledger, non-JSON or non-array output yields no
-// section rather than an error.
+// desc, ref?}, oldest first. Only findings are open items (wins are not),
+// minus this hook family's own `compaction-reanchor` audit entries, which
+// pre-compact records on every compaction and would otherwise crowd out real
+// findings. The newest 8 are rendered, newest first, one line each. Absent
+// CLI, absent ledger, non-JSON or non-array output yields no section rather
+// than an error.
 // `maxBuffer` is explicit: on the 1 MB default a large ledger throws ENOBUFS,
 // which is indistinguishable here from "no ledger" and would drop the section
 // silently.
+const COMPACTION_AUDIT_SIGNATURE = 'compaction-reanchor';
+
 function ledgerItems(cwd) {
     let entries;
     try {
@@ -159,8 +166,10 @@ function ledgerItems(cwd) {
     }
     if (!Array.isArray(entries)) return [];
     return entries
-        .filter((entry) => entry !== null && typeof entry === 'object' && entry.polarity === 'finding')
-        .slice(0, 8)
+        .filter((entry) => entry !== null && typeof entry === 'object'
+            && entry.polarity === 'finding' && entry.signature !== COMPACTION_AUDIT_SIGNATURE)
+        .slice(-8)
+        .reverse()
         .map((entry) => truncate(`- [${entry.severity}] ${entry.signature}: ${entry.desc}`, MAX_LINE_CHARS, '[truncated]'));
 }
 
