@@ -29,14 +29,15 @@ Newest entry on top; append new releases directly below this line.
 - Plan tie-break: all three session hooks (`hooks/cursor-session-start`,
   `hooks/codex-session-start` and `hooks/session-start`) now break equal-mtime
   plan ties in UTF-8 byte order on every locale (the Node hooks with
-  `Buffer.compare`, the Claude hook with `LC_ALL=C ls -t`), so a tie no longer
+  `Buffer.compare`, the Claude hook with `LC_ALL=C ls -Lt`), so a tie no longer
   makes them name different active plans. Under a non-C locale the Claude hook
   previously followed locale collation (`a-plan.md` before `B-plan.md`); it now
   picks `B-plan.md`, as the Node hooks do.
 - Plan scan (A10/A11): all three session hooks skip dot-prefixed names, follow
   symlinks to regular files, skip devices/FIFOs/non-files, refuse plans over
-  1 MiB, and order candidates by `mtimeNs` (nanoseconds) so they name the same
-  active plan. Codex and Claude pick up the same skip/order rules Cursor added.
+  1 MiB, and order candidates by followed `mtimeNs` (nanoseconds) so they name
+  the same active plan. The Claude hook lists with `ls -Lt` (not plain `-t`) so
+  Linux orders by the target's mtime, matching Node `statSync`.
 - Goal extraction: `**Goal:**` and the H1 fallback are line-bounded (`[ \t]`,
   not `\s`) in Cursor and Codex, so an empty Goal line never captures the next
   body line.

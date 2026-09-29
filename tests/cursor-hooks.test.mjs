@@ -773,16 +773,21 @@ test('A10/A11: device and FIFO plans are skipped unread by all three hooks', { s
 });
 
 test('A10/A11: a symlink to a regular plan is followed by all three hooks', () => {
-    const { project } = planProject('plan-symlink', [['2026-01-01-open-plan.md', OPEN_PLAN, 1_000]]);
+    const { project, plans } = planProject('plan-symlink', [['2026-01-01-open-plan.md', OPEN_PLAN, 1_000]]);
     const target = path.join(project, 'elsewhere', 'real-plan.txt');
     fs.mkdirSync(path.dirname(target));
     fs.writeFileSync(target, '# Linked Plan\n\n> **Goal:** via a link\n\n- [ ] linked item\n');
     fs.utimesSync(target, 9_000, 9_000);
-    const link = path.join(project, 'docs/plans', '2026-01-02-linked-plan.md');
+    const link = path.join(plans, '2026-01-02-linked-plan.md');
     fs.symlinkSync(target, link);
     // The link itself is older than the rival: only the followed target's
-    // mtime makes it the newest.
+    // mtime makes it the newest. Plain `ls -t` on Linux orders by the link's
+    // mtime and would pick the open plan; `ls -Lt` (and Node statSync) follow.
     fs.lutimesSync(link, 500, 500);
+    const lsL = spawnSync('bash', ['-c', 'LC_ALL=C ls -Lt "$1"/*.md', 'ls', plans], { encoding: 'utf8' });
+    assert.equal(lsL.status, 0, lsL.stderr);
+    assert.equal(path.basename(lsL.stdout.trim().split('\n')[0]), '2026-01-02-linked-plan.md',
+        'fixture precondition: ls -Lt must order by the followed target mtime');
     expectAllPick(project, '2026-01-02-linked-plan.md');
 });
 

@@ -78,6 +78,12 @@ function activePlanLine(context) {
 }
 
 try {
+    // Linux `ls -t` orders by the symlink's own mtime; Node `statSync` follows.
+    // The bash hook must use `-L` so a symlink to a newer regular plan wins on
+    // every platform (CI caught plain `-t` disagreeing with Cursor/Codex).
+    assert.match(fs.readFileSync(bashHook, 'utf8'), /LC_ALL=C ls -Lt /,
+        'bash plan listing must follow symlinks with ls -Lt');
+
     // AWM installs using-awm.md next to the hook; the envelope is its payload.
     const hooksRoot = path.join(workspace, 'awm-hooks');
     fs.mkdirSync(hooksRoot, { recursive: true });
