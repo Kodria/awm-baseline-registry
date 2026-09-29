@@ -269,19 +269,37 @@ try {
         fs.writeFileSync(file, `# ${name}\n\n- [ ] open step\n`);
         fs.utimesSync(file, 5_000, 5_000);
     }
-    const tie = spawnSync('bash', [bashHook], {
-        cwd: tieProject,
-        input: JSON.stringify({ source: 'compact' }),
-        encoding: 'utf8',
-        env: {
-            ...process.env,
-            AWM_HOOKS_ROOT: hooksRoot,
-            PATH: neutralPath,
-            LANG: 'en_US.UTF-8',
-            LC_ALL: 'en_US.UTF-8',
-        },
-    });
-    assert.equal(activePlanLine(contextOf(tie)), 'Active plan: B-plan.md');
+    const tieLocale = 'en_US.UTF-8';
+    const localeEnv = { ...process.env, PATH: neutralPath, LANG: tieLocale, LC_ALL: tieLocale };
+    const byteFirst = ['a-plan.md', 'B-plan.md']
+        .sort((a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b)))[0];
+    const lsFirst = (env) => {
+        const listed = spawnSync('bash', ['-c', 'ls -t "$1"/*.md', 'ls-first', tiePlans], { encoding: 'utf8', env });
+        assert.equal(listed.status, 0, listed.stderr);
+        return path.basename(listed.stdout.split('\n')[0]);
+    };
+    assert.equal(lsFirst({ ...localeEnv, LC_ALL: 'C' }), byteFirst, 'LC_ALL=C ls -t must list the byte-order file first');
+
+    // Precondition (A9): without the locale installed, `ls` silently falls back
+    // to C and the assertion below would pass even with LC_ALL=C removed from
+    // the hook. Require plain `ls -t` under the locale to disagree with byte
+    // order; otherwise fail in CI and skip visibly elsewhere.
+    const localeFirst = lsFirst(localeEnv);
+    const localeMissing = localeFirst === byteFirst
+        ? `${tieLocale} collation is unavailable on this host (plain \`ls -t\` printed ${localeFirst}, the byte-order file, first)`
+        : null;
+    if (localeMissing && process.env.CI) assert.fail(`locale precondition failed in CI: ${localeMissing}`);
+    if (localeMissing) {
+        process.stdout.write(`SKIP: bash plan tie-break under ${tieLocale}: ${localeMissing}\n`);
+    } else {
+        const tie = spawnSync('bash', [bashHook], {
+            cwd: tieProject,
+            input: JSON.stringify({ source: 'compact' }),
+            encoding: 'utf8',
+            env: { ...localeEnv, AWM_HOOKS_ROOT: hooksRoot },
+        });
+        assert.equal(activePlanLine(contextOf(tie)), `Active plan: ${byteFirst}`);
+    }
 
     assert.equal(heartbeatSnapshot(), heartbeatBefore, 'the suite must not rewrite hooks/heartbeat.json in the checkout');
 
