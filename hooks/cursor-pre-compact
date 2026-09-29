@@ -28,13 +28,21 @@ function installedScriptPath() {
         : __filename;
 }
 
+// Hook stdin is a small JSON envelope. Cap it so a never-EOF flood (/dev/zero)
+// cannot grow RSS without bound; anything past the cap is dropped and parsed
+// as incomplete JSON (fail-open to {}).
+const MAX_STDIN_BYTES = 1024 * 1024;
+
 // Reading fd 0 can raise EAGAIN when the parent handed us a non-blocking pipe;
 // that is a "try again", not "no input". Distinguishing it from malformed JSON
 // matters: silently degrading loses `conversation_id` and crosses markers.
 function readStdin() {
     // Chunks read before an EAGAIN are kept: a writer that holds stdin open
-    // (no EOF yet) must not lose the payload it already sent.
+    // (no EOF yet) must not lose the payload it already sent. The attempt
+    // counter resets on every successful read so a trickled payload does not
+    // burn the budget across chunks.
     const chunks = [];
+    let total = 0;
     const buffer = Buffer.alloc(64 * 1024);
     for (let attempt = 0; attempt < 20;) {
         let bytes;
@@ -53,22 +61,37 @@ function readStdin() {
             continue;
         }
         if (bytes === 0) break; // EOF
-        chunks.push(Buffer.from(buffer.subarray(0, bytes)));
+        attempt = 0;
+        const take = Math.min(bytes, MAX_STDIN_BYTES - total);
+        if (take > 0) chunks.push(Buffer.from(buffer.subarray(0, take)));
+        total += take;
+        if (total >= MAX_STDIN_BYTES) break;
     }
     return Buffer.concat(chunks).toString('utf8');
 }
 
 // Cursor owns this payload, but a hook that trusts its shape crashes on a
-// stray `null` or `"text"` — both of which are valid JSON.
+// stray `null` or `"text"` — both of which are valid JSON. When a truncated
+// payload fails JSON.parse, pull conversation_id from the leading bytes.
 function readInput() {
     if (process.stdin.isTTY) return {};
+    const raw = readStdin() || '';
     let parsed;
     try {
-        parsed = JSON.parse(readStdin() || '{}');
+        parsed = JSON.parse(raw || '{}');
     } catch {
-        return {};
+        return extractHookFields(raw);
     }
-    return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? parsed
+        : extractHookFields(raw);
+}
+
+function extractHookFields(raw) {
+    const out = {};
+    const id = raw.match(/"conversation_id"\s*:\s*"([^"]{1,128})"/);
+    if (id) out.conversation_id = id[1];
+    return out;
 }
 
 // Cursor passes no cwd. The env var is the documented project root; the first

@@ -55,13 +55,21 @@ function truncate(text, limit, marker) {
     return text.length > limit ? `${text.slice(0, limit)}\n${marker}` : text;
 }
 
+// Hook stdin is a small JSON envelope. Cap it so a never-EOF flood (/dev/zero)
+// cannot grow RSS without bound; anything past the cap is dropped and parsed
+// as incomplete JSON (fail-open to {}).
+const MAX_STDIN_BYTES = 1024 * 1024;
+
 // Reading fd 0 can raise EAGAIN when the parent handed us a non-blocking pipe;
 // that is a "try again", not "no input". Distinguishing it from malformed JSON
 // matters: silently degrading loses `cwd` and mislabels a compact as a startup.
 function readStdin() {
     // Chunks read before an EAGAIN are kept: a writer that holds stdin open
-    // (no EOF yet) must not lose the payload it already sent.
+    // (no EOF yet) must not lose the payload it already sent. The attempt
+    // counter resets on every successful read so a trickled payload does not
+    // burn the budget across chunks.
     const chunks = [];
+    let total = 0;
     const buffer = Buffer.alloc(64 * 1024);
     for (let attempt = 0; attempt < 20;) {
         let bytes;
@@ -80,7 +88,11 @@ function readStdin() {
             continue;
         }
         if (bytes === 0) break; // EOF
-        chunks.push(Buffer.from(buffer.subarray(0, bytes)));
+        attempt = 0;
+        const take = Math.min(bytes, MAX_STDIN_BYTES - total);
+        if (take > 0) chunks.push(Buffer.from(buffer.subarray(0, take)));
+        total += take;
+        if (total >= MAX_STDIN_BYTES) break;
     }
     return Buffer.concat(chunks).toString('utf8');
 }

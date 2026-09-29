@@ -408,8 +408,9 @@ async function validateSkillDiscoveryRoots(errors) {
 // blocks — so a concept can only be satisfied by code, not by a comment
 // describing it. String and template literals are skipped verbatim, so a `//`
 // or `/*` inside one (e.g. 'https://') is not taken for a comment. Regex
-// literals are not tracked: one holding a quote could only hide code and make
-// the gate fail loudly, never pass silently.
+// literals are tracked as a best-effort scan (division vs regex is ambiguous):
+// a quote inside `/…/` must not open a string span that would keep a later
+// comment and let that comment satisfy a concept.
 function withoutComments(source) {
   let code = '';
   let index = 0;
@@ -423,6 +424,17 @@ function withoutComments(source) {
       const end = source.indexOf('*/', index + 2);
       index = end === -1 ? source.length : end + 2;
       code += ' ';
+    } else if (char === '/' && looksLikeRegexLiteral(source, index)) {
+      let end = index + 1;
+      while (end < source.length) {
+        if (source[end] === '\\') { end += 2; continue; }
+        if (source[end] === '/') { end += 1; break; }
+        if (source[end] === '\n') break;
+        end += 1;
+      }
+      while (end < source.length && /[a-z]/i.test(source[end])) end += 1;
+      code += source.slice(index, end);
+      index = end;
     } else if (char === "'" || char === '"' || char === '`') {
       let end = index + 1;
       while (end < source.length && source[end] !== char) {
@@ -436,6 +448,18 @@ function withoutComments(source) {
     }
   }
   return code;
+}
+
+// Heuristic: a `/` starts a regex when the preceding non-space token is an
+// opener or operator, not an identifier/literal that would make it division.
+function looksLikeRegexLiteral(source, index) {
+  let i = index - 1;
+  while (i >= 0 && /[ \t]/.test(source[i])) i -= 1;
+  if (i < 0) return true;
+  const prev = source[i];
+  if (/[([{\];,=!?:&|~^+*%<>]/.test(prev)) return true;
+  if (prev === 'n' && source.slice(Math.max(0, i - 5), i + 1) === 'return') return true;
+  return false;
 }
 
 // Shared gate for an installable hook script: it must exist, be a regular

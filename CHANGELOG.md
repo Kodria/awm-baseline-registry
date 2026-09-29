@@ -33,8 +33,20 @@ Newest entry on top; append new releases directly below this line.
   makes them name different active plans. Under a non-C locale the Claude hook
   previously followed locale collation (`a-plan.md` before `B-plan.md`); it now
   picks `B-plan.md`, as the Node hooks do.
+- Plan scan (A10/A11): all three session hooks skip dot-prefixed names, follow
+  symlinks to regular files, skip devices/FIFOs/non-files, refuse plans over
+  1 MiB, and order candidates by `mtimeNs` (nanoseconds) so they name the same
+  active plan. Codex and Claude pick up the same skip/order rules Cursor added.
+- Goal extraction: `**Goal:**` and the H1 fallback are line-bounded (`[ \t]`,
+  not `\s`) in Cursor and Codex, so an empty Goal line never captures the next
+  body line.
+- Cursor stdin: each Cursor hook caps stdin at 1 MiB, resets the EAGAIN retry
+  budget on every successful read, recovers `conversation_id` from a truncated
+  payload when needed, and `post-tool-use` forwards only `conversation_id` /
+  `workspace_roots` to `session-start --reanchor`.
 - CI: `validate-portability.mjs` gates each Cursor hook (present, executable,
-  required concepts) and `validate.yml` runs `npm run test:cursor-hooks`.
+  required concepts) and `validate.yml` / `auto-tag.yml` run
+  `npm run test:cursor-hooks`.
 - CLI Plan B (the Cursor adapter) requires this registry tag as its minimum.
 
 ## Registry floor 9.14.0 — 2026-09-26

@@ -30,13 +30,21 @@ function installedScriptPath() {
         : __filename;
 }
 
+// Hook stdin is a small JSON envelope. Cap it so a never-EOF flood (/dev/zero)
+// cannot grow RSS without bound; anything past the cap is dropped and parsed
+// as incomplete JSON (fail-open to {}).
+const MAX_STDIN_BYTES = 1024 * 1024;
+
 // Reading fd 0 can raise EAGAIN when the parent handed us a non-blocking pipe;
 // that is a "try again", not "no input". Distinguishing it from malformed JSON
 // matters: silently degrading loses `conversation_id` and crosses markers.
 function readStdin() {
     // Chunks read before an EAGAIN are kept: a writer that holds stdin open
-    // (no EOF yet) must not lose the payload it already sent.
+    // (no EOF yet) must not lose the payload it already sent. The attempt
+    // counter resets on every successful read so a trickled payload does not
+    // burn the budget across chunks.
     const chunks = [];
+    let total = 0;
     const buffer = Buffer.alloc(64 * 1024);
     for (let attempt = 0; attempt < 20;) {
         let bytes;
@@ -55,22 +63,47 @@ function readStdin() {
             continue;
         }
         if (bytes === 0) break; // EOF
-        chunks.push(Buffer.from(buffer.subarray(0, bytes)));
+        attempt = 0;
+        const take = Math.min(bytes, MAX_STDIN_BYTES - total);
+        if (take > 0) chunks.push(Buffer.from(buffer.subarray(0, take)));
+        total += take;
+        if (total >= MAX_STDIN_BYTES) break;
     }
     return Buffer.concat(chunks).toString('utf8');
 }
 
 // Cursor owns this payload, but a hook that trusts its shape crashes on a
-// stray `null` or `"text"` — both of which are valid JSON.
+// stray `null` or `"text"` — both of which are valid JSON. When a truncated
+// multi-megabyte tool-call payload fails JSON.parse, pull conversation_id and
+// workspace_roots from the leading bytes so the marker claim still works.
 function readInput() {
     if (process.stdin.isTTY) return {};
+    const raw = readStdin() || '';
     let parsed;
     try {
-        parsed = JSON.parse(readStdin() || '{}');
+        parsed = JSON.parse(raw || '{}');
     } catch {
-        return {};
+        return extractHookFields(raw);
     }
-    return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? parsed
+        : extractHookFields(raw);
+}
+
+function extractHookFields(raw) {
+    const out = {};
+    const id = raw.match(/"conversation_id"\s*:\s*"([^"]{1,128})"/);
+    if (id) out.conversation_id = id[1];
+    const roots = raw.match(/"workspace_roots"\s*:\s*\[([^\]]{0,4096})\]/);
+    if (roots) {
+        try {
+            const list = JSON.parse(`[${roots[1]}]`);
+            if (Array.isArray(list)) out.workspace_roots = list;
+        } catch {
+            // Leave workspace_roots unset; CURSOR_PROJECT_DIR still resolves.
+        }
+    }
+    return out;
 }
 
 // One marker per conversation. The id is reduced to [A-Za-z0-9_-] so a hostile
@@ -132,10 +165,16 @@ function main() {
     } catch {
         // Best-effort: a leftover claim is swept once it is older than 24 h.
     }
+    // Forward only the fields session-start needs. Re-piping the whole Cursor
+    // tool-call payload can be multi-megabyte; the child then hits the stdin
+    // cap, abandons the parse, and the re-anchor is silently lost.
+    const forward = {};
+    if (typeof input.conversation_id === 'string') forward.conversation_id = input.conversation_id;
+    if (Array.isArray(input.workspace_roots)) forward.workspace_roots = input.workspace_roots;
     let text = '';
     try {
         text = execFileSync(process.execPath, [path.join(dir, 'session-start'), '--reanchor'], {
-            input: JSON.stringify(input),
+            input: JSON.stringify(forward),
             encoding: 'utf8',
             timeout: REANCHOR_TIMEOUT_MS,
             killSignal: 'SIGKILL',
