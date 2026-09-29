@@ -468,3 +468,22 @@ Deviation record: the A8 code-quality revalidation found three remaining issues.
 - **S1: UTF-8 byte order.** Both Node hooks break equal-mtime ties with `Buffer.compare(Buffer.from(a.file), Buffer.from(b.file))`. Test: two equal-mtime plans named with U+FF01 and U+1F600 are chosen identically by all three hooks. Run the Node hooks with the reversed-readdir preload as well.
 - **S1 and S3: locale precondition.** Before any assertion that relies on `en_US.UTF-8` collation, each locale tie-break test (in `tests/cursor-hooks.test.mjs` and `tests/session-start.test.mjs`) runs plain `ls -t` on its tie fixture, without `LC_ALL=C` and with the `en_US.UTF-8` env, and checks that locale order really differs from byte order. If it does not, the test fails when `CI` is set and prints a visible `SKIP` otherwise. It never passes silently.
 - **S1: quoting.** The preload is passed as `--require "<path>"` in `NODE_OPTIONS`, so a tmp path containing spaces works.
+
+#### Amendment A10 (2026-09-28, post-implementation QA)
+Deviation record: Track A was clean, and the Track B lenses found 12 defects. Several sit in helpers that S1/S2 copied verbatim from `hooks/codex-session-start`. The corrected clauses govern. The same pre-existing defects in `hooks/codex-session-start` and `hooks/session-start` that are not needed for cross-provider parity are tracked in issue #70.
+
+- **G1, S1 plan scan (robustness, logic, tests).**
+  - `activePlan` in `hooks/cursor-session-start` reads a candidate only if `fs.statSync` reports a regular file of at most 1 MiB, so a plan symlinked to `/dev/zero` or a FIFO cannot hang the hook.
+  - It skips dot-prefixed names, matching the bash `*.md` glob.
+  - It compares mtimes as `statSync(file, { bigint: true }).mtimeNs`, so sub-microsecond differences order the same way as `ls -t`.
+  - For cross-provider parity, the dot-prefix skip and the `mtimeNs` comparison also apply to `activePlan` in `hooks/codex-session-start`.
+  - The Goal regex no longer crosses lines: `^[> \t]*\*\*Goal:\*\*[ \t]*(\S.*)$`. An empty Goal line falls through to the H1, then to the file name.
+  - Tests cover each rule by mutation: the device/FIFO/oversize skip, the dotfile skip, ns ordering (set with `fs.utimesSync` using bigint-precision times, or skipped visibly if the filesystem cannot store them), the empty-Goal fallback, the open-checkbox filter, the HTML-anchored complete marker, the 500-char line cap, the 8-open-item cap, and the H1 Goal fallback.
+  - The heartbeat `.tmp` cleanup is tested by forcing the rename to fail (e.g. `heartbeat.json` as a directory), not with a read-only dir.
+- **G2, S1/S2 subprocess and stdin robustness.**
+  - Every `execFileSync` in the three Cursor hooks passes `killSignal: 'SIGKILL'`, so an `awm` or sibling that ignores SIGTERM is still bounded by its timeout.
+  - `readStdin` in the three Cursor hooks accumulates the bytes it has already read across EAGAIN retries, so a payload whose writer keeps stdin open is not lost.
+  - Tests: a `trap '' TERM` awm stub is bounded in `pre-compact` and in `session-start`; a payload written with stdin held open keeps its `conversation_id`; and `post-tool-use` with a marker but no active plan prints nothing.
+- **G3, S3 test isolation and gate precision.**
+  - Every bash-hook run in `tests/session-start.test.mjs` starts from an env with `CURSOR_VERSION`, `AWM_HOME` and a real `HOME` removed or pointed at tmp, so the suite passes inside a Cursor session that has the Cursor hook installed. A test pins this.
+  - The Cursor concept matcher in `scripts/validate-portability.mjs` also ignores `/* … */` block comments and trailing `//` comments outside string literals. The real repo still validates, and a comment-preserving mutant with a trailing comment is caught.
