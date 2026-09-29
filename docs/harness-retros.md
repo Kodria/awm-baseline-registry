@@ -1,5 +1,16 @@
 # Harness Retros
 
+## 2026-09-29 — Plan A Cursor hooks: stdin/parity/tests under load
+
+- **Class:** structural / process.
+- **Occurrences:** residual QA round after A10/A11; `awm ledger recurring --min 2` collapsed many already-fixed plan-parity signatures into one convergent cluster (tool still groups by loose similarity, not open status). Real open residuals closed in code: wall-clock-flaky timeout asserts, late EAGAIN stdin, H1 `#[ \\t]+`, 1 MiB stdin cap + slim re-pipe, portability regex-quote tracking, CHANGELOG/README.
+- **Curas ya materializadas (código + tests):** `tests/cursor-hooks.test.mjs` (status/signal bounds, late FIFO stdin, H1/`##`/`#tag`, 1 MiB cap, huge forward); `hooks/cursor-{session-start,pre-compact,post-tool-use}` (stdin cap, EAGAIN reset, field fallback, slim forward); `scripts/validate-portability.mjs` (regex literal scan); CHANGELOG + README.
+- **Recomendaciones (requieren autoridad, no aplicadas):**
+  1. Documentar en `AGENTS.md` (registry): "timeout/subprocess tests assert `status`/`signal`/`timedOut`, never tight wall-clock ceilings — those flake under CPU oversubscription."
+  2. Documentar en `using-awm` / development-process: unattended (`desatendido`) means in-provider session only; external `claude --bg` / detached CLIs that surface auth prompts are not a valid unattended launch (ledger `unattended-requires-in-provider-session`).
+- **Descartes (modo desatendido):** historical findings already fixed in A7–A11 (tie-break, SIGKILL, plan guards, ledger JSON, release gate) — no second rule; wins already on the branch. Portability division-vs-regex heuristic left as best-effort (selftest green); no further CONSTITUTION change without a real false-pass on a shipped hook.
+- **Sensores:** R8 registry opt-out (`not_certified`); native gates `test:cursor-hooks` 60/60, `test:session-start`, `test:portability` + selftest green.
+
 ## 2026-09-17 — R2-A: recibos completos de revisión y QA
 
 - **Class:** process.

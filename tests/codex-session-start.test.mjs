@@ -264,6 +264,58 @@ try {
         'startup',
     );
 
+    // Equal mtimes tie-break in byte order, as `ls -t` does in the Claude
+    // hook: `B-plan.md` (0x42) beats `a-plan.md` (0x61). localeCompare would
+    // pick `a-plan.md` and re-anchor on a different plan than Claude.
+    const tie = path.join(workspace, 'tie-break');
+    fs.mkdirSync(path.join(tie, 'docs/plans'), { recursive: true });
+    for (const name of ['a-plan.md', 'B-plan.md']) {
+        const file = path.join(tie, 'docs/plans', name);
+        fs.writeFileSync(file, `# ${name}\n\n- [ ] open item\n`);
+        fs.utimesSync(file, 5_000, 5_000);
+    }
+    assert.match(
+        parseContext(runHook(installed, { source: 'startup', cwd: tie })),
+        /^Active plan: B-plan\.md$/m,
+    );
+    // fs.readdirSync (libuv scandir) already returns byte order on macOS and
+    // Linux, so the case above passes even without the tie-breaker. Reversing
+    // readdirSync through a preload hands the hook `a-plan.md` first: only the
+    // byte-order tie-breaker can still pick `B-plan.md`.
+    // A directory name with a space: NODE_OPTIONS must quote the path.
+    fs.mkdirSync(path.join(workspace, 'pre load'));
+    const preload = path.join(workspace, 'pre load', 'reverse-readdir.cjs');
+    fs.writeFileSync(
+        preload,
+        "const fs = require('node:fs');\n"
+        + 'const readdirSync = fs.readdirSync;\n'
+        + 'fs.readdirSync = function reversed(...args) {\n'
+        + '    const entries = readdirSync.apply(this, args);\n'
+        + '    return Array.isArray(entries) ? entries.slice().reverse() : entries;\n'
+        + '};\n',
+    );
+    const reversedEnv = { ...process.env, NODE_OPTIONS: `--require "${preload}"` };
+    const seen = spawnSync(process.execPath, ['-e', 'console.log(require("node:fs").readdirSync(process.argv[1])[0])', path.join(tie, 'docs/plans')], {
+        encoding: 'utf8', env: reversedEnv,
+    });
+    assert.equal(seen.stdout.trim(), 'a-plan.md', 'the preload must hand the hook the byte-later plan first');
+    assert.match(
+        parseContext(runHook(installed, { source: 'startup', cwd: tie }, { env: reversedEnv })),
+        /^Active plan: B-plan\.md$/m,
+    );
+
+    // An empty `**Goal:**` line must not capture the body text below it; the
+    // goal falls back to the H1, as in the Cursor hook.
+    const emptyGoal = path.join(workspace, 'empty-goal');
+    fs.mkdirSync(path.join(emptyGoal, 'docs/plans'), { recursive: true });
+    fs.writeFileSync(
+        path.join(emptyGoal, 'docs/plans/2026-07-24-goal-plan.md'),
+        '# H1 Title\n\n**Goal:**\nBODY-TEXT-NOT-A-GOAL\n\n- [ ] item\n',
+    );
+    const emptyGoalContext = parseContext(runHook(installed, { source: 'startup', cwd: emptyGoal }));
+    assert.match(emptyGoalContext, /^Goal: H1 Title$/m);
+    assert.doesNotMatch(emptyGoalContext, /^Goal: BODY-TEXT-NOT-A-GOAL$/m);
+
     process.stdout.write('codex session hook: ok\n');
 } finally {
     fs.rmSync(workspace, { recursive: true, force: true });

@@ -96,6 +96,12 @@ const requiredCodexHookConcepts = [
   'heartbeat.json',
   'additionalContext',
 ];
+// The Cursor hooks are what the CLI installs under <AWM_HOME>/hooks/cursor/.
+const requiredCursorHookConcepts = {
+  'hooks/cursor-session-start': ['CURSOR_PROJECT_DIR', 'additional_context', 'heartbeat.json', '--reanchor', 'CONSTITUTION.md', 'docs/plans'],
+  'hooks/cursor-pre-compact': ['compaction-reanchor', '`compact-${', 'conversation_id'],
+  'hooks/cursor-post-tool-use': ['--reanchor', 'additional_context', '`compact-${', "startsWith('compact-')"],
+};
 // Every skill that resolves another skill on disk must search the shared global
 // root too — Claude-only roots make the lookup fail under OpenCode and Codex.
 const skillDiscoveryFiles = [
@@ -398,15 +404,76 @@ async function validateSkillDiscoveryRoots(errors) {
   }
 }
 
-async function validateCodexSessionHook(errors) {
-  const relativePath = 'hooks/codex-session-start';
+// Drops every JavaScript comment — whole-line or trailing `//`, and `/* … */`
+// blocks — so a concept can only be satisfied by code, not by a comment
+// describing it. String and template literals are skipped verbatim, so a `//`
+// or `/*` inside one (e.g. 'https://') is not taken for a comment. Regex
+// literals are tracked as a best-effort scan (division vs regex is ambiguous):
+// a quote inside `/…/` must not open a string span that would keep a later
+// comment and let that comment satisfy a concept.
+function withoutComments(source) {
+  let code = '';
+  let index = 0;
+  while (index < source.length) {
+    const char = source[index];
+    const next = source[index + 1];
+    if (char === '/' && next === '/') {
+      const end = source.indexOf('\n', index);
+      index = end === -1 ? source.length : end;
+    } else if (char === '/' && next === '*') {
+      const end = source.indexOf('*/', index + 2);
+      index = end === -1 ? source.length : end + 2;
+      code += ' ';
+    } else if (char === '/' && looksLikeRegexLiteral(source, index)) {
+      let end = index + 1;
+      while (end < source.length) {
+        if (source[end] === '\\') { end += 2; continue; }
+        if (source[end] === '/') { end += 1; break; }
+        if (source[end] === '\n') break;
+        end += 1;
+      }
+      while (end < source.length && /[a-z]/i.test(source[end])) end += 1;
+      code += source.slice(index, end);
+      index = end;
+    } else if (char === "'" || char === '"' || char === '`') {
+      let end = index + 1;
+      while (end < source.length && source[end] !== char) {
+        end += source[end] === '\\' ? 2 : 1;
+      }
+      code += source.slice(index, end + 1);
+      index = end + 1;
+    } else {
+      code += char;
+      index += 1;
+    }
+  }
+  return code;
+}
+
+// Heuristic: a `/` starts a regex when the preceding non-space token is an
+// opener or operator, not an identifier/literal that would make it division.
+function looksLikeRegexLiteral(source, index) {
+  let i = index - 1;
+  while (i >= 0 && /[ \t]/.test(source[i])) i -= 1;
+  if (i < 0) return true;
+  const prev = source[i];
+  if (/[([{\];,=!?:&|~^+*%<>]/.test(prev)) return true;
+  if (prev === 'n' && source.slice(Math.max(0, i - 5), i + 1) === 'return') return true;
+  return false;
+}
+
+// Shared gate for an installable hook script: it must exist, be a regular
+// executable file, and contain every required concept. Each missing concept is
+// reported on its own line so one CI round shows them all. With `codeOnly`,
+// concepts are matched against the script with its comments removed.
+async function validateHookScript(errors, relativePath, missingMessage, concepts, { codeOnly = false } = {}) {
   const hookPath = path.join(repoRoot, relativePath);
 
   let details;
   try {
     details = await stat(hookPath);
   } catch {
-    errors.push(`${relativePath}: missing Codex session recovery adapter`);
+    errors.push(`${relativePath}: ${missingMessage}`);
     return;
   }
   if (!details.isFile()) {
@@ -417,11 +484,27 @@ async function validateCodexSessionHook(errors) {
     errors.push(`${relativePath}: is not executable`);
   }
 
-  const source = await readFile(hookPath, 'utf8');
-  for (const concept of requiredCodexHookConcepts) {
+  const text = await readFile(hookPath, 'utf8');
+  const source = codeOnly ? withoutComments(text) : text;
+  for (const concept of concepts) {
     if (!source.includes(concept)) {
       errors.push(`${relativePath}: missing required concept ${JSON.stringify(concept)}`);
     }
+  }
+}
+
+async function validateCodexSessionHook(errors) {
+  await validateHookScript(
+    errors,
+    'hooks/codex-session-start',
+    'missing Codex session recovery adapter',
+    requiredCodexHookConcepts,
+  );
+}
+
+async function validateCursorHooks(errors) {
+  for (const [relativePath, concepts] of Object.entries(requiredCursorHookConcepts)) {
+    await validateHookScript(errors, relativePath, 'missing Cursor hook', concepts, { codeOnly: true });
   }
 }
 
@@ -525,6 +608,7 @@ async function main() {
   await validateConstitutionDelivery(errors);
   await validateSkillDiscoveryRoots(errors);
   await validateCodexSessionHook(errors);
+  await validateCursorHooks(errors);
   await validateBundleVersions(errors);
 
   const developmentProcessPath = path.join(repoRoot, 'agents', 'development-process.md');

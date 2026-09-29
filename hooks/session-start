@@ -10,6 +10,18 @@
 
 set -euo pipefail
 
+# Cursor also runs ~/.claude/settings.json hooks. When AWM's native Cursor hook
+# is installed it is the only carrier of this context; emitting here too would
+# pay for using-awm twice in every Cursor session. The sibling check covers a
+# custom AWM_HOME that Cursor does not export: this hook is installed in
+# <AWM_HOME>/hooks/, the parent of hooks/cursor/.
+if [ -n "${CURSOR_VERSION:-}" ] && {
+    [ -e "${AWM_HOME:-${HOME:-}/.awm}/hooks/cursor/session-start" ] ||
+    [ -e "$(dirname "$0")/cursor/session-start" ]
+}; then
+    exit 0
+fi
+
 # Determine hooks root. Set via env var so tests can override.
 # Defaults to the directory containing this script (assumes installed at ~/.awm/hooks/).
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -77,13 +89,23 @@ if [ -d "$PLANS_DIR" ]; then
         # `*design*` on the path dropped every plan in any repo whose directory
         # happened to contain "design", and also swallowed `-redesign-*-plan.md`.
         case "$(basename "$plan_file")" in *-design.md) continue;; esac
+        # A plan is a regular file (`-f` follows symlinks) of at most 1 MiB, as
+        # in the Node hooks: a FIFO or a link to /dev/zero would block grep, and
+        # a huge file would bloat the session start. Skipped unread.
+        [ -f "$plan_file" ] || continue
+        plan_bytes=$(wc -c < "$plan_file" 2>/dev/null | tr -d '[:space:]') || continue
+        { [ -n "$plan_bytes" ] && [ "$plan_bytes" -le 1048576 ]; } 2>/dev/null || continue
         grep -q '^- \[ \]' "$plan_file" 2>/dev/null || continue
         # Anchored to the HTML comment the skills actually write, so a plan whose
         # own steps mention the marker is not mistaken for a finished one.
         if grep -qE '<!--[[:space:]]*awm-(plan|qa)-complete' "$plan_file" 2>/dev/null; then continue; fi
         active_plan="$plan_file"
         break
-    done < <(ls -t "$PLANS_DIR"/*.md 2>/dev/null || true)
+    # LC_ALL=C: equal-mtime ties follow byte order on every platform and locale,
+    # the same tie-break as the Node hooks (A8). -L: sort by the followed
+    # target's mtime (GNU and BSD), matching Node's statSync — plain ls -t on
+    # Linux orders by the symlink's own mtime and would disagree with Cursor.
+    done < <(LC_ALL=C ls -Lt "$PLANS_DIR"/*.md 2>/dev/null || true)
 
     if [ -n "$active_plan" ]; then
         goal_line=$(grep -m1 '\*\*Goal:\*\*' "$active_plan" 2>/dev/null || true)

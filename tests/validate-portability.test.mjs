@@ -33,6 +33,22 @@ function writeJson(relativePath, value) {
     fs.writeFileSync(path.join(copy, relativePath), `${JSON.stringify(value, null, 2)}\n`);
 }
 
+// Replaces `token` on code lines only; whole-line comments (first non-blank
+// characters `//`, `/*` or `*`) keep it, so a concept that a comment alone
+// satisfies lets the mutant survive.
+function stripFromCode(relativePath, token, replacement = 'REMOVED') {
+    const file = path.join(copy, relativePath);
+    const before = fs.readFileSync(file, 'utf8');
+    fs.writeFileSync(file, before.split('\n')
+        .map((line) => (/^\s*(?:\/\/|\/\*|\*)/.test(line) ? line : line.replaceAll(token, replacement)))
+        .join('\n'));
+    return () => fs.writeFileSync(file, before);
+}
+
+function stripMarkerLogic(relativePath) {
+    return stripFromCode(relativePath, 'compact-', 'marker-');
+}
+
 // Every mutation is applied to a pristine copy and reverted afterwards, so a
 // failure in one case cannot mask or cause another.
 function mutation(name, expected, apply) {
@@ -208,6 +224,103 @@ const mutations = [
             return () => fs.writeFileSync(file, before, { mode: 0o755 });
         },
     ),
+    // The Cursor hooks are what `awm init --agent cursor` installs; they ship
+    // under the same exists / executable / concept gate as the Codex hook.
+    mutation(
+        'a Cursor hook losing its executable bit',
+        /hooks\/cursor-post-tool-use: is not executable/,
+        () => {
+            const file = path.join(copy, 'hooks/cursor-post-tool-use');
+            fs.chmodSync(file, 0o644);
+            return () => fs.chmodSync(file, 0o755);
+        },
+    ),
+    mutation(
+        'a Cursor hook deleted entirely',
+        /hooks\/cursor-pre-compact: missing Cursor hook/,
+        () => {
+            const file = path.join(copy, 'hooks/cursor-pre-compact');
+            const before = fs.readFileSync(file);
+            fs.rmSync(file);
+            return () => fs.writeFileSync(file, before, { mode: 0o755 });
+        },
+    ),
+    // Both concepts must be reported: a validator that stops at the first
+    // missing concept hides the second one until the next CI round.
+    mutation(
+        'a Cursor hook losing two required concepts',
+        /(?=[\s\S]*hooks\/cursor-session-start: missing required concept "CURSOR_PROJECT_DIR")(?=[\s\S]*hooks\/cursor-session-start: missing required concept "docs\/plans")/,
+        () => {
+            const file = path.join(copy, 'hooks/cursor-session-start');
+            const before = fs.readFileSync(file, 'utf8');
+            fs.writeFileSync(
+                file,
+                before.replaceAll('CURSOR_PROJECT_DIR', 'SOME_PROJECT_DIR').replaceAll('docs/plans', 'docs/other'),
+            );
+            return () => fs.writeFileSync(file, before);
+        },
+    ),
+    // The marker logic, not a comment describing it, must satisfy the gate:
+    // both hooks also mention `compact-` in comments, so these mutants rename
+    // the marker prefix on code lines only and keep every comment intact.
+    mutation(
+        'the Cursor pre-compact hook losing its compact- marker logic behind intact comments',
+        /hooks\/cursor-pre-compact: missing required concept "`compact-\$\{"/,
+        () => stripMarkerLogic('hooks/cursor-pre-compact'),
+    ),
+    mutation(
+        'the Cursor post-tool-use hook losing its compact- marker logic behind intact comments',
+        /(?=[\s\S]*hooks\/cursor-post-tool-use: missing required concept "`compact-\$\{")(?=[\s\S]*hooks\/cursor-post-tool-use: missing required concept "startsWith\('compact-'\)")/,
+        () => stripMarkerLogic('hooks/cursor-post-tool-use'),
+    ),
+    // One comment-preserving mutant per concept family: each removes a concept
+    // from code lines only. Every one of these tokens also appears in a
+    // comment of the same hook, so only code-only matching catches them.
+    mutation(
+        'the Cursor post-tool-use hook losing --reanchor from code behind intact comments',
+        /hooks\/cursor-post-tool-use: missing required concept "--reanchor"/,
+        () => stripFromCode('hooks/cursor-post-tool-use', '--reanchor'),
+    ),
+    mutation(
+        'the Cursor post-tool-use hook losing additional_context from code behind intact comments',
+        /hooks\/cursor-post-tool-use: missing required concept "additional_context"/,
+        () => stripFromCode('hooks/cursor-post-tool-use', 'additional_context'),
+    ),
+    mutation(
+        'the Cursor pre-compact hook losing conversation_id from code behind intact comments',
+        /hooks\/cursor-pre-compact: missing required concept "conversation_id"/,
+        () => stripFromCode('hooks/cursor-pre-compact', 'conversation_id'),
+    ),
+    mutation(
+        'the Cursor session-start hook losing CURSOR_PROJECT_DIR from code behind intact comments',
+        /hooks\/cursor-session-start: missing required concept "CURSOR_PROJECT_DIR"/,
+        () => stripFromCode('hooks/cursor-session-start', 'CURSOR_PROJECT_DIR'),
+    ),
+    mutation(
+        'the Cursor session-start hook losing heartbeat.json from code behind intact comments',
+        /hooks\/cursor-session-start: missing required concept "heartbeat\.json"/,
+        () => stripFromCode('hooks/cursor-session-start', 'heartbeat.json'),
+    ),
+    // A concept that survives only inside a trailing `//` comment or an
+    // unstarred `/* … */` block line is still a comment, not code.
+    mutation(
+        'a Cursor hook concept moved into a trailing // comment',
+        /hooks\/cursor-session-start: missing required concept "CURSOR_PROJECT_DIR"/,
+        () => {
+            const revert = stripFromCode('hooks/cursor-session-start', 'CURSOR_PROJECT_DIR');
+            fs.appendFileSync(path.join(copy, 'hooks/cursor-session-start'), '\nconst trailing = 1; // CURSOR_PROJECT_DIR\n');
+            return revert;
+        },
+    ),
+    mutation(
+        'a Cursor hook concept moved into an unstarred block-comment line',
+        /hooks\/cursor-post-tool-use: missing required concept "additional_context"/,
+        () => {
+            const revert = stripFromCode('hooks/cursor-post-tool-use', 'additional_context');
+            fs.appendFileSync(path.join(copy, 'hooks/cursor-post-tool-use'), '\n/*\n  additional_context\n*/\n');
+            return revert;
+        },
+    ),
     // Provenance is the field that survives `awm export`, where the repository
     // LICENSE does not travel. A skill added without it ships terms-less.
     mutation(
@@ -256,6 +369,22 @@ try {
 
         const restored = runValidator();
         assert.equal(restored.status, 0, `revert failed after ${name}:\n${restored.stderr}`);
+    }
+
+    // The comment stripper must not treat `//` or `/*` inside string and
+    // template literals as comments: code after them still satisfies a concept.
+    {
+        const revert = stripFromCode('hooks/cursor-session-start', 'CURSOR_PROJECT_DIR');
+        fs.appendFileSync(
+            path.join(copy, 'hooks/cursor-session-start'),
+            "\nconst probeUrl = 'https://example.invalid/*'; const probeTpl = `//${'/*'}`; const probeEsc = 'it\\'s // not a comment'; const probeDir = process.env.CURSOR_PROJECT_DIR;\n",
+        );
+        try {
+            const result = runValidator();
+            assert.equal(result.status, 0, `code after a string containing // must still count:\n${result.stderr}`);
+        } finally {
+            revert();
+        }
     }
 
     process.stdout.write(`portability validator: ${mutations.length} mutations caught\n`);

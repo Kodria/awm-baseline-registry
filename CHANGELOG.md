@@ -2,6 +2,54 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## Cursor native hooks — 2026-09-28
+
+- Three native Cursor hooks, installed by the CLI under
+  `<AWM_HOME>/hooks/cursor/`: `hooks/cursor-session-start` as `session-start`
+  (`sessionStart`: using-awm, `CONSTITUTION.md` and the re-anchor block as
+  `additional_context`, plus a `heartbeat.json` next to the installed script),
+  `hooks/cursor-pre-compact` as `pre-compact` (`preCompact`: marks the
+  conversation for re-anchoring in `<AWM_HOME>/hooks/cursor/state/`) and
+  `hooks/cursor-post-tool-use` as `post-tool-use` (`postToolUse`: claims that
+  marker once and injects the re-anchor block after a compaction).
+- `using-awm.md` location contract: the Cursor hook reads the composed payload
+  from `<AWM_HOME>/hooks/cursor/using-awm.md`, which the Cursor CLI adapter
+  writes. It never reads `<AWM_HOME>/hooks/using-awm.md`, the Claude adapter's
+  file, so Cursor works without Claude installed.
+- The Cursor hook renders only the `finding` entries of the `awm ledger list`
+  JSON output as open ledger items; wins are not open items. The Claude and
+  Codex hooks still carry the same pre-existing defect, tracked in issue #70.
+- Claude guard: Cursor also runs `~/.claude/settings.json` hooks, so
+  `hooks/session-start` now exits silently when `CURSOR_VERSION` is set and
+  either `${AWM_HOME:-${HOME:-}/.awm}/hooks/cursor/session-start` or its own
+  sibling `$(dirname "$0")/cursor/session-start` exists (the latter covers a
+  custom `AWM_HOME` that Cursor does not export). A dangling symlink counts as
+  not installed. Outside Cursor its output is byte-identical, apart from the
+  plan tie-break below.
+- Plan tie-break: all three session hooks (`hooks/cursor-session-start`,
+  `hooks/codex-session-start` and `hooks/session-start`) now break equal-mtime
+  plan ties in UTF-8 byte order on every locale (the Node hooks with
+  `Buffer.compare`, the Claude hook with `LC_ALL=C ls -Lt`), so a tie no longer
+  makes them name different active plans. Under a non-C locale the Claude hook
+  previously followed locale collation (`a-plan.md` before `B-plan.md`); it now
+  picks `B-plan.md`, as the Node hooks do.
+- Plan scan (A10/A11): all three session hooks skip dot-prefixed names, follow
+  symlinks to regular files, skip devices/FIFOs/non-files, refuse plans over
+  1 MiB, and order candidates by followed `mtimeNs` (nanoseconds) so they name
+  the same active plan. The Claude hook lists with `ls -Lt` (not plain `-t`) so
+  Linux orders by the target's mtime, matching Node `statSync`.
+- Goal extraction: `**Goal:**` and the H1 fallback are line-bounded (`[ \t]`,
+  not `\s`) in Cursor and Codex, so an empty Goal line never captures the next
+  body line.
+- Cursor stdin: each Cursor hook caps stdin at 1 MiB, resets the EAGAIN retry
+  budget on every successful read, recovers `conversation_id` from a truncated
+  payload when needed, and `post-tool-use` forwards only `conversation_id` /
+  `workspace_roots` to `session-start --reanchor`.
+- CI: `validate-portability.mjs` gates each Cursor hook (present, executable,
+  required concepts) and `validate.yml` / `auto-tag.yml` run
+  `npm run test:cursor-hooks`.
+- CLI Plan B (the Cursor adapter) requires this registry tag as its minimum.
+
 ## Registry floor 9.14.0 — 2026-09-26
 
 - `minCliVersion` 9.13.0 -> 9.14.0, the first CLI that admits a journal-less
