@@ -282,7 +282,9 @@ try {
     // Linux, so the case above passes even without the tie-breaker. Reversing
     // readdirSync through a preload hands the hook `a-plan.md` first: only the
     // byte-order tie-breaker can still pick `B-plan.md`.
-    const preload = path.join(workspace, 'reverse-readdir.cjs');
+    // A directory name with a space: NODE_OPTIONS must quote the path.
+    fs.mkdirSync(path.join(workspace, 'pre load'));
+    const preload = path.join(workspace, 'pre load', 'reverse-readdir.cjs');
     fs.writeFileSync(
         preload,
         "const fs = require('node:fs');\n"
@@ -292,7 +294,7 @@ try {
         + '    return Array.isArray(entries) ? entries.slice().reverse() : entries;\n'
         + '};\n',
     );
-    const reversedEnv = { ...process.env, NODE_OPTIONS: `--require ${preload}` };
+    const reversedEnv = { ...process.env, NODE_OPTIONS: `--require "${preload}"` };
     const seen = spawnSync(process.execPath, ['-e', 'console.log(require("node:fs").readdirSync(process.argv[1])[0])', path.join(tie, 'docs/plans')], {
         encoding: 'utf8', env: reversedEnv,
     });

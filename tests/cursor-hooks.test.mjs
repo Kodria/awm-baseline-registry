@@ -528,7 +528,8 @@ test('parity: the Active plan line matches hooks/codex-session-start', () => {
 // platform whose readdir is unsorted, so the tie-breaker is the ONLY thing
 // that can still produce the byte-order answer.
 function reversedReaddirPreload() {
-    const file = path.join(tmpDir('preload'), 'reverse-readdir.cjs');
+    // The directory name contains a space on purpose: NODE_OPTIONS must quote it.
+    const file = path.join(tmpDir('pre load'), 'reverse-readdir.cjs');
     fs.writeFileSync(file, [
         "const fs = require('node:fs');",
         'const readdirSync = fs.readdirSync;',
@@ -541,71 +542,115 @@ function reversedReaddirPreload() {
     return file;
 }
 
-test('parity (A7/A8): equal-mtime plans tie-break in byte order in all three hooks', () => {
-    // Byte order vs locale collation disagree on every pair below:
-    // `B` (0x42) < `a` (0x61), and `f` (0x66) < `é` (0xC3 0xA9).
+// UTF-8 byte order, the order of `LC_ALL=C ls`. JS `<` and Array#sort compare
+// UTF-16 code units, which disagree once an astral character (U+1F600, a
+// surrogate pair starting at 0xD83D) meets one in U+E000–U+FFFF (U+FF01).
+function byteOrderFirst(names) {
+    return [...names].sort((a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b)))[0];
+}
+
+const TIE_LOCALE = 'en_US.UTF-8';
+
+function writeTiePlans(pair) {
+    const project = tmpDir('tie-break');
+    const plans = path.join(project, 'docs/plans');
+    fs.mkdirSync(plans, { recursive: true });
+    for (const name of pair) {
+        const file = path.join(plans, name);
+        fs.writeFileSync(file, `# ${name}\n\n- [ ] open item\n`);
+        fs.utimesSync(file, 5_000, 5_000);
+    }
+    const [first, second] = pair.map((name) => fs.statSync(path.join(plans, name)).mtimeMs);
+    assert.equal(first, second, `${pair}: mtimes must tie`);
+    return { project, plans };
+}
+
+// First name `ls -t` prints for an equal-mtime fixture, under `env`.
+function lsFirst(plans, env) {
+    const result = spawnSync('bash', ['-c', 'ls -t "$1"/*.md', 'ls-first', plans], { encoding: 'utf8', env });
+    assert.equal(result.status, 0, result.stderr);
+    return path.basename(result.stdout.split('\n')[0]);
+}
+
+test('parity (A7/A8/A9): equal-mtime plans tie-break in byte order in all three hooks', async (t) => {
+    // Byte order and collation/UTF-16 order disagree on every pair below:
+    // `B` (0x42) < `a` (0x61); `f` (0x66) < `é` (0xC3 0xA9); and
+    // `！` U+FF01 (0xEF…) < `😀` U+1F600 (0xF0…) in bytes, but not in UTF-16.
     const pairs = [
         ['a-plan.md', 'B-plan.md'],
         ['plan-é.md', 'plan-f.md'],
+        ['plan-\u{1F600}.md', 'plan-\u{FF01}.md'],
     ];
-    const preload = reversedReaddirPreload();
-    const reversed = { NODE_OPTIONS: `--require ${preload}` };
-
-    const hooks = installHooks(tmpDir('install'));
-    const codex = path.join(tmpDir('install-codex'), 'session-start');
-    fs.copyFileSync(path.join(hooksSource, 'codex-session-start'), codex);
-    // The bash hook runs from a tmp copy too, so nothing executes out of the checkout.
-    const bashRoot = tmpDir('install-claude');
-    const bashHook = path.join(bashRoot, 'session-start');
-    fs.copyFileSync(path.join(hooksSource, 'session-start'), bashHook);
-    fs.writeFileSync(path.join(bashRoot, 'using-awm.md'), USING_AWM_BODY);
+    const fixtures = pairs.map((pair) => ({ pair, byteFirst: byteOrderFirst(pair), ...writeTiePlans(pair) }));
+    assert.equal(fixtures[2].byteFirst, 'plan-\u{FF01}.md');
+    assert.notEqual([...pairs[2]].sort()[0], fixtures[2].byteFirst, 'the astral pair must separate UTF-16 from UTF-8 order');
 
     const checkout = () => listTree(hooksSource).map((name) => [name, fs.readFileSync(path.join(hooksSource, name), 'utf8')]);
     const checkoutBefore = checkout();
 
-    for (const pair of pairs) {
-        const project = tmpDir('tie-break');
-        const plans = path.join(project, 'docs/plans');
-        fs.mkdirSync(plans, { recursive: true });
-        for (const name of pair) {
-            const file = path.join(plans, name);
-            fs.writeFileSync(file, `# ${name}\n\n- [ ] open item\n`);
-            fs.utimesSync(file, 5_000, 5_000);
+    await t.test('Node hooks (cursor, codex) with real and reversed readdir', () => {
+        const preload = reversedReaddirPreload();
+        assert.ok(preload.includes(' '), 'the preload path must contain a space');
+        const reversed = { NODE_OPTIONS: `--require "${preload}"` };
+        const hooks = installHooks(tmpDir('install'));
+        const codex = path.join(tmpDir('install-codex'), 'session-start');
+        fs.copyFileSync(path.join(hooksSource, 'codex-session-start'), codex);
+
+        for (const { pair, byteFirst, project, plans } of fixtures) {
+            // Self-test of the fixture: under the preload the hooks see the
+            // byte-LATER plan first, so only the tie-breaker can pick byteFirst.
+            const seen = spawnSync(process.execPath, ['-e', 'console.log(require("node:fs").readdirSync(process.argv[1])[0])', plans], {
+                encoding: 'utf8', env: { ...process.env, ...reversed },
+            });
+            assert.equal(seen.status, 0, seen.stderr);
+            assert.equal(seen.stdout.trim(), pair.find((name) => name !== byteFirst), `${pair}: preload must reverse readdir`);
+
+            for (const [mode, env] of [['readdir', {}], ['reversed-readdir', reversed]]) {
+                const cursorLine = activePlanLine(contextOf(runHook(hooks.sessionStart, {}, {
+                    env: { CURSOR_PROJECT_DIR: project, ...env },
+                })));
+                assert.equal(cursorLine, `Active plan: ${byteFirst}`, `${pair.join(' vs ')}: cursor/${mode} picked ${cursorLine}`);
+                const codexResult = runHook(codex, { cwd: project }, { env });
+                assert.equal(codexResult.status, 0, codexResult.stderr);
+                const codexLine = activePlanLine(JSON.parse(codexResult.stdout).hookSpecificOutput.additionalContext);
+                assert.equal(codexLine, `Active plan: ${byteFirst}`, `${pair.join(' vs ')}: codex/${mode} picked ${codexLine}`);
+            }
         }
-        const [first, second] = pair.map((name) => fs.statSync(path.join(plans, name)).mtimeMs);
-        assert.equal(first, second, `${pair}: mtimes must tie`);
-        const byteFirst = [...pair].sort()[0];
-        const expected = `Active plan: ${byteFirst}`;
+    });
 
-        // Self-test of the fixture: under the preload the hooks see the
-        // byte-LATER plan first, so only the tie-breaker can pick byteFirst.
-        const seen = spawnSync(process.execPath, ['-e', 'console.log(require("node:fs").readdirSync(process.argv[1])[0])', plans], {
-            encoding: 'utf8', env: { ...process.env, ...reversed },
-        });
-        assert.equal(seen.stdout.trim(), pair.find((name) => name !== byteFirst), `${pair}: preload must reverse readdir`);
+    // Precondition (A9): without the locale installed, `ls` silently falls
+    // back to C and the bash half would pass whether or not the hook pins
+    // LC_ALL=C. Require plain `ls -t` under the locale to disagree with byte
+    // order on the a/B fixture; otherwise fail in CI, skip visibly elsewhere.
+    const localeEnv = { ...baseEnv(), LANG: TIE_LOCALE, LC_ALL: TIE_LOCALE };
+    delete localeEnv.CURSOR_VERSION;
+    const localeFirst = lsFirst(fixtures[0].plans, localeEnv);
+    const localeMissing = localeFirst === fixtures[0].byteFirst
+        ? `${TIE_LOCALE} collation is unavailable on this host (plain \`ls -t\` printed ${localeFirst}, the byte-order file first)`
+        : false;
+    if (localeMissing && process.env.CI) assert.fail(`locale precondition failed in CI: ${localeMissing}`);
 
-        const lines = {};
-        for (const [mode, env] of [['readdir', {}], ['reversed-readdir', reversed]]) {
-            lines[`cursor/${mode}`] = activePlanLine(contextOf(runHook(hooks.sessionStart, {}, {
-                env: { CURSOR_PROJECT_DIR: project, ...env },
-            })));
-            const codexResult = runHook(codex, { cwd: project }, { env });
-            assert.equal(codexResult.status, 0, codexResult.stderr);
-            lines[`codex/${mode}`] = activePlanLine(JSON.parse(codexResult.stdout).hookSpecificOutput.additionalContext);
+    await t.test(`bash hooks/session-start under ${TIE_LOCALE}`, { skip: localeMissing ? `SKIP: ${localeMissing}` : false }, () => {
+        // The bash hook runs from a tmp copy, so nothing executes out of the checkout.
+        const bashRoot = tmpDir('install-claude');
+        const bashHook = path.join(bashRoot, 'session-start');
+        fs.copyFileSync(path.join(hooksSource, 'session-start'), bashHook);
+        fs.writeFileSync(path.join(bashRoot, 'using-awm.md'), USING_AWM_BODY);
+
+        for (const { pair, byteFirst, project, plans } of fixtures) {
+            // `LC_ALL=C ls -t` itself must pick the byte-first file.
+            assert.equal(lsFirst(plans, { ...localeEnv, LC_ALL: 'C' }), byteFirst, `${pair}: LC_ALL=C ls -t order`);
+            const bash = spawnSync('bash', [bashHook], {
+                cwd: project,
+                input: JSON.stringify({ source: 'compact' }),
+                encoding: 'utf8',
+                env: { ...localeEnv, AWM_HOOKS_ROOT: bashRoot },
+            });
+            assert.equal(bash.status, 0, bash.stderr);
+            const bashLine = activePlanLine(JSON.parse(bash.stdout).hookSpecificOutput.additionalContext);
+            assert.equal(bashLine, `Active plan: ${byteFirst}`, `${pair.join(' vs ')}: bash/${TIE_LOCALE} picked ${bashLine}`);
         }
-
-        const bashEnv = { ...baseEnv(), AWM_HOOKS_ROOT: bashRoot, LANG: 'en_US.UTF-8', LC_ALL: 'en_US.UTF-8' };
-        delete bashEnv.CURSOR_VERSION;
-        const bash = spawnSync('bash', [bashHook], {
-            cwd: project, input: JSON.stringify({ source: 'compact' }), encoding: 'utf8', env: bashEnv,
-        });
-        assert.equal(bash.status, 0, bash.stderr);
-        lines['bash/en_US.UTF-8'] = activePlanLine(JSON.parse(bash.stdout).hookSpecificOutput.additionalContext);
-
-        for (const [hook, line] of Object.entries(lines)) {
-            assert.equal(line, expected, `${pair.join(' vs ')}: ${hook} picked ${line}`);
-        }
-    }
+    });
 
     assert.deepEqual(checkout(), checkoutBefore, 'the parity run must not write into the checkout hooks/');
 });

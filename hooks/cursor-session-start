@@ -131,9 +131,10 @@ function activePlan(cwd) {
         }
     }
 
-    // Ties break in byte order, as `ls -t` does in hooks/session-start;
-    // localeCompare would disagree on case (`B-plan.md` vs `a-plan.md`).
-    candidates.sort((a, b) => b.mtime - a.mtime || (a.file < b.file ? -1 : a.file > b.file ? 1 : 0));
+    // Ties break in UTF-8 byte order, as `LC_ALL=C ls -t` does in
+    // hooks/session-start. localeCompare disagrees on case (`B-plan.md` vs
+    // `a-plan.md`) and `<` compares UTF-16 code units (U+1F600 vs U+FF01).
+    candidates.sort((a, b) => b.mtime - a.mtime || Buffer.compare(Buffer.from(a.file), Buffer.from(b.file)));
     return candidates[0] || null;
 }
 
