@@ -24,7 +24,15 @@ Newest entry on top; append new releases directly below this line.
   either `${AWM_HOME:-${HOME:-}/.awm}/hooks/cursor/session-start` or its own
   sibling `$(dirname "$0")/cursor/session-start` exists (the latter covers a
   custom `AWM_HOME` that Cursor does not export). A dangling symlink counts as
-  not installed. Outside Cursor its output is byte-identical.
+  not installed. Outside Cursor its output is byte-identical, apart from the
+  plan tie-break below.
+- Plan tie-break: all three session hooks (`hooks/cursor-session-start`,
+  `hooks/codex-session-start` and `hooks/session-start`) now break equal-mtime
+  plan ties in UTF-8 byte order on every locale (the Node hooks with
+  `Buffer.compare`, the Claude hook with `LC_ALL=C ls -t`), so a tie no longer
+  makes them name different active plans. Under a non-C locale the Claude hook
+  previously followed locale collation (`a-plan.md` before `B-plan.md`); it now
+  picks `B-plan.md`, as the Node hooks do.
 - CI: `validate-portability.mjs` gates each Cursor hook (present, executable,
   required concepts) and `validate.yml` runs `npm run test:cursor-hooks`.
 - CLI Plan B (the Cursor adapter) requires this registry tag as its minimum.
