@@ -34,7 +34,7 @@ awm pin <registry> <version>   # freeze a project on a known tag
 | `bundles/` | The installable units. A bundle names the skills, workflows, and agents it delivers, and may depend on another bundle |
 | `catalog.json` | The bundle index the CLI reads. Bundle versions here must match each `bundles/<name>/bundle.json` |
 | `sensor-packs/` | Executable quality sensors per ecosystem (`js-ts`, `python`, `shell`, `generic`) with their tool configuration |
-| `hooks/` | Session-start adapters that deliver the project constitution, active plan, and ledger into a new agent session |
+| `hooks/` | Provider session adapters (Claude, Codex, and Cursor) that deliver the project constitution, active plan, and ledger into a new agent session; Cursor also ships `pre-compact` / `post-tool-use` for post-compaction re-anchor |
 | `agents/`, `workflows/` | Agent profiles and orchestration templates |
 | `scripts/`, `tests/` | The gates that keep the above honest |
 

@@ -1,5 +1,9 @@
 # Cursor Hooks Implementation Plan (Plan A — registry)
 
+<!-- awm-qa-complete: 2026-09-29 -->
+<!-- awm-docs-complete: 2026-09-29 -->
+<!-- awm-retro-complete: 2026-09-29 -->
+
 > **For agentic workers:** REQUIRED: follow `development-process`; execute slice by slice with RED → GREEN evidence.
 
 > **Goal:** ship the three native Cursor hook scripts (`hooks/cursor-session-start`, `hooks/cursor-pre-compact`, `hooks/cursor-post-tool-use`) and the Claude-hook suppression guard, published under a registry tag before the CLI release that installs them.
