@@ -114,22 +114,26 @@ function activePlan(cwd) {
 
     const candidates = [];
     for (const name of names) {
-        if (!name.endsWith('.md') || DESIGN_DOC.test(name)) continue;
+        // Dot-prefixed names are skipped, as the bash hook's `*.md` glob does.
+        if (name.startsWith('.') || !name.endsWith('.md') || DESIGN_DOC.test(name)) continue;
         const file = path.join(plansDir, name);
         try {
             const body = fs.readFileSync(file, 'utf8');
             if (!/^- \[ \]/m.test(body)) continue;
             if (PLAN_COMPLETE.test(body)) continue;
-            candidates.push({ file, body, mtime: fs.statSync(file).mtimeMs });
+            // bigint: mtimeNs keeps the nanoseconds that `ls -t` orders by;
+            // float mtimeMs merges mtimes less than ~240 ns apart.
+            candidates.push({ file, body, mtime: fs.statSync(file, { bigint: true }).mtimeNs });
         } catch {
             // Unreadable plan: skip it rather than losing the whole re-anchor.
         }
     }
 
-    // Ties break in UTF-8 byte order, as `LC_ALL=C ls -t` does in
-    // hooks/session-start. localeCompare disagrees on case (`B-plan.md` vs
+    // Newest first. Ties break in UTF-8 byte order, as `LC_ALL=C ls -t` does
+    // in hooks/session-start. localeCompare disagrees on case (`B-plan.md` vs
     // `a-plan.md`) and `<` compares UTF-16 code units (U+1F600 vs U+FF01).
-    candidates.sort((a, b) => b.mtime - a.mtime || Buffer.compare(Buffer.from(a.file), Buffer.from(b.file)));
+    candidates.sort((a, b) => (b.mtime > a.mtime ? 1 : b.mtime < a.mtime ? -1 : 0)
+        || Buffer.compare(Buffer.from(a.file), Buffer.from(b.file)));
     return candidates[0] || null;
 }
 

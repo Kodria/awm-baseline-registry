@@ -104,6 +104,10 @@ const PLAN_COMPLETE = /<!--\s*awm-(plan|qa)-complete/;
 // Design docs are `<topic>-design.md`. Matching the bare word `design` would
 // also drop `2026-07-24-redesign-checkout-plan.md`, losing recovery entirely.
 const DESIGN_DOC = /-design\.md$/;
+// A plan is a regular file of at most this size. Anything else (a symlink to
+// /dev/zero, a FIFO with no writer, a huge file) is skipped unread: reading it
+// would hang or bloat the session start.
+const MAX_PLAN_BYTES = 1024 * 1024;
 
 // Active plan = most-recently-modified plan (not a design doc) that still has
 // open checkboxes and is not marked complete. Deterministic and file-derived,
@@ -119,22 +123,29 @@ function activePlan(cwd) {
 
     const candidates = [];
     for (const name of names) {
-        if (!name.endsWith('.md') || DESIGN_DOC.test(name)) continue;
+        // Dot-prefixed names are skipped, as the bash hook's `*.md` glob does.
+        if (name.startsWith('.') || !name.endsWith('.md') || DESIGN_DOC.test(name)) continue;
         const file = path.join(plansDir, name);
         try {
+            // statSync follows symlinks, so a link to a device is caught here.
+            // bigint: mtimeNs keeps the nanoseconds that `ls -t` orders by;
+            // float mtimeMs merges mtimes less than ~240 ns apart.
+            const stat = fs.statSync(file, { bigint: true });
+            if (!stat.isFile() || stat.size > BigInt(MAX_PLAN_BYTES)) continue;
             const body = fs.readFileSync(file, 'utf8');
             if (!/^- \[ \]/m.test(body)) continue;
             if (PLAN_COMPLETE.test(body)) continue;
-            candidates.push({ file, body, mtime: fs.statSync(file).mtimeMs });
+            candidates.push({ file, body, mtime: stat.mtimeNs });
         } catch {
             // Unreadable plan: skip it rather than losing the whole re-anchor.
         }
     }
 
-    // Ties break in UTF-8 byte order, as `LC_ALL=C ls -t` does in
-    // hooks/session-start. localeCompare disagrees on case (`B-plan.md` vs
+    // Newest first. Ties break in UTF-8 byte order, as `LC_ALL=C ls -t` does
+    // in hooks/session-start. localeCompare disagrees on case (`B-plan.md` vs
     // `a-plan.md`) and `<` compares UTF-16 code units (U+1F600 vs U+FF01).
-    candidates.sort((a, b) => b.mtime - a.mtime || Buffer.compare(Buffer.from(a.file), Buffer.from(b.file)));
+    candidates.sort((a, b) => (b.mtime > a.mtime ? 1 : b.mtime < a.mtime ? -1 : 0)
+        || Buffer.compare(Buffer.from(a.file), Buffer.from(b.file)));
     return candidates[0] || null;
 }
 
@@ -275,7 +286,9 @@ function usingAwm(scriptPath, cwd) {
 function reanchorSection(cwd, heading) {
     const plan = activePlan(cwd);
     if (!plan) return '';
-    const goal = plan.body.match(/^[>\s]*\*\*Goal:\*\*\s*(.+)$/m)?.[1]
+    // `[> \t]` and `[ \t]`, not `\s`: an empty `**Goal:**` line must fall
+    // through to the H1 instead of capturing the next line.
+    const goal = plan.body.match(/^[> \t]*\*\*Goal:\*\*[ \t]*(\S.*)$/m)?.[1]
         || plan.body.match(/^#\s+(.+)$/m)?.[1]
         || path.basename(plan.file);
     const openItems = (plan.body.match(/^- \[ \].+$/gm) || [])

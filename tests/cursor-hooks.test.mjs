@@ -115,12 +115,13 @@ function baseEnv(stubDir = failingAwm) {
     };
 }
 
-function runHook(installed, input, { env = {}, args = [], cwd, stub } = {}) {
+function runHook(installed, input, { env = {}, args = [], cwd, stub, timeout } = {}) {
     return spawnSync(process.execPath, [installed, ...args], {
         input: typeof input === 'string' ? input : JSON.stringify(input),
         encoding: 'utf8',
         cwd,
         env: { ...baseEnv(stub), ...env },
+        timeout,
     });
 }
 
@@ -454,18 +455,30 @@ test('R17: a symlinked install writes the heartbeat beside the link, not the reg
     assert.equal(read(), before, 'the registry checkout heartbeat must not change');
 });
 
-test('R17: a read-only install dir still answers with valid JSON and leaves no .tmp', { skip: process.getuid?.() === 0 || process.platform === 'win32' }, () => {
+test('R17: a read-only install dir still answers with valid JSON', { skip: process.getuid?.() === 0 || process.platform === 'win32' }, () => {
     const project = makeProject('readonly');
     const hooks = installHooks(tmpDir('install'));
     fs.chmodSync(hooks.dir, 0o555);
     try {
         const context = contextOf(runHook(hooks.sessionStart, {}, { env: { CURSOR_PROJECT_DIR: project } }));
         assert.ok(context.includes('INSTALLED-USING-AWM-BODY'));
-        assert.deepEqual(fs.readdirSync(hooks.dir).filter((name) => name.endsWith('.tmp')), []);
         assert.ok(!fs.existsSync(path.join(hooks.dir, 'heartbeat.json')));
     } finally {
         fs.chmodSync(hooks.dir, 0o755);
     }
+});
+
+test('R17: a failing heartbeat rename leaves no .tmp behind', () => {
+    // heartbeat.json as a directory: the .tmp write succeeds and the rename
+    // over it fails, so only the cleanup can keep the install dir clean. (A
+    // read-only dir fails the .tmp write itself and proves nothing.)
+    const project = makeProject('rename-fails');
+    const hooks = installHooks(tmpDir('install'));
+    fs.mkdirSync(path.join(hooks.dir, 'heartbeat.json'));
+    const context = contextOf(runHook(hooks.sessionStart, {}, { env: { CURSOR_PROJECT_DIR: project } }));
+    assert.ok(context.includes('INSTALLED-USING-AWM-BODY'));
+    assert.ok(fs.statSync(path.join(hooks.dir, 'heartbeat.json')).isDirectory());
+    assert.deepEqual(fs.readdirSync(hooks.dir).filter((name) => name.endsWith('.tmp')), []);
 });
 
 test('R17: --reanchor prints plain text and writes no heartbeat', () => {
@@ -653,6 +666,179 @@ test('parity (A7/A8/A9): equal-mtime plans tie-break in byte order in all three 
     });
 
     assert.deepEqual(checkout(), checkoutBefore, 'the parity run must not write into the checkout hooks/');
+});
+
+// --- A10 (G1): the plan scan ---
+
+// Writes plans into a fresh project. Each entry is [name, body, mtimeSeconds];
+// mtimes are stamped explicitly so a rule under test, not the clock, decides.
+function planProject(label, entries) {
+    const project = tmpDir(label);
+    const plans = path.join(project, 'docs/plans');
+    fs.mkdirSync(plans, { recursive: true });
+    for (const [name, body, mtime] of entries) {
+        const file = path.join(plans, name);
+        fs.writeFileSync(file, body);
+        if (mtime !== undefined) fs.utimesSync(file, mtime, mtime);
+    }
+    return { project, plans };
+}
+
+function scanReanchor(hooks, project, options = {}) {
+    const result = runHook(hooks.sessionStart, {}, { args: ['--reanchor'], env: { CURSOR_PROJECT_DIR: project }, ...options });
+    assert.equal(result.status, 0, result.stderr || `signal ${result.signal}`);
+    return result.stdout;
+}
+
+// All three session hooks, installed from tmp copies (nothing runs out of the checkout).
+function installAllSessionHooks() {
+    const hooks = installHooks(tmpDir('install'));
+    const codex = path.join(tmpDir('install-codex'), 'session-start');
+    fs.copyFileSync(path.join(hooksSource, 'codex-session-start'), codex);
+    const bashRoot = tmpDir('install-claude');
+    const bash = path.join(bashRoot, 'session-start');
+    fs.copyFileSync(path.join(hooksSource, 'session-start'), bash);
+    fs.writeFileSync(path.join(bashRoot, 'using-awm.md'), USING_AWM_BODY);
+
+    return {
+        cursor: (project) => activePlanLine(scanReanchor(hooks, project)),
+        codex: (project) => {
+            const result = runHook(codex, { cwd: project });
+            assert.equal(result.status, 0, result.stderr);
+            return activePlanLine(JSON.parse(result.stdout).hookSpecificOutput.additionalContext);
+        },
+        bash: (project) => {
+            const env = { ...baseEnv(), AWM_HOOKS_ROOT: bashRoot };
+            delete env.CURSOR_VERSION;
+            const result = spawnSync('bash', [bash], { cwd: project, input: JSON.stringify({ source: 'compact' }), encoding: 'utf8', env });
+            assert.equal(result.status, 0, result.stderr);
+            return activePlanLine(JSON.parse(result.stdout).hookSpecificOutput.additionalContext);
+        },
+    };
+}
+
+const OPEN_PLAN = '# Open Plan\n\n> **Goal:** the real one\n\n- [ ] open item\n';
+
+test('A10: a device, FIFO or oversize plan is skipped, never read', { skip: process.platform === 'win32' }, () => {
+    const { project, plans } = planProject('plan-types', [['2026-01-01-open-plan.md', OPEN_PLAN, 1_000]]);
+    fs.symlinkSync('/dev/zero', path.join(plans, 'zzz-zero-plan.md'));
+    spawnSync('mkfifo', [path.join(plans, 'zzz-fifo-plan.md')]);
+    assert.ok(fs.statSync(path.join(plans, 'zzz-fifo-plan.md')).isFIFO(), 'mkfifo must create the FIFO');
+    // Newer and over 1 MiB, with an open item: must lose to the small plan.
+    const big = path.join(plans, 'zzz-big-plan.md');
+    fs.writeFileSync(big, `# Big\n\n- [ ] big item\n${'x'.repeat(1024 * 1024)}`);
+    fs.utimesSync(big, 9_000, 9_000);
+
+    const hooks = installHooks(tmpDir('install'));
+    const started = Date.now();
+    const out = scanReanchor(hooks, project, { timeout: 8_000 });
+    assert.ok(Date.now() - started < 4_000, `the scan took ${Date.now() - started} ms`);
+    assert.equal(activePlanLine(out), 'Active plan: 2026-01-01-open-plan.md');
+});
+
+test('A10: a plan of exactly 1 MiB is still read', () => {
+    const body = '# Limit Plan\n\n> **Goal:** at the limit\n\n- [ ] limit item\n';
+    const { project, plans } = planProject('plan-limit', [
+        ['2026-01-01-open-plan.md', OPEN_PLAN, 1_000],
+        ['2026-01-02-limit-plan.md', `${body}${'y'.repeat(1024 * 1024 - Buffer.byteLength(body))}`, 9_000],
+    ]);
+    assert.equal(fs.statSync(path.join(plans, '2026-01-02-limit-plan.md')).size, 1024 * 1024);
+    const hooks = installHooks(tmpDir('install'));
+    assert.equal(activePlanLine(scanReanchor(hooks, project)), 'Active plan: 2026-01-02-limit-plan.md');
+});
+
+test('A10: dot-prefixed plans are skipped by all three hooks, like the bash glob', () => {
+    const { project } = planProject('plan-dot', [
+        ['2026-01-01-open-plan.md', OPEN_PLAN, 1_000],
+        ['.2026-01-02-hidden-plan.md', '# Hidden\n\n- [ ] hidden item\n', 9_000],
+    ]);
+    const all = installAllSessionHooks();
+    for (const hook of ['cursor', 'codex', 'bash']) {
+        assert.equal(all[hook](project), 'Active plan: 2026-01-01-open-plan.md', `${hook} must skip the dotfile plan`);
+    }
+});
+
+test('A10: mtimes closer than float mtimeMs can tell apart order like ls -t in all three hooks', (t) => {
+    // Byte-FIRST name is the older one, so a merged mtimeMs plus the byte
+    // tie-break would pick it: only a nanosecond comparison picks the newer.
+    const { project, plans } = planProject('plan-ns', [
+        ['a-older-plan.md', '# Older\n\n- [ ] older item\n'],
+        ['b-newer-plan.md', '# Newer\n\n- [ ] newer item\n'],
+    ]);
+    const older = path.join(plans, 'a-older-plan.md');
+    const newer = path.join(plans, 'b-newer-plan.md');
+    // fs.utimesSync takes double seconds and cannot express 100 ns at this
+    // epoch; `touch -d` with a fractional second can, where the fs stores it.
+    spawnSync('touch', ['-d', '2026-09-28T12:00:00.000000000', older]);
+    spawnSync('touch', ['-d', '2026-09-28T12:00:00.000000100', newer]);
+    const olderNs = fs.statSync(older, { bigint: true }).mtimeNs;
+    const newerNs = fs.statSync(newer, { bigint: true }).mtimeNs;
+    if (!(newerNs > olderNs) || fs.statSync(older).mtimeMs !== fs.statSync(newer).mtimeMs) {
+        t.skip(`SKIP: this filesystem/touch cannot store a sub-240 ns mtime split (older ${olderNs}, newer ${newerNs})`);
+        return;
+    }
+    const all = installAllSessionHooks();
+    for (const hook of ['cursor', 'codex', 'bash']) {
+        assert.equal(all[hook](project), 'Active plan: b-newer-plan.md', `${hook} must order by nanoseconds`);
+    }
+});
+
+test('A10: a plan with no open checkbox is not active', () => {
+    const { project } = planProject('plan-closed', [
+        ['2026-01-01-open-plan.md', OPEN_PLAN, 1_000],
+        ['2026-01-02-closed-plan.md', '# Closed\n\n> **Goal:** nothing open\n\n- [x] done item\n', 9_000],
+    ]);
+    const hooks = installHooks(tmpDir('install'));
+    assert.equal(activePlanLine(scanReanchor(hooks, project)), 'Active plan: 2026-01-01-open-plan.md');
+});
+
+test('A10: only the HTML-comment complete marker retires a plan', () => {
+    const hooks = installHooks(tmpDir('install'));
+    for (const marker of ['<!-- awm-qa-complete -->', '<!--awm-plan-complete-->']) {
+        const { project } = planProject('plan-done', [
+            ['2026-01-01-open-plan.md', OPEN_PLAN, 1_000],
+            ['2026-01-02-done-plan.md', `# Done\n\n- [ ] leftover\n${marker}\n`, 9_000],
+        ]);
+        assert.equal(activePlanLine(scanReanchor(hooks, project)), 'Active plan: 2026-01-01-open-plan.md', `${marker} must retire the plan`);
+    }
+    // A plan whose own steps mention the marker, not as a comment, stays active.
+    const { project } = planProject('plan-mentions', [
+        ['2026-01-01-open-plan.md', OPEN_PLAN, 1_000],
+        ['2026-01-02-marker-plan.md', '# Marker\n\n- [ ] append the awm-qa-complete comment when done\n', 9_000],
+    ]);
+    assert.equal(activePlanLine(scanReanchor(hooks, project)), 'Active plan: 2026-01-02-marker-plan.md');
+});
+
+test('A10: Goal falls back to the H1, then to the file name; an empty Goal line never captures the next line', () => {
+    const hooks = installHooks(tmpDir('install'));
+    const goalOf = (body) => {
+        const { project } = planProject('plan-goal', [['2026-01-01-goal-plan.md', body, 1_000]]);
+        return scanReanchor(hooks, project).split('\n').find((line) => line.startsWith('Goal: '));
+    };
+    assert.equal(goalOf('# H1 Title\n\n> **Goal:** stated goal\n\n- [ ] item\n'), 'Goal: stated goal');
+    assert.equal(goalOf('# H1 Title\n\n- [ ] item\n'), 'Goal: H1 Title');
+    assert.equal(goalOf('# H1 Title\n\n**Goal:**\n- [ ] first item\n'), 'Goal: H1 Title');
+    assert.equal(goalOf('# H1 Title\n\n> **Goal:**   \n\n- [ ] first item\n'), 'Goal: H1 Title');
+    assert.equal(goalOf('no heading\n\n- [ ] item\n'), 'Goal: 2026-01-01-goal-plan.md');
+});
+
+test('A10: open plan items are capped at 500 chars each and 8 in total, below the 4 KiB cap', () => {
+    const hooks = installHooks(tmpDir('install'));
+
+    const long = `- [ ] ${'L'.repeat(600)}`;
+    const { project: longProject } = planProject('plan-long-line', [['2026-01-01-long-plan.md', `# Long\n\n${long}\n`, 1_000]]);
+    const longOut = scanReanchor(hooks, longProject);
+    assert.ok(Buffer.byteLength(longOut) < 4096 && !longOut.includes('[truncated by AWM'), 'the 4 KiB cap must not be what cuts the line');
+    const lines = longOut.split('\n');
+    const at = lines.findIndex((line) => line.startsWith('- [ ] L'));
+    assert.equal(lines[at], long.slice(0, 500));
+    assert.equal(lines[at + 1], '[truncated]');
+
+    const items = Array.from({ length: 12 }, (_, i) => `- [ ] item ${i}`);
+    const { project: manyProject } = planProject('plan-many-items', [['2026-01-01-many-plan.md', `# Many\n\n${items.join('\n')}\n`, 1_000]]);
+    const manyOut = scanReanchor(hooks, manyProject);
+    assert.ok(Buffer.byteLength(manyOut) < 4096 && !manyOut.includes('[truncated by AWM'), 'the 4 KiB cap must not be what drops items');
+    assert.deepEqual(manyOut.split('\n').filter((line) => line.startsWith('- [ ] item ')), items.slice(0, 8));
 });
 
 // --- S2: deferred compaction re-anchor (R16, R16.1) ---
