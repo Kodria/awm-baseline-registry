@@ -89,6 +89,12 @@ if [ -d "$PLANS_DIR" ]; then
         # `*design*` on the path dropped every plan in any repo whose directory
         # happened to contain "design", and also swallowed `-redesign-*-plan.md`.
         case "$(basename "$plan_file")" in *-design.md) continue;; esac
+        # A plan is a regular file (`-f` follows symlinks) of at most 1 MiB, as
+        # in the Node hooks: a FIFO or a link to /dev/zero would block grep, and
+        # a huge file would bloat the session start. Skipped unread.
+        [ -f "$plan_file" ] || continue
+        plan_bytes=$(wc -c < "$plan_file" 2>/dev/null | tr -d '[:space:]') || continue
+        { [ -n "$plan_bytes" ] && [ "$plan_bytes" -le 1048576 ]; } 2>/dev/null || continue
         grep -q '^- \[ \]' "$plan_file" 2>/dev/null || continue
         # Anchored to the HTML comment the skills actually write, so a plan whose
         # own steps mention the marker is not mistaken for a finished one.

@@ -122,6 +122,7 @@ function runHook(installed, input, { env = {}, args = [], cwd, stub, timeout } =
         cwd,
         env: { ...baseEnv(stub), ...env },
         timeout,
+        ...(timeout ? { killSignal: 'SIGKILL' } : {}),
     });
 }
 
@@ -691,6 +692,8 @@ function scanReanchor(hooks, project, options = {}) {
 }
 
 // All three session hooks, installed from tmp copies (nothing runs out of the checkout).
+const HOOK_TIMEOUT_MS = 8_000;
+
 function installAllSessionHooks() {
     const hooks = installHooks(tmpDir('install'));
     const codex = path.join(tmpDir('install-codex'), 'session-start');
@@ -700,18 +703,22 @@ function installAllSessionHooks() {
     fs.copyFileSync(path.join(hooksSource, 'session-start'), bash);
     fs.writeFileSync(path.join(bashRoot, 'using-awm.md'), USING_AWM_BODY);
 
+    // Every spawn is bounded: a hook that blocks on a plan (a FIFO, a device)
+    // is SIGKILLed by the timeout, and the status/signal check reports it.
+    const bound = { timeout: HOOK_TIMEOUT_MS, killSignal: 'SIGKILL' };
+    const ok = (result, hook) => assert.equal(result.status, 0, `${hook}: ${result.stderr || `signal ${result.signal}`}`);
     return {
-        cursor: (project) => activePlanLine(scanReanchor(hooks, project)),
+        cursor: (project) => activePlanLine(scanReanchor(hooks, project, { timeout: HOOK_TIMEOUT_MS })),
         codex: (project) => {
-            const result = runHook(codex, { cwd: project });
-            assert.equal(result.status, 0, result.stderr);
+            const result = runHook(codex, { cwd: project }, { timeout: HOOK_TIMEOUT_MS });
+            ok(result, 'codex');
             return activePlanLine(JSON.parse(result.stdout).hookSpecificOutput.additionalContext);
         },
         bash: (project) => {
             const env = { ...baseEnv(), AWM_HOOKS_ROOT: bashRoot };
             delete env.CURSOR_VERSION;
-            const result = spawnSync('bash', [bash], { cwd: project, input: JSON.stringify({ source: 'compact' }), encoding: 'utf8', env });
-            assert.equal(result.status, 0, result.stderr);
+            const result = spawnSync('bash', [bash], { cwd: project, input: JSON.stringify({ source: 'compact' }), encoding: 'utf8', env, ...bound });
+            ok(result, 'bash');
             return activePlanLine(JSON.parse(result.stdout).hookSpecificOutput.additionalContext);
         },
     };
@@ -719,32 +726,62 @@ function installAllSessionHooks() {
 
 const OPEN_PLAN = '# Open Plan\n\n> **Goal:** the real one\n\n- [ ] open item\n';
 
-test('A10: a device, FIFO or oversize plan is skipped, never read', { skip: process.platform === 'win32' }, () => {
-    const { project, plans } = planProject('plan-types', [['2026-01-01-open-plan.md', OPEN_PLAN, 1_000]]);
-    fs.symlinkSync('/dev/zero', path.join(plans, 'zzz-zero-plan.md'));
-    spawnSync('mkfifo', [path.join(plans, 'zzz-fifo-plan.md')]);
-    assert.ok(fs.statSync(path.join(plans, 'zzz-fifo-plan.md')).isFIFO(), 'mkfifo must create the FIFO');
-    // Newer and over 1 MiB, with an open item: must lose to the small plan.
-    const big = path.join(plans, 'zzz-big-plan.md');
-    fs.writeFileSync(big, `# Big\n\n- [ ] big item\n${'x'.repeat(1024 * 1024)}`);
-    fs.utimesSync(big, 9_000, 9_000);
+// A10/A11: a plan is a regular file (symlinks followed) of at most 1 MiB, in
+// all three hooks, so they keep naming the same plan.
+function expectAllPick(project, expected) {
+    const all = installAllSessionHooks();
+    for (const hook of ['cursor', 'codex', 'bash']) {
+        assert.equal(all[hook](project), `Active plan: ${expected}`, `${hook} picked a different plan`);
+    }
+}
 
-    const hooks = installHooks(tmpDir('install'));
-    const started = Date.now();
-    const out = scanReanchor(hooks, project, { timeout: 8_000 });
-    assert.ok(Date.now() - started < 4_000, `the scan took ${Date.now() - started} ms`);
-    assert.equal(activePlanLine(out), 'Active plan: 2026-01-01-open-plan.md');
+test('A10/A11: a newest plan over 1 MiB is skipped by all three hooks', () => {
+    const { project, plans } = planProject('plan-oversize', [['2026-01-01-open-plan.md', OPEN_PLAN, 1_000]]);
+    const big = path.join(plans, 'zzz-big-plan.md');
+    const head = '# Big\n\n- [ ] big item\n';
+    fs.writeFileSync(big, `${head}${'x'.repeat(1024 * 1024 + 1 - Buffer.byteLength(head))}`);
+    fs.utimesSync(big, 9_000, 9_000);
+    assert.equal(fs.statSync(big).size, 1024 * 1024 + 1);
+    expectAllPick(project, '2026-01-01-open-plan.md');
 });
 
-test('A10: a plan of exactly 1 MiB is still read', () => {
+test('A10/A11: a plan of exactly 1 MiB is still read by all three hooks', () => {
     const body = '# Limit Plan\n\n> **Goal:** at the limit\n\n- [ ] limit item\n';
     const { project, plans } = planProject('plan-limit', [
         ['2026-01-01-open-plan.md', OPEN_PLAN, 1_000],
         ['2026-01-02-limit-plan.md', `${body}${'y'.repeat(1024 * 1024 - Buffer.byteLength(body))}`, 9_000],
     ]);
     assert.equal(fs.statSync(path.join(plans, '2026-01-02-limit-plan.md')).size, 1024 * 1024);
-    const hooks = installHooks(tmpDir('install'));
-    assert.equal(activePlanLine(scanReanchor(hooks, project)), 'Active plan: 2026-01-02-limit-plan.md');
+    expectAllPick(project, '2026-01-02-limit-plan.md');
+});
+
+test('A10/A11: device and FIFO plans are skipped unread by all three hooks', { skip: process.platform === 'win32' }, () => {
+    for (const kind of ['device', 'fifo']) {
+        const { project, plans } = planProject(`plan-${kind}`, [['2026-01-01-open-plan.md', OPEN_PLAN, 1_000]]);
+        const special = path.join(plans, `zzz-${kind}-plan.md`);
+        if (kind === 'device') {
+            fs.symlinkSync('/dev/zero', special);
+            assert.ok(fs.statSync(special).isCharacterDevice());
+        } else {
+            spawnSync('mkfifo', [special]);
+            assert.ok(fs.statSync(special).isFIFO(), 'mkfifo must create the FIFO');
+        }
+        expectAllPick(project, '2026-01-01-open-plan.md');
+    }
+});
+
+test('A10/A11: a symlink to a regular plan is followed by all three hooks', () => {
+    const { project } = planProject('plan-symlink', [['2026-01-01-open-plan.md', OPEN_PLAN, 1_000]]);
+    const target = path.join(project, 'elsewhere', 'real-plan.txt');
+    fs.mkdirSync(path.dirname(target));
+    fs.writeFileSync(target, '# Linked Plan\n\n> **Goal:** via a link\n\n- [ ] linked item\n');
+    fs.utimesSync(target, 9_000, 9_000);
+    const link = path.join(project, 'docs/plans', '2026-01-02-linked-plan.md');
+    fs.symlinkSync(target, link);
+    // The link itself is older than the rival: only the followed target's
+    // mtime makes it the newest.
+    fs.lutimesSync(link, 500, 500);
+    expectAllPick(project, '2026-01-02-linked-plan.md');
 });
 
 test('A10: dot-prefixed plans are skipped by all three hooks, like the bash glob', () => {
@@ -820,6 +857,9 @@ test('A10: Goal falls back to the H1, then to the file name; an empty Goal line 
     assert.equal(goalOf('# H1 Title\n\n**Goal:**\n- [ ] first item\n'), 'Goal: H1 Title');
     assert.equal(goalOf('# H1 Title\n\n> **Goal:**   \n\n- [ ] first item\n'), 'Goal: H1 Title');
     assert.equal(goalOf('no heading\n\n- [ ] item\n'), 'Goal: 2026-01-01-goal-plan.md');
+    // The H1 needs whitespace after a single `#`: neither `## Section` nor
+    // `#tag` is the title.
+    assert.equal(goalOf('## Section\n#tag\n# Real Title\n\n- [ ] item\n'), 'Goal: Real Title');
 });
 
 test('A10: open plan items are capped at 500 chars each and 8 in total, below the 4 KiB cap', () => {

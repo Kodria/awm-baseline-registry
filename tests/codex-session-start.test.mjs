@@ -304,6 +304,18 @@ try {
         /^Active plan: B-plan\.md$/m,
     );
 
+    // An empty `**Goal:**` line must not capture the body text below it; the
+    // goal falls back to the H1, as in the Cursor hook.
+    const emptyGoal = path.join(workspace, 'empty-goal');
+    fs.mkdirSync(path.join(emptyGoal, 'docs/plans'), { recursive: true });
+    fs.writeFileSync(
+        path.join(emptyGoal, 'docs/plans/2026-07-24-goal-plan.md'),
+        '# H1 Title\n\n**Goal:**\nBODY-TEXT-NOT-A-GOAL\n\n- [ ] item\n',
+    );
+    const emptyGoalContext = parseContext(runHook(installed, { source: 'startup', cwd: emptyGoal }));
+    assert.match(emptyGoalContext, /^Goal: H1 Title$/m);
+    assert.doesNotMatch(emptyGoalContext, /^Goal: BODY-TEXT-NOT-A-GOAL$/m);
+
     process.stdout.write('codex session hook: ok\n');
 } finally {
     fs.rmSync(workspace, { recursive: true, force: true });
