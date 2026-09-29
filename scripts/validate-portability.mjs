@@ -404,19 +404,44 @@ async function validateSkillDiscoveryRoots(errors) {
   }
 }
 
-// Drops whole-line comments (first non-blank characters `//`, `/*` or `*`) so a
-// concept can only be satisfied by code, not by a comment describing it.
-function withoutCommentLines(source) {
-  return source
-    .split('\n')
-    .filter((line) => !/^\s*(?:\/\/|\/\*|\*)/.test(line))
-    .join('\n');
+// Drops every JavaScript comment — whole-line or trailing `//`, and `/* … */`
+// blocks — so a concept can only be satisfied by code, not by a comment
+// describing it. String and template literals are skipped verbatim, so a `//`
+// or `/*` inside one (e.g. 'https://') is not taken for a comment. Regex
+// literals are not tracked: one holding a quote could only hide code and make
+// the gate fail loudly, never pass silently.
+function withoutComments(source) {
+  let code = '';
+  let index = 0;
+  while (index < source.length) {
+    const char = source[index];
+    const next = source[index + 1];
+    if (char === '/' && next === '/') {
+      const end = source.indexOf('\n', index);
+      index = end === -1 ? source.length : end;
+    } else if (char === '/' && next === '*') {
+      const end = source.indexOf('*/', index + 2);
+      index = end === -1 ? source.length : end + 2;
+      code += ' ';
+    } else if (char === "'" || char === '"' || char === '`') {
+      let end = index + 1;
+      while (end < source.length && source[end] !== char) {
+        end += source[end] === '\\' ? 2 : 1;
+      }
+      code += source.slice(index, end + 1);
+      index = end + 1;
+    } else {
+      code += char;
+      index += 1;
+    }
+  }
+  return code;
 }
 
 // Shared gate for an installable hook script: it must exist, be a regular
 // executable file, and contain every required concept. Each missing concept is
 // reported on its own line so one CI round shows them all. With `codeOnly`,
-// concepts are matched against the script with whole-line comments removed.
+// concepts are matched against the script with its comments removed.
 async function validateHookScript(errors, relativePath, missingMessage, concepts, { codeOnly = false } = {}) {
   const hookPath = path.join(repoRoot, relativePath);
 
@@ -436,7 +461,7 @@ async function validateHookScript(errors, relativePath, missingMessage, concepts
   }
 
   const text = await readFile(hookPath, 'utf8');
-  const source = codeOnly ? withoutCommentLines(text) : text;
+  const source = codeOnly ? withoutComments(text) : text;
   for (const concept of concepts) {
     if (!source.includes(concept)) {
       errors.push(`${relativePath}: missing required concept ${JSON.stringify(concept)}`);

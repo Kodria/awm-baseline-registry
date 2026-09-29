@@ -301,6 +301,26 @@ const mutations = [
         /hooks\/cursor-session-start: missing required concept "heartbeat\.json"/,
         () => stripFromCode('hooks/cursor-session-start', 'heartbeat.json'),
     ),
+    // A concept that survives only inside a trailing `//` comment or an
+    // unstarred `/* … */` block line is still a comment, not code.
+    mutation(
+        'a Cursor hook concept moved into a trailing // comment',
+        /hooks\/cursor-session-start: missing required concept "CURSOR_PROJECT_DIR"/,
+        () => {
+            const revert = stripFromCode('hooks/cursor-session-start', 'CURSOR_PROJECT_DIR');
+            fs.appendFileSync(path.join(copy, 'hooks/cursor-session-start'), '\nconst trailing = 1; // CURSOR_PROJECT_DIR\n');
+            return revert;
+        },
+    ),
+    mutation(
+        'a Cursor hook concept moved into an unstarred block-comment line',
+        /hooks\/cursor-post-tool-use: missing required concept "additional_context"/,
+        () => {
+            const revert = stripFromCode('hooks/cursor-post-tool-use', 'additional_context');
+            fs.appendFileSync(path.join(copy, 'hooks/cursor-post-tool-use'), '\n/*\n  additional_context\n*/\n');
+            return revert;
+        },
+    ),
     // Provenance is the field that survives `awm export`, where the repository
     // LICENSE does not travel. A skill added without it ships terms-less.
     mutation(
@@ -349,6 +369,22 @@ try {
 
         const restored = runValidator();
         assert.equal(restored.status, 0, `revert failed after ${name}:\n${restored.stderr}`);
+    }
+
+    // The comment stripper must not treat `//` or `/*` inside string and
+    // template literals as comments: code after them still satisfies a concept.
+    {
+        const revert = stripFromCode('hooks/cursor-session-start', 'CURSOR_PROJECT_DIR');
+        fs.appendFileSync(
+            path.join(copy, 'hooks/cursor-session-start'),
+            "\nconst probeUrl = 'https://example.invalid/*'; const probeTpl = `//${'/*'}`; const probeEsc = 'it\\'s // not a comment'; const probeDir = process.env.CURSOR_PROJECT_DIR;\n",
+        );
+        try {
+            const result = runValidator();
+            assert.equal(result.status, 0, `code after a string containing // must still count:\n${result.stderr}`);
+        } finally {
+            revert();
+        }
     }
 
     process.stdout.write(`portability validator: ${mutations.length} mutations caught\n`);
