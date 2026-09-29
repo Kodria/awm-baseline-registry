@@ -59,20 +59,30 @@ function truncate(text, limit, marker) {
 // that is a "try again", not "no input". Distinguishing it from malformed JSON
 // matters: silently degrading loses `cwd` and mislabels a compact as a startup.
 function readStdin() {
-    for (let attempt = 0; attempt < 20; attempt += 1) {
+    // Chunks read before an EAGAIN are kept: a writer that holds stdin open
+    // (no EOF yet) must not lose the payload it already sent.
+    const chunks = [];
+    const buffer = Buffer.alloc(64 * 1024);
+    for (let attempt = 0; attempt < 20;) {
+        let bytes;
         try {
-            return fs.readFileSync(0, 'utf8');
+            bytes = fs.readSync(0, buffer, 0, buffer.length, null);
         } catch (error) {
-            if (error.code !== 'EAGAIN') return '';
+            if (error.code !== 'EAGAIN') break;
+            attempt += 1;
             try {
-                // Block briefly without a timer: sleep via a 0-byte read retry.
-                execFileSync(process.execPath, ['-e', 'setTimeout(()=>{},10)'], { stdio: 'ignore' });
+                // Back off ~10 ms by running a short-lived Node child (one
+                // spawn per retry, up to 20), then retry the read.
+                execFileSync(process.execPath, ['-e', 'setTimeout(()=>{},10)'], { stdio: 'ignore', killSignal: 'SIGKILL' });
             } catch {
-                return '';
+                break;
             }
+            continue;
         }
+        if (bytes === 0) break; // EOF
+        chunks.push(Buffer.from(buffer.subarray(0, bytes)));
     }
-    return '';
+    return Buffer.concat(chunks).toString('utf8');
 }
 
 // Codex owns this payload, but a hook that trusts its shape crashes the whole
@@ -171,6 +181,7 @@ function ledgerItems(cwd) {
             encoding: 'utf8',
             stdio: ['ignore', 'pipe', 'ignore'],
             timeout: AWM_TIMEOUT_MS,
+            killSignal: 'SIGKILL',
             maxBuffer: MAX_LEDGER_BYTES,
         }));
     } catch {
@@ -289,7 +300,7 @@ function reanchorSection(cwd, heading) {
     // `[> \t]` and `[ \t]`, not `\s`: an empty `**Goal:**` line must fall
     // through to the H1 instead of capturing the next line.
     const goal = plan.body.match(/^[> \t]*\*\*Goal:\*\*[ \t]*(\S.*)$/m)?.[1]
-        || plan.body.match(/^#\s+(.+)$/m)?.[1]
+        || plan.body.match(/^#[ \t]+(\S.*)$/m)?.[1]
         || path.basename(plan.file);
     const openItems = (plan.body.match(/^- \[ \].+$/gm) || [])
         .slice(0, 8)

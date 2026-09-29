@@ -32,21 +32,30 @@ function installedScriptPath() {
 // that is a "try again", not "no input". Distinguishing it from malformed JSON
 // matters: silently degrading loses `conversation_id` and crosses markers.
 function readStdin() {
-    for (let attempt = 0; attempt < 20; attempt += 1) {
+    // Chunks read before an EAGAIN are kept: a writer that holds stdin open
+    // (no EOF yet) must not lose the payload it already sent.
+    const chunks = [];
+    const buffer = Buffer.alloc(64 * 1024);
+    for (let attempt = 0; attempt < 20;) {
+        let bytes;
         try {
-            return fs.readFileSync(0, 'utf8');
+            bytes = fs.readSync(0, buffer, 0, buffer.length, null);
         } catch (error) {
-            if (error.code !== 'EAGAIN') return '';
+            if (error.code !== 'EAGAIN') break;
+            attempt += 1;
             try {
                 // Back off ~10 ms by running a short-lived Node child (one
                 // spawn per retry, up to 20), then retry the read.
-                execFileSync(process.execPath, ['-e', 'setTimeout(()=>{},10)'], { stdio: 'ignore' });
+                execFileSync(process.execPath, ['-e', 'setTimeout(()=>{},10)'], { stdio: 'ignore', killSignal: 'SIGKILL' });
             } catch {
-                return '';
+                break;
             }
+            continue;
         }
+        if (bytes === 0) break; // EOF
+        chunks.push(Buffer.from(buffer.subarray(0, bytes)));
     }
-    return '';
+    return Buffer.concat(chunks).toString('utf8');
 }
 
 // Cursor owns this payload, but a hook that trusts its shape crashes on a
@@ -108,7 +117,7 @@ function main() {
                 '--source-skill', 'context-compaction-recovery', '--polarity', 'finding',
                 '--class', 'proceso', '--signature', 'compaction-reanchor', '--severity', 'info',
                 '--desc', 'Cursor compacted the context; re-anchor queued for the next tool call'],
-            { cwd, stdio: 'ignore', timeout: AWM_TIMEOUT_MS });
+            { cwd, stdio: 'ignore', timeout: AWM_TIMEOUT_MS, killSignal: 'SIGKILL' });
         } catch {
             // Best-effort audit trail, same as the Claude and Codex hooks.
         }

@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test, { after } from 'node:test';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -1259,4 +1259,131 @@ test('R5/R16: the injected re-anchor is at most 4096 bytes end-to-end', () => {
     assert.ok(Buffer.byteLength(context, 'utf8') <= 4096, `got ${Buffer.byteLength(context, 'utf8')} bytes`);
     assert.ok(context.includes('Re-anchor (post-compaction)'));
     assert.ok(context.includes('[truncated by AWM'));
+});
+
+// --- A10 G2: subprocess and stdin robustness ---
+
+// An `awm` that ignores SIGTERM (the only signal a default execFileSync timeout
+// sends). The ignored disposition survives `exec`, so SIGTERM stops nothing
+// and only SIGKILL bounds it; `exec` leaves no orphan behind once it is killed.
+const TERM_IGNORING_AWM = "trap '' TERM\nexec sleep 30";
+
+test('A10 G2: a SIGTERM-ignoring awm cannot outlive the pre-compact and session-start timeouts', () => {
+    const project = makeProject('term-ignoring');
+    const stub = awmStub(TERM_IGNORING_AWM);
+
+    const hooks = installHooks(tmpDir('install'));
+    let started = Date.now();
+    const pre = runHook(hookOf(hooks, 'pre-compact'), { conversation_id: 'c1' }, {
+        env: { CURSOR_PROJECT_DIR: project }, cwd: tmpDir('launch'), stub, timeout: 15_000,
+    });
+    let elapsed = Date.now() - started;
+    assert.equal(pre.signal, null, `pre-compact was killed by the harness after ${elapsed} ms`);
+    assert.ok(elapsed < 5000, `pre-compact took ${elapsed} ms`);
+    assert.equal(pre.status, 0, pre.stderr);
+    assert.equal(pre.stdout, '{}\n');
+    assert.ok(fs.existsSync(path.join(stateDir(hooks), 'compact-c1')));
+
+    started = Date.now();
+    const session = runHook(hooks.sessionStart, {}, { env: { CURSOR_PROJECT_DIR: project }, stub, timeout: 15_000 });
+    elapsed = Date.now() - started;
+    assert.equal(session.signal, null, `session-start was killed by the harness after ${elapsed} ms`);
+    assert.ok(elapsed < 5000, `session-start took ${elapsed} ms`);
+    const context = contextOf(session);
+    assert.equal(activePlanLine(context), 'Active plan: 2026-07-24-demo-plan.md');
+    assert.ok(!context.includes('Open ledger items:'));
+});
+
+test('A10 G2: a SIGTERM-ignoring session-start sibling cannot outlive the post-tool-use timeout', () => {
+    const hooks = installHooks(tmpDir('install'));
+    writeMarker(hooks, 'compact-c1');
+    fakeSessionStart(hooks, "process.on('SIGTERM', () => {});\nsetTimeout(() => {}, 30000);");
+    const started = Date.now();
+    const result = runHook(hookOf(hooks, 'post-tool-use'), { conversation_id: 'c1' }, { cwd: tmpDir('launch'), timeout: 15_000 });
+    const elapsed = Date.now() - started;
+    assert.equal(result.signal, null, `post-tool-use was killed by the harness after ${elapsed} ms`);
+    assert.ok(elapsed < 5000, `post-tool-use took ${elapsed} ms`);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, '');
+});
+
+// The payload is written to a FIFO the test keeps open, so the hook never sees
+// EOF: readInput() makes fd 0 non-blocking, and readStdin must keep the bytes
+// it already read across its EAGAIN retries instead of discarding them.
+function runWithHeldStdin(installed, payload, { env = {}, cwd = workspace } = {}) {
+    return new Promise((resolve) => {
+        const fifo = path.join(tmpDir('fifo'), 'stdin');
+        const made = spawnSync('mkfifo', [fifo]);
+        assert.equal(made.status, 0, String(made.stderr));
+        const writer = fs.openSync(fifo, 'r+'); // keeps a writer open: no EOF
+        fs.writeSync(writer, payload);
+        const child = spawn(process.execPath, [installed], {
+            env: { ...baseEnv(), ...env }, cwd, stdio: [writer, 'pipe', 'pipe'],
+        });
+        let stdout = '';
+        let timedOut = false;
+        const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, 10_000);
+        child.stdout.on('data', (chunk) => { stdout += chunk; });
+        child.on('close', (status) => {
+            clearTimeout(timer);
+            fs.closeSync(writer);
+            resolve({ status, stdout, timedOut });
+        });
+    });
+}
+
+test('A10 G2: a payload whose writer keeps stdin open is not lost (all three hooks)', { skip: process.platform === 'win32' }, async () => {
+    const project = makeProject('held-stdin', { plan: 'held' });
+
+    const hooks = installHooks(tmpDir('install'));
+    const pre = await runWithHeldStdin(hookOf(hooks, 'pre-compact'), '{"conversation_id":"abc"}', {
+        env: { CURSOR_PROJECT_DIR: project },
+    });
+    assert.equal(pre.timedOut, false);
+    assert.equal(pre.status, 0);
+    assert.equal(pre.stdout, '{}\n');
+    assert.deepEqual(fs.readdirSync(stateDir(hooks)), ['compact-abc']);
+
+    // post-tool-use (off the hot path: a marker exists) consumes compact-abc.
+    const post = await runWithHeldStdin(hookOf(hooks, 'post-tool-use'), '{"conversation_id":"abc"}', {
+        env: { CURSOR_PROJECT_DIR: project },
+    });
+    assert.equal(post.timedOut, false);
+    assert.equal(post.status, 0);
+    assert.equal(activePlanLine(JSON.parse(post.stdout).additional_context), 'Active plan: 2026-07-24-held-plan.md');
+    assert.deepEqual(fs.readdirSync(stateDir(hooks)), []);
+
+    // session-start resolves the project from the held payload's workspace_roots.
+    const session = await runWithHeldStdin(hooks.sessionStart, JSON.stringify({ workspace_roots: [project] }), {
+        cwd: tmpDir('launch'),
+    });
+    assert.equal(session.timedOut, false);
+    assert.equal(session.status, 0);
+    assert.equal(activePlanLine(JSON.parse(session.stdout).additional_context), 'Active plan: 2026-07-24-held-plan.md');
+});
+
+test('A10 G2: a consumed marker with no active plan prints nothing', () => {
+    const project = makeProject('no-active-plan', { plan: null });
+    const hooks = installHooks(tmpDir('install'));
+    writeMarker(hooks, 'compact-c1');
+    const result = runHook(hookOf(hooks, 'post-tool-use'), { conversation_id: 'c1' }, {
+        env: { CURSOR_PROJECT_DIR: project }, cwd: tmpDir('launch'),
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, '', 'an empty re-anchor must not be injected');
+    assert.deepEqual(fs.readdirSync(stateDir(hooks)), [], 'the marker is still consumed');
+});
+
+test('A10 G2: the H1 Goal fallback never crosses a line break', () => {
+    const hooks = installHooks(tmpDir('install'));
+    const goalOf = (body) => {
+        const { project } = planProject('plan-h1', [['2026-01-01-h1-plan.md', body, 1_000]]);
+        return scanReanchor(hooks, project).split('\n').find((line) => line.startsWith('Goal: '));
+    };
+    // A bare `#` line is not a heading: the next real H1 is the goal.
+    assert.equal(goalOf('#\nNot a heading\n\n# Real Title\n\n- [ ] item\n'), 'Goal: Real Title');
+    // `#` followed only by blanks never captures the following line.
+    assert.equal(goalOf('#   \nNot a heading\n\n- [ ] item\n'), 'Goal: 2026-01-01-h1-plan.md');
+    // A tab after `#` still makes an H1.
+    assert.equal(goalOf('#\tTabbed Title\n\n- [ ] item\n'), 'Goal: Tabbed Title');
 });
