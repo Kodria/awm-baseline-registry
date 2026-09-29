@@ -487,3 +487,20 @@ Deviation record: Track A was clean, and the Track B lenses found 12 defects. Se
 - **G3, S3 test isolation and gate precision.**
   - Every bash-hook run in `tests/session-start.test.mjs` starts from an env with `CURSOR_VERSION`, `AWM_HOME` and a real `HOME` removed or pointed at tmp, so the suite passes inside a Cursor session that has the Cursor hook installed. A test pins this.
   - The Cursor concept matcher in `scripts/validate-portability.mjs` also ignores `/* … */` block comments and trailing `//` comments outside string literals. The real repo still validates, and a comment-preserving mutant with a trailing comment is caught.
+
+#### Amendment A11 (2026-09-28, post-implementation QA revalidation)
+Deviation record: the fresh QA revalidation confirmed the A10 fixes and found 12 remaining defects, 2 of them important. A10 applied the plan-file guard and the Goal regex only to the Cursor hook, which reopened cross-provider plan parity. The readStdin accumulation had no byte cap and a retry budget that never reset. The corrected clauses:
+
+- **H1, cross-provider plan parity (S1 Edge case "Parity").** `hooks/codex-session-start` and `hooks/session-start` apply the same plan-file guard as the Cursor hook: a plan is a candidate only if it is a regular file (symlinks followed) of at most 1 MiB. Bash uses `[ -f ]` plus a `wc -c` size check. `hooks/codex-session-start` uses the same line-bounded Goal regex as the Cursor hook. Tests: an oversize newest plan, a device or FIFO plan, and a symlink to a regular plan each give the same `Active plan:` line from all three hooks. A `## Section` or `#tag` line before the H1 does not become the goal. Wall-clock assertions that duplicate a spawn timeout are removed; the spawn timeout plus the `signal`/`status` check is the bound.
+- **H2, stdin and payload robustness (R14.3, R16).**
+  - `readStdin` in the three Cursor hooks resets its EAGAIN retry budget whenever a read makes progress.
+  - It stops at 16 MiB (`MAX_STDIN_BYTES`) and returns an empty input past that, so the hook falls back to its defaults and still exits 0.
+  - `post-tool-use` passes only `{conversation_id, workspace_roots}` to the sibling `--reanchor`, never the full tool payload.
+  - Tests:
+    - A 10 MB `postToolUse` payload still re-anchors.
+    - A payload written late, after spawn, is read.
+    - `/dev/zero` on stdin ends with exit 0 and bounded memory.
+    - Wall-clock bounds are generous, or replaced by the harness timeout plus a signal check, so the suite passes under CPU oversubscription.
+- **H3, gate precision and release notes.**
+  - The comment scanner in `scripts/validate-portability.mjs` recognises regex literals, using the standard preceding-token heuristic, and `${…}` template substitutions, so a quote inside a regex or a comment inside `${}` cannot hide or keep comment text. Its code comment claims only what it guarantees.
+  - `CHANGELOG.md` also records the plan-scan changes that the published Codex and Claude hooks now share: dot-prefix skip, nanosecond ordering, and the regular-file ≤ 1 MiB guard.
