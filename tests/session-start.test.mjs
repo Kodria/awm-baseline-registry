@@ -44,12 +44,25 @@ const stubBin = fs.mkdtempSync(path.join(os.tmpdir(), 'awm-stub-bin-'));
 fs.writeFileSync(path.join(stubBin, 'awm'), '#!/usr/bin/env bash\nexit 1\n', { mode: 0o755 });
 const neutralPath = `${stubBin}${path.delimiter}${process.env.PATH}`;
 
+// Every hook run starts from this env. The suite may itself run inside a
+// Cursor session (CURSOR_VERSION set) on a machine with the Cursor hook
+// installed under HOME or AWM_HOME, where the R15 guard would silence the
+// bash hook. The R15 cases below set these variables deliberately.
+const isolatedHome = path.join(workspace, 'isolated-home');
+fs.mkdirSync(isolatedHome, { recursive: true });
+function isolatedEnv(extra = {}) {
+    const env = { ...process.env, HOME: isolatedHome, PATH: neutralPath };
+    delete env.CURSOR_VERSION;
+    delete env.AWM_HOME;
+    return { ...env, ...extra };
+}
+
 function runBashHook(cwd, source, hooksRoot) {
     return spawnSync('bash', [bashHook], {
         cwd,
         input: JSON.stringify({ source }),
         encoding: 'utf8',
-        env: { ...process.env, AWM_HOOKS_ROOT: hooksRoot, PATH: neutralPath },
+        env: isolatedEnv({ AWM_HOOKS_ROOT: hooksRoot }),
     });
 }
 
@@ -126,7 +139,7 @@ try {
     const codex = spawnSync(installedCodexHook, [], {
         input: JSON.stringify({ source: 'compact', cwd: project }),
         encoding: 'utf8',
-        env: { ...process.env, PATH: neutralPath },
+        env: isolatedEnv(),
     });
     assert.equal(
         activePlanLine(contextOf(codex)),
@@ -145,10 +158,7 @@ try {
     fs.mkdirSync(cursorHookDir, { recursive: true });
 
     const runInCursorEnv = (overrides, hookPath = bashHook, args = []) => {
-        const env = { ...process.env, AWM_HOOKS_ROOT: hooksRoot, PATH: neutralPath };
-        // Never inherit these from the machine running the suite.
-        delete env.CURSOR_VERSION;
-        delete env.AWM_HOME;
+        const env = isolatedEnv({ AWM_HOOKS_ROOT: hooksRoot });
         for (const [key, value] of Object.entries(overrides)) {
             if (value === undefined) delete env[key];
             else env[key] = value;
@@ -270,7 +280,7 @@ try {
         fs.utimesSync(file, 5_000, 5_000);
     }
     const tieLocale = 'en_US.UTF-8';
-    const localeEnv = { ...process.env, PATH: neutralPath, LANG: tieLocale, LC_ALL: tieLocale };
+    const localeEnv = isolatedEnv({ LANG: tieLocale, LC_ALL: tieLocale });
     const byteFirst = ['a-plan.md', 'B-plan.md']
         .sort((a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b)))[0];
     const lsFirst = (env) => {
@@ -299,6 +309,38 @@ try {
             env: { ...localeEnv, AWM_HOOKS_ROOT: hooksRoot },
         });
         assert.equal(activePlanLine(contextOf(tie)), `Active plan: ${byteFirst}`);
+    }
+
+    // --- Isolation: the suite passes inside a Cursor session with the Cursor
+    // hook installed under HOME. Re-run it as a child in exactly that setting
+    // (the child skips this step, so it does not recurse).
+    if (!process.env.AWM_SESSION_START_ISOLATION_CHILD) {
+        const hostileHome = path.join(workspace, 'hostile-home');
+        fs.mkdirSync(path.join(hostileHome, '.awm/hooks/cursor'), { recursive: true });
+        fs.writeFileSync(path.join(hostileHome, '.awm/hooks/cursor/session-start'), '#!/usr/bin/env bash\n', { mode: 0o755 });
+        const hostileAwm = path.join(workspace, 'hostile-awm');
+        fs.mkdirSync(path.join(hostileAwm, 'hooks/cursor'), { recursive: true });
+        fs.writeFileSync(path.join(hostileAwm, 'hooks/cursor/session-start'), '#!/usr/bin/env bash\n', { mode: 0o755 });
+        for (const [label, extra] of [
+            ['HOME', {}],
+            ['AWM_HOME', { AWM_HOME: hostileAwm }],
+        ]) {
+            const child = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+                encoding: 'utf8',
+                env: {
+                    ...process.env,
+                    AWM_SESSION_START_ISOLATION_CHILD: '1',
+                    CURSOR_VERSION: '2026.09.26',
+                    HOME: hostileHome,
+                    ...extra,
+                },
+            });
+            assert.equal(
+                child.status,
+                0,
+                `suite must pass inside Cursor with the hook installed via ${label}:\n${child.stdout}${child.stderr}`,
+            );
+        }
     }
 
     assert.equal(heartbeatSnapshot(), heartbeatBefore, 'the suite must not rewrite hooks/heartbeat.json in the checkout');
