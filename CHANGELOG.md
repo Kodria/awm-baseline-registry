@@ -2,6 +2,17 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## fix(ci/sensors): slim gates + npm 11 test variant — 2026-10-07
+
+- **CI gates:** blocking portability/auto-tag install the declared certified CLI
+  pair, not npm latest. `cli-latest-smoke` probes latest with
+  `continue-on-error`. R15 no longer hard-pins exact spine skill versions
+  (bumps stay gated by `check-skill-version-bumps.sh`). RF-1.5 accepts
+  suspended watch or classic `missing` JSON.
+- **js-ts test sensor:** add `npm-11-script` (`>=11.0.0 <12.0.0`, certified
+  `=11.16.0`) so Node 24 / npm 11 without pnpm still resolves a test sensor.
+  Pin + certification workflow exercise. Closes issue #62.
+
 ## fix(hooks): Claude/Codex ledger JSON + CLI 9.16.0 watch suspension — 2026-10-07
 
 - `hooks/session-start` (Claude) and `hooks/codex-session-start` now parse
