@@ -2,7 +2,7 @@
 
 Newest entry on top; append new releases directly below this line.
 
-## fix(hooks): Claude/Codex ledger re-anchor parses JSON — 2026-10-07
+## fix(hooks): Claude/Codex ledger JSON + CLI 9.16.0 watch suspension — 2026-10-07
 
 - `hooks/session-start` (Claude) and `hooks/codex-session-start` now parse
   `awm ledger list` as the pretty-printed JSON array the CLI prints, matching
@@ -12,6 +12,9 @@ Newest entry on top; append new releases directly below this line.
   or non-array output omits the section (fail-open).
 - Tests stub `awm` with real JSON-shaped output so a line-split regression
   fails CI. Closes issue #70.
+- **dev 4.9.1:** RF-1.5 and `harness-retro` catch up to CLI 9.16.0 durable-custody
+  suspension (`awm watch` actions refuse; help remains). Suspended
+  `journal-status` is treated as a missing journal, not a hard failure.
 
 ## Cursor native hooks — 2026-09-28
 

@@ -15,7 +15,8 @@ function closure(skill) {
 const required = [
   'Use only the explicit admitted active_plan and its CLI identity; never resolve another plan by filename, mtime, marker, or checkbox scans.',
   'Read minCliVersion only when this project contains awm-registry.json; a CLI project without registry metadata must not invent that file or fail merely because it is absent.',
-  'Query the current branch with `awm watch journal-status --json`; a global .awm/journal directory is never evidence of an active branch journal.',
+  'Query the current branch with `awm watch journal-status --json` when durable custody is available; a global .awm/journal directory is never evidence of an active branch journal.',
+  'While durable custody is suspended (CLI refuses every `awm watch` verb with the published suspension message), treat the branch as having no journal — same path as `state: missing` — and do not invent cycle evidence.',
   'Only a present, non-bootstrapUnused journal with cycleState COMPLETE and a passing current interlock permits cycle evidence capture.',
   'Missing journal skips capture explicitly with manual/native QA evidence and no fabricated cycle; an unattended native session without durable custody legitimately has no journal, and awm-routed work never dispatches without one.',
   'Corrupt, nonterminal, or mismatched journal blocks capture and archive; unused bootstrap state is administrative abandonment, never completed execution.',
@@ -73,4 +74,23 @@ ${snippet}`], { encoding:'utf8', timeout:5000, maxBuffer:10000 });
   assert.notEqual(run('{"state":"present","cycleState":"IN_PROGRESS","bootstrapUnused":true}').status,0);
   const complete=run('{"state":"present","cycleState":"COMPLETE","bootstrapUnused":false}');
   assert.equal(complete.status,0,complete.stderr); assert.match(complete.stdout,/CAPTURE_CALLED/);
+});
+test('RF-3.2 suspended durable custody is treated as missing journal, not a hard failure', () => {
+  const body = closure(read('skills/harness-retro/SKILL.md'));
+  const snippet = body.match(/```bash\n(test -n "\$active_plan"[\s\S]*?)\n```/)[1];
+  const suspended = spawnSync('bash', ['-c', `
+active_plan=docs/plans/current.md
+active_provider=codex
+manual_qa_evidence=durable-manual-review-reference
+awm() {
+  if [ "$1 $2" = "watch journal-status" ]; then
+    printf '%s\\n' 'Durable custody (awm watch) is suspended for all providers until routing/custody work resumes. Use native provider-session unattended (compact-slices/v1, no journal).' >&2
+    return 1
+  elif [ "$1 $2" = "evidence capture" ]; then printf 'CAPTURE_CALLED\\n';
+  else return 0; fi
+}
+${snippet}`], { encoding:'utf8', timeout:5000, maxBuffer:10000 });
+  assert.equal(suspended.status, 0, suspended.stderr);
+  assert.doesNotMatch(suspended.stdout, /CAPTURE_CALLED/);
+  assert.match(suspended.stderr, /Skipping cycle evidence capture/);
 });

@@ -1,6 +1,6 @@
 ---
 name: harness-retro
-version: "3.2.0"
+version: "3.2.1"
 license: Apache-2.0
 description: Use as the terminal learning phase of development-process — reads the per-branch findings ledger (awm ledger), presents the session's findings and wins interactively, and cures each into a concrete, durable rule (remediation tree / CONSTITUTION.md / AGENTS.md) so the agent stops repeating mistakes. Ledger-driven, not dependent on human recall.
 ---
@@ -293,7 +293,8 @@ Append (or create) `docs/harness-retros.md`:
 
 Use only the explicit admitted active_plan and its CLI identity; never resolve another plan by filename, mtime, marker, or checkbox scans.
 Read minCliVersion only when this project contains awm-registry.json; a CLI project without registry metadata must not invent that file or fail merely because it is absent.
-Query the current branch with `awm watch journal-status --json`; a global .awm/journal directory is never evidence of an active branch journal.
+Query the current branch with `awm watch journal-status --json` when durable custody is available; a global .awm/journal directory is never evidence of an active branch journal.
+While durable custody is suspended (CLI refuses every `awm watch` verb with the published suspension message), treat the branch as having no journal — same path as `state: missing` — and do not invent cycle evidence.
 Only a present, non-bootstrapUnused journal with cycleState COMPLETE and a passing current interlock permits cycle evidence capture.
 Missing journal skips capture explicitly with manual/native QA evidence and no fabricated cycle; an unattended native session without durable custody legitimately has no journal, and awm-routed work never dispatches without one.
 Corrupt, nonterminal, or mismatched journal blocks capture and archive; unused bootstrap state is administrative abandonment, never completed execution.
@@ -344,7 +345,17 @@ bootstrapUnused false and `awm job gate` passing before capture. Then require ex
 
 ```bash
 test -n "$active_plan" || { echo 'Explicit current active_plan is required.' >&2; exit 1; }
-journal_status="$(awm watch journal-status --json)" || exit 1
+journal_err="$(mktemp)"
+journal_status="$(awm watch journal-status --json 2>"$journal_err")" || {
+  if grep -qF 'Durable custody (awm watch) is suspended' "$journal_err"; then
+    journal_status='{"state":"missing"}'
+  else
+    cat "$journal_err" >&2
+    rm -f "$journal_err"
+    exit 1
+  fi
+}
+rm -f "$journal_err"
 capture_state="$(node - "$journal_status" <<'NODE'
 const input=process.argv[2];
 if (Buffer.byteLength(input,'utf8')>10000) process.exit(1);
