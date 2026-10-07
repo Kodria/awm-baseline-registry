@@ -144,31 +144,51 @@ function activePlan(cwd) {
     return candidates[0] || null;
 }
 
-// Open findings for the current branch, via `awm ledger list`. Absent CLI or
-// absent ledger yields no section rather than an error.
+// Open findings for the current branch, via `awm ledger list`, which prints
+// the branch ledger as a pretty-printed JSON array of entries
+// {ts, branch, phase, source_skill, polarity, class, signature, severity,
+// desc, ref?}, oldest first. Only findings are open items (wins are not),
+// minus this hook family's own `compaction-reanchor` audit entries, which
+// would otherwise crowd out real findings. The newest 8 are rendered, newest
+// first, one line each. Absent CLI, absent ledger, non-JSON or non-array
+// output yields no section rather than an error.
 // `maxBuffer` is explicit: on the 1 MB default a large ledger throws ENOBUFS,
 // which is indistinguishable here from "no ledger" and would drop the section
 // silently. `awmReachable` records whether the probe answered at all, so the
 // audit write below does not spend a second timeout against a wedged binary.
 let awmReachable = true;
+const COMPACTION_AUDIT_SIGNATURE = 'compaction-reanchor';
 
 function ledgerItems(cwd) {
+    let raw;
     try {
-        return execFileSync('awm', ['ledger', 'list'], {
+        raw = execFileSync('awm', ['ledger', 'list'], {
             cwd,
             encoding: 'utf8',
             stdio: ['ignore', 'pipe', 'ignore'],
             timeout: AWM_TIMEOUT_MS,
+            killSignal: 'SIGKILL',
             maxBuffer: MAX_LEDGER_BYTES,
-        })
-            .split(/\r?\n/)
-            .filter(Boolean)
-            .slice(0, 8)
-            .map((line) => truncate(line, MAX_LINE_CHARS, '[truncated]'));
+        });
     } catch (error) {
-        if (error.code === 'ETIMEDOUT' || error.signal === 'SIGTERM') awmReachable = false;
+        if (error.code === 'ETIMEDOUT' || error.signal === 'SIGTERM' || error.signal === 'SIGKILL') {
+            awmReachable = false;
+        }
         return [];
     }
+    let entries;
+    try {
+        entries = JSON.parse(raw);
+    } catch {
+        return [];
+    }
+    if (!Array.isArray(entries)) return [];
+    return entries
+        .filter((entry) => entry !== null && typeof entry === 'object'
+            && entry.polarity === 'finding' && entry.signature !== COMPACTION_AUDIT_SIGNATURE)
+        .slice(-8)
+        .reverse()
+        .map((entry) => truncate(`- [${entry.severity}] ${entry.signature}: ${entry.desc}`, MAX_LINE_CHARS, '[truncated]'));
 }
 
 // Audit trail for genuine compaction boundaries only — same entry the Claude

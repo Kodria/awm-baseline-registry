@@ -164,20 +164,40 @@ try {
         'a symlinked run must not touch the heartbeat in the registry checkout',
     );
 
-    // --- R3.1: ledger recovery and the compaction audit entry. ---
-    // Nothing else on this branch puts an `awm` on PATH, so without this stub
-    // both the ledger section and the audit write can be deleted wholesale
-    // without a single assertion failing.
+    // --- R3.1 / issue #70: ledger JSON rendering + compaction audit entry. ---
+    // The stub prints the real CLI shape (pretty-printed JSON array). A
+    // plain-text stub would hide the defect that split JSON into bare `[`/`{`
+    // lines and never surfaced a finding's `desc`.
     const stubDir = path.join(workspace, 'stub-bin');
     fs.mkdirSync(stubDir, { recursive: true });
     const ledgerCalls = path.join(workspace, 'awm-calls.log');
+    const ledgerJson = path.join(workspace, 'ledger-list.json');
+    const ledgerEntry = (fields) => ({
+        ts: '2026-09-28T00:00:00.000Z',
+        branch: 'feat/demo',
+        phase: 'implementation',
+        source_skill: 'post-implementation-qa',
+        polarity: 'finding',
+        class: 'logica',
+        signature: 'sig',
+        severity: 'important',
+        desc: 'desc',
+        ...fields,
+    });
+    fs.writeFileSync(
+        ledgerJson,
+        `${JSON.stringify([
+            ledgerEntry({ severity: 'important', signature: 'split-infinity', desc: 'splitBill returns Infinity' }),
+            ledgerEntry({ polarity: 'win', signature: 'tdd-caught', desc: 'WIN-DESC-MUST-NOT-APPEAR' }),
+            ledgerEntry({ severity: 'blocker', signature: 'input-validation', desc: 'missing input validation' }),
+        ], null, 2)}\n`,
+    );
     fs.writeFileSync(
         path.join(stubDir, 'awm'),
         '#!/usr/bin/env bash\n'
         + `printf '%s\\n' "$*" >> ${JSON.stringify(ledgerCalls)}\n`
         + 'if [ "$1" = "ledger" ] && [ "$2" = "list" ]; then\n'
-        + '  echo "finding: splitBill returns Infinity"\n'
-        + '  echo "finding: missing input validation"\n'
+        + `  cat ${JSON.stringify(ledgerJson)}\n`
         + 'fi\n'
         + 'exit 0\n',
         { mode: 0o755 },
@@ -191,7 +211,18 @@ try {
     });
     const compactedContext = parseContext(compacted);
     assert.match(compactedContext, /Open ledger items:/);
-    assert.match(compactedContext, /splitBill returns Infinity/);
+    const ledgerLines = compactedContext.split('\n');
+    const ledgerStart = ledgerLines.indexOf('Open ledger items:');
+    assert.notEqual(ledgerStart, -1);
+    // Newest findings first (CLI lists oldest first); wins are not open items.
+    assert.deepEqual(ledgerLines.slice(ledgerStart + 1).filter((line) => line.startsWith('- [')), [
+        '- [blocker] input-validation: missing input validation',
+        '- [important] split-infinity: splitBill returns Infinity',
+    ]);
+    assert.doesNotMatch(compactedContext, /WIN-DESC-MUST-NOT-APPEAR/);
+    for (const line of ledgerLines) {
+        assert.ok(!/^\s*[[\]{}],?\s*$/.test(line), `bare JSON fragment line: ${JSON.stringify(line)}`);
+    }
 
     const calls = fs.readFileSync(ledgerCalls, 'utf8');
     assert.match(calls, /ledger list/, 'the hook must read open ledger items');
@@ -199,6 +230,47 @@ try {
         calls,
         /ledger add .*compaction-recovery/,
         'a compact event must leave the same audit entry the Claude hook writes',
+    );
+
+    // Compaction-reanchor audit findings must not crowd out a real finding.
+    fs.writeFileSync(
+        ledgerJson,
+        `${JSON.stringify([
+            ...Array.from({ length: 8 }, () => ledgerEntry({
+                phase: 'compaction-recovery',
+                source_skill: 'context-compaction-recovery',
+                class: 'proceso',
+                signature: 'compaction-reanchor',
+                severity: 'info',
+                desc: 're-anchored active plan + open items after compaction',
+            })),
+            ledgerEntry({ severity: 'blocker', signature: 'real-blocker', desc: 'payments double-charge' }),
+        ], null, 2)}\n`,
+    );
+    const auditContext = parseContext(spawnSync(installed, [], {
+        input: JSON.stringify({ source: 'startup', cwd: project }),
+        encoding: 'utf8',
+        env: withStub,
+    }));
+    assert.match(auditContext, /- \[blocker\] real-blocker: payments double-charge/);
+    assert.doesNotMatch(auditContext, /compaction-reanchor/);
+
+    // Non-JSON ledger output yields no ledger section (fail-open).
+    fs.writeFileSync(ledgerJson, 'finding: plain text line\n');
+    const badContext = parseContext(spawnSync(installed, [], {
+        input: JSON.stringify({ source: 'startup', cwd: project }),
+        encoding: 'utf8',
+        env: withStub,
+    }));
+    assert.doesNotMatch(badContext, /Open ledger items:/);
+    assert.match(badContext, /Active plan: 2026-07-24-demo-plan\.md/);
+
+    // Restore a valid JSON ledger for the audit-call assertion below.
+    fs.writeFileSync(
+        ledgerJson,
+        `${JSON.stringify([
+            ledgerEntry({ severity: 'important', signature: 'split-infinity', desc: 'splitBill returns Infinity' }),
+        ], null, 2)}\n`,
     );
 
     // A non-compact event reads the ledger but must NOT write an audit entry.

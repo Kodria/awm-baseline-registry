@@ -111,9 +111,32 @@ if [ -d "$PLANS_DIR" ]; then
         goal_line=$(grep -m1 '\*\*Goal:\*\*' "$active_plan" 2>/dev/null || true)
         [ -z "$goal_line" ] && goal_line=$(grep -m1 '^# ' "$active_plan" 2>/dev/null || true)
         open_items=$(grep -m8 '^- \[ \]' "$active_plan" 2>/dev/null || true)
+        # `awm ledger list` prints a pretty-printed JSON array (CLI contract).
+        # Parse it the same way as hooks/cursor-session-start and
+        # hooks/codex-session-start: findings only, skip compaction-reanchor,
+        # newest 8 first as `- [severity] signature: desc`. Non-JSON / missing
+        # node / missing awm → omit the section (fail-open).
         ledger_open=""
-        if command -v awm >/dev/null 2>&1; then
-            ledger_open=$(awm ledger list 2>/dev/null | head -8 || true)
+        if command -v awm >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then
+            ledger_open=$(awm ledger list 2>/dev/null | node -e '
+let d = "";
+process.stdin.on("data", (c) => { d += c; });
+process.stdin.on("end", () => {
+  let entries;
+  try { entries = JSON.parse(d); } catch { return; }
+  if (!Array.isArray(entries)) return;
+  const lines = entries
+    .filter((e) => e !== null && typeof e === "object"
+      && e.polarity === "finding" && e.signature !== "compaction-reanchor")
+    .slice(-8)
+    .reverse()
+    .map((e) => {
+      const line = `- [${e.severity}] ${e.signature}: ${e.desc}`;
+      return line.length > 500 ? `${line.slice(0, 500)}\n[truncated]` : line;
+    });
+  if (lines.length) process.stdout.write(lines.join("\n"));
+});
+' || true)
         fi
         reanchor="## Re-anchor (post-compaction recovery)"$'\n'"Active plan: $(basename "$active_plan")"
         [ -n "$goal_line" ]   && reanchor="${reanchor}"$'\n'"${goal_line}"
