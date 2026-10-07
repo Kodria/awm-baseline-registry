@@ -2,6 +2,15 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## fix(ci): gate previously orphan registry tests — 2026-10-07
+
+- Wire `r5-track-contract`, `sensor-pack-js-ts-variants`,
+  `sensor-pack-schema-equivalence`, and `sensor-pack-eslint-semantics` into
+  `validate.yml` and `auto-tag.yml`. Measured: all four are pure Node (no
+  eslint/semgrep/python toolchain); validate is the right surface.
+- Add `tests/workflow-test-coverage.test.mjs` so a future ungated
+  `tests/*.test.mjs` fails CI instead of staying silently green. Closes #61.
+
 ## fix(ci/sensors): slim gates + npm 11 test variant — 2026-10-07
 
 - **CI gates:** blocking portability/auto-tag install the declared certified CLI

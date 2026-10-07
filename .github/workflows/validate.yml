@@ -38,11 +38,14 @@ jobs:
       - run: node tests/r11-process-lifecycle-contract.test.mjs
       - run: node tests/r12-context-footprint-contract.test.mjs
       - run: node tests/r13-role-evidence-capsule-contract.test.mjs
+      - run: node --test tests/r5-track-contract.test.mjs
       - run: node --test tests/r2a-review-cycle-contract.test.mjs
       # These two gate the floor/provenance split itself, and need no CLI, so they
       # run before anything is installed.
       - run: node --test tests/cli-floor-decoupling.test.mjs
       - run: node --test tests/r2b-release-prepublication.test.mjs
+      # Structural: every tests/*.test.mjs must be named in a workflow (#61).
+      - run: node --test tests/workflow-test-coverage.test.mjs
       # Every declared CLI pin lives in cli-certification.json and is validated
       # there before it reaches the environment, so nothing downstream re-reads
       # or restates it. See Kodria/agentic-workflow#164.
@@ -120,6 +123,11 @@ jobs:
       - run: npm run test:cursor-hooks
       - run: node tests/sensor-pack-eslint.test.mjs
       - run: node tests/sensor-pack-shape.test.mjs
+      # Named explicitly even though shape imports them — basename-in-workflow is
+      # the structural gate (#61); shape keeps the one-shot local composition.
+      - run: node tests/sensor-pack-js-ts-variants.test.mjs
+      - run: node tests/sensor-pack-schema-equivalence.test.mjs
+      - run: node tests/sensor-pack-eslint-semantics.test.mjs
       - run: node tests/sensor-pack-python-shell-generic.test.mjs
       - run: node tests/sensor-pack-variants.test.mjs
       - run: node tests/sensor-pack-coverage.test.mjs
