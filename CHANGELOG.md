@@ -2,6 +2,17 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## fix(hooks): Claude/Codex ledger re-anchor parses JSON — 2026-10-07
+
+- `hooks/session-start` (Claude) and `hooks/codex-session-start` now parse
+  `awm ledger list` as the pretty-printed JSON array the CLI prints, matching
+  `hooks/cursor-session-start`. Open ledger items are only `polarity ===
+  "finding"` entries, rendered as `- [<severity>] <signature>: <desc>`, newest
+  8 first. Wins and `compaction-reanchor` audit entries are omitted. Non-JSON
+  or non-array output omits the section (fail-open).
+- Tests stub `awm` with real JSON-shaped output so a line-split regression
+  fails CI. Closes issue #70.
+
 ## Cursor native hooks — 2026-09-28
 
 - Three native Cursor hooks, installed by the CLI under
@@ -17,8 +28,8 @@ Newest entry on top; append new releases directly below this line.
   writes. It never reads `<AWM_HOME>/hooks/using-awm.md`, the Claude adapter's
   file, so Cursor works without Claude installed.
 - The Cursor hook renders only the `finding` entries of the `awm ledger list`
-  JSON output as open ledger items; wins are not open items. The Claude and
-  Codex hooks still carry the same pre-existing defect, tracked in issue #70.
+  JSON output as open ledger items; wins are not open items. (Claude/Codex
+  parity for this contract landed in the 2026-10-07 entry above; issue #70.)
 - Claude guard: Cursor also runs `~/.claude/settings.json` hooks, so
   `hooks/session-start` now exits silently when `CURSOR_VERSION` is set and
   either `${AWM_HOME:-${HOME:-}/.awm}/hooks/cursor/session-start` or its own

@@ -153,6 +153,74 @@ try {
         'the Claude and Codex hooks must re-anchor on the same plan',
     );
 
+    // --- Issue #70: ledger JSON parity — Claude and Codex render the same
+    // findings from the real CLI pretty-printed JSON shape. ---
+    const ledgerParityBin = path.join(workspace, 'ledger-parity-bin');
+    const ledgerParityJson = path.join(workspace, 'ledger-parity.json');
+    fs.mkdirSync(ledgerParityBin, { recursive: true });
+    fs.writeFileSync(
+        ledgerParityJson,
+        `${JSON.stringify([
+            {
+                ts: '2026-10-01T10:00:00.000Z', branch: 'feat/demo', phase: 'debugging',
+                source_skill: 'systematic-debugging', polarity: 'finding', class: 'logica',
+                signature: 'hooks-treat-ledger-as-lines', severity: 'important',
+                desc: 'Claude/Codex hooks split JSON pretty-print into lines',
+            },
+            {
+                ts: '2026-10-01T11:00:00.000Z', branch: 'feat/demo', phase: 'qa',
+                source_skill: 'harness-retro', polarity: 'win', class: 'proceso',
+                signature: 'cursor-parses-json', severity: 'info',
+                desc: 'WIN-DESC-MUST-NOT-APPEAR',
+            },
+            {
+                ts: '2026-10-01T12:00:00.000Z', branch: 'feat/demo', phase: 'debugging',
+                source_skill: 'systematic-debugging', polarity: 'finding', class: 'structural',
+                signature: 'tests-use-plaintext-stubs', severity: 'blocker',
+                desc: 'Tests hide the defect with plain-text awm stubs',
+            },
+        ], null, 2)}\n`,
+    );
+    fs.writeFileSync(
+        path.join(ledgerParityBin, 'awm'),
+        '#!/usr/bin/env bash\n'
+        + 'if [ "$1" = "ledger" ] && [ "$2" = "list" ]; then\n'
+        + `  cat ${JSON.stringify(ledgerParityJson)}\n`
+        + 'fi\n'
+        + 'exit 0\n',
+        { mode: 0o755 },
+    );
+    const ledgerParityPath = `${ledgerParityBin}${path.delimiter}${process.env.PATH}`;
+    const expectedLedger = [
+        'Open ledger items:',
+        '- [blocker] tests-use-plaintext-stubs: Tests hide the defect with plain-text awm stubs',
+        '- [important] hooks-treat-ledger-as-lines: Claude/Codex hooks split JSON pretty-print into lines',
+    ];
+    const ledgerLinesOf = (text) => {
+        const lines = text.split('\n');
+        const start = lines.indexOf('Open ledger items:');
+        assert.notEqual(start, -1, 'ledger section missing');
+        return lines.slice(start, start + 3);
+    };
+    const claudeLedger = contextOf(spawnSync('bash', [bashHook], {
+        cwd: project,
+        input: JSON.stringify({ source: 'startup' }),
+        encoding: 'utf8',
+        env: isolatedEnv({ AWM_HOOKS_ROOT: hooksRoot, PATH: ledgerParityPath }),
+    }));
+    const codexLedger = contextOf(spawnSync(installedCodexHook, [], {
+        input: JSON.stringify({ source: 'startup', cwd: project }),
+        encoding: 'utf8',
+        env: isolatedEnv({ PATH: ledgerParityPath }),
+    }));
+    assert.deepEqual(ledgerLinesOf(claudeLedger), expectedLedger, 'Claude must render JSON findings');
+    assert.deepEqual(ledgerLinesOf(codexLedger), expectedLedger, 'Codex must render JSON findings');
+    assert.doesNotMatch(claudeLedger, /WIN-DESC-MUST-NOT-APPEAR/);
+    assert.doesNotMatch(codexLedger, /WIN-DESC-MUST-NOT-APPEAR/);
+    for (const line of [...claudeLedger.split('\n'), ...codexLedger.split('\n')]) {
+        assert.ok(!/^\s*[[\]{}],?\s*$/.test(line), `bare JSON fragment: ${JSON.stringify(line)}`);
+    }
+
     // --- R15: inside Cursor, the native Cursor hook is the only carrier. ---
     // Cursor also runs ~/.claude/settings.json hooks, so with AWM's Cursor hook
     // installed this hook must stay silent; everywhere else its output must be
