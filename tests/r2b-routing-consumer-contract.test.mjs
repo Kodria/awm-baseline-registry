@@ -170,13 +170,21 @@ function runsUnconditionally(workflow, command) {
   return hits.length > 0 && hits.every(hit => guardedBy(workflow, hit.index).length === 0);
 }
 
+/** True when at least one invocation is unguarded (blocking path).
+ *  Unlike runsUnconditionally, tolerates additional guarded copies — e.g.
+ *  validate.yml's advisory cli-latest-smoke job also declares pins under
+ *  continue-on-error, which must not defeat the blocking-job declaration. */
+function hasUnconditionalRun(workflow, command) {
+  return invocations(workflow, command).some(hit => guardedBy(workflow, hit.index).length === 0);
+}
+
 /** Kodria/agentic-workflow#164: the immutable pins moved out of the workflow body
  *  into cli-certification.json, the single record that validates them. They are
  *  still DECLARED, never derived at run time — a job may only pass the declared
  *  values through, and deriving the candidate from the floor is what coupled the
  *  floor to every CLI patch release in the first place. */
 function assertDeclaredPins(name, workflow) {
-  assert.ok(runsUnconditionally(workflow, 'scripts/cli-certification.mjs --env'), `${name} must declare its CLI pins from the single validated record`);
+  assert.ok(hasUnconditionalRun(workflow, 'scripts/cli-certification.mjs --env'), `${name} must declare its CLI pins from the single validated record`);
   assert.match(workflow, /AWM_R2B_CLI_SHA="\$AWM_CERTIFIED_CLI_SHA"/, `${name} must pass the declared certified SHA through, not a value derived in the job`);
   assert.match(workflow, /AWM_R2B_PROTOCOL_DIGEST="\$AWM_CERTIFIED_CLI_PROTOCOL_DIGEST"/, `${name} must pass the declared protocol digest through, not a value derived in the job`);
   assert.doesNotMatch(workflow, /AWM_R2B_CLI_VERSION="\$\(/, `${name} must not derive the candidate version at run time`);
@@ -231,6 +239,17 @@ test('B3 both CI surfaces run the routing contract and paired installed acceptan
   const undeclared = validate.replaceAll('node scripts/cli-certification.mjs --env >> "$GITHUB_ENV"', 'true');
   assert.notEqual(undeclared, validate, 'the mutation must actually drop the declared pin step');
   assert.throws(() => assertDeclaredPins('validate.yml', undeclared), /must declare its CLI pins/, 'dropping the declared pin step must be rejected');
+
+  // Advisory cli-latest-smoke also declares pins under continue-on-error; that
+  // copy alone must not satisfy the blocking-job declaration gate.
+  const advisoryOnly = validate.replace(
+    'node scripts/cli-certification.mjs --env >> "$GITHUB_ENV"',
+    'true',
+  );
+  assert.notEqual(advisoryOnly, validate, 'the mutation must drop the blocking-job pin declaration');
+  assert.ok(advisoryOnly.includes('scripts/cli-certification.mjs --env'), 'advisory job must still declare pins so the mutation is selective');
+  assert.throws(() => assertDeclaredPins('validate.yml', advisoryOnly), /must declare its CLI pins/,
+    'pins only under a continue-on-error job must not satisfy the blocking declaration gate');
 
   const rederived = validate.replace('AWM_R2B_CLI_VERSION="$AWM_CERTIFIED_CLI_VERSION"', 'AWM_R2B_CLI_VERSION="$(node -p \'require("./awm-registry.json").minCliVersion\')"');
   assert.notEqual(rederived, validate, 'the mutation must actually reintroduce a run-time derivation');
