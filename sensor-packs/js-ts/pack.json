@@ -398,6 +398,29 @@
           }
         },
         {
+          "id": "npm-11-script",
+          "priority": 40,
+          "requirements": {
+            "tool": "npm",
+            "toolRange": ">=11.0.0 <12.0.0",
+            "runtime": "node",
+            "runtimeRange": ">=16.0.0"
+          },
+          "certifiedRange": "=11.16.0",
+          "command": {
+            "executable": "npm",
+            "resolution": "path",
+            "args": ["test"],
+            "packageManager": "npm"
+          },
+          "assets": [],
+          "formatter": "test",
+          "probe": {
+            "kind": "package-script-present",
+            "script": "test"
+          }
+        },
+        {
           "id": "pnpm-script",
           "priority": 30,
           "requirements": {

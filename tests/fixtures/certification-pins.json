@@ -26,6 +26,11 @@
       "version": "10.8.3",
       "source": "https://registry.npmjs.org/npm"
     },
+    "npm-11": {
+      "package": "npm",
+      "version": "11.16.0",
+      "source": "https://registry.npmjs.org/npm"
+    },
     "prettier": {
       "package": "prettier",
       "version": "3.9.6",
