@@ -32,17 +32,19 @@ function assertTogether(text, terms, windowSize, message) {
 
 function assertCliAcceptanceWiring(source, workflow) {
   const lines = source.split(/\r?\n/);
+  // Blocking gates install the declared certified CLI pair — not npm latest.
+  // Forward-compat against latest is the advisory cli-latest-smoke job only.
   const installStep = lines.findIndex(line =>
-    /^\s*-\s+name:\s+Install the published CLI under test\s*$/.test(line));
+    /^\s*-\s+name:\s+Install the certified CLI under test\s*$/.test(line));
   const installCommand = lines.findIndex(line =>
-    /^\s*npm install --global "agentic-workflow-manager@\$LATEST"\s*$/.test(line));
+    /^\s*npm install --global "agentic-workflow-manager@\$AWM_CERTIFIED_CLI_VERSION"\s*$/.test(line));
   const acceptance = lines.findIndex(line =>
     /^\s*(?:-\s+run:\s*)?node tests\/r11-process-lifecycle-cli-acceptance\.mjs\s*$/.test(line));
-  assert.ok(installStep >= 0, `${workflow} must name the compatible published CLI install step`);
+  assert.ok(installStep >= 0, `${workflow} must name the certified CLI install step`);
   assert.ok(installCommand > installStep,
-    `${workflow} must install the compatible published CLI with an executable npm command`);
+    `${workflow} must install the certified CLI with an executable npm command`);
   assert.ok(acceptance > installCommand,
-    `${workflow} must run the process-lifecycle CLI acceptance after installing the compatible CLI`);
+    `${workflow} must run the process-lifecycle CLI acceptance after installing the certified CLI`);
 }
 
 test('R2.1: pregunta primero en que registry vive el proceso', () => {
@@ -350,12 +352,12 @@ test('el gate de workflow rechaza una instalación del CLI presente solo como co
   for (const workflow of ['.github/workflows/validate.yml', '.github/workflows/auto-tag.yml']) {
     const source = read(workflow);
     const commented = source.replace(
-      /^(\s*)npm install --global "agentic-workflow-manager@\$LATEST"\s*$/m,
-      '$1# npm install --global "agentic-workflow-manager@$LATEST"',
+      /^(\s*)npm install --global "agentic-workflow-manager@\$AWM_CERTIFIED_CLI_VERSION"\s*$/m,
+      '$1# npm install --global "agentic-workflow-manager@$AWM_CERTIFIED_CLI_VERSION"',
     );
     assert.notEqual(commented, source, `the mutation must comment out the executable CLI install in ${workflow}`);
     assert.throws(() => assertCliAcceptanceWiring(commented, workflow),
-      /must install the compatible published CLI/,
+      /must install the certified CLI/,
       'an install step name without its executable npm command must not satisfy the workflow gate');
   }
 });

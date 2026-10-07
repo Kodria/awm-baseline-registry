@@ -110,37 +110,49 @@ test('the runtime guard accepts any CLI at or above the floor and still demands 
   }
 });
 
-// The workflows are the place the coupling actually bit: they installed the CLI
-// at the floor and then admitted against it. Hold their shape, and hold the
-// clear failure that replaces the confusing one when the floor outruns npm.
-function assertInstallsPublishedLatest(name, workflow) {
-  assert.match(workflow, /^\s*-\s+name:\s+Install the published CLI under test\s*$/m, `${name} must name the published-CLI install step`);
-  assert.match(workflow, /^\s*LATEST="\$\(npm view agentic-workflow-manager version\)"\s*$/m, `${name} must resolve the version under test from npm at run time`);
-  assert.match(workflow, /^\s*node scripts\/cli-certification\.mjs --assert-floor "\$LATEST"\s*$/m, `${name} must prove the resolved version satisfies the floor before installing it`);
-  assert.match(workflow, /^\s*npm install --global "agentic-workflow-manager@\$LATEST"\s*$/m, `${name} must install exactly the resolved published version`);
-  assert.match(workflow, /^\s*echo "AWM_INSTALLED_CLI_VERSION=\$LATEST" >> "\$GITHUB_ENV"\s*$/m, `${name} must declare the installed version so the acceptance can refuse a prerelease`);
+// Blocking surfaces install the certified pair. npm latest is advisory only
+// (validate.yml `cli-latest-smoke`). Never install at the compatibility floor.
+function assertInstallsCertifiedCli(name, workflow) {
+  assert.match(workflow, /^\s*-\s+name:\s+Install the certified CLI under test\s*$/m, `${name} must name the certified-CLI install step`);
+  assert.match(workflow, /^\s*node scripts\/cli-certification\.mjs --assert-floor "\$AWM_CERTIFIED_CLI_VERSION"\s*$/m, `${name} must prove the certified version satisfies the floor before installing it`);
+  assert.match(workflow, /^\s*npm install --global "agentic-workflow-manager@\$AWM_CERTIFIED_CLI_VERSION"\s*$/m, `${name} must install exactly the declared certified version`);
+  assert.match(workflow, /^\s*echo "AWM_INSTALLED_CLI_VERSION=\$AWM_CERTIFIED_CLI_VERSION" >> "\$GITHUB_ENV"\s*$/m, `${name} must declare the installed version so the acceptance can refuse a prerelease`);
   assert.doesNotMatch(workflow, /npm install --global "agentic-workflow-manager@\$R3A_VERSION"/, `${name} must not install the CLI at the compatibility floor`);
+  assert.doesNotMatch(
+    workflow.replace(/cli-latest-smoke:[\s\S]*/, ''),
+    /npm install --global "agentic-workflow-manager@\$LATEST"/,
+    `${name} blocking path must not install npm latest (advisory smoke is separate)`,
+  );
 }
 
-test('both CI surfaces install the published CLI, never the floor, and prove it clears the floor first', () => {
+test('both blocking CI surfaces install the certified CLI, never the floor or latest', () => {
   for (const name of ['.github/workflows/validate.yml', '.github/workflows/auto-tag.yml']) {
     const workflow = readFileSync(path.join(root, name), 'utf8');
-    assertInstallsPublishedLatest(name, workflow);
+    assertInstallsCertifiedCli(name, workflow);
 
-    const atTheFloor = workflow.replace('npm install --global "agentic-workflow-manager@$LATEST"', 'npm install --global "agentic-workflow-manager@$R3A_VERSION"');
+    const atTheFloor = workflow.replace(
+      'npm install --global "agentic-workflow-manager@$AWM_CERTIFIED_CLI_VERSION"',
+      'npm install --global "agentic-workflow-manager@$R3A_VERSION"',
+    );
     assert.notEqual(atTheFloor, workflow, 'the mutation must actually reinstate the install-at-the-floor step');
-    assert.throws(() => assertInstallsPublishedLatest(name, atTheFloor), /must install exactly the resolved published version/);
+    assert.throws(() => assertInstallsCertifiedCli(name, atTheFloor), /must install exactly the declared certified version/);
 
-    const alsoTheFloor = workflow.replace('npm install --global "agentic-workflow-manager@$LATEST"', 'npm install --global "agentic-workflow-manager@$LATEST"\n          npm install --global "agentic-workflow-manager@$R3A_VERSION"');
-    assert.notEqual(alsoTheFloor, workflow, 'the mutation must actually add a second install at the floor');
-    assert.throws(() => assertInstallsPublishedLatest(name, alsoTheFloor), /must not install the CLI at the compatibility floor/, 'installing at the floor as well must be rejected: the last install wins');
-
-    const unproven = workflow.replace('node scripts/cli-certification.mjs --assert-floor "$LATEST"', 'true');
+    const unproven = workflow.replace('node scripts/cli-certification.mjs --assert-floor "$AWM_CERTIFIED_CLI_VERSION"', 'true');
     assert.notEqual(unproven, workflow, 'the mutation must actually drop the floor proof');
-    assert.throws(() => assertInstallsPublishedLatest(name, unproven), /must prove the resolved version satisfies the floor/);
+    assert.throws(() => assertInstallsCertifiedCli(name, unproven), /must prove the certified version satisfies the floor/);
 
-    const undeclared = workflow.replace('echo "AWM_INSTALLED_CLI_VERSION=$LATEST" >> "$GITHUB_ENV"', 'true');
+    const undeclared = workflow.replace('echo "AWM_INSTALLED_CLI_VERSION=$AWM_CERTIFIED_CLI_VERSION" >> "$GITHUB_ENV"', 'true');
     assert.notEqual(undeclared, workflow, 'the mutation must actually drop the declared installed version');
-    assert.throws(() => assertInstallsPublishedLatest(name, undeclared), /must declare the installed version/);
+    assert.throws(() => assertInstallsCertifiedCli(name, undeclared), /must declare the installed version/);
   }
+});
+
+test('validate keeps an advisory npm-latest smoke job that cannot block content PRs', () => {
+  const workflow = readFileSync(path.join(root, '.github/workflows/validate.yml'), 'utf8');
+  assert.match(workflow, /^\s*cli-latest-smoke:\s*$/m, 'validate must declare cli-latest-smoke');
+  const smoke = workflow.slice(workflow.indexOf('cli-latest-smoke:'));
+  assert.match(smoke, /^\s*continue-on-error:\s*true\s*$/m, 'cli-latest-smoke must be continue-on-error');
+  assert.match(smoke, /npm view agentic-workflow-manager version/, 'smoke must resolve npm latest');
+  assert.match(smoke, /npm install --global "agentic-workflow-manager@\$LATEST"/, 'smoke must install npm latest');
+  assert.match(smoke, /r16-compact-only-cli-acceptance/, 'smoke must exercise thin CLI acceptance');
 });
