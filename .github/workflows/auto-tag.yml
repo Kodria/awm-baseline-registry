@@ -47,19 +47,16 @@ jobs:
       # there before it reaches the environment. See Kodria/agentic-workflow#164.
       - name: Declare CLI provenance pins
         run: node scripts/cli-certification.mjs --env >> "$GITHUB_ENV"
-      - name: Install the published CLI under test
+      - name: Install the certified CLI under test
         run: |
           set -euo pipefail
-          # minCliVersion is a FLOOR, not the version this job must run. Installing
-          # at the floor makes the CLI report ITSELF stale the moment a newer one
-          # publishes, so admission blocks with ADMISSION_CURRENTNESS_BLOCKED before
-          # anything this job verifies can happen. A tag must never be cut over that.
-          LATEST="$(npm view agentic-workflow-manager version)"
-          printf '%s' "$LATEST" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
-            || { echo "::error::npm reported a non-semver latest CLI: $LATEST"; exit 1; }
-          node scripts/cli-certification.mjs --assert-floor "$LATEST"
-          npm install --global "agentic-workflow-manager@$LATEST"
-          echo "AWM_INSTALLED_CLI_VERSION=$LATEST" >> "$GITHUB_ENV"
+          # Blocking release gates run against the declared certified pair, not
+          # npm latest. A tag must not be blocked by unrelated CLI semantic drift.
+          printf '%s' "$AWM_CERTIFIED_CLI_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
+            || { echo "::error::certified CLI pin must be a bare semver, got: $AWM_CERTIFIED_CLI_VERSION"; exit 1; }
+          node scripts/cli-certification.mjs --assert-floor "$AWM_CERTIFIED_CLI_VERSION"
+          npm install --global "agentic-workflow-manager@$AWM_CERTIFIED_CLI_VERSION"
+          echo "AWM_INSTALLED_CLI_VERSION=$AWM_CERTIFIED_CLI_VERSION" >> "$GITHUB_ENV"
 
       # The tag is what `awm update` delivers, so it must never be cut over a
       # red gate. validate.yml runs on the same push, but as a separate

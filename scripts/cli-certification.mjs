@@ -9,10 +9,11 @@
  *  - `certifiedCli` (this file) is the IMMUTABLE PAIR the routing/protocol
  *    evidence rests on: an exact published version, the exact public commit it
  *    was built from, and the protocol digest observed on it. Declared, never
- *    derived at run time. It moves only on re-certification.
- *  - The version CI actually installs for consumer-facing acceptance is
- *    resolved from npm at run time. It is not declared anywhere, because it is
- *    not a claim — it is "whatever a user installing today would get".
+ *    derived at run time. It moves only on re-certification. Blocking
+ *    portability / auto-tag acceptance installs this pair.
+ *  - npm `latest` is probed only by the advisory `cli-latest-smoke` job
+ *    (`continue-on-error: true`). It must not block content PRs when a newer
+ *    CLI changes semantics; re-certify intentionally when ready.
  *
  * Before this split, `minCliVersion` carried all three meanings at once, so
  * every CLI patch release forced two hand edits here and turned registry CI red

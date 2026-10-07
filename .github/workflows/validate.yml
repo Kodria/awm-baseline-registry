@@ -48,22 +48,20 @@ jobs:
       # or restates it. See Kodria/agentic-workflow#164.
       - name: Declare CLI provenance pins
         run: node scripts/cli-certification.mjs --env >> "$GITHUB_ENV"
-      - name: Install the published CLI under test
+      - name: Install the certified CLI under test
         run: |
           set -euo pipefail
-          # minCliVersion is a FLOOR, not the version this job must run. Installing
-          # at the floor makes the CLI report ITSELF stale the moment a newer one
-          # publishes, so admission blocks with ADMISSION_CURRENTNESS_BLOCKED before
-          # anything this suite asserts can happen. Install what a user installing
-          # today actually gets, and prove it satisfies the floor.
-          LATEST="$(npm view agentic-workflow-manager version)"
-          printf '%s' "$LATEST" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
-            || { echo "::error::npm reported a non-semver latest CLI: $LATEST"; exit 1; }
-          node scripts/cli-certification.mjs --assert-floor "$LATEST"
-          npm install --global "agentic-workflow-manager@$LATEST"
-          # The acceptance asserts the CLI it exercises is exactly this published
-          # version: a locally compiled binary can never match it.
-          echo "AWM_INSTALLED_CLI_VERSION=$LATEST" >> "$GITHUB_ENV"
+          # Blocking acceptance runs against the declared certified pair from
+          # cli-certification.json — not npm latest. Content PRs must not turn
+          # red when a newer CLI changes semantics (e.g. watch suspension).
+          # Forward-compat against latest is the advisory `cli-latest-smoke` job.
+          # minCliVersion remains a FLOOR only; never install at the floor (that
+          # makes the CLI report itself stale and blocks admission).
+          printf '%s' "$AWM_CERTIFIED_CLI_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
+            || { echo "::error::certified CLI pin must be a bare semver, got: $AWM_CERTIFIED_CLI_VERSION"; exit 1; }
+          node scripts/cli-certification.mjs --assert-floor "$AWM_CERTIFIED_CLI_VERSION"
+          npm install --global "agentic-workflow-manager@$AWM_CERTIFIED_CLI_VERSION"
+          echo "AWM_INSTALLED_CLI_VERSION=$AWM_CERTIFIED_CLI_VERSION" >> "$GITHUB_ENV"
       - run: node tests/r11-process-lifecycle-cli-acceptance.mjs
       - run: node tests/r15-compact-slices-contract.test.mjs
       - run: node tests/r15-compact-slices-cli-acceptance.mjs
@@ -127,3 +125,38 @@ jobs:
       - run: node tests/sensor-pack-coverage.test.mjs
       - run: node tests/sensor-pack-coverage-mutations.test.mjs
       - run: node --test tests/sensor-pack-rules-fire.test.mjs
+
+  # Advisory only: detect drift when npm latest changes CLI semantics.
+  # Must not block content PRs — re-certify intentionally when ready.
+  cli-latest-smoke:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Declare CLI provenance pins
+        run: node scripts/cli-certification.mjs --env >> "$GITHUB_ENV"
+      - name: Install npm-latest CLI (advisory)
+        run: |
+          set -euo pipefail
+          LATEST="$(npm view agentic-workflow-manager version)"
+          printf '%s' "$LATEST" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
+            || { echo "::error::npm reported a non-semver latest CLI: $LATEST"; exit 1; }
+          node scripts/cli-certification.mjs --assert-floor "$LATEST"
+          npm install --global "agentic-workflow-manager@$LATEST"
+          echo "AWM_INSTALLED_CLI_VERSION=$LATEST" >> "$GITHUB_ENV"
+          echo "Advisory smoke against CLI $LATEST (certified pair remains $AWM_CERTIFIED_CLI_VERSION)"
+      - name: Thin acceptance against latest
+        env:
+          AWM_R16_INSTALLED_ACCEPTANCE: "1"
+        run: |
+          npm install --global npm@10.8.3
+          npm install --prefix "$RUNNER_TEMP/r16-old-cli" "agentic-workflow-manager@$AWM_R16_OLD_CLI_VERSION"
+          AWM_R16_OLD_CLI_BIN="$RUNNER_TEMP/r16-old-cli/node_modules/.bin/awm" \
+            node tests/r16-compact-only-cli-acceptance.mjs
+          node tests/r15-compact-slices-cli-acceptance.mjs

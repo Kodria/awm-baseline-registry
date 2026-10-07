@@ -47,24 +47,27 @@ test('RF-1.3/1.4/2.1/2.3 canonical reference is compiled-valid and all non-valid
   } finally { rmSync(sandbox, { recursive: true, force: true }); }
 });
 
-test('RF-1.5 durable custody watch actions are suspended; help and plan migration-facts remain', () => {
-  // CLI 9.16.0+ (agentic-workflow#207): every `awm watch` verb refuses with a
-  // fixed suspension message. Help still works. Skills that query journal-status
-  // must treat that refusal as "no durable custody" (missing journal), not as a
-  // successful missing-state JSON report.
+test('RF-1.5 watch journal-status is suspended or reports missing; help and plan migration-facts remain', () => {
+  // Adaptive across the certified pair and newer published CLIs:
+  // - CLI 9.16.0+ (agentic-workflow#207): every `awm watch` verb refuses with a
+  //   fixed suspension message (no JSON body).
+  // - Older certified CLIs still return journal-status JSON with state missing.
+  // Help remains available either way. Skills that query journal-status must
+  // treat suspension as "no durable custody" (same as missing).
   requireCompatibleRuntime(awm, root);
   const sandbox = mkdtempSync(path.join(os.tmpdir(), 'awm-r16-public-'));
   try {
     const git = spawnSync('git', ['init', '-q', sandbox], { encoding:'utf8', timeout:5000 });
     assert.equal(git.status,0,git.stderr);
     const status = spawnSync(awm, ['watch','journal-status','--json'], { cwd:sandbox, encoding:'utf8', timeout:15_000, maxBuffer:10_000 });
-    assert.equal(status.status, 1, status.stderr.slice(0, 2000));
-    assert.match(
-      `${status.stderr}${status.stdout}`,
-      /Durable custody \(awm watch\) is suspended/,
-      'watch actions must refuse with the published suspension message',
-    );
-    assert.equal(status.stdout.trim(), '', 'suspended watch must not emit a journal-status JSON body');
+    const combined = `${status.stderr}${status.stdout}`;
+    if (/Durable custody \(awm watch\) is suspended/.test(combined)) {
+      assert.equal(status.status, 1, status.stderr.slice(0, 2000));
+      assert.equal(status.stdout.trim(), '', 'suspended watch must not emit a journal-status JSON body');
+    } else {
+      const report = parse(status, 0, 'missing');
+      assert.equal(report.bootstrapUnused, false);
+    }
     for (const command of [['watch','archive-unused','--help'],['watch','rebind','--help'],['plan','migration-facts','--help']]) {
       const result=invoke(command); assert.equal(result.status,0,result.stderr);
       assert.match(result.stdout,/Usage:/);
