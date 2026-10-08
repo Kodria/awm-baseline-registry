@@ -1,8 +1,8 @@
 ---
 name: setup-sensors
-version: "1.1.2"
+version: "1.2.0"
 license: Apache-2.0
-description: Use when a repository needs sensor configuration adapted to its actual installed tool versions (e.g. ESLint v9 flat config vs v8 extends, mypy vs ruff, monorepo tsconfig refs). Complements the `awm sensors init` CLI wizard by consulting Context7 for current docs and generating version-correct config files. Invoke when the wizard's templated configs don't fit the project.
+description: Use when a repository needs sensor configuration adapted to its actual installed tool versions (e.g. ESLint v9 flat config vs v8 extends, mypy vs ruff, monorepo tsconfig refs). Complements the `awm sensors init` CLI wizard by consulting Context7 for current docs and generating version-correct config files. Invoke when the wizard's templated configs don't fit the project — including when to declare a project sensor versus when to use or extend a pack.
 ---
 
 # Setup Sensors
@@ -27,6 +27,45 @@ description: Use when a repository needs sensor configuration adapted to its act
 - Fresh project, standard stack, no existing configs — use `awm sensors init --configure` directly; it's faster
 - Just need to see which sensors are configured — use `awm sensors status`
 - Tool isn't installed at all — install the tool first; this skill adapts configs, it doesn't install dependencies
+
+## Project sensors vs packs
+
+Prefer a **pack** (or a pack variant / hardening opt-in) when the check is
+already covered by a registry sensor-pack for the project's stack — packs own
+variants, assets, and compatibility evidence. Declare a **project sensor** when
+the check is project-owned and packs do not (and should not) cover it: a custom
+formatter gate, an infra tool the pack never ships, or a one-off binary the team
+commits to maintaining in `.awm/sensors.json`.
+
+Project-declared sensors use `"source": "project"` in a schemaVersion 3
+manifest. They run through the same pipeline as pack sensors and report
+provenance `project-declared`. That `project-declared` provenance does not block
+unattended gates — only empirical sensor outcomes do.
+
+Minimal only-project example (omit or null `pack` when every entry is project-declared):
+
+```json
+{
+  "schemaVersion": 3,
+  "mode": "project-sensors",
+  "pack": null,
+  "sensors": {
+    "iac-format": {
+      "source": "project",
+      "enabled": true,
+      "command": {
+        "executable": "terraform",
+        "resolution": "path",
+        "args": ["fmt", "-check", "-recursive"]
+      },
+      "formatter": "exit-code"
+    }
+  }
+}
+```
+
+Do not invent a pack id for this shape, and do not label these entries as pack
+certified — they stay `project-declared`.
 
 ## Checklist
 
