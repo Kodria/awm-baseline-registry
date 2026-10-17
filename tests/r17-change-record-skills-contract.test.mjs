@@ -67,6 +67,11 @@ function assertRecordSubsection(text) {
   assert.ok(body.includes('Elige un slug que no use ningún'), 'the subsection must forbid reusing an existing record slug');
   assert.ok(body.includes('declara `**Change Record:** ninguno — <razón>`, sin backticks'), 'the subsection must give the opt-out header syntax');
   assert.ok(body.includes('`- ninguno — <razón>`, que se convierte en `manual_validation: {none: <razón>}`'), 'the subsection must map the ninguno criterion to a none item');
+  assert.ok(body.includes('cada línea se convierte en un ítem `{step, expected}`'), 'each criterion line must become a step/expected item');
+  assert.ok(body.includes('Con un CLI anterior el plan declara igual el slug y los criterios'), 'an old CLI must not change what the plan declares');
+  assert.ok(body.includes('informa la limitación al cerrar y continúa sin record, nunca lo inventa'), 'the plan must announce that an old CLI closes without an invented record');
+  assert.ok(body.includes('`awm change new` lo rechaza (`record-exists`) aunque la fecha difiera'), 'the slug clash must be explained as record-exists across dates');
+  assert.ok(body.includes('y omite `**Criterios de aceptación:**`'), 'the trivial opt-out must omit the acceptance criteria');
 }
 
 test('R7.1: the plan header template declares the planned Change Record and its acceptance criteria', () => {
@@ -91,6 +96,11 @@ test('R7.1: writing-plans states that type, scope and semver are derived, never 
   assert.throws(() => assertRecordSubsection(mutated(text, 'Elige un slug que no use ningún', 'Usa cualquier slug, aunque lo use un')), /forbid reusing an existing record slug/);
   assert.throws(() => assertRecordSubsection(mutated(text, 'declara `**Change Record:** ninguno — <razón>`, sin backticks', 'declara el opt-out')), /opt-out header syntax/);
   assert.throws(() => assertRecordSubsection(mutated(text, '`- ninguno — <razón>`, que se convierte en `manual_validation: {none: <razón>}`', '`- ninguno`')), /map the ninguno criterion/);
+  assert.throws(() => assertRecordSubsection(mutated(text, 'cada línea se convierte en un ítem `{step, expected}`', 'cada línea vale')), /step\/expected item/);
+  assert.throws(() => assertRecordSubsection(mutated(text, 'Con un CLI anterior el plan declara igual el slug y los criterios', 'Con un CLI anterior el plan omite el slug')), /must not change what the plan declares/);
+  assert.throws(() => assertRecordSubsection(mutated(text, 'informa la limitación al cerrar y continúa sin record, nunca lo inventa', 'escribe el record a mano')), /closes without an invented record/);
+  assert.throws(() => assertRecordSubsection(mutated(text, '`awm change new` lo rechaza (`record-exists`) aunque la fecha difiera', 'conviene')), /record-exists across dates/);
+  assert.throws(() => assertRecordSubsection(mutated(text, 'y omite `**Criterios de aceptación:**`', 'y lista criterios')), /omit the acceptance criteria/);
 });
 
 test('section() keeps fenced headings inside the section', () => {
@@ -169,6 +179,38 @@ function assertRecordSequence(text) {
     sectionAt = at;
   }
   assert.ok(item4.includes('Never edit the derived fields by hand'), 'the narrative must forbid editing derived fields');
+  assert.ok(step.includes('after Step 4.0 and before the merge/push below. Skip entirely for Options 3 and 4.'), 'Step 4.1 must be skipped for Options 3 and 4');
+  assert.ok(step.includes('once you check that it matches `^[a-z0-9]+(-[a-z0-9]+)*$` and has at most 64 characters'), 'the header slug must be checked against the slug rule');
+  assert.ok(step.includes('stop and report the malformed header'), 'a malformed header slug must stop');
+  assert.ok(step.includes('with a conventional-commit subject (`type(scope): subject`)'), 'step 1 must require a conventional-commit subject');
+  assert.ok(step.includes('stage files by name'), 'step 1 must add each file explicitly');
+  assert.ok(step.includes('if they keep the tree dirty, stop and report them instead'), 'step 1 must stop on a tree kept dirty by unrelated files');
+  assert.ok(step.includes('The working tree must be clean: a dirty tree gets no sensor receipt.'), 'step 1 must leave a clean tree');
+  assert.ok(step.includes('`"mode": "opt-out"` or `"mode": "native-gate"`'), 'the opt-out sensors mode must be named');
+  assert.ok(step.includes('if the reason is uncommitted changes of this change'), "the receipt retry must commit only this change's work");
+  assert.ok(step.includes("(the plan's repo-relative path, only when the plan file lives inside this repository)"), '--plan must be a repo-relative path inside the repository');
+  assert.ok(step.includes("never refresh, rename or delete another change's record on your own"), "Step 4.1 must never touch another change's record");
+  assert.ok(step.includes(', and never merge or push past a failing strict validation, in either mode'), 'a failing strict validation must block integration in both modes');
+  assert.ok(step.includes('`pending-content`, `field-invalid` or `body-section-missing` → step 4'), 'content diagnostics must resume at step 4');
+  assert.ok(step.includes('`record-uncommitted` → step 5'), 'record-uncommitted must resume at step 5');
+  assert.ok(step.includes('`code-changed-after-verification`, `derived-mismatch`, `receipt-missing` or `verification-mismatch` → step 2, then `--refresh` in step 3'), 'verification-drift diagnostics must resume at step 2 with a refresh');
+  assert.ok(step.includes('`verification-not-passing` → fix the sensors and commit, then step 2 and `--refresh` in step 3'), 'verification-not-passing must fix the sensors before re-running step 2');
+  const optOutAt = step.indexOf('**Trivial changes (opt-out):**');
+  assert.ok(optOutAt >= 0, 'Step 4.1 must describe the trivial opt-out');
+  const optOut = step.slice(optOutAt);
+  assert.ok(optOut.includes('or, in interactive mode, when the human decides so'), 'only a human in interactive mode may choose the opt-out');
+  assert.ok(optOut.includes("Make the opt-out commit the branch's last commit"), 'the opt-out commit must close the branch');
+  assert.ok(optOut.includes('so a reason taken from the plan (backticks, `$(…)`) is never run by the shell'), 'the heredoc must keep the plan reason away from the shell');
+  assert.ok(optOut.includes('a paragraph added after it (for example a separate attribution block) makes validation report `record-missing`'), 'the skill must explain that a later paragraph voids the trailer');
+  assert.ok(optOut.includes('exit 0; anything else → stop and report it'), 'the opt-out validation must stop on anything but the exempt line');
+  const block = optOut.match(/```bash\n([\s\S]*?)\n```/);
+  assert.ok(block, 'the trivial opt-out must show its commit command');
+  const lines = block[1].split('\n');
+  const eof = lines.indexOf('EOF');
+  assert.ok(eof > 1, 'the opt-out heredoc must close with EOF');
+  const message = lines.slice(1, eof);
+  assert.ok(message.filter(line => line.trim()).at(-1) === 'Change-Record: none', 'the opt-out heredoc must end with the Change-Record: none trailer');
+  assert.ok(!message[0].includes('Change-Record'), 'the opt-out heredoc must keep the trailer out of the subject');
   assert.match(step, /never add `Change-Record: none` to hide it/, 'a sensors opt-out must not be disguised as an exemption');
   assert.ok(step.includes('Never choose it on your own judgment, and never after any of steps 2–6 failed'), 'the agent must never choose the trivial opt-out on its own or after a failing step');
   assert.ok(step.includes('Change Record validation: exempt (Change-Record: none)'), 'the opt-out must be confirmed by the exempt validation line');
@@ -193,6 +235,13 @@ function assertCommonMistakesQualifyRefresh(text) {
   assert.ok(mistakes.includes('`record-exists` for a record this branch added (refresh; a slug owned by an earlier change stops as a collision)'), 'Common Mistakes must limit the record-exists exception to a record this branch added');
 }
 
+function assertRedFlagsGuardRecord(text) {
+  const flags = section(text, '## Red Flags');
+  assert.ok(flags.includes('- Merge or push after `awm change validate --strict` failed'), 'Red Flags must forbid integrating after a failed strict validation');
+  assert.ok(flags.includes('- Invent a Change Record or edit its derived fields by hand'), 'Red Flags must forbid inventing a record or hand-editing derived fields');
+  assert.ok(flags.includes('- Run Step 4.1 (Change Record) after Step 4.0 and before the merge/push of Options 1 & 2'), 'Red Flags must always run Step 4.1 before integrating');
+}
+
 function assertUnattendedKeepsRecordGate(text) {
   const unattended = section(text, '### Modo desatendido');
   assert.match(unattended, /el Step 4\.1 \(Change Record\)/, 'unattended mode must run the Change Record step');
@@ -201,6 +250,7 @@ function assertUnattendedKeepsRecordGate(text) {
   assert.ok(unattended.includes('nunca lo elijas por criterio propio'), 'unattended mode must forbid choosing the trivial opt-out on its own');
   assert.ok(unattended.includes('si `awm sensors run` no da `pass`'), 'unattended mode must pause on a non-pass sensors run');
   assert.ok(unattended.includes('un intento por diagnóstico que el paso 6 mapea'), 'unattended mode must bound the step 6 fix loop');
+  assert.ok(unattended.includes('un código no mapeado, o el mismo diagnóstico repetido tras su corrección, no se reintenta'), 'unattended mode must not retry unmapped or repeated diagnostics');
 }
 
 function assertPrBodyFromRecord(text) {
@@ -220,6 +270,12 @@ function assertPrBodyFromRecord(text) {
   assert.ok(option.includes('with any credentials removed'), 'the web URL must drop credentials');
   assert.ok(option.includes('Never copy userinfo, tokens or query strings'), 'the PR body must never carry remote secrets');
   assert.ok(section(text, STEP_41).includes('for Option 2 also end the PR/MR description with a `Change-Record: none` paragraph'), 'the opt-out must also close the PR/MR description');
+  assert.ok(section(text, STEP_41).includes('also end the PR/MR description with a `Change-Record: none` paragraph, placed after any footer (attribution, links)'), 'the squash trailer paragraph must follow any description footer');
+  assert.ok(option.includes('; for the trivial opt-out, with `Change Record: ninguno — <razón>`, and end the body with a `Change-Record: none` paragraph'), 'the opt-out PR body must use the ninguno line and the closing trailer');
+  assert.ok(option.includes('any footer the body carries (attribution, links) goes before that paragraph, never after it'), 'PR body footers must precede the closing trailer paragraph');
+  assert.ok(option.includes('`<web-url>/-/blob/<record-commit-sha>/docs/changes/<file>` on GitLab'), 'the GitLab link must pin the record commit');
+  assert.ok(option.includes('Give the operator the PR/MR body built above, ready to paste.'), 'the degraded path must hand over the built body');
+  assert.ok(option.includes('built exactly like the `gh` body above'), 'the glab description must match the gh body');
 }
 
 test('R7.2: Step 4.1 runs the six record steps in order and stops on a failing strict validation', () => {
@@ -270,12 +326,41 @@ test('R7.2: Step 4.1 runs the six record steps in order and stops on a failing s
   fails('`## Qué falta validar`, `## Riesgos y rollback`', '`## Qué falta validar`', /list the body section ## Riesgos y rollback/);
   fails('`## Qué se hizo`, `## Qué se probó` (only checks that actually ran, with their result)', '`## Qué se probó` (only checks that actually ran, with their result), `## Qué se hizo`', /body section ## Qué se probó out of order/);
   fails('Never edit the derived fields by hand', 'Edit the derived fields freely', /forbid editing derived fields/);
+  fails('after Step 4.0 and before the merge/push below. Skip entirely for Options 3 and 4.', 'after Step 4.0 and before the merge/push below.', /skipped for Options 3 and 4/);
+  fails('once you check that it matches `^[a-z0-9]+(-[a-z0-9]+)*$` and has at most 64 characters', 'once you read it', /checked against the slug rule/);
+  fails('stop and report the malformed header', 'use it anyway', /malformed header slug must stop/);
+  fails('with a conventional-commit subject (`type(scope): subject`)', 'with any subject', /require a conventional-commit subject/);
+  fails('stage files by name', 'stage everything', /add each file explicitly/);
+  fails('if they keep the tree dirty, stop and report them instead', 'if they keep the tree dirty, ignore them', /tree kept dirty by unrelated files/);
+  fails('The working tree must be clean: a dirty tree gets no sensor receipt.', '', /leave a clean tree/);
+  fails('`"mode": "opt-out"` or `"mode": "native-gate"`', '`"mode": "native-gate"`', /opt-out sensors mode must be named/);
+  fails('if the reason is uncommitted changes of this change', 'if the reason is uncommitted changes', /commit only this change's work/);
+  fails("(the plan's repo-relative path, only when the plan file lives inside this repository)", '(any path)', /repo-relative path inside the repository/);
+  fails("never refresh, rename or delete another change's record on your own", 'delete it if needed', /never touch another change's record/);
+  fails(', and never merge or push past a failing strict validation, in either mode', '', /block integration in both modes/);
+  fails('`pending-content`, `field-invalid` or `body-section-missing` → step 4', '`pending-content`, `field-invalid` or `body-section-missing` → step 6', /content diagnostics must resume at step 4/);
+  fails('`record-uncommitted` → step 5', '`record-uncommitted` → step 4', /record-uncommitted must resume at step 5/);
+  fails('`code-changed-after-verification`, `derived-mismatch`, `receipt-missing` or `verification-mismatch` → step 2, then `--refresh` in step 3', '`code-changed-after-verification`, `derived-mismatch`, `receipt-missing` or `verification-mismatch` → step 4', /verification-drift diagnostics/);
+  fails('`verification-not-passing` → fix the sensors and commit, then step 2 and `--refresh` in step 3', '`verification-not-passing` → step 6', /fix the sensors before re-running step 2/);
+  fails('**Trivial changes (opt-out):**', '**Trivial changes:**', /describe the trivial opt-out/);
+  fails('or, in interactive mode, when the human decides so', 'or when the agent decides so', /only a human in interactive mode/);
+  fails("Make the opt-out commit the branch's last commit", 'Add the opt-out commit', /opt-out commit must close the branch/);
+  fails('so a reason taken from the plan (backticks, `$(…)`) is never run by the shell', 'for style', /keep the plan reason away from the shell/);
+  fails('a paragraph added after it (for example a separate attribution block) makes validation report `record-missing`', 'that is all', /later paragraph voids the trailer/);
+  fails('exit 0; anything else → stop and report it', 'exit 0; otherwise continue', /stop on anything but the exempt line/);
+  fails('Change-Record: none\nEOF\n```', 'Change-Record: none\n```', /close with EOF/);
+  fails('chore: <subject>\n\n<razón>\n\nChange-Record: none\nEOF', 'chore: <subject> Change-Record: none\n\n<razón>\nEOF', /end with the Change-Record: none trailer/);
+  fails('chore: <subject>\n', 'chore: <subject> Change-Record: none\n', /trailer out of the subject/);
   fails('never add `Change-Record: none` to hide it', 'add `Change-Record: none`', /disguised/);
   fails('Never choose it on your own judgment, and never after any of steps 2–6 failed', 'Choose it freely', /on its own or after a failing step/);
   fails('Change Record validation: exempt (Change-Record: none)', 'Change Record validation: ok', /exempt validation line/);
   fails('commit any pending work (step 1), then go straight to **Trivial changes (opt-out)** below; steps 2–6 do not run', 'go straight to **Trivial changes (opt-out)** below; steps 1–6 do not run', /commit pending work before skipping steps 2–6/);
   fails('`--allow-empty` is only for when nothing is pending', '`--allow-empty` always', /reserve --allow-empty for an empty tree/);
   assertCommonMistakesQualifyRefresh(text);
+  assertRedFlagsGuardRecord(text);
+  assert.throws(() => assertRedFlagsGuardRecord(mutated(text, '- Merge or push after `awm change validate --strict` failed\n', '')), /integrating after a failed strict validation/);
+  assert.throws(() => assertRedFlagsGuardRecord(mutated(text, '- Invent a Change Record or edit its derived fields by hand\n', '')), /inventing a record or hand-editing/);
+  assert.throws(() => assertRedFlagsGuardRecord(mutated(text, '- Run Step 4.1 (Change Record) after Step 4.0 and before the merge/push of Options 1 & 2\n', '')), /always run Step 4\.1 before integrating/);
   assert.throws(() => assertCommonMistakesQualifyRefresh(mutated(text, '`record-exists` for a record this branch added (refresh; a slug owned by an earlier change stops as a collision)', '`record-exists` (refresh)')), /limit the record-exists exception/);
 });
 
@@ -296,6 +381,7 @@ test('R7.2: Options 1 and 2 run the record after Step 4.0 and before integrating
   unattended('nunca lo elijas por criterio propio', 'elígelo libremente', /forbid choosing the trivial opt-out/);
   unattended('si `awm sensors run` no da `pass`', 'si `awm sensors run` falla', /pause on a non-pass sensors run/);
   unattended('un intento por diagnóstico que el paso 6 mapea', 'reintentos libres', /bound the step 6 fix loop/);
+  unattended('; un código no mapeado, o el mismo diagnóstico repetido tras su corrección, no se reintenta', '', /not retry unmapped or repeated diagnostics/);
 });
 
 test('R7.3: the Option 2 PR body is built from the record and links it', () => {
@@ -316,6 +402,12 @@ test('R7.3: the Option 2 PR body is built from the record and links it', () => {
   fails('with any credentials removed', 'as is', /drop credentials/);
   fails('Never copy userinfo, tokens or query strings', 'Copy the remote verbatim', /never carry remote secrets/);
   fails('for Option 2 also end the PR/MR description with a `Change-Record: none` paragraph', 'for Option 2 do nothing more', /also close the PR\/MR description/);
+  fails(', placed after any footer (attribution, links)', '', /follow any description footer/);
+  fails('; for the trivial opt-out, with `Change Record: ninguno — <razón>`, and end the body with a `Change-Record: none` paragraph', '', /ninguno line and the closing trailer/);
+  fails('any footer the body carries (attribution, links) goes before that paragraph, never after it', 'footers go anywhere', /footers must precede the closing trailer/);
+  fails('`<web-url>/-/blob/<record-commit-sha>/docs/changes/<file>` on GitLab', '`<web-url>/-/blob/main/docs/changes/<file>` on GitLab', /GitLab link must pin the record commit/);
+  fails('Give the operator the PR/MR body built above, ready to paste.', '', /hand over the built body/);
+  fails('built exactly like the `gh` body above', 'covering the summary and test plan', /glab description must match the gh body/);
 });
 
 const MIN_CLI = '9.20.0';
