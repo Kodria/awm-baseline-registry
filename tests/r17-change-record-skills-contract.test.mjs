@@ -193,6 +193,9 @@ function assertRecordSequence(text) {
   assert.ok(step.includes('stop and report the malformed header'), 'a malformed header slug must stop');
   assert.ok(step.includes('with a conventional-commit subject (`type(scope): subject`)'), 'step 1 must require a conventional-commit subject');
   assert.ok(step.includes('stage files by name'), 'step 1 must add each file explicitly');
+  assert.ok(step.includes('Read `git status` and commit'), 'step 1 must inspect the working tree first');
+  assert.ok(step.includes('cut it to 64 characters (trimming a trailing `-` again)'), 'the derived slug must be cut to the 64-character limit');
+  assert.ok(step.includes('(local, never committed)'), 'the sensor receipt must stay out of the commits');
   assert.ok(step.includes('if they keep the tree dirty, stop and report them instead'), 'step 1 must stop on a tree kept dirty by unrelated files');
   assert.ok(step.includes('The working tree must be clean: a dirty tree gets no sensor receipt.'), 'step 1 must leave a clean tree');
   assert.ok(step.includes('`"mode": "opt-out"` or `"mode": "native-gate"`'), 'the opt-out sensors mode must be named');
@@ -352,6 +355,9 @@ test('R7.2: Step 4.1 runs the six record steps in order and stops on a failing s
   fails('stop and report the malformed header', 'use it anyway', /malformed header slug must stop/);
   fails('with a conventional-commit subject (`type(scope): subject`)', 'with any subject', /require a conventional-commit subject/);
   fails('stage files by name', 'stage everything', /add each file explicitly/);
+  fails('Read `git status` and commit', 'Commit', /inspect the working tree first/);
+  fails('cut it to 64 characters (trimming a trailing `-` again)', 'keep it whole', /cut to the 64-character limit/);
+  fails(' (local, never committed)', '', /stay out of the commits/);
   fails('if they keep the tree dirty, stop and report them instead', 'if they keep the tree dirty, ignore them', /tree kept dirty by unrelated files/);
   fails('The working tree must be clean: a dirty tree gets no sensor receipt.', '', /leave a clean tree/);
   fails('`"mode": "opt-out"` or `"mode": "native-gate"`', '`"mode": "native-gate"`', /opt-out sensors mode must be named/);
