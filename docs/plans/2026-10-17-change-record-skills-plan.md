@@ -506,7 +506,7 @@ test('R7.4: the per-skill minimum never raises the registry compatibility floor'
 });
 ```
 
-- [ ] **Step 3: Run RED.** `npm run test:change-record` → the first two new tests fail; the floor test passes already (it pins that `minCliVersion` stays `9.14.0`, below `9.20.0`).
+- [ ] **Step 3: Run RED.** `npm run test:change-record` → the first two new tests fail; the floor test passes already (it pins that `minCliVersion` stays below `9.20.0`).
 
 - [ ] **Step 4: writing-plans.** Append to the end of `### Change Record` (after its last bullet, one blank line before):
 
@@ -593,3 +593,5 @@ Backward check: the CI wiring and `test:workflow-coverage` serve R7.1's gate (S1
 **A6 (S2 code-quality re-review, minors, 2026-10-17).** Applied in S2: the Step 4.1 lead paragraph says `ninguno — <razón>` skips steps 2–6 while step 1 still commits pending work, and the trivial opt-out says to commit pending work first (`--allow-empty` only when nothing is pending); the Option 2 link pins the last commit that changed the record (`git log -1 --format=%H -- docs/changes/<file>`), not the commit that added it; the test pins the unattended `record-exists` exception, the unattended "nunca lo elijas por criterio propio" rule and the Option 2 `Change Record: no generado — <motivo>` line, each with its own mutation.
 
 **A7 (deviation accepted in S3, 2026-10-17; SRC-BUNDLE locator refreshed to `"name": "dev"` because S3 changed the version line it pointed at).** S3 also updated the Common Mistakes "Integrating without a validated Change Record" fix line so its exceptions include the new version gate (a missing or pre-9.20.0 CLI), otherwise it would contradict Step 4.1 item 0. No behavior beyond R7.4 changes.
+
+**A8 (S3 code-quality review, 2026-10-17).** Applied in S3: the version gate states that `awm --version` prints only `X.Y.Z` and that major, minor and patch are compared as integers, in that order (9.9.0 < 9.20.0 < 10.0.0); "missing" means `awm` is not found, exits non-zero, or prints a version below 9.20.0, and the limitation line reads `el CLI <versión, o "ausente">`. Test: the floor check uses `compareSemver` from `scripts/semver.mjs` through an `assertFloorBelowMinimum` helper with mutation checks (`9.20.0`, `10.0.0`), the self-referential numeric assertion is removed, and the gate's `awm --version`, numeric-comparison and `state the limitation once` assertions each get a mutation.
