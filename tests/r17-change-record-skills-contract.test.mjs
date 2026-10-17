@@ -64,6 +64,7 @@ function assertRecordSubsection(text) {
   assert.ok(body.includes('como máximo 64 caracteres'), 'the subsection must state the 64-character slug limit');
   assert.ok(body.includes('`ninguno` está reservado'), 'the subsection must reserve ninguno for the opt-out');
   assert.ok(body.includes('`Change-Record: none`'), 'the trivial opt-out must map to the Change-Record: none trailer');
+  assert.ok(body.includes('Elige un slug que no use ningún'), 'the subsection must forbid reusing an existing record slug');
 }
 
 test('R7.1: the plan header template declares the planned Change Record and its acceptance criteria', () => {
@@ -85,6 +86,7 @@ test('R7.1: writing-plans states that type, scope and semver are derived, never 
   assert.throws(() => assertRecordSubsection(mutated(text, 'como máximo 64 caracteres', 'sin límite')), /64-character/);
   assert.throws(() => assertRecordSubsection(mutated(text, '`ninguno` está reservado', '`ninguno` es libre')), /reserve ninguno/);
   assert.throws(() => assertRecordSubsection(mutated(text, 'el trailer `Change-Record: none`', 'otra cosa')), /Change-Record: none trailer/);
+  assert.throws(() => assertRecordSubsection(mutated(text, 'Elige un slug que no use ningún', 'Usa cualquier slug, aunque lo use un')), /forbid reusing an existing record slug/);
 });
 
 test('section() keeps fenced headings inside the section', () => {
@@ -128,7 +130,13 @@ function assertRecordSequence(text) {
   assert.ok(lead < step.search(RECORD_STEPS[0][1]), 'the plan-header lead paragraph must precede step 1');
   assert.ok(step.includes('commit any pending work (step 1), then go straight to **Trivial changes (opt-out)** below; steps 2–6 do not run'), 'the plan-level opt-out must commit pending work before skipping steps 2–6');
   assert.match(step, /`awm change new <slug> --refresh`/, 'an existing record must be refreshed, never overwritten');
-  assert.ok(step.includes('with no other flag'), 'the --refresh run must take no other flag');
+  assert.ok(step.includes('with no flag other than `--base`'), 'the --refresh run must take no flag other than --base');
+  assert.ok(step.includes('this branch added it'), 'refresh must be limited to a record this branch added');
+  assert.ok(step.includes('If an earlier change owns that slug, stop and report the collision'), 'a slug owned by an earlier change must stop as a collision');
+  assert.ok(step.includes('Pass `--base <base-branch>` (from Step 2) to every `awm change new` and `awm change validate` call of this step'), 'every awm change call must pass the Step 2 base');
+  assert.ok(step.includes('replace each run of characters outside `[a-z0-9]` with `-`'), 'the derived slug must normalise non-alphanumeric runs');
+  assert.ok(step.includes('never edit `.awm/sensors.json` to obtain a receipt'), 'the agent must never tamper with the sensors manifest for a receipt');
+  assert.ok(step.includes('never invent `{none}`'), 'a plan without criteria must not yield an invented none item');
   assert.match(step, /Non-zero → stop/, 'a failing strict validation must stop the integration');
   assert.ok(step.includes(NARRATIVE_SOURCES), 'the narrative must be written from the plan, the QA results and the diff (narrative sources)');
   assert.ok(step.includes('`"mode": "native-gate"`'), 'the native-gate sensors mode must be named');
@@ -171,6 +179,7 @@ function assertPrBodyFromRecord(text) {
   assert.match(option, /not from memory/, 'the skill must say the body comes from the record');
   assert.ok(option.includes('`git log -1 --format=%H -- docs/changes/<file>`'), 'the record link must pin the last commit that changed the record');
   assert.ok(option.includes('`Change Record: no generado — <motivo>`'), 'the PR body must state a Step 4.1 limitation line');
+  assert.ok(option.includes('`Change Record: docs/changes/<file> @ <record-commit-sha>`'), 'other hosts must get a plain record reference with its commit');
 }
 
 test('R7.2: Step 4.1 runs the six record steps in order and stops on a failing strict validation', () => {
@@ -187,7 +196,13 @@ test('R7.2: Step 4.1 runs the six record steps in order and stops on a failing s
   fails(RECORD_LEAD, '**Read the header.**', /open with the plan-header lead paragraph/);
   assert.throws(() => assertRecordSequence(mutated(mutated(text, RECORD_LEAD, '**Read the header.**'), '1. **Commit.** ', `1. **Commit.** ${RECORD_LEAD} `)), /lead paragraph must precede step 1/);
   fails('`awm change new <slug> --refresh`', '`awm change new <slug>` again', /refreshed, never overwritten/);
-  fails('with no other flag', 'with any flag', /--refresh run must take/);
+  fails('with no flag other than `--base`', 'with any flag', /--refresh run must take/);
+  fails('this branch added it', 'it exists', /limited to a record this branch added/);
+  fails('If an earlier change owns that slug, stop and report the collision', 'If an earlier change owns that slug, refresh it', /stop as a collision/);
+  fails('Pass `--base <base-branch>` (from Step 2) to every `awm change new` and `awm change validate` call of this step', 'Pass nothing extra', /must pass the Step 2 base/);
+  fails('replace each run of characters outside `[a-z0-9]` with `-`', 'keep other characters', /normalise non-alphanumeric runs/);
+  fails('never edit `.awm/sensors.json` to obtain a receipt', 'edit the manifest if needed', /never tamper with the sensors manifest/);
+  fails('never invent `{none}`', 'use `{none}`', /invented none item/);
   fails('Non-zero → stop', 'Non-zero → continue', /must stop the integration/);
   fails(NARRATIVE_SOURCES, 'drawing from the `post-implementation-qa` results and the diff', /narrative sources/);
   fails(NARRATIVE_SOURCES, 'drawing from the plan (goal and `**Criterios de aceptación:**`) and the diff', /narrative sources/);
@@ -230,6 +245,7 @@ test('R7.3: the Option 2 PR body is built from the record and links it', () => {
   fails('not from memory', 'from the record', /comes from the record/);
   fails('`git log -1 --format=%H -- docs/changes/<file>`', '`git rev-parse HEAD`', /pin the last commit that changed the record/);
   fails('`Change Record: no generado — <motivo>`', '`Change Record: ausente`', /state a Step 4\.1 limitation line/);
+  fails('`Change Record: docs/changes/<file> @ <record-commit-sha>`', '`Change Record: docs/changes/<file>`', /plain record reference/);
 });
 
 const MIN_CLI = '9.20.0';
@@ -250,7 +266,8 @@ function assertGracefulDegradation(text) {
   assert.match(step, /do not probe with `--help`/, 'the gate must not trust --help, which older CLIs answer with exit 0');
   assert.match(step, /state the limitation once/, 'an old CLI must be reported, not hidden');
   assert.match(step, /continue to the merge\/push without a record — never write a record by hand or invent its fields/, 'an old CLI must neither block integration nor be papered over');
-  assert.ok(section(text, '### Modo desatendido').includes('CLI anterior a 9.20.0'), 'unattended mode must also continue without a record on a CLI older than the minimum');
+  assert.ok(section(text, '### Modo desatendido').includes('CLI ausente o anterior a 9.20.0'), 'unattended mode must also continue without a record on a CLI older than the minimum');
+  assert.ok(step.includes('still make the opt-out commit'), 'an old CLI must still make a declared opt-out commit');
 }
 
 test('R7.4: both changed skills declare the minimum CLI version that ships the Change Record', () => {
@@ -265,14 +282,15 @@ test('R7.4: finishing states the limitation and continues without inventing a re
   const text = read(FINISHING);                               // verifies R7.4
   assertGracefulDegradation(text);
   assert.throws(() => assertGracefulDegradation(mutated(text, ' — never write a record by hand or invent its fields', '')), /papered over/);
-  assert.throws(() => assertGracefulDegradation(mutated(text, 'do not probe with `--help`', 'probe with `--help`')), /--help/);
+  assert.throws(() => assertGracefulDegradation(mutated(text, 'do not probe with `--help`', 'probe with `--help`')), /must not trust --help/);
   assert.throws(() => assertGracefulDegradation(mutated(text, '0. **Version gate.**', '7. **Version gate.**')), /start with the version gate/);
   assert.throws(() => assertGracefulDegradation(mutated(mutated(text, RECORD_LEAD, '**Read the header.**'), 'Every integrated change leaves one Change Record', `${RECORD_LEAD} Every integrated change leaves one Change Record`)), /precede the plan-level opt-out decision/);
-  assert.throws(() => assertGracefulDegradation(mutated(text, 'CLI anterior a 9.20.0', 'CLI antiguo')), /unattended mode must also continue/);
+  assert.throws(() => assertGracefulDegradation(mutated(text, 'CLI ausente o anterior a 9.20.0', 'CLI antiguo')), /unattended mode must also continue/);
   assert.throws(() => assertGracefulDegradation(mutated(text, 'compare major, minor and patch as integers', 'compare the versions')), /compare semver numerically/);
   assert.throws(() => assertGracefulDegradation(mutated(text, 'is not found, exits non-zero, or prints a version below 9.20.0', 'is older')), /define a missing CLI/);
   assert.throws(() => assertGracefulDegradation(mutated(text, 'with `awm --version`', 'with `awm version`')), /read the installed CLI version/);
   assert.throws(() => assertGracefulDegradation(mutated(text, 'state the limitation once', 'note it')), /reported, not hidden/);
+  assert.throws(() => assertGracefulDegradation(mutated(text, 'still make the opt-out commit', 'skip the opt-out commit')), /still make a declared opt-out commit/);
 });
 
 function assertFloorBelowMinimum(floor) {
