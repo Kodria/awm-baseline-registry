@@ -99,6 +99,11 @@ test('section() keeps fenced headings inside the section', () => {
 });
 
 const STEP_41 = '#### Step 4.1: Change Record (Options 1 & 2 only)';
+const STEP_40 = '#### Step 4.0: Retire design artifacts (Options 1 & 2 only)';
+const OPTION_1 = '#### Option 1: Merge Locally';
+const OPTION_2 = '#### Option 2: Push and Create PR/MR';
+const RECORD_LEAD = "**Before step 1, read the plan's `**Change Record:**` header.**";
+const NARRATIVE_SOURCES = 'drawing from the plan (goal and `**Criterios de aceptación:**`), the `post-implementation-qa` results and the diff';
 const RECORD_STEPS = [
   ['commit', /^1\. \*\*Commit\.\*\*/m],
   ['sensors', /^2\. \*\*Run the sensors:\*\* `awm sensors run`/m],
@@ -117,22 +122,31 @@ function assertRecordSequence(text) {
     assert.ok(at > last, `Step 4.1 lists the ${name} step out of order`);
     last = at;
   }
+  const lead = step.indexOf(RECORD_LEAD);
+  assert.ok(lead >= 0, 'Step 4.1 must open with the plan-header lead paragraph');
+  assert.ok(lead < step.search(RECORD_STEPS[0][1]), 'the plan-header lead paragraph must precede step 1');
   assert.match(step, /`awm change new <slug> --refresh`/, 'an existing record must be refreshed, never overwritten');
+  assert.ok(step.includes('with no other flag'), 'the --refresh run must take no other flag');
   assert.match(step, /Non-zero → stop/, 'a failing strict validation must stop the integration');
-  for (const source of ['the plan', '`post-implementation-qa` results', 'the diff']) {
-    assert.ok(step.includes(source), `the narrative must be written from ${source}`);
-  }
-  assert.match(step, /`Change-Record: none`, with the reason in the commit body/, 'trivial changes may use the opt-out trailer with a reason');
+  assert.ok(step.includes(NARRATIVE_SOURCES), 'the narrative must be written from the plan, the QA results and the diff (narrative sources)');
+  assert.ok(step.includes('`"mode": "native-gate"`'), 'the native-gate sensors mode must be named');
+  assert.ok(step.includes('the only non-pass verdict that does not stop'), 'the declared sensors modes must be the only non-pass verdict that continues');
+  assert.match(step, /with the reason in the commit body and the trailer `Change-Record: none` as the final paragraph/, 'trivial changes may use the opt-out trailer with a reason');
   assert.match(step, /never add `Change-Record: none` to hide it/, 'a sensors opt-out must not be disguised as an exemption');
+  assert.ok(step.includes('Never choose it on your own judgment, and never after any of steps 2–6 failed'), 'the agent must never choose the trivial opt-out on its own or after a failing step');
+  assert.ok(step.includes('Change Record validation: exempt (Change-Record: none)'), 'the opt-out must be confirmed by the exempt validation line');
 }
 
 function assertRecordRunsBeforeIntegration(text) {
-  for (const option of ['#### Option 1: Merge Locally', '#### Option 2: Push and Create PR/MR']) {
+  const at = heading => text.indexOf(`\n${heading}\n`);
+  const [i40, i41, iOpt1] = [STEP_40, STEP_41, OPTION_1].map(at);
+  for (const [heading, i] of [[STEP_40, i40], [STEP_41, i41], [OPTION_1, iOpt1]]) {
+    assert.ok(i >= 0, `missing heading ${heading}`);
+  }
+  assert.ok(i40 < i41 && i41 < iOpt1, 'Step 4.1 must sit after Step 4.0 and before Option 1');
+  for (const option of [OPTION_1, OPTION_2]) {
     assert.match(section(text, option), /run Step 4\.0 \(retire design artifacts\), then Step 4\.1 \(Change Record\)/, `${option} must run the Change Record step before integrating`);
   }
-  const at = heading => text.indexOf(`\n${heading}\n`);
-  assert.ok(at('#### Step 4.0: Retire design artifacts (Options 1 & 2 only)') < at(STEP_41) && at(STEP_41) < at('#### Option 1: Merge Locally'),
-    'Step 4.1 must sit after Step 4.0 and before Option 1');
 }
 
 function assertUnattendedKeepsRecordGate(text) {
@@ -142,7 +156,7 @@ function assertUnattendedKeepsRecordGate(text) {
 }
 
 function assertPrBodyFromRecord(text) {
-  const option = section(text, '#### Option 2: Push and Create PR/MR');
+  const option = section(text, OPTION_2);
   const body = option.match(/gh pr create[\s\S]*?\nEOF\n/);
   assert.ok(body, 'Option 2 must show the gh pr create body');
   for (const source of ['<summary_short>', '## Qué se hizo', '## Qué se probó', 'manual_validation']) {
@@ -155,26 +169,52 @@ function assertPrBodyFromRecord(text) {
 test('R7.2: Step 4.1 runs the six record steps in order and stops on a failing strict validation', () => {
   const text = read(FINISHING);                               // verifies R7.2
   assertRecordSequence(text);
-  assert.throws(() => assertRecordSequence(mutated(text, '6. **Validate:** `awm change validate --strict`', '6. **Validate:** `awm change validate`')), /strict validation step/);
-  assert.throws(() => assertRecordSequence(mutated(text, 'Non-zero → stop', 'Non-zero → continue')), /must stop the integration/);
-  assert.throws(() => assertRecordSequence(mutated(text, '`Change-Record: none`, with the reason in the commit body', '`Change-Record: none`')), /opt-out trailer/);
-  assert.throws(() => assertRecordSequence(mutated(text, 'never add `Change-Record: none` to hide it', 'add `Change-Record: none`')), /disguised/);
-  const early = mutated(text, '1. **Commit.**', '6. **Validate:** `awm change validate --strict` first\n1. **Commit.**');
-  assert.throws(() => assertRecordSequence(early), /strict validation step out of order/);
+  const fails = (from, to, expected) => assert.throws(() => assertRecordSequence(mutated(text, from, to)), expected);
+  fails('1. **Commit.**', '1. **Save.**', /include the commit step/);
+  fails('2. **Run the sensors:**', '2. **Sensors:**', /include the sensors step/);
+  fails('3. **Create the skeleton:**', '3. **Skeleton:**', /include the skeleton step/);
+  fails('4. **Write the narrative.**', '4. **Narrative.**', /include the narrative step/);
+  fails('5. **Commit the record**', '5. **Save the record**', /include the record commit step/);
+  fails('6. **Validate:** `awm change validate --strict`', '6. **Validate:** `awm change validate`', /include the strict validation step/);
+  fails('1. **Commit.**', '6. **Validate:** `awm change validate --strict` first\n1. **Commit.**', /strict validation step out of order/);
+  fails(RECORD_LEAD, '**Read the header.**', /open with the plan-header lead paragraph/);
+  assert.throws(() => assertRecordSequence(mutated(mutated(text, RECORD_LEAD, '**Read the header.**'), '1. **Commit.** ', `1. **Commit.** ${RECORD_LEAD} `)), /lead paragraph must precede step 1/);
+  fails('`awm change new <slug> --refresh`', '`awm change new <slug>` again', /refreshed, never overwritten/);
+  fails('with no other flag', 'with any flag', /--refresh run must take/);
+  fails('Non-zero → stop', 'Non-zero → continue', /must stop the integration/);
+  fails(NARRATIVE_SOURCES, 'drawing from the `post-implementation-qa` results and the diff', /narrative sources/);
+  fails(NARRATIVE_SOURCES, 'drawing from the plan (goal and `**Criterios de aceptación:**`) and the diff', /narrative sources/);
+  fails(NARRATIVE_SOURCES, 'drawing from the plan (goal and `**Criterios de aceptación:**`) and the `post-implementation-qa` results', /narrative sources/);
+  fails('`"mode": "native-gate"`', '`"mode": "gate"`', /native-gate sensors mode/);
+  fails('the only non-pass verdict that does not stop', 'a non-pass verdict', /only non-pass verdict that continues/);
+  fails('with the reason in the commit body and the trailer `Change-Record: none` as the final paragraph', 'with the trailer `Change-Record: none`', /opt-out trailer/);
+  fails('never add `Change-Record: none` to hide it', 'add `Change-Record: none`', /disguised/);
+  fails('Never choose it on your own judgment, and never after any of steps 2–6 failed', 'Choose it freely', /on its own or after a failing step/);
+  fails('Change Record validation: exempt (Change-Record: none)', 'Change Record validation: ok', /exempt validation line/);
 });
 
 test('R7.2: Options 1 and 2 run the record after Step 4.0 and before integrating, in both modes', () => {
   const text = read(FINISHING);                               // verifies R7.2
   assertRecordRunsBeforeIntegration(text);
   assertUnattendedKeepsRecordGate(text);
-  assert.throws(() => assertRecordRunsBeforeIntegration(mutated(text, 'run Step 4.0 (retire design artifacts), then Step 4.1 (Change Record)', 'run Step 4.0 (retire design artifacts)')), /must run the Change Record step/);
-  assert.throws(() => assertUnattendedKeepsRecordGate(mutated(text, 'pausa legítima como los tests rojos', 'advertencia')), /legitimate pause/);
+  const integration = (from, to, expected) => assert.throws(() => assertRecordRunsBeforeIntegration(mutated(text, from, to)), expected);
+  integration(STEP_40, '#### Step 4.0: Retire artifacts', /missing heading #### Step 4\.0/);
+  integration('Then continue with Step 4.1 (Change Record).\n', `Then continue with Step 4.1 (Change Record).\n${OPTION_1}\n`, /after Step 4\.0 and before Option 1/);
+  integration('run Step 4.0 (retire design artifacts), then Step 4.1 (Change Record)', 'run Step 4.0 (retire design artifacts)', /Option 1: Merge Locally must run the Change Record step/);
+  integration(`${OPTION_2}\n\n**First, run Step 4.0 (retire design artifacts), then Step 4.1 (Change Record).**`, `${OPTION_2}\n\n**First, run Step 4.0 (retire design artifacts).**`, /Option 2: Push and Create PR\/MR must run the Change Record step/);
+  const unattended = (from, to, expected) => assert.throws(() => assertUnattendedKeepsRecordGate(mutated(text, from, to)), expected);
+  unattended('y el Step 4.1 (Change Record) automáticamente', 'automáticamente', /must run the Change Record step/);
+  unattended('pausa legítima como los tests rojos', 'advertencia', /legitimate pause/);
 });
 
 test('R7.3: the Option 2 PR body is built from the record and links it', () => {
   const text = read(FINISHING);                               // verifies R7.3
   assertPrBodyFromRecord(text);
-  assert.throws(() => assertPrBodyFromRecord(mutated(text, '<summary_short>\n', '<2-3 bullets of what changed>\n')), /draw from <summary_short>/);
-  assert.throws(() => assertPrBodyFromRecord(mutated(text, 'Change Record: [`docs/changes/<file>`](', 'Record: (')), /link the record file/);
-  assert.throws(() => assertPrBodyFromRecord(mutated(text, '<each manual_validation step>', '<each manual step>')), /draw from manual_validation/);
+  const fails = (from, to, expected) => assert.throws(() => assertPrBodyFromRecord(mutated(text, from, to)), expected);
+  fails('<summary_short>\n', '<2-3 bullets of what changed>\n', /draw from <summary_short>/);
+  fails('<bullets from ## Qué se hizo>', '<bullets of what changed>', /draw from ## Qué se hizo/);
+  fails('<each check from ## Qué se probó>', '<each check>', /draw from ## Qué se probó/);
+  fails('<each manual_validation step>', '<each manual step>', /draw from manual_validation/);
+  fails('Change Record: [`docs/changes/<file>`](', 'Record: (', /link the record file/);
+  fails('not from memory', 'from the record', /comes from the record/);
 });

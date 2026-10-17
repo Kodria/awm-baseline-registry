@@ -41,7 +41,7 @@ El modo desatendido quita pausas, no controles: los gates (sensor, ledger, recon
 
 WHEN el modo es `desatendido` AND los tests del Step 1 pasan: omite el menú del Step 3 y ejecuta directamente la **Opción 2 (Push and Create PR/MR)**, que corre primero el Step 3.5 (detección de host), luego el Step 4.0 (retiro de artefactos de diseño) y el Step 4.1 (Change Record) automáticamente, sin prompt. IF los tests fallan, THEN detente y reporta los fallos sin pushear ni crear el PR/MR — igual que en modo interactivo; tests rojos son una pausa legítima que ningún modo salta. La **Opción 4 (Discard)** NUNCA está disponible en modo desatendido: descartar trabajo es una acción destructiva que siempre requiere a un humano.
 
-El Step 4.1 (Change Record) corre igual que en modo interactivo: si `awm change new` o `awm change validate --strict` terminan con exit distinto de cero, es una pausa legítima como los tests rojos — detente y reporta el diagnóstico sin pushear ni crear el PR/MR. Solo la limitación de sensores opt-out (ver Step 4.1) continúa sin record.
+El Step 4.1 (Change Record) corre igual que en modo interactivo: si `awm sensors run` no da `pass`, si `awm change new` termina con exit distinto de cero (salvo `record-exists`, que el Step 4.1 resuelve con `--refresh`) o si `awm change validate --strict` termina con exit distinto de cero, es una pausa legítima como los tests rojos — detente y reporta el diagnóstico sin pushear ni crear el PR/MR. Solo la limitación de sensores declarados opt-out o native-gate (ver Step 4.1) continúa sin record. El opt-out trivial (`Change-Record: none`) solo aplica si el plan lo declara; en modo desatendido nunca lo elijas por criterio propio.
 
 **El push siempre corre; el PR/MR es best-effort.** Si `$HOST=unknown` (o el host es reconocido pero su CLI no está instalado), la Opción 2 degrada a "push + instrucciones para abrir el PR/MR a mano" — ese es un resultado **final y válido** del modo desatendido, no un fallo. El skill nunca debe: (a) bloquear/escalar porque no pudo crear el PR/MR, ni (b) terminar en silencio sin decir que el PR/MR no se creó. El reporte final del modo desatendido siempre debe indicar explícitamente si el PR/MR se creó o si quedó pendiente de creación manual.
 
@@ -165,12 +165,14 @@ Then continue with Step 4.1 (Change Record).
 
 Every integrated change leaves one Change Record (`awm.change-record/v1`) at `docs/changes/<YYYY-MM-DD>-<slug>.md`: a short, structured answer to what the change did, what was verified and what a human still has to validate, readable without the code. The CLI derives the deterministic fields (`type`, `scope`, `semver`, `breaking`, `modules`, `verification`) from git and from the sensor-run receipt; you write only the narrative.
 
-1. **Commit.** Commit all pending work. The working tree must be clean: a dirty tree gets no sensor receipt.
-2. **Run the sensors:** `awm sensors run`. A full run on a clean tree writes the receipt `.awm/sensors/runs/<commit>.json` (local, never committed).
-   - `overall` other than `pass` → stop exactly as for failing tests in Step 1: report it and do not merge or push.
-   - The JSON has `"mode": "opt-out"` (the project deliberately declares no sensors) → no receipt can exist, so no record can be certified. State the limitation once (`Sin Change Record: el proyecto declara sensores opt-out; no hay receipt que certifique la verificación`) and continue to the merge/push without a record. Never invent one, and never add `Change-Record: none` to hide it: `awm changes list` reports the change as `missing`, which is the truth.
-   - Any other stderr line `no sensor receipt written: <reason>` → stop and report it; fix its cause (usually: commit the pending work) and run this step again.
-3. **Create the skeleton:** `awm change new <slug>`, with the slug from the plan's `**Change Record:**` header (for a plan without one, derive it from the branch name: lowercase letters, digits and hyphens, at most 64 characters). A plan that declares `**Change Record:** ninguno — <razón>` takes the trivial opt-out below instead of steps 2–6. Pass `--plan <plan-path>`, and `--issue <https-url>` when the plan names an issue. If the record already exists (`record-exists`), run `awm change new <slug> --refresh` instead: it recomputes only the derived fields and keeps the narrative. Any other non-zero exit → stop and report the diagnostic with its `remedy:` line.
+**Before step 1, read the plan's `**Change Record:**` header.** `ninguno — <razón>` → go straight to **Trivial changes (opt-out)** below; steps 1–6 do not run. Otherwise its slug is the `<slug>` of steps 3–6; for a plan without the header, derive one from the branch name that matches `^[a-z0-9]+(-[a-z0-9]+)*$` (at most 64 characters).
+
+1. **Commit.** Commit all pending work with a conventional-commit subject (`type(scope): subject`): the CLI derives `type`, `scope` and `semver` only from conventional subjects, and fails with `no-conventional-commits` when the branch has none. The working tree must be clean: a dirty tree gets no sensor receipt.
+2. **Run the sensors:** `awm sensors run`. A full run on a clean tree writes the receipt `.awm/sensors/runs/<commit>.json` (local, never committed). Read the JSON's `mode` before its `overall`:
+   - `"mode": "opt-out"` or `"mode": "native-gate"` → the project deliberately declares no AWM sensors (`reason` is `opt-out-declared` or `native-gate-declared`). The run reports `"overall": "not_certified"` and exits 1, and this is the only non-pass verdict that does not stop: no receipt can exist, so no record can be certified. State the limitation once, in the final report and in the PR/MR body (`Change Record: no generado — el proyecto declara sensores <mode>; no hay receipt que certifique la verificación`), and continue to the merge/push without a record. Never invent one, and never add `Change-Record: none` to hide it: `awm changes list` reports the change as `missing`, which is the truth.
+   - Any other `overall` than `pass` (including the modes `missing` and `invalid`) → stop exactly as for failing tests in Step 1: report its `overall`, `mode`, `reason` and `remedy`, and do not merge or push.
+   - `overall: pass` with a stderr line `no sensor receipt written: <reason>` → stop and report it; fix its cause (usually: commit the pending work) and run this step again.
+3. **Create the skeleton:** `awm change new <slug>`. Pass `--plan <plan-path>` (the plan's repo-relative path, only when the plan file lives inside this repository) and `--issue <https-url>` when the plan names an issue. If the record already exists (`record-exists`), run `awm change new <slug> --refresh` with no other flag instead (the CLI rejects `--plan` and `--issue` together with `--refresh`): it recomputes only the derived fields and keeps the narrative. Any other non-zero exit → stop and report the diagnostic with its `remedy:` line.
 4. **Write the narrative.** Replace every `<!-- awm:pending -->` marker, drawing from the plan (goal and `**Criterios de aceptación:**`), the `post-implementation-qa` results and the diff (`git diff <base-branch>...HEAD`):
    - `title` (at most 120 characters) and `summary_short` (one line, at most 280 characters, written for someone who will not read the code);
    - `manual_validation`: one `{step, expected}` item per acceptance criterion of the plan, or `{none: <razón>}` when the plan's criterion is `- ninguno — <razón>`;
@@ -179,15 +181,15 @@ Every integrated change leaves one Change Record (`awm.change-record/v1`) at `do
 
    Never edit the derived fields by hand: validation recomputes them.
 5. **Commit the record** on its own: `git add docs/changes/<file>`, then `git commit -m "docs(changes): add change record <slug>"`. A commit that only touches `docs/changes/` changes neither the derived fields nor what the receipt certifies.
-6. **Validate:** `awm change validate --strict`. Exit 0 → continue. Non-zero → stop: report every diagnostic, and never merge or push past a failing strict validation, in either mode. Fix it and repeat from the step the diagnostic points to: `pending-content`, `field-invalid` or `body-section-missing` → step 4, then commit the fix; `record-uncommitted` → step 5; `code-changed-after-verification`, `derived-mismatch`, `receipt-missing` or `verification-mismatch` → step 2, then `--refresh` in step 3; `verification-not-passing` → fix the failing sensors first.
+6. **Validate:** `awm change validate --strict`. Exit 0 → continue. Non-zero → stop: report every diagnostic, and never merge or push past a failing strict validation, in either mode. Fix it and repeat from the step the diagnostic points to: `pending-content`, `field-invalid` or `body-section-missing` → step 4, then commit the fix; `record-uncommitted` → step 5; `code-changed-after-verification`, `derived-mismatch`, `receipt-missing` or `verification-mismatch` → step 2, then `--refresh` in step 3; `verification-not-passing` → fix the sensors and commit, then step 2 and `--refresh` in step 3. Any other code → stop and report it; do not improvise a fix.
 
-**Trivial changes (opt-out):** a change too small to merit a record (a version bump, a typo) MAY skip steps 2–6 by ending one of its commit messages with the trailer `Change-Record: none`, with the reason in the commit body:
+**Trivial changes (opt-out):** only when the plan declares `**Change Record:** ninguno — <razón>`, or, in interactive mode, when the human decides so for a change too small to merit a record (a version bump, a typo). Never choose it on your own judgment, and never after any of steps 2–6 failed: that would turn an inability to certify into an exemption. Make the opt-out commit the branch's last commit, with the reason in the commit body and the trailer `Change-Record: none` as the final paragraph (`--allow-empty` lets it work when nothing is pending):
 
 ```bash
-git commit -m "chore: bump version" -m "Trivial: version bump only, nothing to validate." -m "Change-Record: none"
+git commit --allow-empty -m "chore: <subject>" -m "<razón>" -m "Change-Record: none"
 ```
 
-The trailer counts only in the final paragraph of a commit message. A host that squash-merges concatenates the branch's messages, so for Option 2 also end the PR/MR description with a `Change-Record: none` paragraph.
+The trailer counts only in the final paragraph of a commit message, never in the subject. Then run `awm change validate --strict`: it must print `Change Record validation: exempt (Change-Record: none)` and exit 0; anything else → stop and report it. A host that squash-merges concatenates the branch's messages, so for Option 2 also end the PR/MR description with a `Change-Record: none` paragraph (used when the host squashes with the PR description).
 
 Then continue with the chosen option's merge/push below.
 
@@ -225,7 +227,7 @@ The push always happens first and never depends on `gh`/`glab`. What differs by 
 git push -u origin <feature-branch>
 ```
 
-Build the PR/MR body from the Change Record of Step 4.1, not from memory. **Summary** is its `summary_short` followed by the bullets of `## Qué se hizo`. **Test Plan** lists what `## Qué se probó` says already ran (checked), then each `manual_validation` item as a pending check; `{none: <razón>}` becomes the single line `Sin validación manual: <razón>`. Link the record file. Without a record (a limitation of Step 4.1, or the trivial opt-out), fill Summary and Test Plan from the plan, the QA results and the diff, write `Change Record: ninguno — <razón>` in place of the link, and for the opt-out end the body with a `Change-Record: none` paragraph.
+Build the PR/MR body from the Change Record of Step 4.1, not from memory. **Summary** is its `summary_short` followed by the bullets of `## Qué se hizo`. **Test Plan** lists what `## Qué se probó` says already ran (checked), then each `manual_validation` item as a pending check; `{none: <razón>}` becomes the single line `Sin validación manual: <razón>`. Link the record file at the commit that added it (step 5), so the link survives deleting the branch: `<web-url>/blob/<record-commit-sha>/docs/changes/<file>` on GitHub, `<web-url>/-/blob/<record-commit-sha>/docs/changes/<file>` on GitLab, where `<web-url>` is the remote as an https web URL (an SSH remote `git@host:owner/repo.git` becomes `https://host/owner/repo`). Without a record, fill Summary and Test Plan from the plan, the QA results and the diff, and replace the link line: after a limitation of Step 4.1, with the line it stated (`Change Record: no generado — <motivo>`); for the trivial opt-out, with `Change Record: ninguno — <razón>`, and end the body with a `Change-Record: none` paragraph.
 
 **`HOST=github` → use `gh`, if installed:**
 
@@ -240,7 +242,7 @@ gh pr create --title "<title>" --body "$(cat <<'EOF'
 - [x] <each check from ## Qué se probó>
 - [ ] <each manual_validation step> → <expected>
 
-Change Record: [`docs/changes/<file>`](<remote-url-without-.git>/blob/<feature-branch>/docs/changes/<file>)
+Change Record: [`docs/changes/<file>`](<web-url>/blob/<record-commit-sha>/docs/changes/<file>)
 EOF
 )"
 ```
@@ -354,7 +356,7 @@ git worktree remove <worktree-path>
 
 **Integrating without a validated Change Record**
 - **Problem:** The merge or PR lands with no record, or with one that `awm change validate --strict` rejects, and the next day nobody can tell what it did or what still needs validating
-- **Fix:** Run Step 4.1 before the merge/push of Options 1 & 2 and stop on any non-zero exit
+- **Fix:** Run Step 4.1 before the merge/push of Options 1 & 2 and stop on any non-zero exit, except the two Step 4.1 names: the declared sensors modes `opt-out`/`native-gate` (limitation, no record) and `record-exists` (refresh)
 
 **Writing the PR/MR body from memory**
 - **Problem:** Summary and Test Plan drift from what was actually verified
