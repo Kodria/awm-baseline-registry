@@ -127,10 +127,10 @@ La línea queda ligada a los digests del plan. `PLAN_DISPATCH_MODE` por valor du
 
 Todo plan nuevo declara en la cabecera el Change Record (`awm.change-record/v1`) que su rama va a producir. `finishing-a-development-branch` lo genera y lo valida antes de integrar; el plan solo fija la intención:
 
-- `**Change Record:**` lleva el slug planeado entre backticks: minúsculas, dígitos y guiones (`^[a-z0-9]+(-[a-z0-9]+)*$`), como máximo 64 caracteres. finishing corre `awm change new <slug>` con ese slug y el record queda en `docs/changes/<YYYY-MM-DD>-<slug>.md`.
-- `**Criterios de aceptación:**` lista lo que un humano tiene que validar a mano después del merge, una línea `- <paso> → <resultado esperado>` por criterio. Es la fuente de `manual_validation` del record: cada línea se convierte en un ítem `{step, expected}`. Si no hay nada que validar a mano, escribe una sola línea `- ninguno: <razón>`, que se convierte en `manual_validation: {none: <razón>}`.
+- `**Change Record:**` lleva el slug planeado entre backticks: minúsculas, dígitos y guiones (`^[a-z0-9]+(-[a-z0-9]+)*$`), como máximo 64 caracteres; `ninguno` está reservado para el opt-out de abajo y nunca es un slug. `finishing-a-development-branch` corre `awm change new <slug>` con ese slug y el record queda en `docs/changes/<YYYY-MM-DD>-<slug>.md`.
+- `**Criterios de aceptación:**` lista lo que un humano tiene que validar a mano después del merge, una línea `- <paso> → <resultado esperado>` por criterio. Es la fuente de `manual_validation` del record: cada línea se convierte en un ítem `{step, expected}`. Si no hay nada que validar a mano, escribe una sola línea `- ninguno — <razón>`, que se convierte en `manual_validation: {none: <razón>}`.
 - `type`, `scope` y `semver` **no se declaran** en el plan: el CLI los deriva de los commits convencionales de la rama, y `awm change validate` rechaza un record que los contradiga (`derived-mismatch`). Declararlos aquí crearía una segunda fuente que diverge de los commits.
-- Un cambio trivial que no merece record (un bump de versión, un typo) declara `**Change Record:** ninguno — <razón>`; finishing usa entonces el trailer `Change-Record: none`.
+- Un cambio trivial que no merece record (un bump de versión, un typo) declara `**Change Record:** ninguno — <razón>`, sin backticks, y omite `**Criterios de aceptación:**`; `finishing-a-development-branch` usa entonces el trailer `Change-Record: none`.
 
 ## Slice Structure
 
