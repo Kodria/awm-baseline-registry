@@ -570,3 +570,13 @@ Root-configuration risk (bundle and catalog versions drive `awm update`): full r
 | R7.4 | S3 | `R7.4: both changed skills declare the minimum CLI version…`, `R7.4: finishing states the limitation…`, `R7.4: the per-skill minimum never raises the registry compatibility floor` |
 
 Backward check: the CI wiring and `test:workflow-coverage` serve R7.1's gate (S1); the bundle bump, CHANGELOG and `test:version-bumps` ship R7.4's declaration (S3). No orphan task.
+
+## Amendments
+
+**A1 (S1 code-quality review, 2026-10-17).** Applied in S1 on top of its literal text:
+- `### Change Record` in `writing-plans`: names the skill in full (`finishing-a-development-branch`, never "finishing"); states that `ninguno` is reserved for the opt-out and is never a slug; the no-manual-validation line is `- ninguno — <razón>` (em dash, the same separator as the header opt-out); the trivial opt-out is written `**Change Record:** ninguno — <razón>` without backticks and omits `**Criterios de aceptación:**`.
+- `tests/r17-change-record-skills-contract.test.mjs`: `read` normalises CRLF; `section()` tracks fences per CommonMark (opening `` ``` `` or `~~~` of length ≥ 3, indented up to 3 spaces, closed only by the same character with at least the same length); `assertRecordSubsection` also pins the 64-character limit, the reserved `ninguno` and the `Change-Record: none` mapping; every assertion of `assertRecordSubsection` has its own mutation check.
+
+**A2 (consequence of A1 for S2).** Step 4.1 item 3 adds: a plan that declares `**Change Record:** ninguno — <razón>` takes the trivial opt-out below instead of steps 2–6. Item 4's `manual_validation` bullet reads "or `{none: <razón>}` when the plan's criterion is `- ninguno — <razón>`".
+
+**A3 (consequence of A1 for S3).** The `**Versión mínima del CLI:**` paragraph names `finishing-a-development-branch` in full.
