@@ -125,6 +125,7 @@ function assertRecordSequence(text) {
   const lead = step.indexOf(RECORD_LEAD);
   assert.ok(lead >= 0, 'Step 4.1 must open with the plan-header lead paragraph');
   assert.ok(lead < step.search(RECORD_STEPS[0][1]), 'the plan-header lead paragraph must precede step 1');
+  assert.ok(step.includes('commit any pending work (step 1), then go straight to **Trivial changes (opt-out)** below; steps 2–6 do not run'), 'the plan-level opt-out must commit pending work before skipping steps 2–6');
   assert.match(step, /`awm change new <slug> --refresh`/, 'an existing record must be refreshed, never overwritten');
   assert.ok(step.includes('with no other flag'), 'the --refresh run must take no other flag');
   assert.match(step, /Non-zero → stop/, 'a failing strict validation must stop the integration');
@@ -135,6 +136,7 @@ function assertRecordSequence(text) {
   assert.match(step, /never add `Change-Record: none` to hide it/, 'a sensors opt-out must not be disguised as an exemption');
   assert.ok(step.includes('Never choose it on your own judgment, and never after any of steps 2–6 failed'), 'the agent must never choose the trivial opt-out on its own or after a failing step');
   assert.ok(step.includes('Change Record validation: exempt (Change-Record: none)'), 'the opt-out must be confirmed by the exempt validation line');
+  assert.ok(step.includes('`--allow-empty` is only for when nothing is pending'), 'the opt-out commit must reserve --allow-empty for an empty tree');
 }
 
 function assertRecordRunsBeforeIntegration(text) {
@@ -153,6 +155,8 @@ function assertUnattendedKeepsRecordGate(text) {
   const unattended = section(text, '### Modo desatendido');
   assert.match(unattended, /el Step 4\.1 \(Change Record\)/, 'unattended mode must run the Change Record step');
   assert.match(unattended, /`awm change validate --strict`[^.]*pausa legítima/, 'a failing record step must be a legitimate pause in unattended mode');
+  assert.ok(unattended.includes('salvo `record-exists`'), 'unattended mode must exempt record-exists from the pause');
+  assert.ok(unattended.includes('nunca lo elijas por criterio propio'), 'unattended mode must forbid choosing the trivial opt-out on its own');
 }
 
 function assertPrBodyFromRecord(text) {
@@ -164,6 +168,8 @@ function assertPrBodyFromRecord(text) {
   }
   assert.match(body[0], /^Change Record: \[`docs\/changes\/<file>`\]\(/m, 'the PR body must link the record file');
   assert.match(option, /not from memory/, 'the skill must say the body comes from the record');
+  assert.ok(option.includes('`git log -1 --format=%H -- docs/changes/<file>`'), 'the record link must pin the last commit that changed the record');
+  assert.ok(option.includes('`Change Record: no generado — <motivo>`'), 'the PR body must state a Step 4.1 limitation line');
 }
 
 test('R7.2: Step 4.1 runs the six record steps in order and stops on a failing strict validation', () => {
@@ -191,6 +197,8 @@ test('R7.2: Step 4.1 runs the six record steps in order and stops on a failing s
   fails('never add `Change-Record: none` to hide it', 'add `Change-Record: none`', /disguised/);
   fails('Never choose it on your own judgment, and never after any of steps 2–6 failed', 'Choose it freely', /on its own or after a failing step/);
   fails('Change Record validation: exempt (Change-Record: none)', 'Change Record validation: ok', /exempt validation line/);
+  fails('commit any pending work (step 1), then go straight to **Trivial changes (opt-out)** below; steps 2–6 do not run', 'go straight to **Trivial changes (opt-out)** below; steps 1–6 do not run', /commit pending work before skipping steps 2–6/);
+  fails('`--allow-empty` is only for when nothing is pending', '`--allow-empty` always', /reserve --allow-empty for an empty tree/);
 });
 
 test('R7.2: Options 1 and 2 run the record after Step 4.0 and before integrating, in both modes', () => {
@@ -205,6 +213,8 @@ test('R7.2: Options 1 and 2 run the record after Step 4.0 and before integrating
   const unattended = (from, to, expected) => assert.throws(() => assertUnattendedKeepsRecordGate(mutated(text, from, to)), expected);
   unattended('y el Step 4.1 (Change Record) automáticamente', 'automáticamente', /must run the Change Record step/);
   unattended('pausa legítima como los tests rojos', 'advertencia', /legitimate pause/);
+  unattended('salvo `record-exists`', 'sin excepción', /exempt record-exists from the pause/);
+  unattended('nunca lo elijas por criterio propio', 'elígelo libremente', /forbid choosing the trivial opt-out/);
 });
 
 test('R7.3: the Option 2 PR body is built from the record and links it', () => {
@@ -217,4 +227,6 @@ test('R7.3: the Option 2 PR body is built from the record and links it', () => {
   fails('<each manual_validation step>', '<each manual step>', /draw from manual_validation/);
   fails('Change Record: [`docs/changes/<file>`](', 'Record: (', /link the record file/);
   fails('not from memory', 'from the record', /comes from the record/);
+  fails('`git log -1 --format=%H -- docs/changes/<file>`', '`git rev-parse HEAD`', /pin the last commit that changed the record/);
+  fails('`Change Record: no generado — <motivo>`', '`Change Record: ausente`', /state a Step 4\.1 limitation line/);
 });
