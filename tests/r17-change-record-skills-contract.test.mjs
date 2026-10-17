@@ -39,7 +39,7 @@ function section(text, heading) {
 
 function mutated(text, from, to) {
   assert.ok(text.includes(from), `mutation anchor not found: ${from}`);
-  return text.replace(from, to);
+  return text.replace(from, () => to);
 }
 
 function headerTemplate(text) {
@@ -65,6 +65,8 @@ function assertRecordSubsection(text) {
   assert.ok(body.includes('`ninguno` está reservado'), 'the subsection must reserve ninguno for the opt-out');
   assert.ok(body.includes('`Change-Record: none`'), 'the trivial opt-out must map to the Change-Record: none trailer');
   assert.ok(body.includes('Elige un slug que no use ningún'), 'the subsection must forbid reusing an existing record slug');
+  assert.ok(body.includes('declara `**Change Record:** ninguno — <razón>`, sin backticks'), 'the subsection must give the opt-out header syntax');
+  assert.ok(body.includes('`- ninguno — <razón>`, que se convierte en `manual_validation: {none: <razón>}`'), 'the subsection must map the ninguno criterion to a none item');
 }
 
 test('R7.1: the plan header template declares the planned Change Record and its acceptance criteria', () => {
@@ -87,6 +89,8 @@ test('R7.1: writing-plans states that type, scope and semver are derived, never 
   assert.throws(() => assertRecordSubsection(mutated(text, '`ninguno` está reservado', '`ninguno` es libre')), /reserve ninguno/);
   assert.throws(() => assertRecordSubsection(mutated(text, 'el trailer `Change-Record: none`', 'otra cosa')), /Change-Record: none trailer/);
   assert.throws(() => assertRecordSubsection(mutated(text, 'Elige un slug que no use ningún', 'Usa cualquier slug, aunque lo use un')), /forbid reusing an existing record slug/);
+  assert.throws(() => assertRecordSubsection(mutated(text, 'declara `**Change Record:** ninguno — <razón>`, sin backticks', 'declara el opt-out')), /opt-out header syntax/);
+  assert.throws(() => assertRecordSubsection(mutated(text, '`- ninguno — <razón>`, que se convierte en `manual_validation: {none: <razón>}`', '`- ninguno`')), /map the ninguno criterion/);
 });
 
 test('section() keeps fenced headings inside the section', () => {
@@ -142,7 +146,29 @@ function assertRecordSequence(text) {
   assert.ok(step.includes(NARRATIVE_SOURCES), 'the narrative must be written from the plan, the QA results and the diff (narrative sources)');
   assert.ok(step.includes('`"mode": "native-gate"`'), 'the native-gate sensors mode must be named');
   assert.ok(step.includes('the only non-pass verdict that does not stop'), 'the declared sensors modes must be the only non-pass verdict that continues');
-  assert.match(step, /with the reason in the commit body and the trailer `Change-Record: none` as the final paragraph/, 'trivial changes may use the opt-out trailer with a reason');
+  assert.match(step, /with the reason in the commit body and the trailer `Change-Record: none` in the final paragraph/, 'trivial changes may use the opt-out trailer with a reason');
+  assert.ok(step.includes("git commit --allow-empty -F - <<'EOF'"), 'the opt-out commit must pass its message through a quoted heredoc');
+  assert.ok(step.includes('in that same final paragraph, never after it'), 'attribution trailers must share the opt-out final paragraph');
+  assert.ok(step.includes('`ninguno — <razón>` → commit any pending work'), 'Step 4.1 must consume the plan opt-out header');
+  assert.ok(step.includes('never pass it to a shell'), 'a malformed header slug must never reach a shell');
+  assert.ok(step.includes('never commit untracked files that are not part of the change'), 'step 1 must not sweep unrelated untracked files');
+  assert.match(step, /Any other `overall` than `pass`[^\n]*stop exactly as for failing tests in Step 1/, 'any other non-pass sensors verdict must stop like failing tests');
+  assert.ok(step.includes('Any other non-zero exit → stop and report the diagnostic'), 'any other awm change new failure must stop');
+  assert.ok(step.includes('Any other code → stop and report it; do not improvise a fix'), 'an unmapped validation code must stop without improvising');
+  const item4 = step.slice(step.search(RECORD_STEPS[3][1]), step.search(RECORD_STEPS[4][1]));
+  assert.ok(item4.includes('`title` (at most 120 characters)'), 'the narrative must cap title at 120 characters');
+  assert.ok(item4.includes('`summary_short` (one line, at most 280 characters'), 'the narrative must cap summary_short at 280 characters');
+  assert.ok(item4.includes('one `{step, expected}` item per acceptance criterion'), 'manual_validation must hold one item per acceptance criterion');
+  assert.ok(item4.includes('`risks` (may be `[]`)'), 'the narrative must include risks');
+  assert.ok(item4.includes('`rollback` (how to undo the change)'), 'the narrative must include rollback');
+  let sectionAt = -1;
+  for (const heading of ['## Qué se hizo', '## Qué se probó', '## Qué falta validar', '## Riesgos y rollback']) {
+    const at = item4.indexOf(`\`${heading}\``);
+    assert.ok(at >= 0, `item 4 must list the body section ${heading}`);
+    assert.ok(at > sectionAt, `item 4 lists the body section ${heading} out of order`);
+    sectionAt = at;
+  }
+  assert.ok(item4.includes('Never edit the derived fields by hand'), 'the narrative must forbid editing derived fields');
   assert.match(step, /never add `Change-Record: none` to hide it/, 'a sensors opt-out must not be disguised as an exemption');
   assert.ok(step.includes('Never choose it on your own judgment, and never after any of steps 2–6 failed'), 'the agent must never choose the trivial opt-out on its own or after a failing step');
   assert.ok(step.includes('Change Record validation: exempt (Change-Record: none)'), 'the opt-out must be confirmed by the exempt validation line');
@@ -159,6 +185,7 @@ function assertRecordRunsBeforeIntegration(text) {
   for (const option of [OPTION_1, OPTION_2]) {
     assert.match(section(text, option), /run Step 4\.0 \(retire design artifacts\), then Step 4\.1 \(Change Record\)/, `${option} must run the Change Record step before integrating`);
   }
+  assert.ok(section(text, OPTION_1).includes('git merge --no-ff <feature-branch>'), 'Option 1 must merge with a merge commit');
 }
 
 function assertCommonMistakesQualifyRefresh(text) {
@@ -172,6 +199,8 @@ function assertUnattendedKeepsRecordGate(text) {
   assert.match(unattended, /`awm change validate --strict`[^.]*pausa legítima/, 'a failing record step must be a legitimate pause in unattended mode');
   assert.ok(unattended.includes('salvo `record-exists`'), 'unattended mode must exempt record-exists from the pause');
   assert.ok(unattended.includes('nunca lo elijas por criterio propio'), 'unattended mode must forbid choosing the trivial opt-out on its own');
+  assert.ok(unattended.includes('si `awm sensors run` no da `pass`'), 'unattended mode must pause on a non-pass sensors run');
+  assert.ok(unattended.includes('un intento por diagnóstico que el paso 6 mapea'), 'unattended mode must bound the step 6 fix loop');
 }
 
 function assertPrBodyFromRecord(text) {
@@ -186,6 +215,11 @@ function assertPrBodyFromRecord(text) {
   assert.ok(option.includes('`git log -1 --format=%H -- docs/changes/<file>`'), 'the record link must pin the last commit that changed the record');
   assert.ok(option.includes('`Change Record: no generado — <motivo>`'), 'the PR body must state a Step 4.1 limitation line');
   assert.ok(option.includes('`Change Record: docs/changes/<file> @ <record-commit-sha>`'), 'other hosts must get a plain record reference with its commit');
+  assert.ok(option.includes('`Sin validación manual: <razón>`'), 'a none manual_validation must become the Sin validación manual line');
+  assert.ok(body[0].includes('/blob/<record-commit-sha>/docs/changes/<file>'), 'the gh link must pin the record commit');
+  assert.ok(option.includes('with any credentials removed'), 'the web URL must drop credentials');
+  assert.ok(option.includes('Never copy userinfo, tokens or query strings'), 'the PR body must never carry remote secrets');
+  assert.ok(section(text, STEP_41).includes('for Option 2 also end the PR/MR description with a `Change-Record: none` paragraph'), 'the opt-out must also close the PR/MR description');
 }
 
 test('R7.2: Step 4.1 runs the six record steps in order and stops on a failing strict validation', () => {
@@ -216,7 +250,26 @@ test('R7.2: Step 4.1 runs the six record steps in order and stops on a failing s
   fails(NARRATIVE_SOURCES, 'drawing from the plan (goal and `**Criterios de aceptación:**`) and the `post-implementation-qa` results', /narrative sources/);
   fails('`"mode": "native-gate"`', '`"mode": "gate"`', /native-gate sensors mode/);
   fails('the only non-pass verdict that does not stop', 'a non-pass verdict', /only non-pass verdict that continues/);
-  fails('with the reason in the commit body and the trailer `Change-Record: none` as the final paragraph', 'with the trailer `Change-Record: none`', /opt-out trailer/);
+  fails('with the reason in the commit body and the trailer `Change-Record: none` in the final paragraph', 'with the trailer `Change-Record: none`', /opt-out trailer/);
+  fails("git commit --allow-empty -F - <<'EOF'", 'git commit --allow-empty -m "<message>"', /quoted heredoc/);
+  fails('in that same final paragraph, never after it', 'after it', /share the opt-out final paragraph/);
+  fails('`ninguno — <razón>` → commit any pending work', '`ninguno` → commit any pending work', /consume the plan opt-out header/);
+  fails('never pass it to a shell', 'pass it on', /never reach a shell/);
+  fails('never commit untracked files that are not part of the change', 'commit everything', /sweep unrelated untracked files/);
+  fails('stop exactly as for failing tests in Step 1', 'continue', /non-pass sensors verdict must stop/);
+  fails('Any other non-zero exit → stop and report the diagnostic', 'Any other non-zero exit → retry', /awm change new failure must stop/);
+  fails('Any other code → stop and report it; do not improvise a fix', 'Any other code → improvise a fix', /unmapped validation code/);
+  fails('`title` (at most 120 characters)', '`title`', /cap title at 120/);
+  fails('`summary_short` (one line, at most 280 characters', '`summary_short` (one line', /cap summary_short at 280/);
+  fails('one `{step, expected}` item per acceptance criterion', 'some items', /one item per acceptance criterion/);
+  fails('`risks` (may be `[]`)', '`hazards` (may be `[]`)', /include risks/);
+  fails('`rollback` (how to undo the change)', '`undo`', /include rollback/);
+  fails('`## Qué se hizo`, `## Qué se probó` (only', '`## Qué se probó` (only', /list the body section ## Qué se hizo/);
+  fails('`## Qué se probó` (only checks', '(only checks', /list the body section ## Qué se probó/);
+  fails('`## Qué falta validar`, `## Riesgos y rollback`', '`## Riesgos y rollback`', /list the body section ## Qué falta validar/);
+  fails('`## Qué falta validar`, `## Riesgos y rollback`', '`## Qué falta validar`', /list the body section ## Riesgos y rollback/);
+  fails('`## Qué se hizo`, `## Qué se probó` (only checks that actually ran, with their result)', '`## Qué se probó` (only checks that actually ran, with their result), `## Qué se hizo`', /body section ## Qué se probó out of order/);
+  fails('Never edit the derived fields by hand', 'Edit the derived fields freely', /forbid editing derived fields/);
   fails('never add `Change-Record: none` to hide it', 'add `Change-Record: none`', /disguised/);
   fails('Never choose it on your own judgment, and never after any of steps 2–6 failed', 'Choose it freely', /on its own or after a failing step/);
   fails('Change Record validation: exempt (Change-Record: none)', 'Change Record validation: ok', /exempt validation line/);
@@ -234,12 +287,15 @@ test('R7.2: Options 1 and 2 run the record after Step 4.0 and before integrating
   integration(STEP_40, '#### Step 4.0: Retire artifacts', /missing heading #### Step 4\.0/);
   integration('Then continue with Step 4.1 (Change Record).\n', `Then continue with Step 4.1 (Change Record).\n${OPTION_1}\n`, /after Step 4\.0 and before Option 1/);
   integration('run Step 4.0 (retire design artifacts), then Step 4.1 (Change Record)', 'run Step 4.0 (retire design artifacts)', /Option 1: Merge Locally must run the Change Record step/);
+  integration('git merge --no-ff <feature-branch>', 'git merge <feature-branch>', /merge with a merge commit/);
   integration(`${OPTION_2}\n\n**First, run Step 4.0 (retire design artifacts), then Step 4.1 (Change Record).**`, `${OPTION_2}\n\n**First, run Step 4.0 (retire design artifacts).**`, /Option 2: Push and Create PR\/MR must run the Change Record step/);
   const unattended = (from, to, expected) => assert.throws(() => assertUnattendedKeepsRecordGate(mutated(text, from, to)), expected);
   unattended('y el Step 4.1 (Change Record) automáticamente', 'automáticamente', /must run the Change Record step/);
   unattended('pausa legítima como los tests rojos', 'advertencia', /legitimate pause/);
   unattended('salvo `record-exists`', 'sin excepción', /exempt record-exists from the pause/);
   unattended('nunca lo elijas por criterio propio', 'elígelo libremente', /forbid choosing the trivial opt-out/);
+  unattended('si `awm sensors run` no da `pass`', 'si `awm sensors run` falla', /pause on a non-pass sensors run/);
+  unattended('un intento por diagnóstico que el paso 6 mapea', 'reintentos libres', /bound the step 6 fix loop/);
 });
 
 test('R7.3: the Option 2 PR body is built from the record and links it', () => {
@@ -255,6 +311,11 @@ test('R7.3: the Option 2 PR body is built from the record and links it', () => {
   fails('`git log -1 --format=%H -- docs/changes/<file>`', '`git rev-parse HEAD`', /pin the last commit that changed the record/);
   fails('`Change Record: no generado — <motivo>`', '`Change Record: ausente`', /state a Step 4\.1 limitation line/);
   fails('`Change Record: docs/changes/<file> @ <record-commit-sha>`', '`Change Record: docs/changes/<file>`', /plain record reference/);
+  fails('`Sin validación manual: <razón>`', 'nothing', /Sin validación manual line/);
+  fails('](<web-url>/blob/<record-commit-sha>/docs/changes/<file>)', '](<web-url>/blob/<feature-branch>/docs/changes/<file>)', /gh link must pin the record commit/);
+  fails('with any credentials removed', 'as is', /drop credentials/);
+  fails('Never copy userinfo, tokens or query strings', 'Copy the remote verbatim', /never carry remote secrets/);
+  fails('for Option 2 also end the PR/MR description with a `Change-Record: none` paragraph', 'for Option 2 do nothing more', /also close the PR\/MR description/);
 });
 
 const MIN_CLI = '9.20.0';
