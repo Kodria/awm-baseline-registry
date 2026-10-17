@@ -179,6 +179,15 @@ function assertRecordSequence(text) {
     sectionAt = at;
   }
   assert.ok(item4.includes('Never edit the derived fields by hand'), 'the narrative must forbid editing derived fields');
+  assert.ok(item4.includes('`## Qué se probó` (only checks that actually ran, with their result)'), 'Qué se probó must be limited to executed checks');
+  assert.ok(item4.includes('Replace every `<!-- awm:pending -->` marker'), 'the narrative must replace every pending marker');
+  assert.ok(step.includes("Read the JSON's `mode` before its `overall`"), 'step 2 must read the sensors mode first');
+  assert.ok(step.includes('State the limitation once, in the final report and in the PR/MR body'), 'the sensors limitation must reach the final report and the PR/MR body');
+  assert.ok(step.includes('commit them as in step 1 and run this step again'), 'uncommitted changes must be committed before re-running the sensors');
+  assert.ok(step.includes('for any other reason, stop and report it'), 'a missing receipt for any other reason must stop');
+  assert.ok(step.includes('it recomputes only the derived fields and keeps the narrative'), '--refresh must keep the narrative');
+  assert.ok(step.includes('(the CLI rejects `--plan` and `--issue` together with `--refresh`)'), 'the skill must say why --refresh takes no plan or issue');
+  assert.ok(step.includes('**Commit the record** on its own: `git add docs/changes/<file>`'), 'the record commit must stage only the record');
   assert.ok(step.includes('after Step 4.0 and before the merge/push below. Skip entirely for Options 3 and 4.'), 'Step 4.1 must be skipped for Options 3 and 4');
   assert.ok(step.includes('once you check that it matches `^[a-z0-9]+(-[a-z0-9]+)*$` and has at most 64 characters'), 'the header slug must be checked against the slug rule');
   assert.ok(step.includes('stop and report the malformed header'), 'a malformed header slug must stop');
@@ -192,6 +201,7 @@ function assertRecordSequence(text) {
   assert.ok(step.includes("never refresh, rename or delete another change's record on your own"), "Step 4.1 must never touch another change's record");
   assert.ok(step.includes(', and never merge or push past a failing strict validation, in either mode'), 'a failing strict validation must block integration in both modes');
   assert.ok(step.includes('`pending-content`, `field-invalid` or `body-section-missing` → step 4'), 'content diagnostics must resume at step 4');
+  assert.ok(step.includes('→ step 4, then commit the fix;'), 'content fixes must be committed before revalidating');
   assert.ok(step.includes('`record-uncommitted` → step 5'), 'record-uncommitted must resume at step 5');
   assert.ok(step.includes('`code-changed-after-verification`, `derived-mismatch`, `receipt-missing` or `verification-mismatch` → step 2, then `--refresh` in step 3'), 'verification-drift diagnostics must resume at step 2 with a refresh');
   assert.ok(step.includes('`verification-not-passing` → fix the sensors and commit, then step 2 and `--refresh` in step 3'), 'verification-not-passing must fix the sensors before re-running step 2');
@@ -250,6 +260,7 @@ function assertUnattendedKeepsRecordGate(text) {
   assert.ok(unattended.includes('nunca lo elijas por criterio propio'), 'unattended mode must forbid choosing the trivial opt-out on its own');
   assert.ok(unattended.includes('si `awm sensors run` no da `pass`'), 'unattended mode must pause on a non-pass sensors run');
   assert.ok(unattended.includes('un intento por diagnóstico que el paso 6 mapea'), 'unattended mode must bound the step 6 fix loop');
+  assert.ok(unattended.includes('detente y reporta el diagnóstico sin pushear ni crear el PR/MR'), 'an unattended record failure must stop before push and PR/MR');
   assert.ok(unattended.includes('un código no mapeado, o el mismo diagnóstico repetido tras su corrección, no se reintenta'), 'unattended mode must not retry unmapped or repeated diagnostics');
 }
 
@@ -320,12 +331,22 @@ test('R7.2: Step 4.1 runs the six record steps in order and stops on a failing s
   fails('one `{step, expected}` item per acceptance criterion', 'some items', /one item per acceptance criterion/);
   fails('`risks` (may be `[]`)', '`hazards` (may be `[]`)', /include risks/);
   fails('`rollback` (how to undo the change)', '`undo`', /include rollback/);
-  fails('`## Qué se hizo`, `## Qué se probó` (only', '`## Qué se probó` (only', /list the body section ## Qué se hizo/);
-  fails('`## Qué se probó` (only checks', '(only checks', /list the body section ## Qué se probó/);
+  fails('`## Qué se hizo`, `## Qué se probó`', '`## Qué se probó`', /list the body section ## Qué se hizo/);
+  fails('`## Qué se hizo`, `## Qué se probó`', '`## Qué se hizo`,', /list the body section ## Qué se probó/);
   fails('`## Qué falta validar`, `## Riesgos y rollback`', '`## Riesgos y rollback`', /list the body section ## Qué falta validar/);
   fails('`## Qué falta validar`, `## Riesgos y rollback`', '`## Qué falta validar`', /list the body section ## Riesgos y rollback/);
-  fails('`## Qué se hizo`, `## Qué se probó` (only checks that actually ran, with their result)', '`## Qué se probó` (only checks that actually ran, with their result), `## Qué se hizo`', /body section ## Qué se probó out of order/);
+  fails('`## Qué se hizo`, `## Qué se probó`', '`## Qué se probó`, `## Qué se hizo`', /body section ## Qué se probó out of order/);
   fails('Never edit the derived fields by hand', 'Edit the derived fields freely', /forbid editing derived fields/);
+  fails(' (only checks that actually ran, with their result)', '', /limited to executed checks/);
+  fails('Replace every `<!-- awm:pending -->` marker', 'Fill in the record', /replace every pending marker/);
+  fails(" Read the JSON's `mode` before its `overall`:", ':', /read the sensors mode first/);
+  fails('State the limitation once, in the final report and in the PR/MR body', 'State the limitation in the final report', /reach the final report and the PR\/MR body/);
+  fails('commit them as in step 1 and run this step again', 'ignore them and continue', /committed before re-running the sensors/);
+  fails('for any other reason, stop and report it', 'for any other reason, continue', /missing receipt for any other reason/);
+  fails('it recomputes only the derived fields and keeps the narrative', 'it regenerates the record', /must keep the narrative/);
+  fails(' (the CLI rejects `--plan` and `--issue` together with `--refresh`)', '', /why --refresh takes no plan or issue/);
+  fails('`git add docs/changes/<file>`, then', '`git add -A`, then', /stage only the record/);
+  fails('→ step 4, then commit the fix;', '→ step 4;', /committed before revalidating/);
   fails('after Step 4.0 and before the merge/push below. Skip entirely for Options 3 and 4.', 'after Step 4.0 and before the merge/push below.', /skipped for Options 3 and 4/);
   fails('once you check that it matches `^[a-z0-9]+(-[a-z0-9]+)*$` and has at most 64 characters', 'once you read it', /checked against the slug rule/);
   fails('stop and report the malformed header', 'use it anyway', /malformed header slug must stop/);
@@ -381,6 +402,7 @@ test('R7.2: Options 1 and 2 run the record after Step 4.0 and before integrating
   unattended('nunca lo elijas por criterio propio', 'elígelo libremente', /forbid choosing the trivial opt-out/);
   unattended('si `awm sensors run` no da `pass`', 'si `awm sensors run` falla', /pause on a non-pass sensors run/);
   unattended('un intento por diagnóstico que el paso 6 mapea', 'reintentos libres', /bound the step 6 fix loop/);
+  unattended('detente y reporta el diagnóstico sin pushear ni crear el PR/MR', 'reporta el diagnóstico y continúa con el push', /stop before push and PR\/MR/);
   unattended('; un código no mapeado, o el mismo diagnóstico repetido tras su corrección, no se reintenta', '', /not retry unmapped or repeated diagnostics/);
 });
 
@@ -430,6 +452,7 @@ function assertGracefulDegradation(text) {
   assert.match(step, /continue to the merge\/push without a record — never write a record by hand or invent its fields/, 'an old CLI must neither block integration nor be papered over');
   assert.ok(section(text, '### Modo desatendido').includes('CLI ausente o anterior a 9.20.0'), 'unattended mode must also continue without a record on a CLI older than the minimum');
   assert.ok(step.includes('still make the opt-out commit'), 'an old CLI must still make a declared opt-out commit');
+  assert.ok(step.includes(', skipping only its `awm change validate --strict` check'), 'an old CLI must skip only the opt-out validation');
   assert.ok(step.includes('In Option 2, build the body as for the trivial opt-out (`Change Record: ninguno — <razón>` and the closing `Change-Record: none` paragraph), not with the limitation line'), 'an old CLI with a declared opt-out must build the trivial opt-out PR body');
 }
 
@@ -454,6 +477,7 @@ test('R7.4: finishing states the limitation and continues without inventing a re
   assert.throws(() => assertGracefulDegradation(mutated(text, 'with `awm --version`', 'with `awm version`')), /read the installed CLI version/);
   assert.throws(() => assertGracefulDegradation(mutated(text, 'state the limitation once', 'note it')), /reported, not hidden/);
   assert.throws(() => assertGracefulDegradation(mutated(text, 'still make the opt-out commit', 'skip the opt-out commit')), /still make a declared opt-out commit/);
+  assert.throws(() => assertGracefulDegradation(mutated(text, ', skipping only its `awm change validate --strict` check', '')), /skip only the opt-out validation/);
   assert.throws(() => assertGracefulDegradation(mutated(text, 'build the body as for the trivial opt-out', 'build the body with the limitation line')), /build the trivial opt-out PR body/);
 });
 
