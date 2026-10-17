@@ -230,3 +230,48 @@ test('R7.3: the Option 2 PR body is built from the record and links it', () => {
   fails('`git log -1 --format=%H -- docs/changes/<file>`', '`git rev-parse HEAD`', /pin the last commit that changed the record/);
   fails('`Change Record: no generado — <motivo>`', '`Change Record: ausente`', /state a Step 4\.1 limitation line/);
 });
+
+const MIN_CLI = '9.20.0';
+
+function assertDeclaresMinimumCli(text, name) {
+  assert.ok(text.includes(`\`agentic-workflow-manager\` ≥ ${MIN_CLI}`), `${name} must declare the minimum CLI version ${MIN_CLI}`);
+}
+
+function assertGracefulDegradation(text) {
+  const step = section(text, STEP_41);
+  assert.match(step, /^0\. \*\*Version gate\.\*\*/m, 'Step 4.1 must start with the version gate');
+  assert.ok(step.indexOf('0. **Version gate.**') < step.indexOf('1. **Commit.**'), 'the version gate must run before the record steps');
+  const lead = step.indexOf(RECORD_LEAD);
+  assert.ok(lead >= 0 && step.indexOf('0. **Version gate.**') < lead, 'the version gate must precede the plan-level opt-out decision');
+  assert.match(step, /`awm --version`/, 'the gate must read the installed CLI version');
+  assert.match(step, /do not probe with `--help`/, 'the gate must not trust --help, which older CLIs answer with exit 0');
+  assert.match(step, /state the limitation once/, 'an old CLI must be reported, not hidden');
+  assert.match(step, /continue to the merge\/push without a record — never write a record by hand or invent its fields/, 'an old CLI must neither block integration nor be papered over');
+  assert.ok(section(text, '### Modo desatendido').includes('CLI anterior a 9.20.0'), 'unattended mode must also continue without a record on a CLI older than the minimum');
+}
+
+test('R7.4: both changed skills declare the minimum CLI version that ships the Change Record', () => {
+  for (const name of [WRITING, FINISHING]) {                  // verifies R7.4
+    const text = read(name);
+    assertDeclaresMinimumCli(text, name);
+    assert.throws(() => assertDeclaresMinimumCli(mutated(text, `\`agentic-workflow-manager\` ≥ ${MIN_CLI}`, '`agentic-workflow-manager` ≥ 9.19.0'), name), /must declare the minimum CLI version/);
+  }
+});
+
+test('R7.4: finishing states the limitation and continues without inventing a record on an older CLI', () => {
+  const text = read(FINISHING);                               // verifies R7.4
+  assertGracefulDegradation(text);
+  assert.throws(() => assertGracefulDegradation(mutated(text, ' — never write a record by hand or invent its fields', '')), /papered over/);
+  assert.throws(() => assertGracefulDegradation(mutated(text, 'do not probe with `--help`', 'probe with `--help`')), /--help/);
+  assert.throws(() => assertGracefulDegradation(mutated(text, '0. **Version gate.**', '7. **Version gate.**')), /start with the version gate/);
+  assert.throws(() => assertGracefulDegradation(mutated(mutated(text, RECORD_LEAD, '**Read the header.**'), 'Every integrated change leaves one Change Record', `${RECORD_LEAD} Every integrated change leaves one Change Record`)), /precede the plan-level opt-out decision/);
+  assert.throws(() => assertGracefulDegradation(mutated(text, 'CLI anterior a 9.20.0', 'CLI antiguo')), /unattended mode must also continue/);
+});
+
+test('R7.4: the per-skill minimum never raises the registry compatibility floor', () => {
+  const floor = JSON.parse(read('awm-registry.json')).minCliVersion; // verifies R7.4
+  const [a, b] = [floor, MIN_CLI].map(v => v.split('.').map(Number));
+  const below = (x, y) => x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
+  assert.ok(below(a, b) < 0, `the registry floor ${floor} must stay below the per-skill minimum ${MIN_CLI}: older CLIs degrade, they are not refused`);
+  assert.ok(below([9, 20, 0], b) === 0 && below([9, 19, 9], b) < 0, 'the semver comparison must be numeric');
+});

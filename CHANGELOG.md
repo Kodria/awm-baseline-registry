@@ -2,6 +2,22 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## feat(skills): Change Record in writing-plans and finishing — 2026-10-17
+
+- `writing-plans` 2.3.0: the plan header declares the planned Change Record
+  slug and the acceptance criteria that feed `manual_validation`; `type`,
+  `scope` and `semver` are derived by the CLI, never declared.
+- `finishing-a-development-branch` 2.2.0: new Step 4.1 for Options 1 and 2 —
+  version gate, commit, `awm sensors run`, `awm change new` (or `--refresh`),
+  narrative, record commit and `awm change validate --strict`, stopping on a
+  non-zero exit; trivial changes may use the `Change-Record: none` trailer.
+  The Option 2 PR/MR body is built from the record and links it.
+- Both declare `agentic-workflow-manager` ≥ 9.20.0 and degrade with a stated
+  limitation (older CLI, sensors opt-out) without inventing a record. The
+  registry floor `minCliVersion` stays 9.14.0.
+- New mutation-verified gate `tests/r17-change-record-skills-contract.test.mjs`,
+  wired into `validate.yml` and `auto-tag.yml`. Kodria/agentic-workflow#217 R7.
+
 ## fix(ci): gate previously orphan registry tests — 2026-10-07
 
 - Wire `r5-track-contract`, `sensor-pack-js-ts-variants`,

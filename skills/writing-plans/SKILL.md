@@ -132,6 +132,8 @@ Todo plan nuevo declara en la cabecera el Change Record (`awm.change-record/v1`)
 - `type`, `scope` y `semver` **no se declaran** en el plan: el CLI los deriva de los commits convencionales de la rama, y `awm change validate` rechaza un record que los contradiga (`derived-mismatch`). Declararlos aquí crearía una segunda fuente que diverge de los commits.
 - Un cambio trivial que no merece record (un bump de versión, un typo) declara `**Change Record:** ninguno — <razón>`, sin backticks, y omite `**Criterios de aceptación:**`; `finishing-a-development-branch` usa entonces el trailer `Change-Record: none`.
 
+**Versión mínima del CLI:** `agentic-workflow-manager` ≥ 9.20.0, la primera versión con `awm change new|validate`, `awm changes list` y el receipt de `awm sensors run`. Con un CLI anterior el plan declara igual el slug y los criterios (planificar no ejecuta ningún comando); `finishing-a-development-branch` informa la limitación al cerrar y continúa sin record, nunca lo inventa.
+
 ## Slice Structure
 
 Use the exact manifest/anchor/five-subsection structure in

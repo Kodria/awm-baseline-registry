@@ -41,7 +41,7 @@ El modo desatendido quita pausas, no controles: los gates (sensor, ledger, recon
 
 WHEN el modo es `desatendido` AND los tests del Step 1 pasan: omite el menú del Step 3 y ejecuta directamente la **Opción 2 (Push and Create PR/MR)**, que corre primero el Step 3.5 (detección de host), luego el Step 4.0 (retiro de artefactos de diseño) y el Step 4.1 (Change Record) automáticamente, sin prompt. IF los tests fallan, THEN detente y reporta los fallos sin pushear ni crear el PR/MR — igual que en modo interactivo; tests rojos son una pausa legítima que ningún modo salta. La **Opción 4 (Discard)** NUNCA está disponible en modo desatendido: descartar trabajo es una acción destructiva que siempre requiere a un humano.
 
-El Step 4.1 (Change Record) corre igual que en modo interactivo: si `awm sensors run` no da `pass`, si `awm change new` termina con exit distinto de cero (salvo `record-exists`, que el Step 4.1 resuelve con `--refresh`) o si `awm change validate --strict` termina con exit distinto de cero, es una pausa legítima como los tests rojos — detente y reporta el diagnóstico sin pushear ni crear el PR/MR. Solo la limitación de sensores declarados opt-out o native-gate (ver Step 4.1) continúa sin record. El opt-out trivial (`Change-Record: none`) solo aplica si el plan lo declara; en modo desatendido nunca lo elijas por criterio propio.
+El Step 4.1 (Change Record) corre igual que en modo interactivo: si `awm sensors run` no da `pass`, si `awm change new` termina con exit distinto de cero (salvo `record-exists`, que el Step 4.1 resuelve con `--refresh`) o si `awm change validate --strict` termina con exit distinto de cero, es una pausa legítima como los tests rojos — detente y reporta el diagnóstico sin pushear ni crear el PR/MR. Solo las limitaciones del Step 4.1 (CLI anterior a 9.20.0, o sensores declarados opt-out o native-gate) continúan sin record. El opt-out trivial (`Change-Record: none`) solo aplica si el plan lo declara; en modo desatendido nunca lo elijas por criterio propio.
 
 **El push siempre corre; el PR/MR es best-effort.** Si `$HOST=unknown` (o el host es reconocido pero su CLI no está instalado), la Opción 2 degrada a "push + instrucciones para abrir el PR/MR a mano" — ese es un resultado **final y válido** del modo desatendido, no un fallo. El skill nunca debe: (a) bloquear/escalar porque no pudo crear el PR/MR, ni (b) terminar en silencio sin decir que el PR/MR no se creó. El reporte final del modo desatendido siempre debe indicar explícitamente si el PR/MR se creó o si quedó pendiente de creación manual.
 
@@ -164,6 +164,8 @@ Then continue with Step 4.1 (Change Record).
 **Runs only on the integration paths (Option 1 Merge, Option 2 PR/MR), after Step 4.0 and before the merge/push below. Skip entirely for Options 3 and 4.** It runs after Step 4.0 because the retirement commit changes files: a record verified before that commit fails validation with `code-changed-after-verification`.
 
 Every integrated change leaves one Change Record (`awm.change-record/v1`) at `docs/changes/<YYYY-MM-DD>-<slug>.md`: a short, structured answer to what the change did, what was verified and what a human still has to validate, readable without the code. The CLI derives the deterministic fields (`type`, `scope`, `semver`, `breaking`, `modules`, `verification`) from git and from the sensor-run receipt; you write only the narrative.
+
+0. **Version gate.** This step needs `agentic-workflow-manager` ≥ 9.20.0, the first version with `awm change new|validate`, `awm changes list` and the sensor-run receipt. Read the installed version with `awm --version`; do not probe with `--help`, because older CLIs answer an unknown subcommand's help with exit 0. If `awm` is missing or older, state the limitation once (`Change Record: no generado — el CLI <versión> no trae awm change; requiere ≥ 9.20.0`) and continue to the merge/push without a record — never write a record by hand or invent its fields. Option 2 then uses the no-record PR/MR body.
 
 **Before step 1, read the plan's `**Change Record:**` header.** `ninguno — <razón>` → commit any pending work (step 1), then go straight to **Trivial changes (opt-out)** below; steps 2–6 do not run. Otherwise its slug is the `<slug>` of steps 3–6; for a plan without the header, derive one from the branch name that matches `^[a-z0-9]+(-[a-z0-9]+)*$` (at most 64 characters).
 
@@ -356,7 +358,7 @@ git worktree remove <worktree-path>
 
 **Integrating without a validated Change Record**
 - **Problem:** The merge or PR lands with no record, or with one that `awm change validate --strict` rejects, and the next day nobody can tell what it did or what still needs validating
-- **Fix:** Run Step 4.1 before the merge/push of Options 1 & 2 and stop on any non-zero exit, except the two Step 4.1 names: the declared sensors modes `opt-out`/`native-gate` (limitation, no record) and `record-exists` (refresh)
+- **Fix:** Run Step 4.1 before the merge/push of Options 1 & 2 and stop on any non-zero exit, except the three Step 4.1 names: a missing or pre-9.20.0 CLI and the declared sensors modes `opt-out`/`native-gate` (limitation, no record), and `record-exists` (refresh)
 
 **Writing the PR/MR body from memory**
 - **Problem:** Summary and Test Plan drift from what was actually verified
