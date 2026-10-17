@@ -1,5 +1,6 @@
 # Change Record Skills (R7) Implementation Plan
 <!-- awm-qa-complete: 2026-10-17 -->
+<!-- awm-docs-complete: 2026-10-17 -->
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `subagent-driven-development`
 > (recommended) or `executing-plans` to implement this plan task-by-task. Steps
@@ -606,3 +607,5 @@ Backward check: the CI wiring and `test:workflow-coverage` serve R7.1's gate (S1
 **A12 (QA revalidation, 2026-10-17).** Second QA fix group: the Option 2 opt-out body and the squash paragraph place any footer (attribution, links) before the closing `Change-Record: none` paragraph, never after it; the contract test additionally pins the header-slug check and malformed-header stop, the stop after a failing opt-out validation, the trailer placement inside the opt-out heredoc, and the secondary Step 4.1 / writing-plans rules the tests lens showed removable while green (step 6 remediation mapping, unattended no-retry clause, step 1 dirty-tree stop, never-delete-other-record, conventional subject, clean tree, GitLab link SHA, writing-plans clauses).
 
 **A13 (QA second revalidation, 2026-10-17).** Third QA fix group, tests only: pin the remaining Step 4.1 details the tests lens showed removable while green, although backstopped by the strict-validation stop (no-receipt "other reason → stop", record-only `git add`, pending-marker and commit-the-fix wording, unattended "detente … sin pushear", refresh keeps the narrative, mode read before overall), and the X8 rule caught only by a missing anchor.
+
+**Docs phase (2026-10-17).** Registry user docs (`README.md`, `docs/`) describe no per-skill behaviour: nothing to update here. Two statements in Kodria/agentic-workflow became stale with this change — `docs/cli-reference.md` ("the skills … are not part of this release") and `docs/framework.md` ("arrive in a follow-up release") — and were rewritten to name the `dev` 4.11.0 skills (`writing-plans` 2.3.0, `finishing-a-development-branch` 2.2.0), the CLI ≥ 9.20.0 requirement and the degradations; the CLI structural doc tests pass (30 suites, 141 tests). That edit lives in the CLI repository and is delivered separately from this branch.
