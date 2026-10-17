@@ -12,10 +12,10 @@ Newest entry on top; append new releases directly below this line.
   version gate, commit, `awm sensors run`, `awm change new` (or `--refresh`),
   narrative, record commit and `awm change validate --strict`; it stops like
   failing tests on any failure except the stated limitations below and an
-  existing record (`--refresh`). The `Change-Record: none` trailer is used
-  only when the plan declares the opt-out or, interactively, the human
-  decides; never by the agent's own judgment nor after a failing step. The
-  Option 2 PR/MR body is built from the record and links it.
+  existing record this branch added (`--refresh`). The `Change-Record: none`
+  trailer is used only when the plan declares the opt-out or, interactively,
+  the human decides; never by the agent's own judgment nor after a failing
+  step. The Option 2 PR/MR body is built from the record and links it.
 - Both declare `agentic-workflow-manager` ≥ 9.20.0. With a missing or older
   CLI, or sensors declared `opt-out`/`native-gate`, finishing states the
   limitation and continues without a record, never inventing one. The

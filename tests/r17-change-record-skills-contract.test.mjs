@@ -132,6 +132,7 @@ function assertRecordSequence(text) {
   assert.match(step, /`awm change new <slug> --refresh`/, 'an existing record must be refreshed, never overwritten');
   assert.ok(step.includes('with no flag other than `--base`'), 'the --refresh run must take no flag other than --base');
   assert.ok(step.includes('this branch added it'), 'refresh must be limited to a record this branch added');
+  assert.ok(step.includes('or `git status --porcelain -- docs/changes/` shows it as untracked after an interrupted run'), 'refresh must also cover an untracked record from an interrupted run');
   assert.ok(step.includes('If an earlier change owns that slug, stop and report the collision'), 'a slug owned by an earlier change must stop as a collision');
   assert.ok(step.includes('Pass `--base <base-branch>` (from Step 2) to every `awm change new` and `awm change validate` call of this step'), 'every awm change call must pass the Step 2 base');
   assert.ok(step.includes('replace each run of characters outside `[a-z0-9]` with `-`'), 'the derived slug must normalise non-alphanumeric runs');
@@ -158,6 +159,11 @@ function assertRecordRunsBeforeIntegration(text) {
   for (const option of [OPTION_1, OPTION_2]) {
     assert.match(section(text, option), /run Step 4\.0 \(retire design artifacts\), then Step 4\.1 \(Change Record\)/, `${option} must run the Change Record step before integrating`);
   }
+}
+
+function assertCommonMistakesQualifyRefresh(text) {
+  const mistakes = section(text, '## Common Mistakes');
+  assert.ok(mistakes.includes('`record-exists` for a record this branch added (refresh; a slug owned by an earlier change stops as a collision)'), 'Common Mistakes must limit the record-exists exception to a record this branch added');
 }
 
 function assertUnattendedKeepsRecordGate(text) {
@@ -198,6 +204,7 @@ test('R7.2: Step 4.1 runs the six record steps in order and stops on a failing s
   fails('`awm change new <slug> --refresh`', '`awm change new <slug>` again', /refreshed, never overwritten/);
   fails('with no flag other than `--base`', 'with any flag', /--refresh run must take/);
   fails('this branch added it', 'it exists', /limited to a record this branch added/);
+  fails('`git status --porcelain -- docs/changes/` shows it as untracked', 'it is tracked', /untracked record from an interrupted run/);
   fails('If an earlier change owns that slug, stop and report the collision', 'If an earlier change owns that slug, refresh it', /stop as a collision/);
   fails('Pass `--base <base-branch>` (from Step 2) to every `awm change new` and `awm change validate` call of this step', 'Pass nothing extra', /must pass the Step 2 base/);
   fails('replace each run of characters outside `[a-z0-9]` with `-`', 'keep other characters', /normalise non-alphanumeric runs/);
@@ -215,6 +222,8 @@ test('R7.2: Step 4.1 runs the six record steps in order and stops on a failing s
   fails('Change Record validation: exempt (Change-Record: none)', 'Change Record validation: ok', /exempt validation line/);
   fails('commit any pending work (step 1), then go straight to **Trivial changes (opt-out)** below; steps 2–6 do not run', 'go straight to **Trivial changes (opt-out)** below; steps 1–6 do not run', /commit pending work before skipping steps 2–6/);
   fails('`--allow-empty` is only for when nothing is pending', '`--allow-empty` always', /reserve --allow-empty for an empty tree/);
+  assertCommonMistakesQualifyRefresh(text);
+  assert.throws(() => assertCommonMistakesQualifyRefresh(mutated(text, '`record-exists` for a record this branch added (refresh; a slug owned by an earlier change stops as a collision)', '`record-exists` (refresh)')), /limit the record-exists exception/);
 });
 
 test('R7.2: Options 1 and 2 run the record after Step 4.0 and before integrating, in both modes', () => {
@@ -268,6 +277,7 @@ function assertGracefulDegradation(text) {
   assert.match(step, /continue to the merge\/push without a record — never write a record by hand or invent its fields/, 'an old CLI must neither block integration nor be papered over');
   assert.ok(section(text, '### Modo desatendido').includes('CLI ausente o anterior a 9.20.0'), 'unattended mode must also continue without a record on a CLI older than the minimum');
   assert.ok(step.includes('still make the opt-out commit'), 'an old CLI must still make a declared opt-out commit');
+  assert.ok(step.includes('In Option 2, build the body as for the trivial opt-out (`Change Record: ninguno — <razón>` and the closing `Change-Record: none` paragraph), not with the limitation line'), 'an old CLI with a declared opt-out must build the trivial opt-out PR body');
 }
 
 test('R7.4: both changed skills declare the minimum CLI version that ships the Change Record', () => {
@@ -291,6 +301,7 @@ test('R7.4: finishing states the limitation and continues without inventing a re
   assert.throws(() => assertGracefulDegradation(mutated(text, 'with `awm --version`', 'with `awm version`')), /read the installed CLI version/);
   assert.throws(() => assertGracefulDegradation(mutated(text, 'state the limitation once', 'note it')), /reported, not hidden/);
   assert.throws(() => assertGracefulDegradation(mutated(text, 'still make the opt-out commit', 'skip the opt-out commit')), /still make a declared opt-out commit/);
+  assert.throws(() => assertGracefulDegradation(mutated(text, 'build the body as for the trivial opt-out', 'build the body with the limitation line')), /build the trivial opt-out PR body/);
 });
 
 function assertFloorBelowMinimum(floor) {
