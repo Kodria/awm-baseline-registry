@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "2.2.0"
+version: "2.3.0"
 license: Apache-2.0
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
@@ -86,6 +86,11 @@ a separately accepted continuation. Missing evidence/ownership never implies com
 
 **Tech Stack:** [Key technologies/libraries]
 
+**Change Record:** `<slug>`
+
+**Criterios de aceptación:**
+- <paso> → <resultado esperado>
+
 **Modo de ejecución:** interactivo
 
 **Modo de despacho:** proveedor-nativo
@@ -117,6 +122,17 @@ Los skills lectores (`development-process`, `subagent-driven-development`, `post
 Todo plan nuevo declara exactamente una línea `**Modo de despacho:** proveedor-nativo` o `**Modo de despacho:** awm-routed` antes del manifiesto. Es una elección independiente de `Modo de ejecución`: ambos despachos pueden ser interactivos o desatendidos y conservan admission, journal cuando corresponde, sensores, revisores y QA. `proveedor-nativo` usa `compact-slices/v1`, deja al proveedor elegir los modelos de sus subagentes y no reclama ahorro de la matriz; no uses `--opt-in-v1`. `awm-routed` usa `compact-slices/v2` y exige política/capacidad aprobadas y custodia de routing. Nunca interpretes un `degraded` del router como permiso para cambiar de modo. La línea contiene solo el valor: cualquier explicación va en otra línea. El CLI cuenta toda línea `**Modo de despacho:**` previa al manifiesto, incluidas las citadas en ejemplos o bloques de código, así que un plan que cite la plantilla de cabecera debe hacerlo después del manifiesto.
 
 La línea queda ligada a los digests del plan. `PLAN_DISPATCH_MODE` por valor duplicado, desconocido o discordante con el esquema bloquea el handoff. Los planes históricos sin línea siguen siendo legibles/validables por compatibilidad, no son una plantilla para planes nuevos. Un journal v2 BLOCKED conserva su identidad y evidencia: no se convierte automáticamente a v1 ni se reanuda con otro modo. Para volver a despacho nativo, preservar el journal original, aplicar `references/compact-migration-v1.md`, aceptar un plan de continuación v1 separado y establecer su propia custodia/admission; no editar el plan ligado ni reiniciar el intento para ocultar el bloqueo.
+
+### Change Record
+
+Todo plan nuevo declara en la cabecera el Change Record (`awm.change-record/v1`) que su rama va a producir. `finishing-a-development-branch` lo genera y lo valida antes de integrar; el plan solo fija la intención:
+
+- `**Change Record:**` lleva el slug planeado entre backticks: minúsculas, dígitos y guiones (`^[a-z0-9]+(-[a-z0-9]+)*$`), como máximo 64 caracteres; `ninguno` está reservado para el opt-out de abajo y nunca es un slug. Elige un slug que no use ningún `docs/changes/*-<slug>.md` existente: `awm change new` lo rechaza (`record-exists`) aunque la fecha difiera. `finishing-a-development-branch` corre `awm change new <slug>` con ese slug y el record queda en `docs/changes/<YYYY-MM-DD>-<slug>.md`.
+- `**Criterios de aceptación:**` lista lo que un humano tiene que validar a mano después del merge, una línea `- <paso> → <resultado esperado>` por criterio. Es la fuente de `manual_validation` del record: cada línea se convierte en un ítem `{step, expected}`. Si no hay nada que validar a mano, escribe una sola línea `- ninguno — <razón>`, que se convierte en `manual_validation: {none: <razón>}`.
+- `type`, `scope` y `semver` **no se declaran** en el plan: el CLI los deriva de los commits convencionales de la rama, y `awm change validate` rechaza un record que los contradiga (`derived-mismatch`). Declararlos aquí crearía una segunda fuente que diverge de los commits.
+- Un cambio trivial que no merece record (un bump de versión, un typo) declara `**Change Record:** ninguno — <razón>`, sin backticks, y omite `**Criterios de aceptación:**`; `finishing-a-development-branch` usa entonces el trailer `Change-Record: none`.
+
+**Versión mínima del CLI:** `agentic-workflow-manager` ≥ 9.20.0, la primera versión con `awm change new|validate`, `awm changes list` y el receipt de `awm sensors run`. Con un CLI anterior el plan declara igual el slug y los criterios (planificar no ejecuta ningún comando); `finishing-a-development-branch` informa la limitación al cerrar y continúa sin record, nunca lo inventa.
 
 ## Slice Structure
 

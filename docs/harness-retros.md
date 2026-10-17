@@ -1,5 +1,27 @@
 # Harness Retros
 
+## 2026-10-17 — Change Record skills (R7, Kodria/agentic-workflow#217)
+
+- **Class:** structural / process / security. Ledger: 37 entries (21 findings, 15 wins, 1 compaction re-anchor). `awm ledger recurring --min 2` folds 17 signatures into one convergent cluster (21 occurrences); every finding in it was fixed on the branch.
+- **Curas ya materializadas (skills + test):** `skills/finishing-a-development-branch/SKILL.md` Step 4.1 and `skills/writing-plans/SKILL.md` `### Change Record`, with plan amendments A1–A13 in `docs/plans/2026-10-17-change-record-skills-plan.md`. Behaviour fixes came from review rounds, not from authoring:
+  - sensors modes `opt-out`/`native-gate` exit 1 with `not_certified`;
+  - `--refresh` rejects `--plan`/`--issue`;
+  - a slug can collide with an earlier change's record;
+  - `--base` was never forwarded;
+  - fast-forward merges hide records in `awm changes list`;
+  - the trailer gets displaced by attribution paragraphs;
+  - shell substitution in the opt-out commit;
+  - remote credentials leaked into the PR body.
+
+  `tests/r17-change-record-skills-contract.test.mjs`: 157 mutation checks; the external batteries of the tests lens end at 54/54 and 59/63 (the 4 survivors only delete explanatory text whose rule is pinned elsewhere).
+- **Recomendaciones (requieren autoridad, no aplicadas — kernel válido y context budget en 30 874 / 27 325 bytes, sin crecimiento en este ciclo):**
+  1. *Skill contract coverage (structural, systemic: 9 `r17-*-unpinned` signatures over three QA rounds).* A skill contract test that pins headline phrases leaves normative stop/safety sentences removable while green. Proposal: a reusable mutation battery (delete each sentence containing a stop/never/only rule in a changed `SKILL.md`, expect the owning contract test red) run by `validate.yml` for changed skills, instead of hand-curated mutation lists. New gate → owner decision.
+  2. *Verify CLI facts before inlining them into a plan (process; existing AGENTS.md pattern `verify-cmd-source-before-documenting`).* Five behaviour facts the plan stated or omitted were only discovered by reviewers reading the CLI source (opt-out exit status, flag clash, slug lookup by any date, first-parent classification, trailer final-paragraph rule with ≥2 paragraphs). Proposal: add this cycle as an occurrence and extend the pattern from "documenting" to "writing skill text that drives a CLI". Context edit under a valid kernel with the budget over → owner decision.
+  3. *Shell commands shown in skills (security).* Commands that interpolate plan- or remote-derived values must use quoted heredocs or validated tokens, and URLs derived from remotes must drop userinfo. Proposal: a portability-validator rule flagging `-m "<…>"` placeholders and remote-URL conversions without a credential-stripping clause. New rule → owner decision.
+- **Descartes (modo desatendido):** `compaction-reanchor` (info, a session-mechanics event, not a defect). The individual `r17-*`, robustness and logic findings were all closed in-cycle with a pinned assertion, so a second rule per item would duplicate the contract test. The wins are recorded here; no AGENTS.md entry was added.
+- **Sensores:** R8 registry opt-out (`awm sensors run` → `not_certified`, `mode: opt-out`). Native gates green: `test:change-record` 9/9, `test:workflow-coverage`, `test:compact-only` 35/35, `test:r2b` 8/8, `test:release`, `test:version-bumps`, `test:portability` + selftest, `cli-floor-decoupling` 7/7, all other `validate.yml` contracts. Closure under R8 needs the versioned `validate` run on the PR head and `auto-tag` on merge.
+- **Docs fuera del registry:** `docs/cli-reference.md` and `docs/framework.md` in Kodria/agentic-workflow said the skills were "not part of this release". The rewrite is ready locally and is delivered separately.
+
 ## 2026-09-29 — Plan A Cursor hooks: stdin/parity/tests under load
 
 - **Class:** structural / process.
