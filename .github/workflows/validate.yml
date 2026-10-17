@@ -35,6 +35,7 @@ jobs:
       - run: node tests/r8-sensor-gate-contract.test.mjs
       - run: node tests/r9-declared-orchestrators-contract.test.mjs
       - run: node tests/r10-documentation-phase-contract.test.mjs
+      - run: node --test tests/r17-change-record-skills-contract.test.mjs
       - run: node tests/r11-process-lifecycle-contract.test.mjs
       - run: node tests/r12-context-footprint-contract.test.mjs
       - run: node tests/r13-role-evidence-capsule-contract.test.mjs
