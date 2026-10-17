@@ -1,6 +1,6 @@
 ---
 name: finishing-a-development-branch
-version: "2.1.0"
+version: "2.2.0"
 license: Apache-2.0
 description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR/MR, or cleanup
 ---
@@ -23,7 +23,7 @@ a native child dispatch, and block a mismatched or unknown routing observation.
 
 Guide completion of development work by presenting clear options and handling chosen workflow.
 
-**Core principle:** Verify tests → Present options → Execute choice → Clean up.
+**Core principle:** Verify tests → Present options → Change Record → Execute choice → Clean up.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
@@ -39,7 +39,9 @@ El modo desatendido quita pausas, no controles: los gates (sensor, ledger, recon
 
 ### Modo desatendido
 
-WHEN el modo es `desatendido` AND los tests del Step 1 pasan: omite el menú del Step 3 y ejecuta directamente la **Opción 2 (Push and Create PR/MR)**, que corre primero el Step 3.5 (detección de host) y luego el Step 4.0 (retiro de artefactos de diseño) automáticamente, sin prompt. IF los tests fallan, THEN detente y reporta los fallos sin pushear ni crear el PR/MR — igual que en modo interactivo; tests rojos son una pausa legítima que ningún modo salta. La **Opción 4 (Discard)** NUNCA está disponible en modo desatendido: descartar trabajo es una acción destructiva que siempre requiere a un humano.
+WHEN el modo es `desatendido` AND los tests del Step 1 pasan: omite el menú del Step 3 y ejecuta directamente la **Opción 2 (Push and Create PR/MR)**, que corre primero el Step 3.5 (detección de host), luego el Step 4.0 (retiro de artefactos de diseño) y el Step 4.1 (Change Record) automáticamente, sin prompt. IF los tests fallan, THEN detente y reporta los fallos sin pushear ni crear el PR/MR — igual que en modo interactivo; tests rojos son una pausa legítima que ningún modo salta. La **Opción 4 (Discard)** NUNCA está disponible en modo desatendido: descartar trabajo es una acción destructiva que siempre requiere a un humano.
+
+El Step 4.1 (Change Record) corre igual que en modo interactivo: si `awm change new` o `awm change validate --strict` terminan con exit distinto de cero, es una pausa legítima como los tests rojos — detente y reporta el diagnóstico sin pushear ni crear el PR/MR. Solo la limitación de sensores opt-out (ver Step 4.1) continúa sin record.
 
 **El push siempre corre; el PR/MR es best-effort.** Si `$HOST=unknown` (o el host es reconocido pero su CLI no está instalado), la Opción 2 degrada a "push + instrucciones para abrir el PR/MR a mano" — ese es un resultado **final y válido** del modo desatendido, no un fallo. El skill nunca debe: (a) bloquear/escalar porque no pudo crear el PR/MR, ni (b) terminar en silencio sin decir que el PR/MR no se creó. El reporte final del modo desatendido siempre debe indicar explícitamente si el PR/MR se creó o si quedó pendiente de creación manual.
 
@@ -78,7 +80,7 @@ Or ask: "This branch split from main - is that correct?"
 
 ### Step 3: Present Options
 
-**Modo desatendido:** no presentes el menú — ejecuta directamente la Opción 2 (Push and Create PR/MR) del Step 4 (que corre el Step 3.5 de detección de host y el Step 4.0 de retiro de artefactos primero) y continúa con el cleanup del Step 5. La Opción 4 (Discard) no existe en este modo. Recordá: si la creación del PR/MR degrada (host desconocido o CLI ausente), el push + instrucciones manuales sigue siendo un cierre válido de la Opción 2 — no un fallo que deba escalarse.
+**Modo desatendido:** no presentes el menú — ejecuta directamente la Opción 2 (Push and Create PR/MR) del Step 4 (que corre primero el Step 3.5 de detección de host, el Step 4.0 de retiro de artefactos y el Step 4.1 de Change Record) y continúa con el cleanup del Step 5. La Opción 4 (Discard) no existe en este modo. Recordá: si la creación del PR/MR degrada (host desconocido o CLI ausente), el push + instrucciones manuales sigue siendo un cierre válido de la Opción 2 — no un fallo que deba escalarse.
 
 **Modo interactivo:** present exactly these 4 options:
 
@@ -155,11 +157,43 @@ git commit -m "chore: retire Stitch design artifacts post-QA before integrating"
 
 Only `completed` screens are retired — `pending`/in-progress screens keep their artifacts. Never remove `design-system/` tokens or `.stitch/verification/` evidence.
 
+Then continue with Step 4.1 (Change Record).
+
+#### Step 4.1: Change Record (Options 1 & 2 only)
+
+**Runs only on the integration paths (Option 1 Merge, Option 2 PR/MR), after Step 4.0 and before the merge/push below. Skip entirely for Options 3 and 4.** It runs after Step 4.0 because the retirement commit changes files: a record verified before that commit fails validation with `code-changed-after-verification`.
+
+Every integrated change leaves one Change Record (`awm.change-record/v1`) at `docs/changes/<YYYY-MM-DD>-<slug>.md`: a short, structured answer to what the change did, what was verified and what a human still has to validate, readable without the code. The CLI derives the deterministic fields (`type`, `scope`, `semver`, `breaking`, `modules`, `verification`) from git and from the sensor-run receipt; you write only the narrative.
+
+1. **Commit.** Commit all pending work. The working tree must be clean: a dirty tree gets no sensor receipt.
+2. **Run the sensors:** `awm sensors run`. A full run on a clean tree writes the receipt `.awm/sensors/runs/<commit>.json` (local, never committed).
+   - `overall` other than `pass` → stop exactly as for failing tests in Step 1: report it and do not merge or push.
+   - The JSON has `"mode": "opt-out"` (the project deliberately declares no sensors) → no receipt can exist, so no record can be certified. State the limitation once (`Sin Change Record: el proyecto declara sensores opt-out; no hay receipt que certifique la verificación`) and continue to the merge/push without a record. Never invent one, and never add `Change-Record: none` to hide it: `awm changes list` reports the change as `missing`, which is the truth.
+   - Any other stderr line `no sensor receipt written: <reason>` → stop and report it; fix its cause (usually: commit the pending work) and run this step again.
+3. **Create the skeleton:** `awm change new <slug>`, with the slug from the plan's `**Change Record:**` header (for a plan without one, derive it from the branch name: lowercase letters, digits and hyphens, at most 64 characters). A plan that declares `**Change Record:** ninguno — <razón>` takes the trivial opt-out below instead of steps 2–6. Pass `--plan <plan-path>`, and `--issue <https-url>` when the plan names an issue. If the record already exists (`record-exists`), run `awm change new <slug> --refresh` instead: it recomputes only the derived fields and keeps the narrative. Any other non-zero exit → stop and report the diagnostic with its `remedy:` line.
+4. **Write the narrative.** Replace every `<!-- awm:pending -->` marker, drawing from the plan (goal and `**Criterios de aceptación:**`), the `post-implementation-qa` results and the diff (`git diff <base-branch>...HEAD`):
+   - `title` (at most 120 characters) and `summary_short` (one line, at most 280 characters, written for someone who will not read the code);
+   - `manual_validation`: one `{step, expected}` item per acceptance criterion of the plan, or `{none: <razón>}` when the plan's criterion is `- ninguno — <razón>`;
+   - `risks` (may be `[]`) and `rollback` (how to undo the change);
+   - the body sections, in this order and none empty: `## Qué se hizo`, `## Qué se probó` (only checks that actually ran, with their result), `## Qué falta validar`, `## Riesgos y rollback`.
+
+   Never edit the derived fields by hand: validation recomputes them.
+5. **Commit the record** on its own: `git add docs/changes/<file>`, then `git commit -m "docs(changes): add change record <slug>"`. A commit that only touches `docs/changes/` changes neither the derived fields nor what the receipt certifies.
+6. **Validate:** `awm change validate --strict`. Exit 0 → continue. Non-zero → stop: report every diagnostic, and never merge or push past a failing strict validation, in either mode. Fix it and repeat from the step the diagnostic points to: `pending-content`, `field-invalid` or `body-section-missing` → step 4, then commit the fix; `record-uncommitted` → step 5; `code-changed-after-verification`, `derived-mismatch`, `receipt-missing` or `verification-mismatch` → step 2, then `--refresh` in step 3; `verification-not-passing` → fix the failing sensors first.
+
+**Trivial changes (opt-out):** a change too small to merit a record (a version bump, a typo) MAY skip steps 2–6 by ending one of its commit messages with the trailer `Change-Record: none`, with the reason in the commit body:
+
+```bash
+git commit -m "chore: bump version" -m "Trivial: version bump only, nothing to validate." -m "Change-Record: none"
+```
+
+The trailer counts only in the final paragraph of a commit message. A host that squash-merges concatenates the branch's messages, so for Option 2 also end the PR/MR description with a `Change-Record: none` paragraph.
+
 Then continue with the chosen option's merge/push below.
 
 #### Option 1: Merge Locally
 
-**First, run Step 4.0 (retire design artifacts).**
+**First, run Step 4.0 (retire design artifacts), then Step 4.1 (Change Record).**
 
 ```bash
 # Switch to base branch
@@ -182,7 +216,7 @@ Then: Cleanup worktree (Step 5)
 
 #### Option 2: Push and Create PR/MR
 
-**First, run Step 4.0 (retire design artifacts).**
+**First, run Step 4.0 (retire design artifacts), then Step 4.1 (Change Record).**
 
 The push always happens first and never depends on `gh`/`glab`. What differs by `$HOST` (from Step 3.5) is only how — or whether — a PR/MR gets opened after.
 
@@ -191,15 +225,22 @@ The push always happens first and never depends on `gh`/`glab`. What differs by 
 git push -u origin <feature-branch>
 ```
 
+Build the PR/MR body from the Change Record of Step 4.1, not from memory. **Summary** is its `summary_short` followed by the bullets of `## Qué se hizo`. **Test Plan** lists what `## Qué se probó` says already ran (checked), then each `manual_validation` item as a pending check; `{none: <razón>}` becomes the single line `Sin validación manual: <razón>`. Link the record file. Without a record (a limitation of Step 4.1, or the trivial opt-out), fill Summary and Test Plan from the plan, the QA results and the diff, write `Change Record: ninguno — <razón>` in place of the link, and for the opt-out end the body with a `Change-Record: none` paragraph.
+
 **`HOST=github` → use `gh`, if installed:**
 
 ```bash
 gh pr create --title "<title>" --body "$(cat <<'EOF'
 ## Summary
-<2-3 bullets of what changed>
+<summary_short>
+
+<bullets from ## Qué se hizo>
 
 ## Test Plan
-- [ ] <verification steps>
+- [x] <each check from ## Qué se probó>
+- [ ] <each manual_validation step> → <expected>
+
+Change Record: [`docs/changes/<file>`](<remote-url-without-.git>/blob/<feature-branch>/docs/changes/<file>)
 EOF
 )"
 ```
@@ -208,7 +249,7 @@ If `gh` isn't installed (or not on PATH), treat this the same as the degraded pa
 
 **`HOST=gitlab` → use `glab`, if installed:**
 
-`glab mr create` is the MR equivalent of `gh pr create` — open it with a title and a description covering the summary and test plan (e.g. `glab mr create --title "<title>" --description "..."`, though verify the exact flags against `glab --help` at the time — CLI surfaces drift, and asserting an untested flag with false confidence is worse than checking). If `glab` isn't installed, treat this the same as the degraded path below.
+`glab mr create` is the MR equivalent of `gh pr create` — open it with a title and a description built exactly like the `gh` body above (e.g. `glab mr create --title "<title>" --description "..."`, though verify the exact flags against `glab --help` at the time — CLI surfaces drift, and asserting an untested flag with false confidence is worse than checking). If `glab` isn't installed, treat this the same as the degraded path below.
 
 **`HOST=unknown` (unrecognized remote domain, or the host's CLI isn't installed) → honest degradation, not a failure:**
 
@@ -221,6 +262,8 @@ Open one manually:
 - If the remote is GitHub-shaped: <remote-url-without-.git>/compare/<base-branch>...<feature-branch>
 - Otherwise: push is done — open a merge/pull request for <feature-branch> against <base-branch> from your host's web UI.
 ```
+
+Give the operator the PR/MR body built above, ready to paste.
 
 This IS a valid, complete outcome of Option 2 — the branch is pushed and the operator has a clear, unambiguous next action. It is never treated as an error or a reason to escalate.
 
@@ -272,12 +315,12 @@ git worktree remove <worktree-path>
 
 ## Quick Reference
 
-| Option | Merge | Push | Keep Worktree | Cleanup Branch | Retire artifacts |
-|--------|-------|------|---------------|----------------|------------------|
-| 1. Merge locally | ✓ | - | - | ✓ | ✓ (if any) |
-| 2. Create PR/MR | - | ✓ | ✓ | - | ✓ (if any) |
-| 3. Keep as-is | - | - | ✓ | - | - |
-| 4. Discard | - | - | - | ✓ (force) | - |
+| Option | Merge | Push | Keep Worktree | Cleanup Branch | Retire artifacts | Change Record |
+|--------|-------|------|---------------|----------------|------------------|---------------|
+| 1. Merge locally | ✓ | - | - | ✓ | ✓ (if any) | ✓ |
+| 2. Create PR/MR | - | ✓ | ✓ | - | ✓ (if any) | ✓ |
+| 3. Keep as-is | - | - | ✓ | - | - | - |
+| 4. Discard | - | - | - | ✓ (force) | - | - |
 
 ## Common Mistakes
 
@@ -309,6 +352,14 @@ git worktree remove <worktree-path>
 - **Problem:** Push succeeds, `gh`/`glab` isn't available, and the skill ends without telling the operator a PR/MR was NOT created
 - **Fix:** Always state explicitly whether a PR/MR was created or is pending manual creation, with the compare/MR URL or instructions
 
+**Integrating without a validated Change Record**
+- **Problem:** The merge or PR lands with no record, or with one that `awm change validate --strict` rejects, and the next day nobody can tell what it did or what still needs validating
+- **Fix:** Run Step 4.1 before the merge/push of Options 1 & 2 and stop on any non-zero exit
+
+**Writing the PR/MR body from memory**
+- **Problem:** Summary and Test Plan drift from what was actually verified
+- **Fix:** Build them from the record's `summary_short`, `## Qué se hizo`, `## Qué se probó` and `manual_validation`, and link the record
+
 ## Red Flags
 
 **Never:**
@@ -319,6 +370,8 @@ git worktree remove <worktree-path>
 - Retire design artifacts on Option 3/4, or for non-`completed` screens
 - Treat a degraded PR/MR (no `gh`/`glab`, or unrecognized host) as a blocking failure
 - Finish Option 2 without stating whether a PR/MR was actually created
+- Merge or push after `awm change validate --strict` failed
+- Invent a Change Record or edit its derived fields by hand
 
 **Always:**
 - Verify tests before offering options
@@ -327,6 +380,7 @@ git worktree remove <worktree-path>
 - Clean up worktree for Options 1 & 4 only
 - Retire `completed`-screen `.stitch/designs/` artifacts before integrating (Options 1 & 2, via Step 4.0)
 - Detect the git host (Step 3.5) before any Option 2 git-host operation
+- Run Step 4.1 (Change Record) after Step 4.0 and before the merge/push of Options 1 & 2
 
 ## Integration
 
