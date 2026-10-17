@@ -197,7 +197,7 @@ Change-Record: none
 EOF
 ```
 
-The trailer counts only in the final paragraph of a commit message, never in the subject: a paragraph added after it (for example a separate attribution block) makes validation report `record-missing`. Then run `awm change validate --strict`: it must print `Change Record validation: exempt (Change-Record: none)` and exit 0; anything else → stop and report it. A host that squash-merges concatenates the branch's messages, so for Option 2 also end the PR/MR description with a `Change-Record: none` paragraph, placed after any footer (attribution, links) (used when the host squashes with the PR description).
+The trailer counts only in the final paragraph of a commit message, never in the subject: a paragraph added after it (for example a separate attribution block) makes validation report `record-missing`. Then run `awm change validate --strict`: it must print `Change Record validation: exempt (Change-Record: none)` and exit 0; anything else → stop and report it. A host that squash-merges concatenates the branch's messages, so for Option 2 also end the PR/MR description with a `Change-Record: none` paragraph, placed after any footer (attribution, links); a host that squashes with the PR description uses that text as the commit message.
 
 Then continue with the chosen option's merge/push below.
 
