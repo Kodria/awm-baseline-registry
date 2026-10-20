@@ -1,6 +1,6 @@
 ---
 name: writing-skills
-version: "1.0.3"
+version: "1.1.0"
 license: Apache-2.0
 description: Use when creating new skills, editing existing skills, or verifying skills work before deployment
 ---
@@ -20,6 +20,10 @@ You write test cases (pressure scenarios with subagents), watch them fail (basel
 **REQUIRED BACKGROUND:** You MUST understand `test-driven-development` before using this skill. That skill defines the fundamental RED-GREEN-REFACTOR cycle. This skill adapts TDD to documentation.
 
 **Official guidance:** For Anthropic's official skill authoring best practices, see anthropic-best-practices.md — an external provider reference retained verbatim (allowlisted in `tests/portability-allowlist.json`), not an AWM runtime contract. This document provides additional patterns and guidelines that complement the TDD-focused approach in this skill.
+
+## Verify CLI facts
+
+Extends `verify-cmd-source-before-documenting` from documentation to skill authoring. Before a skill asserts CLI flags, exits, or command semantics, read the matching `cli/src/commands/` source (and run the built binary when the claim is behavioral). Do not copy CLI facts from a plan or from memory — pin the prose to the published consumer.
 
 ## What is a Skill?
 
