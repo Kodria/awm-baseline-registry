@@ -12,6 +12,7 @@
     "test:workflow-coverage": "node --test tests/workflow-test-coverage.test.mjs",
     "test:version-bumps": "./scripts/check-skill-version-bumps.sh origin/main HEAD",
     "test:r2a": "node --test tests/r2a-review-cycle-contract.test.mjs",
+    "test:r77": "node --test tests/r77-process-hardening-contract.test.mjs",
     "test:r2b": "node --test tests/r2b-routing-consumer-contract.test.mjs",
     "test:r2b-cli": "node --test tests/r2b-routing-cli-acceptance.mjs",
     "test:r2b-prepublication": "node --test tests/r2b-release-prepublication.test.mjs",

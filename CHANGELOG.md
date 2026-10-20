@@ -2,6 +2,20 @@
 
 Newest entry on top; append new releases directly below this line.
 
+## feat(process): QA worktree mutations, severity rubric, verify-cmd-source — 2026-10-20
+
+- `post-implementation-qa` 2.3.0: `deep-review-prompt.md` adds a severity rubric
+  (`important` only for real-author / trust-boundary failures; esoteric cases ≤
+  `minor`) and requires the tests lens to run mutation probes in an isolated
+  `git worktree`, never the shared checkout.
+- `writing-plans` 2.4.0 and `writing-skills` 1.1.0: extend
+  `verify-cmd-source-before-documenting` to plan/skill prose that asserts CLI
+  flags, exits, or command semantics.
+- New mutation-pinned gate `tests/r77-process-hardening-contract.test.mjs`
+  (`npm run test:r77`), wired into `validate.yml` and `auto-tag.yml`.
+- Bundles: `dev` 4.11.0→4.12.0, `authoring` 1.2.0→1.3.0. Closes
+  Kodria/awm-baseline-registry#77.
+
 ## feat(skills): Change Record in writing-plans and finishing — 2026-10-17
 
 - `writing-plans` 2.3.0: the plan header declares the planned Change Record

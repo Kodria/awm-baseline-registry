@@ -38,6 +38,10 @@ and does not repeat evidence. Track B uses `track: "B"`, its lens name, and B-pr
 When authoritative evidence is insufficient, return only the shared three-line `NEEDS_CONTEXT`
 response instead of JSON.
 
+## Severity rubric
+
+Applies to every lens. `blocker` stops the branch. `important` is only for what a real author would hit, or a real trust-boundary failure. An esoteric case that does not contradict any written clause is at most `minor` — never inflate it to `important` to force another QA round.
+
 ## Record to the ledger (AWM)
 
 Append `--defect-class <exact-catalog-id>` only when the finding maps to an exact class in the active sensor-pack coverage catalog. Omit the flag when the class is not known; do not infer it from the review lens, prose, signature, or severity.
@@ -119,6 +123,11 @@ fallback: <selective or full-context: exact-trigger>
 Judge tests, not implementation. Find requirements without tests, untested IF/THEN edge cases,
 empty asserts, tests that cannot fail, and missing failure/error paths. Cite a test `file:line`
 or an uncovered requirement ID.
+
+Run mutation probes only inside `git worktree add <scratch> HEAD` (link `node_modules` into the
+scratch when the probe needs dependencies). Never mutate the shared working tree or checkout
+the other lenses are reading. Remove the scratch worktree when the lens finishes (`git worktree
+remove` / prune); leave no dirty probes behind.
 
 ## Evidence Capsule v1
 

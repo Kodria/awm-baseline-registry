@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-version: "2.3.0"
+version: "2.4.0"
 license: Apache-2.0
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
@@ -133,6 +133,10 @@ Todo plan nuevo declara en la cabecera el Change Record (`awm.change-record/v1`)
 - Un cambio trivial que no merece record (un bump de versión, un typo) declara `**Change Record:** ninguno — <razón>`, sin backticks, y omite `**Criterios de aceptación:**`; `finishing-a-development-branch` usa entonces el trailer `Change-Record: none`.
 
 **Versión mínima del CLI:** `agentic-workflow-manager` ≥ 9.20.0, la primera versión con `awm change new|validate`, `awm changes list` y el receipt de `awm sensors run`. Con un CLI anterior el plan declara igual el slug y los criterios (planificar no ejecuta ningún comando); `finishing-a-development-branch` informa la limitación al cerrar y continúa sin record, nunca lo inventa.
+
+### Verify CLI facts
+
+Extends `verify-cmd-source-before-documenting` from documentation to plan authoring. Before a plan asserts CLI flags, exits, or command semantics, read the matching `cli/src/commands/` source (and run the built binary when the claim is behavioral). Do not invent flags, exit codes, or subcommand names from memory or from an older plan — reviewers catch those only after the prose is already wrong.
 
 ## Slice Structure
 
