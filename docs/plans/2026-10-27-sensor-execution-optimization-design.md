@@ -1,29 +1,27 @@
-# Sensor execution optimization — Registry design half (#236)
+# Sensor execution optimization — Registry design pointer (#236)
 
-**Companion:** CLI system design and CLI plan live in `agentic-workflow` (`docs/plans/2026-10-27-sensor-execution-optimization-design.md` and `…-plan.md`). This document owns only **registry content** requirements after the CLI that parses `inputs` / `closureOnly` is published to npm (audit [B] / RF-7).
+**Normative source (single):** `Kodria/agentic-workflow` → `docs/plans/2026-10-27-sensor-execution-optimization-design.md` (audit [X1]). Pin the CLI design commit SHA in the content PR description when admitting S2/S3. **Do not rewrite** RF prose here.
 
-**Issue:** [Kodria/agentic-workflow#236](https://github.com/Kodria/agentic-workflow/issues/236)
+**Issue:** [Kodria/agentic-workflow#236](https://github.com/Kodria/agentic-workflow/issues/236) · Companion CLI plan PR: [agentic-workflow#237](https://github.com/Kodria/agentic-workflow/pull/237)
 
-## Requirements (registry-owned)
+**IDs this registry plan implements** (definitions live only in the CLI design):
 
-- **RF-1.9 — Conservative pack defaults:** Declare `inputs` only for boundable sensors (`typecheck`, and `lint` when extensions/ignore bound the check). Do **not** default `inputs` on `format`, `test`, `mutation`, or `security`. Projects may override; `setup-sensors` teaches mutation/test overrides for docs-only / #236 wall-clock.
-- **RF-3.1 — Pack defaults:** Same as RF-1.9; never ship docs-excluding inputs on tree-walking tools.
-- **RF-3.2 — setup-sensors teaches inputs:** Normative authoring rules + explicit mutation/slow `inputs` override section.
-- **RF-3.5 — No agent-side skip protocol:** Skills invoke phase gates; CLI owns reuse.
-- **RF-3.6 — closureOnly authoring:** Document sensor-level `closureOnly` (mutation default true; security optional; test never).
-- **RF-5.1 — Slice DONE:** Skills require `awm sensors run --slice` with `overall: pass`.
-- **RF-5.2 — verification-before-completion (implementation loop):** `--slice` sufficient.
-- **RF-5.3 — QA full gate:** full `awm sensors run`.
-- **RF-5.4 — Docs Step 5 full gate:** full run; note CLI may cache.
-- **RF-5.5 — Finishing full gate + receipt:** unchanged obligation; CLI RF-4 semantics.
-- **RF-5.6 — Forbid partial closure evidence:** no `--slice` / `--fast` / `--slow`-only / `--changed` as QA/docs/finish evidence.
-- **RF-5.7 — Constitutions may harden only.**
-- **RF-5.8 — development-process carve-out preserved.**
-- **RF-5.9 — Replace universal no-flag wording** with phase gates.
-- **RF-7.1 — pack.schema.json + minCliVersion + cli-certification.json** updated for `inputs` and sensor-level `closureOnly`.
-- **RF-7.2 — Publish order:** start this plan only after the parsing CLI version is on npm; set `minCliVersion` to that version; skills naming new flags declare min CLI.
-- **RF-7.3 — Do not ship new fields on tags consumed by older CLIs.**
+| ID | Notes |
+|---|---|
+| RF-1.9, RF-3.1 | Extension-bound pack defaults; never directory-anchored |
+| RF-3.2, RF-3.5, RF-3.6 | setup-sensors + no agent skip + closureOnly authoring |
+| RF-5.1–RF-5.9 | Skill phase gates (`--slice` vs full) |
+| RF-7.1 | Schema + `minCliVersion` + **re-certify** `certifiedCli` |
+| RF-7.2 | Content slices after CLI npm publish |
+| RF-7.3 | No new fields on tags for older CLIs |
+| RF-7.4 | Mirror `sensor-pack-v2-validator.mjs` + equivalence tests |
+
+**Docs-only PRs** for this pointer/plan may merge before CLI publish (`auto-tag` ignores `docs/**`). **Content slices S2/S3** wait for published CLI version N.
+
+## Registry-local requirement
+
+- **RF-R.0 — Contract harness:** THE registry SHALL provide `npm run test:sensor-execution-optimization` wired to an executable contract before content slices land. Smoke asserts only (design pointer present, script wired); content asserts belong to S2/S3.
 
 ## Non-goals here
 
-CLI runtime, receipts, digests, jest in the CLI repo.
+CLI runtime, receipts, digests, jest suites inside `agentic-workflow`.
