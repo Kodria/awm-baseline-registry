@@ -10,6 +10,7 @@
     "test:release": "node --test tests/release-skill-version-gate.test.mjs",
     "test:change-record": "node --test tests/r17-change-record-skills-contract.test.mjs",
     "test:sensor-execution-optimization": "node --test tests/r18-sensor-execution-optimization-contract.test.mjs",
+    "test:systematic-debugging-data-over-time": "node --test tests/r19-systematic-debugging-data-over-time-contract.test.mjs",
     "test:workflow-coverage": "node --test tests/workflow-test-coverage.test.mjs",
     "test:version-bumps": "./scripts/check-skill-version-bumps.sh origin/main HEAD",
     "test:r2a": "node --test tests/r2a-review-cycle-contract.test.mjs",

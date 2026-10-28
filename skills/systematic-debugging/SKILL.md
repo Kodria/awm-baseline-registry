@@ -1,6 +1,6 @@
 ---
 name: systematic-debugging
-version: "1.1.1"
+version: "1.2.0"
 license: Apache-2.0
 description: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes
 ---
@@ -120,6 +120,26 @@ You MUST complete each phase before proceeding to the next.
    - What called this with bad value?
    - Keep tracing up until you find the source
    - Fix at source, not at symptom
+
+6. **Investigate Data-Dependent Behavior Over Time**
+
+   **WHEN the observed behavior depends on stored data (records, configuration, user or role assignments,
+   catalogs), or the reporter says the system shows a value that should be a different one:**
+
+   - **Reconstruct the timeline** of the affected entity and of every piece of data its behavior depends on:
+     creation, each state change, each re-submission or re-processing, and the last modification of the
+     referenced data (audit or event logs, `updatedAt`, history tables). Put all events in one ordered list.
+   - **Separate snapshots from live reads.** For each value the code uses, determine whether it was copied
+     when the entity was created (a snapshot) or is read at the moment of the action. A snapshot reused after
+     its source changed is a classic stale-data defect.
+   - **Recompute the outcome with the data that was current at each action**, especially the latest one, and
+     compare it with what the system produced. If they differ, the code used stale data: that is a code-level
+     root cause candidate, not "just data".
+   - **Test the reporter's expectation against the data before dismissing it.** Find the expected value,
+     person or item through stable identifiers and through the relationships the code uses, not by display
+     name: names, labels and translations often differ from what a user writes.
+   - **Look at sibling records.** A newer or similar record that shows the expected outcome usually reveals
+     which input changed.
 
 ### Phase 2: Pattern Analysis
 
@@ -290,6 +310,25 @@ Check `docs/harness-retros.md` (if it exists) and recent commit messages matchin
 - **No, first occurrence** → ship the regression test (Phase 4 Step 1 already covers this) and move on. Don't structuralize on a single sample.
 
 This is what closes the loop between debugging and the harness. Without it, every recurrence costs a full debug cycle.
+
+## Before Concluding "Not a Code Defect"
+
+"The system does what its data says", "it is a configuration issue" or "it works as designed" is a
+conclusion, not a starting point. Before you reach it, and before you stop or close the investigation with
+that answer, all of these must be true:
+
+- [ ] You built the timeline (Phase 1, step 6) and you can state, for each relevant data change, whether the
+      latest action happened before or after it.
+- [ ] For every value the code used, you know whether it was a snapshot or a live read, and you compared each
+      snapshot with the current value.
+- [ ] You recomputed the outcome with the data current at the latest action, and it matches what the system
+      produced.
+- [ ] You searched for the reporter's expected value by stable identifiers and relationships, not only by
+      display name.
+
+If any box is unchecked, the investigation is incomplete. If the recomputed outcome differs from what the
+system produced, it is a code defect candidate; whether the fix also needs a business decision is a separate
+question.
 
 ## When Process Reveals "No Root Cause"
 
