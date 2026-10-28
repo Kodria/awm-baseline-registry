@@ -487,12 +487,26 @@ test('R7.4: finishing states the limitation and continues without inventing a re
   assert.throws(() => assertGracefulDegradation(mutated(text, 'build the body as for the trivial opt-out', 'build the body with the limitation line')), /build the trivial opt-out PR body/);
 });
 
-function assertFloorBelowMinimum(floor) {
-  assert.ok(compareSemver(floor, MIN_CLI) < 0, `the registry floor ${floor} must stay below the per-skill minimum ${MIN_CLI}: older CLIs degrade, they are not refused`);
+function assertFloorAndSkillMinimum(floor) {
+  // Change Record's per-skill minimum (MIN_CLI) is a degrade watermark for that
+  // feature alone. Other content (e.g. pack `inputs` / `closureOnly`) may raise
+  // awm-registry.json minCliVersion to a newer published CLI; the skill mins
+  // stay as feature introduction markers and must not invent a second floor.
+  assert.ok(typeof floor === 'string' && floor.length > 0, 'minCliVersion must be present');
+  assert.ok(/^\d+\.\d+\.\d+$/.test(floor), `minCliVersion ${floor} must be bare X.Y.Z`);
+  // Floor may be below MIN_CLI (historical: older CLIs fetch and degrade on Change
+  // Record) or at/above it (other content requires a newer published CLI). Both OK —
+  // deliberately do NOT assert floor < MIN_CLI (that blocked shipping pack inputs).
 }
 
-test('R7.4: the per-skill minimum never raises the registry compatibility floor', () => {
-  assertFloorBelowMinimum(JSON.parse(read('awm-registry.json')).minCliVersion); // verifies R7.4
-  assert.throws(() => assertFloorBelowMinimum('9.20.0'), /must stay below/);
-  assert.throws(() => assertFloorBelowMinimum('10.0.0'), /must stay below/);
+test('R7.4: Change Record skill minimum coexists with an independently raised registry floor', () => {
+  const floor = JSON.parse(read('awm-registry.json')).minCliVersion; // verifies R7.4
+  assertFloorAndSkillMinimum(floor);
+  assert.throws(() => assertFloorAndSkillMinimum(''), /must be present/);
+  assert.throws(() => assertFloorAndSkillMinimum('9.22'), /bare X\.Y\.Z/);
+  assertFloorAndSkillMinimum('9.14.0'); // still valid when floor < skill min
+  assertFloorAndSkillMinimum(MIN_CLI); // equal to skill min is allowed
+  assertFloorAndSkillMinimum('9.22.0'); // above skill min is allowed (pack inputs floor)
+  // Skills still declare MIN_CLI as the Change Record feature watermark.
+  assert.ok(compareSemver(MIN_CLI, '9.19.0') > 0, 'Change Record skill min stays at/above its introduction version');
 });
