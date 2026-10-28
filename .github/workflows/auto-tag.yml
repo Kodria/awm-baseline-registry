@@ -81,6 +81,7 @@ jobs:
           node tests/r10-documentation-phase-contract.test.mjs
           node --test tests/r17-change-record-skills-contract.test.mjs
           node --test tests/r18-sensor-execution-optimization-contract.test.mjs
+          node --test tests/r19-systematic-debugging-data-over-time-contract.test.mjs
           node --test tests/r77-process-hardening-contract.test.mjs
           node tests/r11-process-lifecycle-contract.test.mjs
           node tests/r11-process-lifecycle-cli-acceptance.mjs
