@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "2.5.0"
+version: "2.6.0"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
@@ -292,10 +292,10 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 
 If the repo has `.awm/sensors.json`, a task is **not complete** until `overall: pass` — `typecheck`/`test`/`build` alone are not sufficient. `fail`, `not_certified`, and `skipped` are all non-pass verdicts. Subagents run in isolated context and only do what their prompt says, so the gate must be enforced at two points:
 
-1. **In the implementer prompt:** the implementer runs `awm sensors run` (no flag — all sensors) before reporting DONE. Continue only when `overall: pass`. On any non-pass, it invokes `systematic-debugging`, stops, and does not report DONE. The implementer prompt template already includes this step.
-2. **At the controller, before marking the task complete:** after the code quality review approves, confirm evidence of `overall: pass`. On `fail`, `not_certified`, or `skipped`, do not mark complete and do not advance toward another task, review, QA, retro, or PR; return the task to diagnosis. Trust-but-verify: `awm sensors run` is cheap and authoritative.
+1. **In the implementer prompt:** the implementer runs `awm sensors run --slice` before reporting task/slice DONE (RF-5.1). `--slice` runs every selected sensor except those with effective `closureOnly: true` (typically `mutation`). Continue only when `overall: pass`. On any non-pass, it invokes `systematic-debugging`, stops, and does not report DONE. The implementer prompt template already includes this step. Requires `agentic-workflow-manager` ≥ 9.22.0.
+2. **At the controller, before marking the task complete:** after the code quality review approves, confirm evidence of `overall: pass` from `--slice`. On `fail`, `not_certified`, or `skipped`, do not mark complete and do not advance toward another task, review, QA, retro, or PR; return the task to diagnosis. Trust-but-verify: the slice gate is cheap and authoritative for task DONE.
 
-**Pitfall — do not use `awm sensors run --slow` as the gate.** `--slow` runs only `semgrep`/`mutation` and skips `lint`/`typecheck`, where most new findings surface. The completion gate is the full run (no flag).
+**Pitfall — do not use `--fast`, `--slow`, or a no-flag full run as the slice DONE gate.** `--fast` skips `test`; `--slow` skips `lint`/`typecheck`; a no-flag full run is the QA/docs/finish gate (RF-5.3–5.5), not the per-slice gate. Do not treat `--slice` as Change Record / QA closure evidence (RF-5.6).
 
 **Recurring sensor failure** (same `name` + `rule` as a prior session) → invoke `harness-retro` instead of just fixing it.
 
@@ -532,7 +532,7 @@ Read `references/review-cycle-v1.md` before review, fix, ledger repair or revali
 
 **Subagents should use:**
 - **test-driven-development** - Subagents follow TDD for each task
-- **verification-before-completion** - Run `awm sensors run` (when `.awm/sensors.json` exists) before reporting DONE
+- **verification-before-completion** - Run `awm sensors run --slice` (when `.awm/sensors.json` exists) before reporting task DONE
 
 **Alternative workflow:**
 - **executing-plans** - Use for a separate serial session instead of same-session execution

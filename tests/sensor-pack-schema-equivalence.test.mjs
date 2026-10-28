@@ -115,9 +115,24 @@ const packageScript = clone();
 packageScript.sensors.lint.variants[0].probe = { kind: 'package-script-present', script: 'test' };
 const missingPackageScript = clone();
 missingPackageScript.sensors.lint.variants[0].probe = { kind: 'package-script-present' };
+const withInputs = clone();
+withInputs.sensors.lint.variants[0].inputs = ['**/*.ts', '**/*.tsx'];
+const withClosureOnly = clone();
+withClosureOnly.sensors.lint.closureOnly = true;
+const braceInputs = clone();
+braceInputs.sensors.lint.variants[0].inputs = ['**/*.{ts,tsx}'];
+const negationInputs = clone();
+negationInputs.sensors.lint.variants[0].inputs = ['!**/*.md'];
+const absoluteInputs = clone();
+absoluteInputs.sensors.lint.variants[0].inputs = ['/tmp/**/*.ts'];
+const closureOnlyOnVariant = clone();
+closureOnlyOnVariant.sensors.lint.variants[0].closureOnly = true;
 
 for (const [name, pack, expected] of [
   ['native', native, true], ['baseline', base, true], ['hardening', hardening, true],
+  ['variant inputs', withInputs, true], ['sensor closureOnly', withClosureOnly, true],
+  ['brace inputs', braceInputs, false], ['negation inputs', negationInputs, false],
+  ['absolute inputs', absoluteInputs, false], ['closureOnly on variant', closureOnlyOnVariant, false],
   ['environment', badEnvironment, false], ['flat environment', flatEnvironment, true], ['package manager', badManager, false], ['coverage', badCoverage, false],
   ['uppercase package manager executable', uppercaseManager, true], ['Windows package manager executable', windowsManager, true],
   ['uppercase package manager executable without manager', uppercaseManagerMissing, false],

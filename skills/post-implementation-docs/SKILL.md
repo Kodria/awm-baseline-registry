@@ -1,6 +1,6 @@
 ---
 name: post-implementation-docs
-version: "2.1.0"
+version: "2.2.0"
 license: Apache-2.0
 description: Use after post-implementation-qa closes and before harness-retro — updates the user-facing documentation that this cycle's changes made stale, verifying every claim against the real binary rather than against prose. Writes the awm-docs-complete marker.
 ---
@@ -105,7 +105,7 @@ Editá la documentación afectada. Reglas:
 awm sensors run
 ```
 
-Correr desde la raíz del repo. `overall: pass` o no cerrás. Si el repo tiene link-checking o lint de markdown, corrélo también.
+Correr desde la raíz del repo **sin** `--slice` / `--fast` / `--slow` (RF-5.4 full gate). `overall: pass` o no cerrás. El CLI puede reutilizar passes en caché cuando los digests coinciden (p. ej. ediciones solo de docs). Si el repo tiene link-checking o lint de markdown, corrélo también.
 
 ### Step 6: Commit
 

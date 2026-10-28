@@ -1,8 +1,8 @@
 {
   "schema": "cli-certification/v1",
   "certifiedCli": {
-    "version": "9.14.0",
-    "sourceSha": "b3f791fd6bab2d6e4f5a44b0c7eeadc9edeba916",
+    "version": "9.22.0",
+    "sourceSha": "183bcaec0508e0f112e4bc9d69b16dd63d28bd09",
     "protocolDigest": "aecfd11414878b19b3456775a576ac2423f04e67a9b2aab0c4075c7c12fbe07a"
   },
   "negativeControls": {

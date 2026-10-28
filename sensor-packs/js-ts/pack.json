@@ -60,9 +60,26 @@
           "changedCommand": {
             "executable": "eslint",
             "resolution": "node-modules-bin",
-            "args": ["--config", "eslint.config.awm.cjs", "--cache", "--format", "json", "{files}"],
-            "environment": { "ESLINT_USE_FLAT_CONFIG": "false" },
-            "fileInput": { "placeholder": "{files}", "extensions": [".js", ".jsx", ".ts", ".tsx"] }
+            "args": [
+              "--config",
+              "eslint.config.awm.cjs",
+              "--cache",
+              "--format",
+              "json",
+              "{files}"
+            ],
+            "environment": {
+              "ESLINT_USE_FLAT_CONFIG": "false"
+            },
+            "fileInput": {
+              "placeholder": "{files}",
+              "extensions": [
+                ".js",
+                ".jsx",
+                ".ts",
+                ".tsx"
+              ]
+            }
           },
           "assets": [
             "eslint.config.awm.cjs"
@@ -70,7 +87,22 @@
           "formatter": "eslint-llm",
           "probe": {
             "kind": "eslint-print-config"
-          }
+          },
+          "inputs": [
+            "**/*.ts",
+            "**/*.tsx",
+            "**/*.mts",
+            "**/*.cts",
+            "**/*.js",
+            "**/*.jsx",
+            "**/*.mjs",
+            "**/*.cjs",
+            "**/eslint.config.*",
+            "**/.eslintrc",
+            "**/.eslintrc.*",
+            "**/.eslintignore",
+            "**/package.json"
+          ]
         },
         {
           "id": "eslint-8-flat",
@@ -108,9 +140,26 @@
           "changedCommand": {
             "executable": "eslint",
             "resolution": "node-modules-bin",
-            "args": ["--config", "eslint.config.awm.mjs", "--cache", "--format", "json", "{files}"],
-            "environment": { "ESLINT_USE_FLAT_CONFIG": "true" },
-            "fileInput": { "placeholder": "{files}", "extensions": [".js", ".jsx", ".ts", ".tsx"] }
+            "args": [
+              "--config",
+              "eslint.config.awm.mjs",
+              "--cache",
+              "--format",
+              "json",
+              "{files}"
+            ],
+            "environment": {
+              "ESLINT_USE_FLAT_CONFIG": "true"
+            },
+            "fileInput": {
+              "placeholder": "{files}",
+              "extensions": [
+                ".js",
+                ".jsx",
+                ".ts",
+                ".tsx"
+              ]
+            }
           },
           "assets": [
             "eslint.config.awm.mjs"
@@ -118,7 +167,22 @@
           "formatter": "eslint-llm",
           "probe": {
             "kind": "eslint-print-config"
-          }
+          },
+          "inputs": [
+            "**/*.ts",
+            "**/*.tsx",
+            "**/*.mts",
+            "**/*.cts",
+            "**/*.js",
+            "**/*.jsx",
+            "**/*.mjs",
+            "**/*.cjs",
+            "**/eslint.config.*",
+            "**/.eslintrc",
+            "**/.eslintrc.*",
+            "**/.eslintignore",
+            "**/package.json"
+          ]
         },
         {
           "id": "eslint-9-flat",
@@ -145,8 +209,23 @@
           "changedCommand": {
             "executable": "eslint",
             "resolution": "node-modules-bin",
-            "args": ["--config", "eslint.config.awm.mjs", "--cache", "--format", "json", "{files}"],
-            "fileInput": { "placeholder": "{files}", "extensions": [".js", ".jsx", ".ts", ".tsx"] }
+            "args": [
+              "--config",
+              "eslint.config.awm.mjs",
+              "--cache",
+              "--format",
+              "json",
+              "{files}"
+            ],
+            "fileInput": {
+              "placeholder": "{files}",
+              "extensions": [
+                ".js",
+                ".jsx",
+                ".ts",
+                ".tsx"
+              ]
+            }
           },
           "assets": [
             "eslint.config.awm.mjs"
@@ -154,7 +233,22 @@
           "formatter": "eslint-llm",
           "probe": {
             "kind": "eslint-print-config"
-          }
+          },
+          "inputs": [
+            "**/*.ts",
+            "**/*.tsx",
+            "**/*.mts",
+            "**/*.cts",
+            "**/*.js",
+            "**/*.jsx",
+            "**/*.mjs",
+            "**/*.cjs",
+            "**/eslint.config.*",
+            "**/.eslintrc",
+            "**/.eslintrc.*",
+            "**/.eslintignore",
+            "**/package.json"
+          ]
         },
         {
           "id": "eslint-10-flat",
@@ -181,8 +275,23 @@
           "changedCommand": {
             "executable": "eslint",
             "resolution": "node-modules-bin",
-            "args": ["--config", "eslint.config.awm.mjs", "--cache", "--format", "json", "{files}"],
-            "fileInput": { "placeholder": "{files}", "extensions": [".js", ".jsx", ".ts", ".tsx"] }
+            "args": [
+              "--config",
+              "eslint.config.awm.mjs",
+              "--cache",
+              "--format",
+              "json",
+              "{files}"
+            ],
+            "fileInput": {
+              "placeholder": "{files}",
+              "extensions": [
+                ".js",
+                ".jsx",
+                ".ts",
+                ".tsx"
+              ]
+            }
           },
           "assets": [
             "eslint.config.awm.mjs"
@@ -190,7 +299,22 @@
           "formatter": "eslint-llm",
           "probe": {
             "kind": "eslint-print-config"
-          }
+          },
+          "inputs": [
+            "**/*.ts",
+            "**/*.tsx",
+            "**/*.mts",
+            "**/*.cts",
+            "**/*.js",
+            "**/*.jsx",
+            "**/*.mjs",
+            "**/*.cjs",
+            "**/eslint.config.*",
+            "**/.eslintrc",
+            "**/.eslintrc.*",
+            "**/.eslintignore",
+            "**/package.json"
+          ]
         }
       ]
     },
@@ -225,7 +349,19 @@
           "formatter": "tsc",
           "probe": {
             "kind": "version"
-          }
+          },
+          "inputs": [
+            "**/*.ts",
+            "**/*.tsx",
+            "**/*.mts",
+            "**/*.cts",
+            "**/*.js",
+            "**/*.jsx",
+            "**/*.mjs",
+            "**/*.cjs",
+            "**/*.json",
+            "**/tsconfig*.json"
+          ]
         }
       ]
     },
@@ -255,8 +391,21 @@
           "changedCommand": {
             "executable": "semgrep",
             "resolution": "path",
-            "args": ["--config", ".semgrep.awm.yml", "--json", "{files}"],
-            "fileInput": { "placeholder": "{files}", "extensions": [".js", ".jsx", ".ts", ".tsx"] }
+            "args": [
+              "--config",
+              ".semgrep.awm.yml",
+              "--json",
+              "{files}"
+            ],
+            "fileInput": {
+              "placeholder": "{files}",
+              "extensions": [
+                ".js",
+                ".jsx",
+                ".ts",
+                ".tsx"
+              ]
+            }
           },
           "assets": [
             ".semgrep.awm.yml"
@@ -387,7 +536,9 @@
           "command": {
             "executable": "npm",
             "resolution": "path",
-            "args": ["test"],
+            "args": [
+              "test"
+            ],
             "packageManager": "npm"
           },
           "assets": [],
@@ -410,7 +561,9 @@
           "command": {
             "executable": "npm",
             "resolution": "path",
-            "args": ["test"],
+            "args": [
+              "test"
+            ],
             "packageManager": "npm"
           },
           "assets": [],
@@ -531,7 +684,8 @@
             "kind": "version"
           }
         }
-      ]
+      ],
+      "closureOnly": true
     }
   },
   "hardening": {
