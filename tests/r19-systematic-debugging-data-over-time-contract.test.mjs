@@ -113,15 +113,7 @@ test('R2: Before Concluding checklist precedes No Root Cause and has four boxes'
   assert.ok(/snapshot/i.test(body) && /live read/i.test(body), 'checkbox must cover snapshot vs live');
   assert.ok(/recomputed the outcome|recomputed outcome/i.test(body), 'checkbox must cover recompute');
   assert.ok(/stable identifiers/i.test(body), 'checkbox must cover stable identifiers');
-  // Mutation: put checklist after No Root Cause — order assert must fail.
-  const afterNoRoot = text.slice(0, checklistAt)
-    + text.slice(checklistAt + CHECKLIST.length, noRootAt)
-    + NO_ROOT + '\n'
-    + text.slice(noRootAt + NO_ROOT.length, text.indexOf('\n## ', noRootAt + NO_ROOT.length) === -1
-      ? text.length
-      : noRootAt)
-    ;
-  // Simpler order mutation: swap headings in a copy by string replace of unique markers.
+  // Mutation: swap checklist and No Root Cause headings — order assert must fail.
   const swapped = text
     .replace(CHECKLIST, '## __CHECKLIST_TMP__')
     .replace(NO_ROOT, CHECKLIST)
@@ -134,7 +126,6 @@ test('R2: Before Concluding checklist precedes No Root Cause and has four boxes'
     },
     /checklist must appear before No Root Cause/,
   );
-  void afterNoRoot;
 });
 
 test('R3: differing recomputed outcome is a code defect candidate', () => {
