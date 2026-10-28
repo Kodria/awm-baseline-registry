@@ -132,3 +132,51 @@ test('RF-7.4: schema allows inputs/closureOnly; mirror validator enforces RF-1.5
   badBrace.sensors.lint.variants[0].inputs = ['**/*.{ts,tsx}'];
   assert.throws(() => validatePackV2(badBrace, fixtureRoot), /brace/);
 });
+
+function skillSection(text, heading) {
+  const lines = text.split('\n');
+  const start = lines.indexOf(heading);
+  assert.ok(start >= 0, `missing section ${heading}`);
+  const level = heading.match(/^#+/)[0].length;
+  const body = [];
+  for (const line of lines.slice(start + 1)) {
+    if (/^#+ /.test(line) && line.match(/^#+/)[0].length <= level) break;
+    body.push(line);
+  }
+  return body.join('\n');
+}
+
+test('RF-5.1 / RF-5.9: slice DONE skills require --slice; forbid partial closure evidence', () => {
+  const sdd = read('skills/subagent-driven-development/SKILL.md');
+  const exec = read('skills/executing-plans/SKILL.md');
+  const verify = read('skills/verification-before-completion/SKILL.md');
+  assert.match(sdd, /awm sensors run --slice/, 'subagent-driven-development must require --slice for DONE');
+  assert.match(exec, /awm sensors run --slice/, 'executing-plans must require --slice for DONE');
+  assert.match(verify, /awm sensors run --slice/, 'verification-before-completion must teach --slice for implementation DONE');
+  assert.match(sdd, /RF-5\.6|closure evidence|QA\/docs\/finish/, 'SDD must forbid treating --slice as closure evidence');
+  assert.doesNotMatch(sdd, /no flag — all sensors\) before reporting DONE/, 'SDD must not keep the old no-flag DONE gate');
+  const implementer = read('skills/subagent-driven-development/implementer-prompt.md');
+  assert.match(implementer, /awm sensors run --slice/, 'implementer prompt must use --slice');
+});
+
+test('RF-5.3–5.6: QA/docs/finish keep full gate; forbid --slice as closure', () => {
+  const qa = read('skills/post-implementation-qa/SKILL.md');
+  const docs = read('skills/post-implementation-docs/SKILL.md');
+  const finish = read('skills/finishing-a-development-branch/SKILL.md');
+  assert.match(qa, /full gate|Full gate|no-flag|sin `--slice`/i, 'QA must name the full gate');
+  assert.match(qa, /--slice/, 'QA must mention --slice when forbidding it as closure');
+  assert.match(docs, /sin\*\* `--slice`|sin\*\* `--slice`|sin `--slice`|RF-5\.4/, 'docs Step 5 must keep full gate');
+  assert.match(finish, /full gate|RF-5\.5/, 'finishing Step 4.1 must keep full gate');
+});
+
+test('RF-3.2 / RF-3.6: setup-sensors teaches inputs and closureOnly', () => {
+  const setup = read('skills/setup-sensors/SKILL.md');
+  const section = skillSection(setup, '## Authoring `inputs` and `closureOnly` (RF-3.2 / RF-3.6)');
+  assert.match(section, /`inputs`/, 'setup-sensors must teach inputs');
+  assert.match(section, /closureOnly/, 'setup-sensors must teach closureOnly');
+  assert.match(section, /mutation/, 'setup-sensors must mention mutation overrides');
+  assert.match(section, /\*\*\/\*|invent/, 'setup-sensors must forbid inventing **/*');
+  assert.match(section, /RF-3\.5|never skip|No agent-side skip/i, 'setup-sensors must forbid agent-side skips');
+  assert.match(setup, /version: "1\.3\.0"/, 'setup-sensors version must bump with content');
+});
+

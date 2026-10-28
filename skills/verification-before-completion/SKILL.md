@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-version: "1.4.0"
+version: "1.5.0"
 license: Apache-2.0
 description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
 ---
@@ -170,10 +170,10 @@ If the repo has `.awm/sensors.json`, "done" requires sensor evidence in addition
 **Before claiming done:**
 
 ```bash
-awm sensors run
+awm sensors run --slice
 ```
 
-Run with **no flag** — that runs *all* sensors (fast: `tsc`, `lint`; slow: `semgrep`, `mutation`). Do **not** use `--slow`: it runs only the slow sensors and skips `lint` and `typecheck`, which is where most new findings surface. (`--fast` / `--slow` exist only for splitting a run when iterating; the completion gate is the full run.)
+**Phase gate (RF-5):** for task/slice DONE during implementation, use `--slice` (skips `closureOnly` sensors such as `mutation`; keeps lint/typecheck/test). Requires `agentic-workflow-manager` ≥ 9.22.0. Do **not** use `--fast` (skips `test`) or `--slow` (skips lint/typecheck) as the DONE gate. For QA closure, docs Step 5, finishing / Change Record, and any claim of full-gate evidence, run **no-flag** `awm sensors run` instead (RF-5.3–5.6) — never present `--slice` as closure evidence.
 
 **Lee el veredicto, no el exit code.** `awm sensors run` emite JSON con un campo `overall`:
 - `overall: "pass"` → sensores corrieron, sin hallazgos nuevos. Verde.

@@ -30,9 +30,10 @@ when authoritative evidence is insufficient.
 2. Write tests, following test-driven-development when declared.
 3. Run relevant tests/build commands and read the output.
 4. **Run sensors if this repo has them.** When `.awm/sensors.json` exists, run
-   `awm sensors run` with no flag (never `--slow`), fix every new finding, and rerun until
-   `overall: pass`. Read `overall`, not only the exit code. `not_certified` means no sensors
-   are configured and is never a pass.
+   `awm sensors run --slice` for task/slice DONE (never `--fast`/`--slow` as the DONE gate;
+   CLI ≥ 9.22.0). Fix every new finding and rerun until `overall: pass`. Read `overall`, not
+   only the exit code. `not_certified` means no sensors are configured and is never a pass.
+   Do not present `--slice` as QA/docs/finish closure evidence.
 5. Commit, self-review, and report back.
 
 ## Code Organization

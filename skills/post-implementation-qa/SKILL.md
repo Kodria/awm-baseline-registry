@@ -1,6 +1,6 @@
 ---
 name: post-implementation-qa
-version: "2.3.0"
+version: "2.4.0"
 license: Apache-2.0
 description: Use after implementation is complete and before finishing the branch — runs two-track QA (Track A fidelity vs. the plan, Track B plan-agnostic quality lenses), drives a fix loop until clean. Also works standalone when a bug is found independently.
 ---
@@ -131,6 +131,9 @@ A quality defect (division by zero → `Infinity`, crash on invalid input) is a 
 **Dedup:** reconcile reports before correction. Merge only confirmed identical defects with a shared cause, affected surfaces and test boundary; `file:line` alone is never enough.
 
 > **The deterministic gate outranks every lens.** No lens may declare "clean" over a red `awm sensors run`. The panel *adds to* the sensor gate; it never overrides it. On any conflict between a lens's judgment and a sensor/test, the sensor wins — fresh context attenuates self-preference bias but does not neutralize it.
+
+**Full gate (RF-5.3 / RF-5.6):** QA entry, after-fix, and completion require no-flag `awm sensors run` with `overall: pass`. Do **not** accept `--slice`, `--fast`, `--slow` alone, or `--changed` as QA closure evidence. Cache hits under the CLI are allowed; inventing a skip is not.
+
 
 ## Registry-content closure exception (R8)
 

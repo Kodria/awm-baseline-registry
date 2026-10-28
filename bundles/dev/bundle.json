@@ -1,18 +1,39 @@
 {
   "name": "dev",
-  "version": "4.12.0",
+  "version": "4.13.0",
   "description": "Agentic software development core: SDD spine, quality gates, sensors, and advisory.",
   "scope": "baseline",
   "dependsOn": [],
   "skills": [
-    "using-awm", "development-process", "brainstorming", "writing-plans", "executing-plans",
-    "subagent-driven-development", "test-driven-development", "requesting-code-review",
-    "receiving-code-review", "post-implementation-qa", "post-implementation-docs", "finishing-a-development-branch",
-    "verification-before-completion", "systematic-debugging",
-    "dispatching-parallel-agents", "using-git-worktrees", "project-context-init",
-    "project-constitution", "setup-sensors", "harness-retro", "architecture-advisor",
-    "nfr-checklist-generator", "technology-evaluator", "mermaid-diagrams"
+    "using-awm",
+    "development-process",
+    "brainstorming",
+    "writing-plans",
+    "executing-plans",
+    "subagent-driven-development",
+    "test-driven-development",
+    "requesting-code-review",
+    "receiving-code-review",
+    "post-implementation-qa",
+    "post-implementation-docs",
+    "finishing-a-development-branch",
+    "verification-before-completion",
+    "systematic-debugging",
+    "dispatching-parallel-agents",
+    "using-git-worktrees",
+    "project-context-init",
+    "project-constitution",
+    "setup-sensors",
+    "harness-retro",
+    "architecture-advisor",
+    "nfr-checklist-generator",
+    "technology-evaluator",
+    "mermaid-diagrams"
   ],
-  "workflows": ["development-process"],
-  "agents": ["development-process"]
+  "workflows": [
+    "development-process"
+  ],
+  "agents": [
+    "development-process"
+  ]
 }
