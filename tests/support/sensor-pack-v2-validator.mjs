@@ -39,6 +39,18 @@ function assetPath(value, message) {
   return value;
 }
 
+/** RF-1.5 input globs — mirrors CLI parseSensorInputs (no braces / ! / () / absolute / \\). */
+function inputGlob(value, message) {
+  assert.ok(typeof value === 'string' && value.trim().length > 0 && !/[\0-\x1f\x7f]/.test(value), `${message}: must be a nonempty single-line string without NUL or control characters`);
+  assert.ok(!value.startsWith('/') && !/^[A-Za-z]:[\\/]/.test(value) && !value.startsWith('\\\\'), `${message}: must be a relative glob`);
+  assert.ok(!value.includes('\\'), `${message}: must use POSIX separators`);
+  assert.ok(!value.includes('{') && !value.includes('}'), `${message}: must not use brace expansion`);
+  assert.ok(!value.includes('!'), `${message}: must not use negation (!)`);
+  assert.ok(!value.includes('(') && !value.includes(')'), `${message}: must not use parentheses or picomatch extglobs`);
+  assert.ok(!value.split('/').some((part) => part === '' || part === '.' || part === '..'), `${message}: must be a contained relative glob`);
+  return value;
+}
+
 function parseRange(value, message) {
   text(value, message);
   const bounds = { lower: null, upper: null };
@@ -147,7 +159,7 @@ export function validatePackV2(pack, packRoot) {
   for (const [sensorId, sensor] of Object.entries(sensors)) {
     stableId(sensorId, 'sensor id must be stable');
     object(sensor, `${sensorId}: sensor must be object`);
-    exactFields(sensor, ['applicability', 'variants', 'fast', 'timeout'], `${sensorId}: sensor has unknown fields`);
+    exactFields(sensor, ['applicability', 'variants', 'fast', 'timeout', 'closureOnly'], `${sensorId}: sensor has unknown fields`);
     const applicability = object(sensor.applicability, `${sensorId}: applicability required`);
     exactFields(applicability, ['allFiles', 'anyFiles', 'kind'], `${sensorId}: applicability has unknown fields`);
     assert.ok(Object.keys(applicability).length > 0, `${sensorId}: applicability requires a condition`);
@@ -155,15 +167,20 @@ export function validatePackV2(pack, packRoot) {
     if ('kind' in applicability) text(applicability.kind, `${sensorId}: applicability kind invalid`);
     if ('fast' in sensor) assert.equal(typeof sensor.fast, 'boolean', `${sensorId}: fast must be boolean`);
     if ('timeout' in sensor) assert.ok(Number.isSafeInteger(sensor.timeout) && sensor.timeout > 0, `${sensorId}: timeout must be a positive safe integer`);
+    if ('closureOnly' in sensor) assert.equal(typeof sensor.closureOnly, 'boolean', `${sensorId}: closureOnly must be boolean`);
     assert.ok(Array.isArray(sensor.variants) && sensor.variants.length > 0, `${sensorId}: variants must be nonempty`);
     const seen = [];
     for (const variant of sensor.variants) {
       object(variant, `${sensorId}: variant must be object`);
-      exactFields(variant, ['id', 'priority', 'requirements', 'certifiedRange', 'command', 'changedCommand', 'assets', 'formatter', 'probe', 'policyRef'], `${sensorId}: variant has unknown fields`);
+      exactFields(variant, ['id', 'priority', 'requirements', 'certifiedRange', 'command', 'changedCommand', 'assets', 'formatter', 'probe', 'policyRef', 'inputs'], `${sensorId}: variant has unknown fields`);
       const variantId = stableId(variant.id, `${sensorId}: variant id must be stable`);
       assert.ok(!allVariantIds.has(variantId), `${sensorId}: variant id '${variantId}' must be globally unique`);
       allVariantIds.add(variantId);
       assert.ok(Number.isSafeInteger(variant.priority), `${sensorId}: variant priority must be an integer`);
+      if (Object.hasOwn(variant, 'inputs')) {
+        assert.ok(Array.isArray(variant.inputs) && variant.inputs.length > 0, `${sensorId}: inputs must be a nonempty array`);
+        variant.inputs.forEach((glob, index) => inputGlob(glob, `${sensorId}: inputs[${index}]`));
+      }
       const policy = Object.hasOwn(variant, 'policyRef') ? readSemgrepPolicy(packRoot, variant.policyRef, `${sensorId}: variant`) : undefined;
       if (policy) assert.ok(!Object.hasOwn(variant, 'requirements') && !Object.hasOwn(variant, 'probe'), `${sensorId}: policyRef is authoritative over requirements and probe`);
       else assert.ok(Object.hasOwn(variant, 'requirements') && Object.hasOwn(variant, 'probe'), `${sensorId}: requirements and probe required without policyRef`);

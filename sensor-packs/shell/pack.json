@@ -169,7 +169,13 @@
           "formatter": "shellcheck",
           "probe": {
             "kind": "version"
-          }
+          },
+          "inputs": [
+            "**/*.sh",
+            "**/*.bash",
+            "**/*.bats",
+            "**/package.json"
+          ]
         }
       ]
     },

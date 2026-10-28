@@ -232,7 +232,14 @@
           "formatter": "mypy",
           "probe": {
             "kind": "version"
-          }
+          },
+          "inputs": [
+            "**/*.py",
+            "**/*.pyi",
+            "**/pyproject.toml",
+            "**/mypy.ini",
+            "**/setup.cfg"
+          ]
         }
       ]
     },
@@ -275,7 +282,14 @@
           "formatter": "ruff",
           "probe": {
             "kind": "version"
-          }
+          },
+          "inputs": [
+            "**/*.py",
+            "**/*.pyi",
+            "**/pyproject.toml",
+            "**/ruff.toml",
+            "**/.ruff.toml"
+          ]
         }
       ]
     },
@@ -373,7 +387,8 @@
             "kind": "version"
           }
         }
-      ]
+      ],
+      "closureOnly": true
     }
   },
   "schemaVersion": 2
