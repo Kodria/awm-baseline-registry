@@ -48,6 +48,22 @@ for (const sensorName of ['lint', 'security']) {
     assert.deepEqual(variant.changedCommand.fileInput.extensions, ['.js', '.jsx', '.ts', '.tsx']);
   }
 }
+
+// Kodria/agentic-workflow#240 R4: ESLint --cache without --cache-location writes .eslintcache
+// at the project root; admission read-only snapshots exclude only directories, so that file
+// fails the worktree-mutation gate. Keep the cache under already-excluded node_modules.
+const ESLINT_CACHE_LOCATION = 'node_modules/.cache/eslint/';
+function assertEslintCacheLocation(label, args) {
+  const hasCache = args.some((arg) => arg === '--cache' || (typeof arg === 'string' && arg.startsWith('--cache=')));
+  if (!hasCache) return;
+  const locationIndex = args.indexOf('--cache-location');
+  assert.ok(locationIndex >= 0, `${label}: --cache requires --cache-location (issue #240 R4)`);
+  assert.equal(args[locationIndex + 1], ESLINT_CACHE_LOCATION, `${label}: --cache-location must be ${ESLINT_CACHE_LOCATION}`);
+}
+for (const variant of pack.sensors.lint.variants) {
+  assertEslintCacheLocation(`lint.${variant.id}.command`, variant.command.args);
+  assertEslintCacheLocation(`lint.${variant.id}.changedCommand`, variant.changedCommand.args);
+}
 for (const sensorName of ['typecheck', 'depcheck', 'format', 'test', 'mutation']) {
   assert.ok(pack.sensors[sensorName].variants.every((variant) => !variant.changedCommand), `${sensorName} must remain whole-project in changed scope`);
 }
