@@ -17,7 +17,8 @@ assert.equal(commandForPlatform('npm', 'win32'), 'npm.cmd', 'Windows must invoke
 assert.equal(commandForPlatform('eslint', 'win32'), 'eslint.cmd', 'Windows must invoke local ESLint through its command shim');
 assert.deepEqual(spawnOptionsForPlatform('linux'), { shell: false }, 'POSIX must spawn executables directly');
 assert.deepEqual(spawnOptionsForPlatform('win32'), { shell: true }, 'Windows command shims must run through cmd.exe');
-assert.equal(timeoutForPlatform('linux'), 120_000, 'POSIX certification keeps the bounded install timeout');
+assert.equal(timeoutForPlatform('linux'), 120_000, 'Linux certification keeps the bounded install timeout');
+assert.equal(timeoutForPlatform('darwin'), 240_000, 'macOS certification allows slower npm ci on hosted runners');
 assert.equal(timeoutForPlatform('win32'), 300_000, 'Windows certification allows npm ci startup overhead');
 
 function commandForPlatform(command, platform = process.platform) {
@@ -29,7 +30,9 @@ function spawnOptionsForPlatform(platform = process.platform) {
 }
 
 function timeoutForPlatform(platform = process.platform) {
-  return platform === 'win32' ? 300_000 : 120_000;
+  if (platform === 'win32') return 300_000;
+  if (platform === 'darwin') return 240_000;
+  return 120_000;
 }
 
 const normalizeReportPath = (filePath) => filePath.replaceAll('\\', '/');
@@ -74,7 +77,7 @@ function fixture(pinName, config, broken = false, cjsSource = cjs) {
   if (config === 'eslintrc' && broken) fs.writeFileSync(path.join(dir, '.eslintrc.js'), 'module.exports = {');
   if (broken) fs.writeFileSync(path.join(dir, 'eslint.config.js'), 'throw new Error("broken native config");');
   const install = run(commandForPlatform('npm'), ['ci', '--ignore-scripts'], dir);
-  assert.equal(install.status, 0, `npm ci ${pinName}: ${install.stderr}`);
+  assert.equal(install.status, 0, `npm ci ${pinName} (signal=${install.signal}): ${install.stderr || install.error || ''}`);
   return dir;
 }
 

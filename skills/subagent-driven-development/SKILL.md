@@ -49,7 +49,8 @@ inspect or discover the plan, branch history, or unrelated files. Invalid or uns
 input stops execution; unmarked input returns migration-required and dispatches zero agents.
 
 The compact state machine is `pending → implementing → spec-review → quality-review → complete`.
-The same implementer fixes findings. Use three distinct identities: implementer, fresh specification reviewer, and different fresh code-quality reviewer. No slice advances while **blocking** findings remain open; non-blocking findings may be deferred per `review-cycle-v1` (round ceiling / re-review rules) and every declared gate must be green. Before `complete`, reconcile the report with
+The same implementer fixes findings. Use three distinct identities: implementer, fresh specification reviewer, and different fresh code-quality reviewer. No slice advances until both reviewers
+are clean of **blocking** findings (non-blocking may be deferred per `review-cycle-v1` round-ceiling / re-review rules) and every declared gate is green. Before `complete`, reconcile the report with
 file-derived truth, the slice clauses, tests, sensors, ledger, skills/design declarations, and
 the current diff. Validate every report against that durable evidence; files win over reports.
 
