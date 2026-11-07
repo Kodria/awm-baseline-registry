@@ -172,7 +172,7 @@ export function validatePackV2(pack, packRoot) {
     const seen = [];
     for (const variant of sensor.variants) {
       object(variant, `${sensorId}: variant must be object`);
-      exactFields(variant, ['id', 'priority', 'requirements', 'certifiedRange', 'command', 'changedCommand', 'assets', 'formatter', 'probe', 'policyRef', 'inputs'], `${sensorId}: variant has unknown fields`);
+      exactFields(variant, ['id', 'priority', 'requirements', 'certifiedRange', 'command', 'changedCommand', 'sliceCommand', 'assets', 'formatter', 'probe', 'policyRef', 'inputs'], `${sensorId}: variant has unknown fields`);
       const variantId = stableId(variant.id, `${sensorId}: variant id must be stable`);
       assert.ok(!allVariantIds.has(variantId), `${sensorId}: variant id '${variantId}' must be globally unique`);
       allVariantIds.add(variantId);
@@ -202,6 +202,10 @@ export function validatePackV2(pack, packRoot) {
       if (Object.hasOwn(variant, 'changedCommand')) {
         validateCommand(variant.changedCommand, `${sensorId}: changedCommand`, assets);
         assert.ok(variant.changedCommand.fileInput, `${sensorId}: changedCommand requires fileInput`);
+      }
+      if (Object.hasOwn(variant, 'sliceCommand')) {
+        validateCommand(variant.sliceCommand, `${sensorId}: sliceCommand`, assets);
+        assert.ok(variant.sliceCommand.fileInput, `${sensorId}: sliceCommand requires fileInput`);
       }
       text(variant.formatter, `${sensorId}: formatter required`);
       const probe = policy ? { kind: policy.probe } : object(variant.probe, `${sensorId}: probe required`);

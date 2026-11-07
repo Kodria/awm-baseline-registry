@@ -85,6 +85,12 @@ checks such as typechecking, tests, dependency analysis, formatting, and
 mutation testing. A declared changed command is literal argv, never a shell
 fragment or a file-discovery command.
 
+`sliceCommand` is the same structured shape (also requires `fileInput`) and is
+optional on `closureOnly` sensors so `awm sensors run --slice --base <sha>` can
+run a scoped expensive check instead of skipping. Prefer project overrides for
+mutation/slow tools unless a pack default is extension-bound and safe (RF-1.9 /
+RF-2.4). Do not invent directory-anchored pack defaults.
+
 Each sensor declares a finite positive-safe-integer `timeout` in milliseconds.
 The CLI resolves a project override first, then this pack timeout, then its
 finite fallback. Choose the pack value from measured tool cost: short for

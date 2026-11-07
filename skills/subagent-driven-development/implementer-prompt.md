@@ -30,9 +30,13 @@ when authoritative evidence is insufficient.
 2. Write tests, following test-driven-development when declared.
 3. Run relevant tests/build commands and read the output.
 4. **Run sensors if this repo has them.** When `.awm/sensors.json` exists, run
-   `awm sensors run --slice` for task/slice DONE (never `--fast`/`--slow` as the DONE gate;
-   CLI ≥ 9.22.0). Fix every new finding and rerun until `overall: pass`. Read `overall`, not
-   only the exit code. `not_certified` means no sensors are configured and is never a pass.
+   `awm sensors run --slice` for task/slice DONE. WHEN any selected sensor has `sliceCommand`,
+   also pass `--base <slice-start-sha>` using the **controller-injected** SHA from this
+   dispatch (CLI ≥ 9.23.0) — never invent `HEAD~1`, `origin/main`, or a re-captured `HEAD`
+   after fixes. If `<slice-start-sha>` is still a placeholder, report `NEEDS_CONTEXT` /
+   `BLOCKED` instead of guessing. Never use `--fast`/`--slow` as the DONE gate. Fix every
+   new finding and rerun until `overall: pass`. Read `overall`, not only the exit code.
+   `not_certified` means no sensors are configured and is never a pass.
    Do not present `--slice` as QA/docs/finish closure evidence.
 5. Commit, self-review, and report back.
 

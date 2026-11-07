@@ -13,11 +13,41 @@ must block; it does not authorize an exploratory review.
 
 ## Mechanical evidence
 
-Consume authoritative mechanical evidence without repeating a command only when
-the identical candidate, command argv, cwd and satisfies obligation are proven.
-Different roles may read that one result. Equivalence that is absent, stale or
-not demonstrably identical requires a real execution. Focused tests are not
-equivalent to a complete gate merely because they pass.
+For **arbitrary commands**, consume a MechanicalRunEvidence receipt without
+re-execution only when `awm evidence verify <receipt> -- <expected-argv…>`
+reports `match` (expected argv after `--` is mandatory; omit → mismatch
+fail-closed). Do **not** conflate MechanicalRunEvidence with `CycleEvidenceV1`
+capsules from `awm evidence capture`.
+
+For **sensors**, consume current `awm sensors run` provenance (`cached: true` /
+fingerprint / digests / status) as the evidence substrate — sensors do not write
+MechanicalRunEvidence. Equivalence that is absent, stale or not demonstrably
+identical requires a real execution. Focused tests are not equivalent to a
+complete gate merely because they pass.
+
+## Review cut and deferred findings
+
+- **RF-4.1 — First round:** WHEN a role's first review verdict for the frozen
+  candidate contains accepted findings, require correction of all of them before
+  that role can be clean for the slice.
+- **RF-4.2 — Re-review:** WHEN a role is in a re-review (second or later round
+  on the same slice obligation), open another fix/re-review loop only for
+  **blocking** findings (RF-4.6). Record all other findings as **deferred**
+  ledger entries (`awm ledger add --deferred` with a reason), not discarded.
+- **RF-4.3 — Round ceiling:** AFTER three total rounds for a role on the same
+  slice (first review + up to two further cycles), defer remaining
+  **non-blocking** findings with durable reason `round-ceiling`, allow the
+  slice to advance, and do not BLOCK an unattended plan waiting for a live
+  owner decision.
+- **RF-4.4 — Blocking never defer:** IF any blocking finding remains open for
+  the slice, do **not** advance that slice until it is fixed and revalidated,
+  regardless of round ceiling.
+- **RF-4.6 — Blocking mapping:** use existing ledger fields only — an entry is
+  blocking when `class=seguridad` **or** `severity=blocker` (covers security,
+  externally false result, and red mechanical gate via those fields). Do not
+  invent a parallel taxonomy. Ambiguous or missing `class`/`severity` on a
+  finding that would otherwise defer SHALL be treated as blocking until
+  clarified (fail closed — never silent drop).
 
 ## Finding reconciliation
 
@@ -71,5 +101,9 @@ implementer/reviewer dispatch without a new diagnostic or changed obligation.
 
 At complete or blocked, report dispatches, reviews, fix rounds, mechanical runs,
 administrative repairs, context fallbacks and reopening causes separately.
-Unavailable counts remain unavailable. Persist only bounded IDs, verdicts and
+Durations come only from durable timestamps (ledger `ts`, MechanicalRunEvidence
+`durationMs`) — never from an LLM clock (RF-5.1). IF any single gate's duration
+is ≥ 30% of that slice's total measured time OR ≥ 20 minutes, include an
+explicit warning naming the gate and durations (RF-5.2). Unavailable counts or
+durations remain unavailable. Persist only bounded IDs, verdicts and
 provenance; never persist prompt, source or unrestricted response bodies.

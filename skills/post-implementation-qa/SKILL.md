@@ -1,6 +1,6 @@
 ---
 name: post-implementation-qa
-version: "2.4.0"
+version: "2.5.1"
 license: Apache-2.0
 description: Use after implementation is complete and before finishing the branch — runs two-track QA (Track A fidelity vs. the plan, Track B plan-agnostic quality lenses), drives a fix loop until clean. Also works standalone when a bug is found independently.
 ---
@@ -132,7 +132,7 @@ A quality defect (division by zero → `Infinity`, crash on invalid input) is a 
 
 > **The deterministic gate outranks every lens.** No lens may declare "clean" over a red `awm sensors run`. The panel *adds to* the sensor gate; it never overrides it. On any conflict between a lens's judgment and a sensor/test, the sensor wins — fresh context attenuates self-preference bias but does not neutralize it.
 
-**Full gate (RF-5.3 / RF-5.6):** QA entry, after-fix, and completion require no-flag `awm sensors run` with `overall: pass`. Do **not** accept `--slice`, `--fast`, `--slow` alone, or `--changed` as QA closure evidence. Cache hits under the CLI are allowed; inventing a skip is not.
+**Full gate (RF-5.3 / RF-5.6 / RF-6.1):** QA entry, after-fix, and completion require no-flag `awm sensors run` with `overall: pass`. Do **not** accept `--slice`, `--fast`, `--slow` alone, or `--changed` as QA closure evidence. Valid full-scope `cached: true` sensor passes are acceptable evidence; inventing a skip is not. Never disable the result cache for closure.
 
 
 ## Registry-content closure exception (R8)
@@ -275,6 +275,7 @@ Proceed only when ALL:
 - [ ] Findings list empty (all resolved or discarded with reason)
 - [ ] `awm sensors run` clean, or registry-content closure is eligible exclusively under the linked R8 policy
 - [ ] Focused RED/GREEN tests and each applicable current gate passed once for every corrected candidate
+- [ ] **Deferred ledger empty (RF-4.5 / RF-E.3):** `awm ledger list --deferred-open` reports no open deferred entries. Resolve each with `awm ledger resolve --id <id> --how fixed` (defect fixed) or `awm ledger resolve --id <id> --how accepted` (explicit accept). `--how` is required on CLI ≥ 9.23.0; there is no `--note` — record the accept rationale in the QA report (Step 7 / findings disposition), not in the ledger. IF any deferred-open entry remains, fail closed — do **not** write `awm-qa-complete`.
 
 ### Step 7: Mark QA complete
 
@@ -292,6 +293,7 @@ NO "QA COMPLETE" CLAIM WITHOUT:
 1. Clean `awm sensors run`, or the linked R8 policy's registry-content closure eligibility (no lens overrides a red sensor)
 2. Focused RED/GREEN tests and each applicable current gate once for every corrected candidate
 3. Empty list or justified discards
+4. Empty `awm ledger list --deferred-open` (fail closed otherwise — never write awm-qa-complete with deferred-open remaining)
 ```
 
 ## Red Flags
@@ -305,6 +307,7 @@ NO "QA COMPLETE" CLAIM WITHOUT:
 - A lens declaring clean while `awm sensors run` is red → the sensor wins
 - Skipping confirmation before the fix loop (modo interactivo — en desatendido la confirmación se omite por diseño)
 - Forgetting the `<!-- awm-qa-complete -->` marker
+- Writing `awm-qa-complete` while `awm ledger list --deferred-open` still lists entries → fail closed (RF-E.3)
 - Dispatching a review with an inline prompt instead of the template → the `awm ledger add` instruction and the anti-bias header are lost
 - Presenting a finding without verifying its received ledger entry, or explicitly recording that its fields are incomplete (Step 4 gate)
 - "UI diff with `.stitch/designs/` present, no fidelity report" → QA is incomplete — dispatch the design-fidelity lens before closing

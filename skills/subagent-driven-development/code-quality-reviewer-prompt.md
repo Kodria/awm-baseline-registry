@@ -10,9 +10,10 @@ declared file structure, newly introduced file growth, and **Systemic patterns**
 more changed files. A systemic pattern names one example and recommends `harness-retro`.
 
 When `.awm/sensors.json` exists and you are reviewing a task/slice implementer, run
-`awm sensors run --slice` and require `overall: pass` (CLI ≥ 9.22.0); new findings block
-approval. For QA/docs/finish closure surfaces, require a no-flag full `awm sensors run`
-instead. Deterministic sensors/tests outrank judgment.
+`awm sensors run --slice` (add `--base <slice-start-sha>` with the **controller-injected**
+SHA when sensors declare `sliceCommand`; CLI ≥ 9.23.0 — never invent a base) and require
+`overall: pass`; new findings block approval. For QA/docs/finish closure surfaces, require a
+no-flag full `awm sensors run` instead. Deterministic sensors/tests outrank judgment.
 
 **Code reviewer returns (Report Contract):**
 

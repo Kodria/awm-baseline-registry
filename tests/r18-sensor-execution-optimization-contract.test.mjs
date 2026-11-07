@@ -177,6 +177,6 @@ test('RF-3.2 / RF-3.6: setup-sensors teaches inputs and closureOnly', () => {
   assert.match(section, /mutation/, 'setup-sensors must mention mutation overrides');
   assert.match(section, /\*\*\/\*|invent/, 'setup-sensors must forbid inventing **/*');
   assert.match(section, /RF-3\.5|never skip|No agent-side skip/i, 'setup-sensors must forbid agent-side skips');
-  assert.match(setup, /version: "1\.3\.0"/, 'setup-sensors version must bump with content');
+  assert.match(setup, /version: "1\.4\.0"/, 'setup-sensors version must bump with content');
 });
 

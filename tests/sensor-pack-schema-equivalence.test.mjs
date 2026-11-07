@@ -111,6 +111,15 @@ const emptyChangedExtensions = structuredClone(boundedChanged);
 emptyChangedExtensions.sensors.lint.variants[0].changedCommand.fileInput.extensions = [];
 const missingChangedFileInput = structuredClone(boundedChanged);
 delete missingChangedFileInput.sensors.lint.variants[0].changedCommand.fileInput;
+
+const boundedSlice = clone();
+boundedSlice.sensors.lint.variants[0].sliceCommand = {
+  executable: 'eslint', resolution: 'node-modules-bin', args: ['--format', 'json', '{files}'],
+  fileInput: { placeholder: '{files}', extensions: ['.ts'] },
+};
+const missingSliceFileInput = structuredClone(boundedSlice);
+delete missingSliceFileInput.sensors.lint.variants[0].sliceCommand.fileInput;
+
 const packageScript = clone();
 packageScript.sensors.lint.variants[0].probe = { kind: 'package-script-present', script: 'test' };
 const missingPackageScript = clone();
@@ -143,11 +152,13 @@ for (const [name, pack, expected] of [
   ['absolute asset', absoluteAsset, false], ['backslash asset', windowsAsset, false],
   ['case-insensitive shell', shell, false], ['embedded files placeholder', embeddedFiles, false],
   ['bounded timeout and changed command', boundedChanged, true],
+  ['bounded slice command', boundedSlice, true],
   ['zero timeout', zeroTimeout, false], ['fractional timeout', fractionalTimeout, false], ['unsafe timeout', unsafeTimeout, false],
   ['changed command shell', shellChanged, false], ['duplicate changed files placeholder', duplicateChangedFiles, false],
   ['missing changed files placeholder', noChangedFiles, false], ['embedded changed files placeholder', embeddedChangedFiles, false],
   ['empty changed extensions', emptyChangedExtensions, false],
   ['missing changed file input', missingChangedFileInput, false],
+  ['missing slice file input', missingSliceFileInput, false],
   ['package script probe', packageScript, true], ['package script probe without script', missingPackageScript, false],
 ]) {
   assert.equal(valid(pack, schema), expected, `formal schema verdict for ${name}`);
