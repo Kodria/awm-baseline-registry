@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-version: "1.6.0"
+version: "1.6.1"
 license: Apache-2.0
 description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
 ---
@@ -173,7 +173,7 @@ If the repo has `.awm/sensors.json`, "done" requires sensor evidence in addition
 awm sensors run --slice
 ```
 
-**Phase gate (RF-5):** for task/slice DONE during implementation, use `--slice` (skips bare `closureOnly` sensors such as `mutation` when they lack `sliceCommand`; keeps lint/typecheck/test). WHEN any selected sensor has `sliceCommand`, also pass `--base <slice-start-sha>` (requires `agentic-workflow-manager` ≥ 9.23.0). Do **not** use `--fast` (skips `test`) or `--slow` (skips lint/typecheck) as the DONE gate. For QA closure, docs Step 5, finishing / Change Record, and any claim of full-gate evidence, run **no-flag** `awm sensors run` instead (RF-5.3–5.6 / RF-6.1; `cached: true` allowed) — never present `--slice` or `--no-cache` as closure evidence.
+**Phase gate (RF-5):** for task/slice DONE during implementation, use `--slice` (skips bare `closureOnly` sensors such as `mutation` when they lack `sliceCommand`; keeps lint/typecheck/test). WHEN any selected sensor has `sliceCommand`, also pass `--base <slice-start-sha>` using the controller-captured SHA from the start of the slice (`git rev-parse HEAD` before first dispatch/edit; requires `agentic-workflow-manager` ≥ 9.23.0) — never invent `HEAD~1` or `origin/main`. Do **not** use `--fast` (skips `test`) or `--slow` (skips lint/typecheck) as the DONE gate. For QA closure, docs Step 5, finishing / Change Record, and any claim of full-gate evidence, run **no-flag** `awm sensors run` instead (RF-5.3–5.6 / RF-6.1; `cached: true` allowed) — never present `--slice` or `--no-cache` as closure evidence.
 
 **Lee el veredicto, no el exit code.** `awm sensors run` emite JSON con un campo `overall`:
 - `overall: "pass"` → sensores corrieron, sin hallazgos nuevos. Verde.

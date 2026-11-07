@@ -1,6 +1,6 @@
 ---
 name: post-implementation-qa
-version: "2.5.0"
+version: "2.5.1"
 license: Apache-2.0
 description: Use after implementation is complete and before finishing the branch — runs two-track QA (Track A fidelity vs. the plan, Track B plan-agnostic quality lenses), drives a fix loop until clean. Also works standalone when a bug is found independently.
 ---
@@ -275,7 +275,7 @@ Proceed only when ALL:
 - [ ] Findings list empty (all resolved or discarded with reason)
 - [ ] `awm sensors run` clean, or registry-content closure is eligible exclusively under the linked R8 policy
 - [ ] Focused RED/GREEN tests and each applicable current gate passed once for every corrected candidate
-- [ ] **Deferred ledger empty (RF-4.5 / RF-E.3):** `awm ledger list --deferred-open` reports no open deferred entries. Resolve each with `awm ledger resolve --id <id>` (fix or explicit accept with recorded rationale). IF any deferred-open entry remains, fail closed — do **not** write `awm-qa-complete`.
+- [ ] **Deferred ledger empty (RF-4.5 / RF-E.3):** `awm ledger list --deferred-open` reports no open deferred entries. Resolve each with `awm ledger resolve --id <id> --how fixed` (defect fixed) or `awm ledger resolve --id <id> --how accepted` (explicit accept). `--how` is required on CLI ≥ 9.23.0; there is no `--note` — record the accept rationale in the QA report (Step 7 / findings disposition), not in the ledger. IF any deferred-open entry remains, fail closed — do **not** write `awm-qa-complete`.
 
 ### Step 7: Mark QA complete
 

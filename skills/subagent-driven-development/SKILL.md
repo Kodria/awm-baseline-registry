@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "2.7.0"
+version: "2.7.1"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
@@ -291,8 +291,9 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 
 If the repo has `.awm/sensors.json`, a task is **not complete** until `overall: pass` — `typecheck`/`test`/`build` alone are not sufficient. `fail`, `not_certified`, and `skipped` are all non-pass verdicts. Subagents run in isolated context and only do what their prompt says, so the gate must be enforced at two points:
 
-1. **In the implementer prompt:** the implementer runs `awm sensors run --slice` before reporting task/slice DONE (RF-5.1). `--slice` runs every selected sensor except those with effective `closureOnly: true` (typically `mutation`). Continue only when `overall: pass`. On any non-pass, it invokes `systematic-debugging`, stops, and does not report DONE. The implementer prompt template already includes this step. Requires `agentic-workflow-manager` ≥ 9.22.0.
-2. **At the controller, before marking the task complete:** after the code quality review approves, confirm evidence of `overall: pass` from `awm sensors run --slice` (add `--base <slice-start-sha>` when any selected sensor has `sliceCommand`; CLI ≥ 9.23.0). On `fail`, `not_certified`, or `skipped`, do not mark complete and do not advance toward another task, review, QA, retro, or PR; return the task to diagnosis. Trust-but-verify: the slice gate is cheap and authoritative for task DONE.
+0. **At the controller, before the first implementer dispatch of a slice:** capture `slice-start-sha` with `git rev-parse HEAD` and inject that concrete SHA into every implementer and reviewer prompt for this slice (replace `<slice-start-sha>`). Keep the same SHA across fix and re-review rounds for the slice — never re-capture after fixes, and never substitute `HEAD~1`, `origin/main`, or another branch tip. Requires CLI ≥ 9.23.0 when any selected sensor has `sliceCommand`; without a controller-supplied SHA the implementer must not invent one.
+1. **In the implementer prompt:** the implementer runs `awm sensors run --slice` before reporting task/slice DONE (RF-5.1). `--slice` runs every selected sensor except those with effective `closureOnly: true` (typically `mutation`). WHEN any selected sensor has `sliceCommand`, also pass `--base <slice-start-sha>` using the controller-injected value. Continue only when `overall: pass`. On any non-pass, it invokes `systematic-debugging`, stops, and does not report DONE. The implementer prompt template already includes this step. Requires `agentic-workflow-manager` ≥ 9.22.0 (≥ 9.23.0 for `--base` / `sliceCommand`).
+2. **At the controller, before marking the task complete:** after the code quality review approves, confirm evidence of `overall: pass` from `awm sensors run --slice` (add `--base <slice-start-sha>` with the same captured SHA when any selected sensor has `sliceCommand`; CLI ≥ 9.23.0). On `fail`, `not_certified`, or `skipped`, do not mark complete and do not advance toward another task, review, QA, retro, or PR; return the task to diagnosis. Trust-but-verify: the slice gate is cheap and authoritative for task DONE.
 
 **Pitfall — do not use `--fast`, `--slow`, or a no-flag full run as the slice DONE gate.** `--fast` skips `test`; `--slow` skips `lint`/`typecheck`; a no-flag full run is the QA/docs/finish gate (RF-5.3–5.5), not the per-slice gate. Do not treat `--slice` as Change Record / QA closure evidence (RF-5.6).
 
@@ -492,6 +493,7 @@ Your sequence — execute steps 1-2 in order, then branch by mode at step 3:
 - Dispatch multiple implementation subagents in parallel (conflicts)
 - Make subagent read the full plan by default (provide only the capsule's authoritative evidence)
 - Dispatch an implementer or reviewer with an inline prompt written from memory (build it from the prompt template — inline prompts drop the sensor/ledger instructions)
+- Dispatch a slice without a controller-captured `slice-start-sha`, or let a worker invent `--base` from `HEAD~1` / `origin/main` / current `HEAD` after fixes
 - Mark a task complete when the reviewer reported findings/wins but `awm ledger list` shows no matching entries
 - Skip scene-setting context (subagent needs to understand where task fits)
 - Ignore subagent questions (answer before letting them proceed)

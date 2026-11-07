@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-version: "2.3.0"
+version: "2.3.1"
 license: Apache-2.0
 description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
 ---
@@ -49,10 +49,11 @@ risk receives full relevant context with every role/gate. Local review never rep
 
 For each task:
 1. Mark as in_progress
-2. Follow each step exactly (plan has bite-sized steps)
-3. Run verifications as specified
-4. **Run sensors before marking complete.** If the repo has `.awm/sensors.json`, run `awm sensors run --slice` (RF-5.1; skips bare `closureOnly` sensors such as mutation when they lack `sliceCommand`). WHEN any selected sensor has `sliceCommand`, also pass `--base <slice-start-sha>` (CLI ≥ 9.23.0); bare `--slice` without `--base` remains valid when no `sliceCommand` will execute. Continue only when `overall: pass`; `fail`, `not_certified`, and `skipped` are all non-pass verdicts. On any non-pass, invoke `systematic-debugging`, stop task progression, and do not mark the checkbox or commit as complete or advance toward review, QA, retro, or PR. Do not use `--fast`/`--slow`/no-flag full run as the slice DONE gate (RF-5.6). <!-- AWM-INTEGRATION: executing-plans-sensor-gate -->
-5. Mark as completed
+2. **Capture `slice-start-sha` once** with `git rev-parse HEAD` before the first edit of this slice. Reuse that SHA for every `--base` on this slice (including fix/re-review rounds); do not re-capture after commits, and do not substitute `HEAD~1` or `origin/main`.
+3. Follow each step exactly (plan has bite-sized steps)
+4. Run verifications as specified
+5. **Run sensors before marking complete.** If the repo has `.awm/sensors.json`, run `awm sensors run --slice` (RF-5.1; skips bare `closureOnly` sensors such as mutation when they lack `sliceCommand`). WHEN any selected sensor has `sliceCommand`, also pass `--base <slice-start-sha>` with the SHA captured in step 2 (CLI ≥ 9.23.0); bare `--slice` without `--base` remains valid when no `sliceCommand` will execute. Continue only when `overall: pass`; `fail`, `not_certified`, and `skipped` are all non-pass verdicts. On any non-pass, invoke `systematic-debugging`, stop task progression, and do not mark the checkbox or commit as complete or advance toward review, QA, retro, or PR. Do not use `--fast`/`--slow`/no-flag full run as the slice DONE gate (RF-5.6). <!-- AWM-INTEGRATION: executing-plans-sensor-gate -->
+6. Mark as completed
 
 ## Review-cycle control
 

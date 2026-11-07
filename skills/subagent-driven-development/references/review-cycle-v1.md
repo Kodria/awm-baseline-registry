@@ -45,7 +45,9 @@ complete gate merely because they pass.
 - **RF-4.6 — Blocking mapping:** use existing ledger fields only — an entry is
   blocking when `class=seguridad` **or** `severity=blocker` (covers security,
   externally false result, and red mechanical gate via those fields). Do not
-  invent a parallel taxonomy.
+  invent a parallel taxonomy. Ambiguous or missing `class`/`severity` on a
+  finding that would otherwise defer SHALL be treated as blocking until
+  clarified (fail closed — never silent drop).
 
 ## Finding reconciliation
 

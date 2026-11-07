@@ -108,6 +108,9 @@ test('RF-3.3 / RF-4 / RF-5: review-cycle-v1 encodes verify, defer ceiling, block
   assert.match(cut, /round-ceiling|three total rounds|3 rounds/i, 'RF-4.3 ceiling');
   assert.match(cut, /class\s*=\s*`?seguridad`?|class.*seguridad/i, 'RF-4.6 seguridad mapping');
   assert.match(cut, /severity\s*=\s*`?blocker`?|severity.*blocker/i, 'RF-4.6 blocker mapping');
+  assert.match(cut, /Ambiguous or missing[\s\S]{0,80}class[\s\S]{0,40}severity[\s\S]{0,160}blocking until[\s\S]{0,20}clarified/i,
+    'RF-4.6 fail-closed on ambiguous/missing class/severity');
+  assert.match(cut, /never silent drop/i, 'RF-4.6 never silent drop');
 
   const bounded = sectionAfterHeading(text, '## Bounded measurement');
   assert.match(bounded, /durationMs|ledger/, 'RF-5.1 durable clocks');
@@ -118,12 +121,30 @@ test('RF-3.3 / RF-4 / RF-5: review-cycle-v1 encodes verify, defer ceiling, block
 test('RF-4.5 / RF-E.3: QA fails closed on deferred-open before awm-qa-complete', () => {
   const text = read('skills/post-implementation-qa/SKILL.md');
   assert.match(text, /ledger list --deferred-open/, 'QA must list deferred-open');
-  assert.match(text, /resolve --id/, 'QA must resolve by id');
+  assert.match(text, /ledger resolve --id <id> --how fixed/, 'QA must resolve with --how fixed');
+  assert.match(text, /ledger resolve --id <id> --how accepted/, 'QA must resolve with --how accepted');
+  assert.match(text, /QA report|findings disposition/i, 'accepted rationale must live outside ledger (no --note)');
   const markerIdx = text.indexOf('awm-qa-complete');
   assert.ok(markerIdx > 0, 'QA marker must exist');
   const beforeMarker = text.slice(Math.max(0, markerIdx - 2500), markerIdx);
   assert.match(beforeMarker, /deferred-open/, 'deferred-open gate must appear before awm-qa-complete discussion');
   assert.match(text, /fail closed|fails closed|no `?awm-qa-complete`?/i, 'RF-E.3 fail-closed language');
+});
+
+test('RF-2.4 / slice-start-sha: controller captures SHA before dispatch and injects it', () => {
+  const sensorGate = sectionAfterHeading(read('skills/subagent-driven-development/SKILL.md'), '## Sensor Gate (AWM)');
+  assert.match(sensorGate, /git rev-parse HEAD/, 'SDD controller must capture via git rev-parse HEAD');
+  assert.match(sensorGate, /before the first implementer dispatch/i, 'capture must be before first dispatch');
+  assert.match(sensorGate, /Keep the same SHA across fix/i, 'SHA must persist across fix rounds');
+  assert.match(sensorGate, /never substitute[\s\S]{0,40}HEAD~1[\s\S]{0,40}origin\/main/i, 'must forbid invented bases');
+
+  const implementer = read('skills/subagent-driven-development/implementer-prompt.md');
+  assert.match(implementer, /controller-injected/, 'implementer must require controller-injected SHA');
+  assert.match(implementer, /NEEDS_CONTEXT|BLOCKED/, 'implementer must escalate when SHA missing');
+
+  const exec = read('skills/executing-plans/SKILL.md');
+  assert.match(exec, /git rev-parse HEAD/, 'executing-plans must capture slice-start-sha');
+  assert.match(exec, /Reuse that SHA|same SHA/i, 'executing-plans must reuse SHA across rounds');
 });
 
 test('RF-6.1: QA/docs/finish keep full gate; cached allowed; no --slice/--no-cache closure', () => {

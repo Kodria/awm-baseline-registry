@@ -23,6 +23,8 @@ const rules = [
   ['## Mechanical evidence', 'requires a real execution', /Focused tests are not equivalent to a complete gate/i],
   ['## Review cut and deferred findings', 'round-ceiling', /allow the slice to advance/i],
   ['## Review cut and deferred findings', 'class=seguridad', /severity=blocker/],
+  ['## Review cut and deferred findings', 'Ambiguous or missing', /blocking until clarified/i],
+  ['## Review cut and deferred findings', 'never silent drop', /Ambiguous or missing/i],
   ['## Finding reconciliation', 'not file:line alone', /finding → fix → test → new verdict/i],
   ['## Finding reconciliation', 'confirmed identical defects', /cause, related surfaces and shared test boundary/i],
   ['## Finding reconciliation', 'unconfirmed common cause means separate groups', /before correcting/i],
