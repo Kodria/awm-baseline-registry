@@ -1,6 +1,6 @@
 ---
 name: setup-sensors
-version: "1.3.0"
+version: "1.4.0"
 license: Apache-2.0
 description: Use when a repository needs sensor configuration adapted to its actual installed tool versions (e.g. ESLint v9 flat config vs v8 extends, mypy vs ruff, monorepo tsconfig refs). Complements the `awm sensors init` CLI wizard by consulting Context7 for current docs and generating version-correct config files. Invoke when the wizard's templated configs don't fit the project — including when to declare a project sensor versus when to use or extend a pack.
 ---
@@ -208,8 +208,9 @@ Pack and project sensor entries may declare cache/measurement scope and slice se
 - **Pack defaults are conservative (RF-1.9):** baseline packs ship extension-bound `inputs` only for reliably bounded tools (`typecheck`, `lint`). `format`, `test`, `mutation`, and `security` ship **without** default `inputs`.
 - **Never directory-anchor pack defaults** (e.g. `src/**/*.ts`) — pack configs extend the project’s own configs, so directory defaults miss `tests/` / `scripts/` and false-green.
 - **Project override for mutation / slow sensors:** when the project knows a safe bound (issue #236 / mutmut), declare `inputs` on that sensor in `.awm/sensors.json` even if the pack left it unbounded.
-- **`closureOnly` (sensor-level):** when `true`, `awm sensors run --slice` skips the sensor. Baseline packs default `mutation` to `closureOnly: true`. Projects may override in `.awm/sensors.json`. Do not mark `test` as `closureOnly` by default.
-- **No agent-side skip protocol (RF-3.5):** always invoke the phase gate (`--slice` for task DONE; full no-flag run for QA/docs/finish) and read `overall`. Never skip `awm sensors run` because “only docs changed” — reuse is the CLI’s job.
+- **`closureOnly` (sensor-level):** when `true` and there is **no** usable `sliceCommand`, `awm sensors run --slice` skips the sensor (D-025). Baseline packs default `mutation` to `closureOnly: true`. Projects may override in `.awm/sensors.json`. Do not mark `test` as `closureOnly` by default.
+- **`sliceCommand` (variant or project override, CLI ≥ 9.23.0):** optional structured command parallel to `changedCommand` (`fileInput: { placeholder: '{files}', extensions? }` required). WHEN present with `closureOnly`, `--slice --base <slice-start-sha>` executes that scoped command instead of skipping. Bare `--slice` without `--base` remains valid when no selected sensor will run `sliceCommand`. Do **not** ship pack-default `sliceCommand` unless extension-bound and safe under RF-1.9; prefer project override for mutation/slow sensors.
+- **No agent-side skip protocol (RF-3.5):** always invoke the phase gate (`--slice` for task DONE, with `--base` when any selected sensor has `sliceCommand`; full no-flag run for QA/docs/finish) and read `overall`. Never skip `awm sensors run` because “only docs changed” — reuse is the CLI’s job.
 
 ## Anti-patterns
 

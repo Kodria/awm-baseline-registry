@@ -18,7 +18,11 @@ function section(text, heading) {
 const rules = [
   ['## Candidate and obligations', 'before any dispatch', /missing required evidence[\s\S]{0,100}block/i],
   ['## Candidate and obligations', 'plan identity, scope, declared roles and current verification obligations', /freezes that candidate/i],
-  ['## Mechanical evidence', 'identical candidate, command argv, cwd and satisfies obligation', /equivalence[\s\S]{0,100}requires a real execution/i],
+  ['## Mechanical evidence', 'awm evidence verify', /reports `match`/],
+  ['## Mechanical evidence', 'CycleEvidenceV1', /Do \*\*not\*\* conflate MechanicalRunEvidence/],
+  ['## Mechanical evidence', 'requires a real execution', /Focused tests are not equivalent to a complete gate/i],
+  ['## Review cut and deferred findings', 'round-ceiling', /allow the slice to advance/i],
+  ['## Review cut and deferred findings', 'class=seguridad', /severity=blocker/],
   ['## Finding reconciliation', 'not file:line alone', /finding → fix → test → new verdict/i],
   ['## Finding reconciliation', 'confirmed identical defects', /cause, related surfaces and shared test boundary/i],
   ['## Finding reconciliation', 'unconfirmed common cause means separate groups', /before correcting/i],
@@ -34,7 +38,9 @@ const rules = [
   ['## Invalidation', 'Commit, staged-index or code changes are not exempt', /new current verdict for each affected obligation/i],
   ['## Failure classification', 'product, plan, missing context, environment, currentness, publication, persistence', /only the affected gate/i],
   ['## Failure classification', 'without a new diagnostic or changed obligation', /must not cause an extra/i],
-  ['## Bounded measurement', 'dispatches, reviews, fix rounds, mechanical runs, administrative repairs, context fallbacks and reopening causes', /Unavailable counts remain unavailable/i],
+  ['## Bounded measurement', 'dispatches, reviews, fix rounds, mechanical runs, administrative repairs, context fallbacks and reopening causes', /Unavailable counts or durations remain unavailable/i],
+  ['## Bounded measurement', 'durationMs', /≥ 30%/],
+  ['## Bounded measurement', '20 minutes', /RF-5\.2/],
   ['## Bounded measurement', 'never persist prompt, source or unrestricted response bodies', /bounded IDs, verdicts and provenance/i],
 ];
 

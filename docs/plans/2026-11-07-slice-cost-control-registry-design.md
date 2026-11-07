@@ -6,7 +6,7 @@
 
 ## Registry-owned RFs
 
-Implement here: RF-2.4, RF-3.3, RF-4.1–4.6, RF-5.1–5.2, RF-6.1, RF-6.3, RF-E.3. Pack schema acceptance of structured `sliceCommand` (design RF-1.5 authoring surface) is also registry content.
+Implement here: RF-2.4, RF-3.3, RF-4.1, RF-4.2, RF-4.3, RF-4.4, RF-4.5, RF-4.6, RF-5.1, RF-5.2, RF-6.1, RF-6.3, RF-E.3. Pack schema acceptance of structured `sliceCommand` (design RF-1.5 authoring surface) is also registry content.
 
 **CLI-owned (already shipped in 9.23.0):** RF-1.*, RF-2.1–2.3/2.5–2.6, RF-3.1–3.2/3.4–3.9, RF-4.7, RF-5.1 clocks substrate, RF-6.2/6.4, RF-E.1–E.2.
 

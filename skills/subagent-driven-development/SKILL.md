@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-version: "2.6.0"
+version: "2.7.0"
 license: Apache-2.0
 description: Use when executing implementation plans with independent tasks in the current session
 ---
@@ -49,8 +49,7 @@ inspect or discover the plan, branch history, or unrelated files. Invalid or uns
 input stops execution; unmarked input returns migration-required and dispatches zero agents.
 
 The compact state machine is `pending → implementing → spec-review → quality-review → complete`.
-The same implementer fixes findings. Use three distinct identities: implementer, fresh specification reviewer, and different fresh code-quality reviewer. No slice advances until both reviewers
-are clean and every declared gate is green. Before `complete`, reconcile the report with
+The same implementer fixes findings. Use three distinct identities: implementer, fresh specification reviewer, and different fresh code-quality reviewer. No slice advances while **blocking** findings remain open; non-blocking findings may be deferred per `review-cycle-v1` (round ceiling / re-review rules) and every declared gate must be green. Before `complete`, reconcile the report with
 file-derived truth, the slice clauses, tests, sensors, ledger, skills/design declarations, and
 the current diff. Validate every report against that durable evidence; files win over reports.
 
@@ -293,7 +292,7 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 If the repo has `.awm/sensors.json`, a task is **not complete** until `overall: pass` — `typecheck`/`test`/`build` alone are not sufficient. `fail`, `not_certified`, and `skipped` are all non-pass verdicts. Subagents run in isolated context and only do what their prompt says, so the gate must be enforced at two points:
 
 1. **In the implementer prompt:** the implementer runs `awm sensors run --slice` before reporting task/slice DONE (RF-5.1). `--slice` runs every selected sensor except those with effective `closureOnly: true` (typically `mutation`). Continue only when `overall: pass`. On any non-pass, it invokes `systematic-debugging`, stops, and does not report DONE. The implementer prompt template already includes this step. Requires `agentic-workflow-manager` ≥ 9.22.0.
-2. **At the controller, before marking the task complete:** after the code quality review approves, confirm evidence of `overall: pass` from `--slice`. On `fail`, `not_certified`, or `skipped`, do not mark complete and do not advance toward another task, review, QA, retro, or PR; return the task to diagnosis. Trust-but-verify: the slice gate is cheap and authoritative for task DONE.
+2. **At the controller, before marking the task complete:** after the code quality review approves, confirm evidence of `overall: pass` from `awm sensors run --slice` (add `--base <slice-start-sha>` when any selected sensor has `sliceCommand`; CLI ≥ 9.23.0). On `fail`, `not_certified`, or `skipped`, do not mark complete and do not advance toward another task, review, QA, retro, or PR; return the task to diagnosis. Trust-but-verify: the slice gate is cheap and authoritative for task DONE.
 
 **Pitfall — do not use `--fast`, `--slow`, or a no-flag full run as the slice DONE gate.** `--fast` skips `test`; `--slow` skips `lint`/`typecheck`; a no-flag full run is the QA/docs/finish gate (RF-5.3–5.5), not the per-slice gate. Do not treat `--slice` as Change Record / QA closure evidence (RF-5.6).
 
