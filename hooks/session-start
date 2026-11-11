@@ -105,7 +105,22 @@ if [ -d "$PLANS_DIR" ]; then
     # the same tie-break as the Node hooks (A8). -L: sort by the followed
     # target's mtime (GNU and BSD), matching Node's statSync — plain ls -t on
     # Linux orders by the symlink's own mtime and would disagree with Cursor.
-    done < <(LC_ALL=C ls -Lt "$PLANS_DIR"/*.md 2>/dev/null || true)
+    #
+    # Expand *.md under C inside this subshell. A parent-shell glob of
+    # "$PLANS_DIR"/*.md is sorted by the ambient LC_COLLATE *before* ls runs;
+    # on some runners (Ubuntu 26+) equal-mtime ties then keep that locale order
+    # even when the ls process itself has LC_ALL=C — which made Active plan
+    # pick a-plan.md over B-plan.md under en_US.UTF-8 in CI.
+    done < <(
+        export LC_ALL=C
+        shopt -s nullglob
+        cd "$PLANS_DIR" || exit 0
+        files=( *.md )
+        ((${#files[@]})) || exit 0
+        ls -Lt -- "${files[@]}" | while IFS= read -r base; do
+            printf '%s/%s\n' "$PLANS_DIR" "$base"
+        done
+    )
 
     if [ -n "$active_plan" ]; then
         goal_line=$(grep -m1 '\*\*Goal:\*\*' "$active_plan" 2>/dev/null || true)

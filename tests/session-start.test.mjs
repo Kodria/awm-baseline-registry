@@ -81,8 +81,16 @@ try {
     // Linux `ls -t` orders by the symlink's own mtime; Node `statSync` follows.
     // The bash hook must use `-L` so a symlink to a newer regular plan wins on
     // every platform (CI caught plain `-t` disagreeing with Cursor/Codex).
-    assert.match(fs.readFileSync(bashHook, 'utf8'), /LC_ALL=C ls -Lt /,
-        'bash plan listing must follow symlinks with ls -Lt');
+    const bashHookSource = fs.readFileSync(bashHook, 'utf8');
+    // Must expand globs under LC_ALL=C inside the listing subshell. Prefixing
+    // only LC_ALL=C onto ls while the parent expands "$PLANS_DIR"/*.md is not
+    // enough on runners where equal-mtime ties preserve ambient locale order.
+    assert.match(bashHookSource, /export LC_ALL=C/,
+        'bash plan listing must export LC_ALL=C before expanding *.md');
+    assert.match(bashHookSource, /ls -Lt -- "\$\{files\[@\]\}"/,
+        'bash plan listing must follow symlinks with ls -Lt on a C-locale glob');
+    assert.doesNotMatch(bashHookSource, /LC_ALL=C ls -Lt "\$PLANS_DIR"\/\*\.md/,
+        'must not parent-expand "$PLANS_DIR"/*.md under a non-C locale');
 
     // AWM installs using-awm.md next to the hook; the envelope is its payload.
     const hooksRoot = path.join(workspace, 'awm-hooks');

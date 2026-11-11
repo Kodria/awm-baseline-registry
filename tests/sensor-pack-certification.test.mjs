@@ -62,7 +62,7 @@ function assertPythonToolchainCertification(workflow) {
   const matrix = block(strategy, 6, 'matrix');
   assert.match(matrix, /^ {8}include:\s*$/m, 'certification matrix must explicitly distinguish Python toolchains');
   for (const entry of [
-    '- os: ubuntu-latest\n            python: "3.9"\n            python-profile: minimum',
+    '- os: ubuntu-24.04\n            python: "3.9"\n            python-profile: minimum',
     '- os: ubuntu-latest\n            python: "3.12"\n            python-profile: current',
     '- os: macos-latest\n            python: "3.12"\n            python-profile: current',
     '- os: windows-latest\n            python: "3.12"\n            python-profile: current',

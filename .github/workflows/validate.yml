@@ -2,11 +2,13 @@ name: Validate registry
 
 on:
   pull_request:
-  push:
-    branches: [main]
 
 permissions:
   contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   sensor-certification:
@@ -51,6 +53,7 @@ jobs:
       - run: node --test tests/r2b-release-prepublication.test.mjs
       # Structural: every tests/*.test.mjs must be named in a workflow (#61).
       - run: node --test tests/workflow-test-coverage.test.mjs
+      - run: node --test tests/validate-pr-only-triggers.test.mjs
       # Every declared CLI pin lives in cli-certification.json and is validated
       # there before it reaches the environment, so nothing downstream re-reads
       # or restates it. See Kodria/agentic-workflow#164.

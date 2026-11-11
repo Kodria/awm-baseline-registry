@@ -13,6 +13,7 @@
     "test:systematic-debugging-data-over-time": "node --test tests/r19-systematic-debugging-data-over-time-contract.test.mjs",
     "test:slice-cost-control": "node --test tests/r20-slice-cost-control-contract.test.mjs",
     "test:workflow-coverage": "node --test tests/workflow-test-coverage.test.mjs",
+    "test:validate-triggers": "node --test tests/validate-pr-only-triggers.test.mjs tests/workflow-test-coverage.test.mjs",
     "test:version-bumps": "./scripts/check-skill-version-bumps.sh origin/main HEAD",
     "test:r2a": "node --test tests/r2a-review-cycle-contract.test.mjs",
     "test:r77": "node --test tests/r77-process-hardening-contract.test.mjs",
